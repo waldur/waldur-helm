@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "waldur.fullname" . }}
+  name: waldur-mastermind-beat
   labels:
 {{ include "waldur.labels" . | indent 4 }}
 spec:
@@ -16,34 +16,18 @@ spec:
         app.kubernetes.io/name: {{ include "waldur.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
-    {{- with .Values.imagePullSecrets }}
-      imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
-    {{- end }}
       containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
-          ports:
-            - name: http
-              containerPort: 80
-              protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
-            volumes:
-            - name: config
-              configMap:
-                name: nginx-config
-            volumeMounts:
-            - name: config
-              mountPath: /etc/nginx/nginx.conf
-              subPath: nginx.conf
+        - name: waldur-mastermind-beat
+          image: opennode/waldur-mastermind:latest
+          args:
+            - "beat"
+          env:
+          - name: POSTGRES_USER
+            value: "postgres"
+          - name: POSTGRES_PASSWORD
+            value: "default"
+          - name: GLOBAL_SECRET_KEY
+            value: "x2pYXyrAOwzXA2QOPzygIgkKFVMj/lUbZryWWbHoMtY="
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
@@ -58,3 +42,4 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
     {{- end }}
+

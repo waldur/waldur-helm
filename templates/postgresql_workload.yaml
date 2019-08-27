@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: waldur-db
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: waldur-db
+  template:
+    metadata:
+      labels:
+        app: waldur-db
+    spec:
+      containers:
+        - name: waldur-db
+          image: bitnami/postgresql:latest
+          volumeMounts:
+            - name: waldur-postgres-data
+              mountPath: /var/lib/postgresql/data
+              subPath: data
+          env:
+          - name: POSTGRESQL_USERNAME
+            value: "waldur"
+          - name: POSTGRES_PASSWORD
+            value: "waldur"
+          - name: POSTGRESQL_DATABASE
+            value: "waldur"
+          ports:
+            - name: postgres
+              containerPort: 5432
+              protocol: TCP
+      volumes:
+      - name: waldur-postgres-data
+        persistentVolumeClaim:
+          claimName: longhorn-waldur-postgres-data
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+

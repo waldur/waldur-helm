@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: waldur-mastermind-uwsgi
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: waldur-mastermind-uwsgi
+  template:
+    metadata:
+      labels:
+        app: waldur-mastermind-uwsgi
+    spec:
+      containers:
+        - name: waldur-mastermind-uwsgi
+          image: opennode/waldur-mastermind:latest
+          args:
+            - "mastermind"
+          ports:
+            - name: uwsgi
+              containerPort: 8000
+              protocol: TCP
+          env:
+          - name: POSTGRESQL_USER
+            value: "waldur"
+          - name: POSTGRESQL_PASSWORD
+            value: "waldur"
+          - name: GLOBAL_SECRET_KEY
+            value: "x2pYXyrAOwzXA2QOPzygIgkKFVMj/lUbZryWWbHoMtY="
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+

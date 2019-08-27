@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: waldur-mastermind-api
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: waldur-mastermind-api
+  template:
+    metadata:
+      labels:
+        app: waldur-mastermind-api
+    spec:
+      containers:
+        - name: waldur-mastermind-api
+          image: nginx:latest
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: api-nginx
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+      volumes:
+      - name: api-nginx
+        configMap:
+          name: api-config
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+

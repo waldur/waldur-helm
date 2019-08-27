@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: waldur-mastermind-uwsgi
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: uwsgi
+      protocol: TCP
+      name: uwsgi
+  selector:
+    app: waldur-mastermind-uwsgi
+

@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: waldur-homeport
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: waldur-homeport
+  template:
+    metadata:
+      labels:
+        app: waldur-homeport
+    spec:
+      containers:
+        - name: waldur-homeport
+          image: opennode/waldur-homeport:latest
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          volumeMounts:
+            - name: json
+              mountPath: /opnd/config.json
+              subPath: config.json
+            - name: nginx
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+      - name: json
+        configMap:
+          name: json-config
+      - name: nginx
+        configMap:
+          name: homeport-nginx-config
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+

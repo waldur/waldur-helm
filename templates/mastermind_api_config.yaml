@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: api-config
+  name: api-nginx-config
 data:
   nginx.conf: |-
 {{ .Files.Get "waldur-mastermind-api/nginx.conf" | indent 4}}

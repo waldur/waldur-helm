@@ -30,7 +30,7 @@ spec:
       volumes:
       - name: api-nginx
         configMap:
-          name: api-config
+          name: api-nginx-config
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

@@ -22,12 +22,18 @@ spec:
           args:
             - "beat"
           env:
-          - name: POSTGRES_USER
-            value: "postgres"
-          - name: POSTGRES_PASSWORD
-            value: "default"
+          - name: POSTGRESQL_USER
+            value: "waldur"
+          - name: POSTGRESQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: waldur-secret
+                key: POSTGRESQL_PASSWORD
           - name: GLOBAL_SECRET_KEY
-            value: "x2pYXyrAOwzXA2QOPzygIgkKFVMj/lUbZryWWbHoMtY="
+            valueFrom:
+              secretKeyRef:
+                name: waldur-secret
+                key: GLOBAL_SECRET_KEY
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

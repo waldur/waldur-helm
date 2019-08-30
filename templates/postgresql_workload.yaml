@@ -24,8 +24,11 @@ spec:
           env:
           - name: POSTGRESQL_USERNAME
             value: "waldur"
-          - name: POSTGRES_PASSWORD
-            value: "waldur"
+          - name: POSTGRESQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: waldur-secret
+                key: POSTGRESQL_PASSWORD
           - name: POSTGRESQL_DATABASE
             value: "waldur"
           ports:

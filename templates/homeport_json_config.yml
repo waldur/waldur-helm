@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: json-config
+  name: homeport-json-config
 data:
   config.json: |-
 {{ .Files.Get "waldur-homeport/config.json" | indent 4}}

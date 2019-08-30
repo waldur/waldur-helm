@@ -27,9 +27,15 @@ spec:
           - name: POSTGRESQL_USER
             value: "waldur"
           - name: POSTGRESQL_PASSWORD
-            value: "waldur"
+            valueFrom:
+              secretKeyRef:
+                name: waldur-secret
+                key: POSTGRESQL_PASSWORD
           - name: GLOBAL_SECRET_KEY
-            value: "x2pYXyrAOwzXA2QOPzygIgkKFVMj/lUbZryWWbHoMtY="
+            valueFrom:
+              secretKeyRef:
+                name: waldur-secret
+                key: GLOBAL_SECRET_KEY
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

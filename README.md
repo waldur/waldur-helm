@@ -1,19 +1,32 @@
-## Waldur helm
+# Waldur
 
-### Content
+Waldur is a platform for creating hybrid cloud solutions. It allows building enterprise-grade systems and providing self-service environment for the end-users.
 
-TODO
+## Introduction
 
-### Howto
+This chart bootstraps a [Waldur](https://waldur.com/) deployment on a [Rancher](https://rancher.com/) cluster using the [Helm](https://helm.sh) package manager.
 
-Right now i use http repo not git for testing http://185.174.162.103/charts/waldur/
+## Installing the Chart
 
-To create package from rancher you need to execute next steps
+1. Download this git repo
+2. Open values.yaml and change api_url and homeport_url.
+3. Open waldur-homeport/config.json and change "apiEndpoint"
+4. Open templates/secrets_config.yaml and change DB password and global secret key
+5. Create new catalog. To do this you need working web server. Download Waldur helm to the web catalog and create tar and index with following commands
 
-helm package waldur
-mv nginx-0.1.0.tgz waldur
-helm repo index waldur --url http://185.174.162.103/charts/waldur/
+helm package waldur --version 1.1.133
+mv nginx-*.tgz waldur
+helm repo waldur nginx --url http://<web server address>/>chart directory>
 
-To generate new version
+5. Add repo to the Rancher catalog
+6. Install Waldur
 
-helm package nginx --version 1.1.1
+## Add admin user
+
+Open waldur-mastermind-worker shell and execute following command
+
+waldur createstaffuser -u user -p password
+
+## Know problems
+
+1. waldur-mastermind-job which triggers database populating command "waldur migrate" runs too soon. The database is not ready and then first startup fails and only second can finish job.

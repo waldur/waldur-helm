@@ -8,8 +8,10 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-api_url: api.waldur.ee
-homeport_url: test.waldur.ee
+apiUrl: api.example.com
+homeportUrl: web.example.com
+
+affinity: {}
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
@@ -23,8 +25,16 @@ resources: {}
   #   cpu: 100m
   #   memory: 128Mi
 
+ingress:
+  enabled: false
+
 nodeSelector: {}
 
 tolerations: []
 
-affinity: {}
+homeport:
+  homeportConf: |
+    {
+    "apiEndpoint": "https://{{ .Values.apiUrl }}/"
+    }
+

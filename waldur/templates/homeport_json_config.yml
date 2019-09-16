@@ -3,6 +3,5 @@ kind: ConfigMap
 metadata:
   name: homeport-json-config
 data:
-  config.json: |-
-{{ .Files.Get "waldur-homeport/config.json" | indent 4}}
-
+  config.json: |
+    {{ tpl .Values.homeport.homeportConf . | indent 4 }}

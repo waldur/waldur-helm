@@ -10,19 +10,23 @@ This chart bootstraps a [Waldur](https://waldur.com/) deployment on a Kubernetes
 
 Check [Helm readme](https://github.com/helm/helm#install).
 
+Run ```helm init``` before proceeding.
+
 ## Installing the Chart
 
 1. Download this git repo
-2. Open values.yaml and change api_url and homeport_url.
+2. Open values.yaml and update apiUrl and homeportUrl.
 3. Open waldur-homeport/config.json and change "apiEndpoint"
 4. Open templates/secrets_config.yaml and change DB password and global secret key
-5. Create a new catalog. To do this you need a working web server. Consider [Ngrok](https://ngrok.com/) for development.
+5. Create a helm package (also deploys it to a local repository) Consider for development.
 ```
-  helm package waldur --version 1.1.133
-  mv waldur-*.tgz waldur
-  helm repo waldur --url http://<web server address>/<chart directory>/
+  helm package waldur --version 3.9.5
 ```
-5. Add repo to the Rancher catalog
+5. Expose helm repository on public URL (using e.g [Ngrok](https://ngrok.com/)):
+```
+  helm serve
+  ngrok http http://localhost:8879/
+```
 6. Install Waldur
 
 ## Adding admin user

@@ -10,8 +10,6 @@ This chart bootstraps a [Waldur](https://waldur.com/) deployment on a Kubernetes
 
 Check [Helm readme](https://github.com/helm/helm#install).
 
-Run ```helm init``` before proceeding.
-
 ## Installing the Chart
 
 1. Download this git repo

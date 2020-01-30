@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: waldur-mastermind-job
-          image: opennode/waldur-mastermind:latest
+          image: opennode/waldur-mastermind:{{ $.Chart.AppVersion }}
           args:
             - "waldur"
             - "migrate"

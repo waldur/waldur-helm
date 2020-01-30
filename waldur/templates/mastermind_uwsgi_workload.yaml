@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: waldur-mastermind-uwsgi
-          image: opennode/waldur-mastermind:latest
+          image: opennode/waldur-mastermind:{{ $.Chart.AppVersion }}
           args:
             - "mastermind"
           ports:

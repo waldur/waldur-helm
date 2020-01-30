@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: waldur-homeport
-          image: opennode/waldur-homeport:latest
+          image: opennode/waldur-homeport:{{ $.Chart.AppVersion }}
           ports:
             - name: http
               containerPort: 80

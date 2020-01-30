@@ -36,6 +36,32 @@ spec:
                 key: GLOBAL_SECRET_KEY
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: api-core
+              mountPath: /etc/waldur/core.ini
+              subPath: core.ini
+            - name: api-override
+              mountPath: /etc/waldur/override.conf.py
+              subPath: override.conf.py
+            - name: api-celery
+              mountPath: /etc/waldur/celery.conf
+              subPath: celery.conf
+            - name: api-uwsgi
+              mountPath: /etc/waldur/uwsgi.ini
+              subPath: uwsgi.ini
+      volumes:
+      - name: api-core
+        configMap:
+          name: api-core-config
+      - name: api-override
+        configMap:
+          name: api-override-config
+      - name: api-celery
+        configMap:
+          name: api-celery-config
+      - name: api-uwsgi
+        configMap:
+          name: api-uwsgi-config
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -48,4 +74,3 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
     {{- end }}
-

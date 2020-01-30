@@ -22,6 +22,10 @@ spec:
           args:
             - "worker"
           env:
+          - name: POSTGRES_HOST
+            value: {{ template "waldur.postgresql.host" . }}
+          - name: POSTGRES_PORT
+            value: {{ template "waldur.postgresql.port" . }}
           - name: POSTGRESQL_USER
             value: "waldur"
           - name: POSTGRESQL_PASSWORD
@@ -29,6 +33,10 @@ spec:
               secretKeyRef:
                 name: waldur-secret
                 key: POSTGRESQL_PASSWORD
+          - name: REDIS_HOST
+            value: {{ template "waldur.redis.host" . }}
+          - name: REDIS_PORT
+            value: {{ template "waldur.redis.port" . }}
           - name: GLOBAL_SECRET_KEY
             valueFrom:
               secretKeyRef:

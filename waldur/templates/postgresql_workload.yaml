@@ -22,6 +22,10 @@ spec:
               mountPath: /var/lib/postgresql/data
               subPath: data
           env:
+          - name: POSTGRES_HOST
+            value: {{ template "waldur.postgresql.host" . }}
+          - name: POSTGRES_PORT
+            value: {{ template "waldur.postgresql.port" . }}
           - name: POSTGRESQL_USERNAME
             value: "waldur"
           - name: POSTGRESQL_PASSWORD

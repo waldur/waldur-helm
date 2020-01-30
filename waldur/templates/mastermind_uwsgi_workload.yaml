@@ -24,6 +24,14 @@ spec:
               containerPort: 8000
               protocol: TCP
           env:
+          - name: POSTGRES_HOST
+            value: {{ template "waldur.postgresql.host" . }}
+          - name: POSTGRES_PORT
+            value: {{ template "waldur.postgresql.port" . }}
+          - name: REDIS_HOST
+            value: {{ template "waldur.redis.host" . }}
+          - name: REDIS_PORT
+            value: {{ template "waldur.redis.port" . }}
           - name: POSTGRESQL_USER
             value: "waldur"
           - name: POSTGRESQL_PASSWORD

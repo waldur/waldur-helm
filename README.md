@@ -14,11 +14,15 @@ This chart bootstraps a [Waldur](https://waldur.com/) deployment on a Kubernetes
 
 ## Installing the Chart
 
-1. Download this git repo
-2. Open values.yaml and update apiUrl and homeportUrl.
-3. Open waldur-homeport/config.json and change "apiEndpoint"
-4. Open templates/secrets_config.yaml and change DB password and global secret key
-5. Install Helm package:
+1. Add the stable repository
+```
+  helm repo add stable https://kubernetes-charts.storage.googleapis.com
+```
+2. Install Chart dependencies:
+```
+  helm dep update
+```
+3. Install Helm package:
 ```
   helm install waldur waldur
 ```

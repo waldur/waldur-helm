@@ -38,7 +38,7 @@ spec:
       volumes:
       - name: waldur-postgres-data
         persistentVolumeClaim:
-          claimName: longhorn-waldur-postgres-data
+          claimName: waldur-postgres-data
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

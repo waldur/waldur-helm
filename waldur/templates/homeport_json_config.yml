@@ -4,4 +4,6 @@ metadata:
   name: homeport-json-config
 data:
   config.json: |
-    {{ tpl .Values.homeport.homeportConf . | indent 4 }}
+    {
+      "apiEndpoint": "https://{{ .Values.apiUrl }}/"
+    }

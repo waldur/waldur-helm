@@ -22,10 +22,6 @@ This chart bootstraps a [Waldur](https://waldur.com/) deployment on a Kubernetes
 ```
   helm install waldur waldur
 ```
-6. Expose helm repository on public URL (using e.g [Ngrok](https://ngrok.com/)):
-```
-  ngrok http http://localhost:8879/
-```
 
 ## Adding admin user
 

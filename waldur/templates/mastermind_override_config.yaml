@@ -1,0 +1,427 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-override-config
+data:
+  override.conf.py: |-
+    #
+    # Configuration for Waldur plugins
+    #
+    # Django
+    #
+
+    EMAIL_HOST = '{{ .Values.waldur.emailHost }}'
+
+    {{ if .Values.waldur.notificationSubject }}
+    WALDUR_CORE['NOTIFICATION_SUBJECT'] = '{{ .Values.waldur.notificationSubject }}'
+    {{ end }}
+
+    {{ if .Values.waldur.timeZone }}
+    # Local time zone to use. See all at https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+    TIME_ZONE = '{{ .Values.waldur.timeZone }}'
+    {{ end }}
+
+    WALDUR_CORE['AUTHENTICATION_METHODS'] = {{ .Values.waldur.authMethods|toJson }}
+
+    {{ if has "FACEBOOK" .Values.waldur.authMethods }}
+    WALDUR_AUTH_SOCIAL.update({
+      'FACEBOOK_SECRET': '{{ .Values.waldur.facebook.secret }}',
+      'FACEBOOK_CLIENT_ID': '{{ .Values.waldur.facebook.clientId }}',
+    })
+    {{ end }}
+
+    {{ if has "GOOGLE" .Values.waldur.authMethods}}
+    WALDUR_AUTH_SOCIAL.update({
+        'GOOGLE_SECRET': '{{ .Values.waldur.google.secret }}',
+        'GOOGLE_CLIENT_ID': '{{ .Values.waldur.google.clientId }}',
+    })
+    {{ end }}
+
+    {{ if has "SMARTIDEE" .Values.waldur.authMethods}}
+    WALDUR_AUTH_SOCIAL.update({
+        'SMARTIDEE_SECRET': '{{ .Values.waldur.smartid.secret }}',
+        'SMARTIDEE_CLIENT_ID': '{{ .Values.waldur.smartid.clientId }}',
+    })
+    {{ end }}
+
+    {{ if has "SELF_REGISTRATION" .Values.waldur.authMethods }}
+    WALDUR_AUTH_SOCIAL.update({
+        'USER_ACTIVATION_URL_TEMPLATE': '{{ .Values.waldur.url }}#/activate/{user_uuid}/{token}/',
+    })
+    {{ end }}
+
+    {{ if has "TARA" .Values.waldur.authMethods }}
+    WALDUR_AUTH_SOCIAL.update({
+        'TARA_SECRET': '{{ .Values.waldur.tara.secret }}',
+        'TARA_CLIENT_ID': '{{ .Values.waldur.tara.clientId }}',
+        'TARA_SANDBOX': False,
+    })
+    {{ end }}
+
+    {{ if has "LDAP" .Values.waldur.authMethods }}
+    #
+    # LDAP
+    #
+    import ldap
+    from django_auth_ldap.config import LDAPSearch, GroupOfNamesType
+
+    # LDAP authentication.
+    # See also: https://django-auth-ldap.readthedocs.io/en/latest/authentication.html
+    AUTHENTICATION_BACKENDS += (
+        'django_auth_ldap.backend.LDAPBackend',
+    )
+
+    AUTH_LDAP_SERVER_URI = '{{ .Values.waldur.ldap.host }}'
+
+    # Following variables are not used by django-auth-ldap,
+    # they are used as templates for other variables
+    AUTH_LDAP_BASE = '{{ .Values.waldur.ldap.baseDN }}'
+    AUTH_LDAP_USER_BASE = '{{ .Values.waldur.ldap.userDN }}'
+
+    # Format authenticating user's distinguished name using template
+    AUTH_LDAP_USER_DN_TEMPLATE = 'uid=%(user)s,' + AUTH_LDAP_USER_BASE
+
+    # Credentials for admin user
+    AUTH_LDAP_BIND_DN = 'uid={{ .Values.waldur.ldap.user }},' + AUTH_LDAP_USER_BASE
+    AUTH_LDAP_BIND_PASSWORD = '{{ .Values.waldur.ldap.password }}'
+
+    # Populate the Django user from the LDAP directory.
+    AUTH_LDAP_USER_ATTR_MAP = {
+        'full_name': 'displayName',
+        'email': 'mail'
+    }
+
+    # Set up the basic group parameters.
+    AUTH_LDAP_GROUP_BASE = "cn=groups," + AUTH_LDAP_BASE
+    AUTH_LDAP_GROUP_FILTER = "(objectClass=groupOfNames)"
+    AUTH_LDAP_GROUP_SEARCH = LDAPSearch(AUTH_LDAP_GROUP_BASE,
+        ldap.SCOPE_SUBTREE, AUTH_LDAP_GROUP_FILTER)
+    AUTH_LDAP_GROUP_TYPE = GroupOfNamesType(name_attr="cn")
+
+    AUTH_LDAP_USER_FLAGS_BY_GROUP = {
+        'is_staff': '{{ .Values.waldur.ldap.admins }},' + AUTH_LDAP_GROUP_BASE,
+        'is_support': '{{ .Values.waldur.ldap.support }},' + AUTH_LDAP_GROUP_BASE,
+    }
+    {{ end }}
+
+    #
+    # waldur-freeipa
+    #
+
+    {{ if has "freeipa" .Values.waldur.features }}
+    WALDUR_FREEIPA.update({
+        'ENABLED': True,
+        'GROUPNAME_PREFIX': '{{ .Values.waldur.freeipa.groupnamePrefix }}',
+        'HOSTNAME': '{{ .Values.waldur.freeipa.hostname }}',
+        'PASSWORD': '{{ .Values.waldur.freeipa.password }}',
+        'USERNAME': '{{ .Values.waldur.freeipa.username }}',
+        'USERNAME_PREFIX': '{{ .Values.waldur.freeipa.usernamePrefix }}',
+        'VERIFY_SSL': {{ .Values.waldur.freeipa.verifySSL }},
+    })
+    {{ end }}
+
+    {{ if has "freeipa_group_synchronization_disabled" .Values.waldur.features }}
+    WALDUR_FREEIPA.update({
+        'GROUP_SYNCHRONIZATION_ENABLED': False,
+    })
+    {{ end }}
+
+    {{ if has "VALIMO" .Values.waldur.authMethods }}
+    WALDUR_AUTH_VALIMO.update({
+        'AP_ID': '{{ .Values.waldur.valimo.apId }}',
+        'AP_PWD': '{{ .Values.waldur.valimo.apPwd }}',
+        'DNSName': '{{ .Values.waldur.valimo.dnsname }}',
+        'cert_path': '/etc/waldur/valimo/valimo-client.crt',
+        'key_path': '/etc/waldur/valimo/valimo-client.key',
+        'URL': '{{ .Values.waldur.valimo.url }}',
+        'SignatureProfile': '{{ .Values.waldur.valimo.signatureProfile }}',
+    {{ if .Values.waldur.valimo.label }}
+        'LABEL': '{{ .Values.waldur.valimo.label }}',
+    {{ end }}
+    {{ if .Values.waldur.valimo.mobilePrefix }}
+        'MOBILE_PREFIX': '{{ .Values.waldur.valimo.mobilePrefix }}',
+    {{ end }}
+    })
+    {{ end }}
+
+    #
+    # waldur-core
+    # https://opennode.atlassian.net/wiki/display/WD/MasterMind+configuration#MasterMindconfiguration-Additionalsettings
+
+    {{ if .Values.waldur.currencyName }}
+    WALDUR_CORE['CURRENCY_NAME'] = '{{ .Values.waldur.currencyName }}'
+    {{ end }}
+
+    WALDUR_CORE['SITE_NAME'] = '{{ .Values.waldur.site.name }}'
+
+    {{ if .Values.waldur.site.logo }}
+    WALDUR_CORE['SITE_LOGO'] = '/etc/waldur/logo.png'
+    {{ end }}
+
+    {{ if has "owner_can_manage_customer" .Values.waldur.features }}
+    WALDUR_CORE['OWNER_CAN_MANAGE_CUSTOMER'] = True
+    {{ end }}
+
+    {{ if has "owners_can_manage_owners" .Values.waldur.features }}
+    WALDUR_CORE['OWNERS_CAN_MANAGE_OWNERS'] = True
+    {{ end }}
+
+    {{ if has "only_staff_manages_services" .Values.waldur.features }}
+    WALDUR_CORE['ONLY_STAFF_MANAGES_SERVICES'] = True
+    WALDUR_MARKETPLACE['OWNER_CAN_APPROVE_ORDER'] = False
+    WALDUR_MARKETPLACE['MANAGER_CAN_APPROVE_ORDER'] = False
+    WALDUR_MARKETPLACE['ADMIN_CAN_APPROVE_ORDER'] = False
+    {{ end }}
+
+    {{ if has "manager_can_approve_order" .Values.waldur.features }}
+    WALDUR_MARKETPLACE['MANAGER_CAN_APPROVE_ORDER'] = True
+    WALDUR_OPENSTACK['MANAGER_CAN_MANAGE_TENANTS'] = True
+    {{ end }}
+
+    {{ if has "admin_can_approve_order" .Values.waldur.features }}
+    WALDUR_MARKETPLACE['ADMIN_CAN_APPROVE_ORDER'] = True
+    WALDUR_OPENSTACK['ADMIN_CAN_MANAGE_TENANTS'] = True
+    {{ end }}
+
+    {{ if has "create_default_project_on_organization_creation" .Values.waldur.features }}
+    WALDUR_CORE['CREATE_DEFAULT_PROJECT_ON_ORGANIZATION_CREATION'] = True
+    {{ end }}
+
+    # Disable company types till we start making use of them
+    WALDUR_CORE['COMPANY_TYPES'] = ()
+
+    # Disable geoip location till HomePort releases maps to a stable deployment
+    WALDUR_CORE['ENABLE_GEOIP'] = False
+
+    # Authentication callback URL templates
+    WALDUR_CORE.update({
+        'LOGIN_COMPLETED_URL': '{{ .Values.waldur.url }}#/login_completed/{token}/{method}/',
+        'LOGIN_FAILED_URL': '{{ .Values.waldur.url }}#/login_failed/',
+        'LOGOUT_COMPLETED_URL': '{{ .Values.waldur.url }}#/logout_completed/',
+        'LOGOUT_FAILED_URL': '{{ .Values.waldur.url }}#/logout_failed/',
+        'INVITATION_APPROVE_URL': '{{ .Values.waldur.url }}#/invitation_approve/{token}/',
+        'INVITATION_REJECT_URL': '{{ .Values.waldur.url }}#/invitation_reject/{token}/',
+    })
+
+    {{ if .Values.waldur.site.address }}
+    WALDUR_CORE['SITE_ADDRESS'] = '{{ .Values.waldur.site.address }}'
+    {{ end }}
+
+    {{ if .Values.waldur.site.email }}
+    WALDUR_CORE['SITE_EMAIL'] = '{{ .Values.waldur.site.email }}'
+    {{ end }}
+
+    {{ if .Values.waldur.site.phone }}
+    WALDUR_CORE['SITE_PHONE'] = '{{ .Values.waldur.site.phone }}'
+    {{ end }}
+
+    {{ if has "disable_signup_without_invitation" .Values.waldur.features }}
+    WALDUR_CORE['ALLOW_SIGNUP_WITHOUT_INVITATION'] = False
+    {{ end }}
+
+    {{ if has "only_staff_can_invite_users" .Values.waldur.features }}
+    WALDUR_CORE['ONLY_STAFF_CAN_INVITE_USERS'] = True
+    {{ end }}
+
+    {{ if has "invitation_create_missing_users" .Values.waldur.features }}
+    WALDUR_CORE['INVITATION_CREATE_MISSING_USER'] = True
+    {{ end }}
+
+    {{ if has "invitation_disable_multiple_roles" .Values.waldur.features }}
+    WALDUR_CORE['INVITATION_DISABLE_MULTIPLE_ROLES'] = True
+    {{ end }}
+
+    {{ if has "protect_freeipa_user_details" .Values.waldur.features }}
+    WALDUR_CORE['PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS'] = ['FREEIPA']
+    {{ end }}
+
+    {{ if has "enable_accounting_start_date" .Values.waldur.features }}
+    WALDUR_CORE['ENABLE_ACCOUNTING_START_DATE'] = True
+    {{ end }}
+
+    {{ if has "marketplace" .Values.waldur.features }}
+    #
+    # waldur-marketplace
+    #
+
+    {{ if .Values.waldur.marketplace.notify_staff }}
+    WALDUR_MARKETPLACE['NOTIFY_STAFF_ABOUT_APPROVALS'] = True
+    {{ end }}
+    WALDUR_MARKETPLACE['ORDER_LINK_TEMPLATE'] = '{{ .Values.waldur.url }}#/projects/{project_uuid}/marketplace-order-list/'
+    WALDUR_MARKETPLACE['ORDER_ITEM_LINK_TEMPLATE'] = '{{ .Values.waldur.url }}#/projects/{project_uuid}/marketplace-order-item-details/{order_item_uuid}/'
+
+    {{ if has "waldur_marketplace_notify_about_resource_change_disabled" .Values.waldur.features }}
+    WALDUR_MARKETPLACE['NOTIFY_ABOUT_RESOURCE_CHANGE'] = False
+    {{ end }}
+
+    {{ end }}
+    #
+    # waldur-mastermind
+    #
+    {{ if has "influx_analytics" .Values.waldur.features }}
+    WALDUR_ANALYTICS.update({
+        'ENABLED': True,
+        'INFLUXDB': {
+            'database': '{{ .Values.waldur.analytics.databaseName }}',
+        },
+    })
+    {{ end }}
+
+    {{ if has "ansible" .Values.waldur.features }}
+    WALDUR_ANSIBLE_COMMON.update({
+        'API_URL': '{{ .Values.waldur.apiUrl }}api/',
+        'PUBLIC_KEY_UUID': '{{ .Values.waldur.ansible.sshPublicKeyUUID }}',
+    })
+    {{ end }}
+
+    {{ if has "python_management" .Values.waldur.features }}
+    WALDUR_PYTHON_MANAGEMENT.update({
+        'SYNC_PIP_PACKAGES_TASK_ENABLED': True,
+    })
+    {{ end }}
+
+    WALDUR_INVOICES['INVOICE_LINK_TEMPLATE'] = '{{ .Values.waldur.url }}#/billing/{uuid}/'
+
+    {{ if has "billing" .Values.waldur.features }}
+    WALDUR_INVOICES['ISSUER_DETAILS'].update({
+        'company': '{{ .Values.waldur.invoice.company }}',
+        'address': '{{ .Values.waldur.invoice.address }}',
+        'country': '{{ .Values.waldur.invoice.country }}',
+        'email': '{{ .Values.waldur.invoice.email }}',
+        'postal': '{{ .Values.waldur.invoice.postalCode }}',
+        'phone': {
+            'country_code': '{{ .Values.waldur.invoice.phoneCountryCode }}',
+            'national_number': '{{ .Values.waldur.invoice.phoneNationalNumber }}',
+        },
+        'bank': '{{ .Values.waldur.invoice.bank }}',
+        'account': '{{ .Values.waldur.invoice.bankAccount }}',
+        'vat_code': '{{ .Values.waldur.invoice.vatCode }}',
+    })
+    {{ end }}
+
+    {{ if has "send_customer_invoices" .Values.waldur.features }}
+    WALDUR_INVOICES['SEND_CUSTOMER_INVOICES'] = True
+    {{ end }}
+
+    {{ if .Values.waldur.paymentInterval }}
+    WALDUR_INVOICES['PAYMENT_INTERVAL'] = {{ .Values.waldur.invoice.paymentInterval }}
+    {{ end }}
+
+    {{ if has "slurm" .Values.waldur.features }}
+    # See also http://docs.waldur.com/SLURM+plugin+configuration
+    WALDUR_SLURM.update({
+        'ENABLED': True,
+        'CUSTOMER_PREFIX': '{{ .Values.waldur.slurm.customerPrefix }}',
+        'PROJECT_PREFIX': '{{ .Values.waldur.slurm.projectPrefix }}',
+        'ALLOCATION_PREFIX': '{{ .Values.waldur.slurm.allocationPrefix }}',
+    })
+    {{ end }}
+
+    {{ if has "support_basic" .Values.waldur.features }}
+    WALDUR_SUPPORT.update({
+    {{ if .Values.waldur.support.customBackend }}
+        'ACTIVE_BACKEND': '{{ .Values.waldur.support.customBackend }}',
+    {{ else }}
+        'ACTIVE_BACKEND': 'waldur_mastermind.support.backend.basic:BasicBackend',
+        'ENABLED': True,
+    {{ end }}
+    })
+    {{ end }}
+
+    {{ if has "support" .Values.waldur.features }}
+    WALDUR_SUPPORT.update({
+        'ACTIVE_BACKEND': 'waldur_mastermind.support.backend.atlassian:ServiceDeskBackend',
+        'ENABLED': True,
+    })
+    {{ if has "support_legacy" .Values.waldur.features }}
+    WALDUR_SUPPORT['USE_OLD_API'] = True
+    {{ end }}
+    WALDUR_SUPPORT['CREDENTIALS'].update({
+    {{ if .Values.waldur.support.servicedeskToken }}
+        'email': '{{ .Values.waldur.support.servicedeskEmail }}',
+        'token': '{{ .Values.waldur.support.servicedeskToken }}',
+    {{ else }}
+        'username': '{{ .Values.waldur.support.servicedeskUsername}}',
+        'password': '{{ .Values.waldur.support.servicedeskPassword }}',
+    {{ end }}
+        'server': '{{ .Values.waldur.support.servicedeskUrl }}',
+    })
+    WALDUR_SUPPORT['ISSUE'].update({
+        'caller_field': 'Request participants',
+    {{ if .Values.waldur.support.servicedesk.organizationField }}
+        'organisation_field': '{{ .Values.waldur.support.servicedesk.organizationField }}',
+    {{ end }}
+    })
+    WALDUR_SUPPORT['PROJECT'].update({
+        'key': '{{ .Values.waldur.support.servicedesk.projectKey }}',
+    })
+
+    ISSUE_LINK_TEMPLATE = '{{ .Values.waldur.support.homeportIssueUrl }}'
+
+    {{ else }}
+    WALDUR_SUPPORT.update({
+        'ENABLED': False,
+        'OFFERINGS': {},  # disable custom offerings
+    })
+    {{ end }}
+
+    #
+    # waldur-openstack
+    #
+
+    {{ if has "show_openstack_credentials" .Values.waldur.features }}
+    WALDUR_OPENSTACK.update({
+        'TENANT_CREDENTIALS_VISIBLE': True,  # enable display of OpenStack credentials to users
+    })
+    {{ else }}
+    WALDUR_OPENSTACK.update({
+        'TENANT_CREDENTIALS_VISIBLE': False,  # disable display of OpenStack credentials to users
+    })
+    {{ end }}
+
+    {{ if has "show_openstack_console" .Values.waldur.features }}
+    WALDUR_OPENSTACK_TENANT.update({
+        'ALLOW_CUSTOMER_USERS_OPENSTACK_CONSOLE_ACCESS': True,
+    })
+    {{ end }}
+
+    {{ if has "disable_openstack_private_offering_creation" .Values.waldur.features }}
+    WALDUR_MARKETPLACE_OPENSTACK.update({
+        'AUTOMATICALLY_CREATE_PRIVATE_OFFERING': False,
+    })
+    {{ end }}
+
+    {{ if .Values.waldur.marketplace.openstack.instance_category_uuid }}
+    WALDUR_MARKETPLACE_OPENSTACK.update({
+        'INSTANCE_CATEGORY_UUID': '{{ .Values.waldur.marketplace.openstack.instanceCategoryUUID }}',
+    })
+    {{ end }}
+
+    {{ if .Values.waldur.marketplace.openstack.volumeCategoryUUID }}
+    WALDUR_MARKETPLACE_OPENSTACK.update({
+        'VOLUME_CATEGORY_UUID': '{{ .Values.waldur.marketplace.openstack.volumeCategoryUUID }}',
+    })
+    {{ end }}
+
+    {{ if .Values.waldur.marketplace.openstack.tenantCategoryUUID }}
+    WALDUR_MARKETPLACE_OPENSTACK.update({
+        'TENANT_CATEGORY_UUID': '{{ .Values.waldur.marketplace.openstack.tenantCategoryUUID }}',
+    })
+    {{ end }}
+
+    {{ if has "paypal" .Values.waldur.features }}
+    #
+    # waldur-paypal
+    #
+
+    # See also http://docs.waldur.com/PayPal+plugin+configuration
+    WALDUR_PAYPAL.update({
+        'ENABLED': True,
+        'BACKEND': {
+            'mode': 'live',
+            'client_id': '{{ .Values.waldur.paypal.clientId }}',
+            'client_secret': '{{ .Values.waldur.paypal.secret }}',
+            'currency_name': 'EUR',
+        }
+    })
+    {{ end }}

@@ -38,6 +38,14 @@ spec:
                 key: GLOBAL_SECRET_KEY
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: api-override
+              mountPath: /etc/waldur/override.conf.py
+              subPath: override.conf.py
+      volumes:
+      - name: api-override
+        configMap:
+          name: api-override-config
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

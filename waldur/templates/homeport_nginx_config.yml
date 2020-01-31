@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: homeport-nginx-config
-data:
-  nginx.conf: |-
-{{ .Files.Get "waldur-homeport/nginx.conf" | indent 4}}

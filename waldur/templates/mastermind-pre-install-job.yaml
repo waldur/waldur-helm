@@ -1,51 +1,45 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
-  name: waldur-mastermind-uwsgi
+  name: waldur-mastermind-job
   labels:
 {{ include "waldur.labels" . | indent 4 }}
 spec:
-  replicas: {{ .Values.replicaCount }}
-  selector:
-    matchLabels:
-      app: waldur-mastermind-uwsgi
   template:
     metadata:
-      labels:
-        app: waldur-mastermind-uwsgi
+      annotations:
+        "helm.sh/hook": post-install, post-upgrade
+        "helm.sh/hook-weight": "0"
+        "helm.sh/hook-delete-policy": hook-succeeded, hook-failed
     spec:
       containers:
-        - name: waldur-mastermind-uwsgi
+        - name: waldur-mastermind-job
           image: opennode/waldur-mastermind:{{ $.Chart.AppVersion }}
           args:
-            - "mastermind"
-          ports:
-            - name: uwsgi
-              containerPort: 8000
-              protocol: TCP
+            - initdb
           env:
           - name: POSTGRES_HOST
             value: {{ template "waldur.postgresql.host" . }}
           - name: POSTGRES_PORT
             value: {{ template "waldur.postgresql.port" . }}
-          - name: REDIS_HOST
-            value: {{ template "waldur.redis.host" . }}
-          - name: REDIS_PORT
-            value: {{ template "waldur.redis.port" . }}
           - name: POSTGRESQL_USER
-            value: "waldur"
+            value: {{ default "waldur" .Values.postgresql.postgresqlUsername | quote }}
           - name: POSTGRESQL_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: waldur-secret
                 key: POSTGRESQL_PASSWORD
+          - name: POSTGRESQL_NAME
+            value: {{ default "waldur" .Values.postgresql.postgresqlDatabase | quote }}
+          - name: REDIS_HOST
+            value: {{ template "waldur.redis.host" . }}
+          - name: REDIS_PORT
+            value: {{ template "waldur.redis.port" . }}
           - name: GLOBAL_SECRET_KEY
             valueFrom:
               secretKeyRef:
                 name: waldur-secret
                 key: GLOBAL_SECRET_KEY
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - name: api-core
               mountPath: /etc/waldur/core.ini
@@ -59,6 +53,8 @@ spec:
             - name: api-uwsgi
               mountPath: /etc/waldur/uwsgi.ini
               subPath: uwsgi.ini
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
       volumes:
       - name: api-core
         configMap:
@@ -84,3 +80,4 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
     {{- end }}
+      restartPolicy: "Never"

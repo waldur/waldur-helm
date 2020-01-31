@@ -27,12 +27,14 @@ spec:
           - name: POSTGRES_PORT
             value: {{ template "waldur.postgresql.port" . }}
           - name: POSTGRESQL_USER
-            value: "waldur"
+            value: {{ default "waldur" .Values.postgresql.postgresqlUsername | quote }}
           - name: POSTGRESQL_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: waldur-secret
                 key: POSTGRESQL_PASSWORD
+          - name: POSTGRESQL_NAME
+            value: {{ default "waldur" .Values.postgresql.postgresqlDatabase | quote }}
           - name: REDIS_HOST
             value: {{ template "waldur.redis.host" . }}
           - name: REDIS_PORT

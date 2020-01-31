@@ -1,34 +1,42 @@
-apiVersion: batch/v1
-kind: Job
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: waldur-mastermind-job
+  name: waldur-mastermind-uwsgi
   labels:
 {{ include "waldur.labels" . | indent 4 }}
 spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: waldur-mastermind-uwsgi
   template:
     metadata:
-      annotations:
-        "helm.sh/hook": post-install, post-upgrade
-        "helm.sh/hook-weight": "0"
-        "helm.sh/hook-delete-policy": hook-succeeded, hook-failed
+      labels:
+        app: waldur-mastermind-uwsgi
     spec:
       containers:
-        - name: waldur-mastermind-job
+        - name: waldur-mastermind-uwsgi
           image: opennode/waldur-mastermind:{{ $.Chart.AppVersion }}
           args:
-            - initdb
+            - "mastermind"
+          ports:
+            - name: uwsgi
+              containerPort: 8000
+              protocol: TCP
           env:
           - name: POSTGRES_HOST
             value: {{ template "waldur.postgresql.host" . }}
           - name: POSTGRES_PORT
             value: {{ template "waldur.postgresql.port" . }}
           - name: POSTGRESQL_USER
-            value: "waldur"
+            value: {{ default "waldur" .Values.postgresql.postgresqlUsername | quote }}
           - name: POSTGRESQL_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: waldur-secret
                 key: POSTGRESQL_PASSWORD
+          - name: POSTGRESQL_NAME
+            value: {{ default "waldur" .Values.postgresql.postgresqlDatabase | quote }}
           - name: REDIS_HOST
             value: {{ template "waldur.redis.host" . }}
           - name: REDIS_PORT
@@ -38,6 +46,8 @@ spec:
               secretKeyRef:
                 name: waldur-secret
                 key: GLOBAL_SECRET_KEY
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
             - name: api-core
               mountPath: /etc/waldur/core.ini
@@ -51,8 +61,6 @@ spec:
             - name: api-uwsgi
               mountPath: /etc/waldur/uwsgi.ini
               subPath: uwsgi.ini
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
       volumes:
       - name: api-core
         configMap:
@@ -78,4 +86,3 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
     {{- end }}
-      restartPolicy: "Never"

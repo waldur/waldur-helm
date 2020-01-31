@@ -32,8 +32,12 @@ spec:
           - name: POSTGRESQL_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: waldur-secret
-                key: POSTGRESQL_PASSWORD
+              {{- if .Values.postgresql.existingSecret }}
+                name: {{ .Values.postgresql.existingSecret }}
+              {{- else }}
+                name: {{ template "waldur.postgresql.secret" . }}
+              {{- end }}
+                key: {{ template "waldur.postgresql.secretKey" . }}
           - name: POSTGRESQL_NAME
             value: {{ default "waldur" .Values.postgresql.postgresqlDatabase | quote }}
           - name: REDIS_HOST

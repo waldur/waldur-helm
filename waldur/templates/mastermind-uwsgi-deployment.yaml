@@ -24,6 +24,11 @@ spec:
               containerPort: 8000
               protocol: TCP
           env:
+          - name: GLOBAL_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: waldur-secret
+                key: GLOBAL_SECRET_KEY
           - name: POSTGRESQL_HOST
             value: {{ template "waldur.postgresql.host" . }}
           - name: POSTGRESQL_PORT
@@ -41,11 +46,15 @@ spec:
             value: {{ template "waldur.redis.host" . }}
           - name: REDIS_PORT
             value: {{ template "waldur.redis.port" . }}
-          - name: GLOBAL_SECRET_KEY
+          - name: REDIS_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: waldur-secret
-                key: GLOBAL_SECRET_KEY
+              {{- if .Values.redis.existingSecret }}
+                name: {{ .Values.redis.existingSecret }}
+              {{- else }}
+                name: {{ template "waldur.redis.secret" . }}
+              {{- end }}
+                key: {{ template "waldur.redis.secretKey" . }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:

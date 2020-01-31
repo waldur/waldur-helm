@@ -10,6 +10,33 @@ data:
     # Django
     #
 
+    import os
+
+    SECRET_KEY = os.environ.get('GLOBAL_SECRET_KEY')
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': os.environ.get('POSTGRESQL_NAME'),
+            'HOST': os.environ.get('POSTGRESQL_HOST'),
+            'PORT': os.environ.get('POSTGRESQL_PORT'),
+            'USER': os.environ.get('POSTGRESQL_USER'),
+            'PASSWORD': os.environ.get('POSTGRESQL_PASSWORD'),
+        },
+    }
+
+    if os.environ.get('REDIS_PASSWORD'):
+        redis_url = 'redis://:%s@%s:%s' % (os.environ.get('REDIS_PASSWORD'),
+                                           os.environ.get('REDIS_HOST'),
+                                           os.environ.get('REDIS_PORT'))
+    else:
+        redis_url = 'redis://%s:%s' % (os.environ.get('REDIS_HOST'), os.environ.get('REDIS_PORT'))
+
+    CACHES['default']['LOCATION'] = redis_url
+    CELERY_BROKER_URL = redis_url
+    CELERY_RESULT_BACKEND = redis_url
+    DEFENDER_REDIS_URL = "%s/0" % redis_url
+
     EMAIL_HOST = '{{ .Values.waldur.emailHost }}'
 
     {{ if .Values.waldur.notificationSubject }}

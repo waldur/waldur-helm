@@ -22,9 +22,9 @@ spec:
           args:
             - "worker"
           env:
-          - name: POSTGRES_HOST
+          - name: POSTGRESQL_HOST
             value: {{ template "waldur.postgresql.host" . }}
-          - name: POSTGRES_PORT
+          - name: POSTGRESQL_PORT
             value: {{ template "waldur.postgresql.port" . }}
           - name: POSTGRESQL_USER
             value: {{ default "waldur" .Values.postgresql.postgresqlUsername | quote }}

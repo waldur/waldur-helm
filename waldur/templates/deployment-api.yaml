@@ -27,7 +27,17 @@ spec:
             - name: api-nginx
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
+          {{- if .Values.persistence.enabled }}
+            - name: media
+              mountPath: /var/lib/waldur/
+              subPath: {{ .Values.persistence.subPath | default "" }}
+          {{- end }}
       volumes:
+      {{- if .Values.persistence.enabled }}
+      - name: media
+        persistentVolumeClaim:
+          claimName: {{ .Values.persistence.existingClaim | default (include "waldur.fullname" .) }}
+      {{- end }}
       - name: api-nginx
         configMap:
           name: api-nginx-config

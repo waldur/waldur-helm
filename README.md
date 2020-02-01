@@ -32,7 +32,3 @@ This chart bootstraps a [Waldur](https://waldur.com/) deployment on a Kubernetes
 Open waldur-mastermind-worker shell and execute the following command:
 
 ```waldur createstaffuser -u user -p password```
-
-## Known problems
-
-1. waldur-mastermind-job which triggers database populating command "waldur migrate" runs too soon. The database is not ready and then first startup fails and only second can finish job.

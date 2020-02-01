@@ -1,0 +1,187 @@
+# Default values for waldur.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+apiUrl: api.example.com
+homeportUrl: web.example.com
+
+affinity: {}
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+service:
+  type: ClusterIP
+  port: 80
+
+storageClassName: local-storage
+
+waldur:
+  imageTag: latest
+  apiUrl: ""
+  homeportUrl: ""
+  emailHost: ""
+  notificationSubject: ""
+  timeZone: "UTC"
+  features: []
+  currencyName: "EUR"
+  site:
+    name: "Waldur"
+    logo: ""
+    address: ""
+    email: ""
+    phone: ""
+  authMethods: 
+    - LOCAL_SIGNIN
+  facebook:
+    secret: ""
+    clientId: ""
+  google:
+    secret: ""
+    clientId: ""
+  smartid:
+    secret: ""
+    clientId: ""
+  tara:
+    secret: ""
+    clientId: ""
+  ldap:
+    host: ""
+    baseDN: ""
+    userDN: ""
+    user: ""
+    password: ""
+    admins: ""
+    support: ""
+  freeipa:
+    hostname: ""
+    password: ""
+    username: ""
+    verifySSL: ""
+    groupnamePrefix: ""
+    usernamePrefix: ""
+  valimo:
+    apId: ""
+    apPwd: ""
+    dnsname: ""
+    url: ""
+    signatureProfile: ""
+    label: ""
+    mobilePrefix: ""
+  paypal:
+    secret: ""
+    clientId: ""
+  analytics:
+    databaseName: ""
+  ansible:
+    sshPublicKeyUUID: ""
+  invoice:
+    company: ""
+    address: ""
+    country: ""
+    email: ""
+    postalCode: ""
+    phoneCountryCode: ""
+    phoneNationalNumber: ""
+    bank: ""
+    bankAccount: ""
+    vatCode: ""
+    paymentInterval: ""
+  slurm:
+    customerPrefix: ""
+    projectPrefix: ""
+    allocationPrefix: ""
+  support:
+    customBackend: ""
+    servicedeskEmail: ""
+    servicedeskToken: ""
+    servicedeskUsername: ""
+    servicedeskPassword: ""
+    servicedeskUrl: ""
+    organizationField: ""
+    projectKey: ""
+    homeportIssueUrl: ""
+  marketplace:
+    openstack:
+      instanceCategoryUUID: ""
+      volumeCategoryUUID: ""
+      tenantCategoryUUID: ""
+  uwsgi:
+    plugins: python36
+    processes: 16
+    socket: ":8000"
+  sentryDSN: ""
+
+postgresql:
+  enabled: true
+  nameOverride: waldur-postgresql
+  postgresqlDatabase: waldur
+  postgresqlUsername: waldur
+  # The following variables are only used when internal PG is disabled
+  # postgresqlHost: postgres
+  postgresqlPassword: waldur
+  # postgresqlPort: 5432
+  # When defined the `postgresqlPassword` field is ignored
+  # existingSecret: secret-name
+  # existingSecretKey: postgresql-password
+
+redis:
+  enabled: true
+  cluster:
+    enabled: false
+  nameOverride: waldur-redis
+  # The following variables are only used when internal PG is disabled
+  # host: redis
+  # Just omit the password field if your redis cluster doesn't use password
+  # password: redis
+  # port: 6379
+  # When defined the `password` field is ignored
+  # existingSecret: secret-name
+  # existingSecretKey: redis-password
+  master:
+    persistence:
+      enabled: true
+      # If change pvc size redis.master.persistence.size: 20Gi
+
+##
+## Storage configuration for waldur
+persistence:
+  ##
+  ## enable persistance storage
+  enabled: true
+  ##
+  ## Existing claim to use
+  # existingClaim: nil
+  ## Existing claim's subPath to use, e.g. "waldur" (optional)
+  # subPath: ""
+  ##
+  ## Persistent Volume Storage Class
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+  ##   GKE, AWS & OpenStack)
+  # storageClass: default
+  accessMode: ReadWriteOnce
+  ##
+  ## Persistant storage size request
+  size: 1Gi

@@ -1,19 +1,34 @@
-## Waldur helm
+# Waldur
 
-### Content
+Waldur is a platform for creating hybrid cloud solutions. It allows building enterprise-grade systems and providing self-service environment for the end-users.
 
-TODO
+## Introduction
 
-### Howto
+This chart bootstraps a [Waldur](https://waldur.com/) deployment on a Kubernetes cluster using the [Helm](https://helm.sh) package manager.
 
-Right now i use http repo not git for testing http://185.174.162.103/charts/waldur/
+## Installing prerequisites
 
-To create package from rancher you need to execute next steps
+1. Install Kubernetes server, for example, using [minikube](https://minikube.sigs.k8s.io/docs/start/linux/)
+2. Install Kubernetes client, ie [kubetcl](https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-kubectl-on-linux)
+3. Install [Helm](https://helm.sh/docs/intro/install/#from-script)
 
-helm package waldur
-mv nginx-0.1.0.tgz waldur
-helm repo index waldur --url http://185.174.162.103/charts/waldur/
+## Installing the Chart
 
-To generate new version
+1. Add the stable repository
+```
+  helm repo add stable https://kubernetes-charts.storage.googleapis.com
+```
+2. Install Chart dependencies:
+```
+  helm dep update
+```
+3. Install Helm package:
+```
+  helm install waldur waldur
+```
 
-helm package nginx --version 1.1.1
+## Adding admin user
+
+Open waldur-mastermind-worker shell and execute the following command:
+
+```waldur createstaffuser -u user -p password```

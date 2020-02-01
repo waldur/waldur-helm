@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homeport-json-config
+data:
+  config.json: |
+    {
+      "apiEndpoint": "http://{{ .Values.apiUrl }}:8080/"
+    }

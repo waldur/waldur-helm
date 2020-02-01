@@ -1,0 +1,108 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homeport-nginx-config
+data:
+  nginx.conf: |-
+    user nginx;
+    worker_processes auto;
+    error_log /var/log/nginx/error.log;
+    pid /run/nginx.pid;
+
+    # Load dynamic modules. See /usr/share/nginx/README.dynamic.
+    include /usr/share/nginx/modules/*.conf;
+
+    events {
+        worker_connections 1024;
+    }
+
+    http {
+        log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                          '$status $body_bytes_sent "$http_referer" '
+                          '"$http_user_agent" "$http_x_forwarded_for"';
+
+        access_log /var/log/nginx/access.log main;
+        sendfile on;
+        tcp_nopush on;
+        tcp_nodelay on;
+        keepalive_timeout 65;
+        types_hash_max_size 2048;
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+
+    server {
+        listen 80;
+        server_tokens off;
+
+        gzip on;
+        gzip_types
+            application/javascript
+            application/rss+xml
+            application/json
+            application/x-javascript
+            application/xml
+            image/svg+xml
+            text/css
+            text/javascript
+            text/js
+            text/xml
+            text/plain
+        ;
+
+        if (-f /var/nginx-maintenance) {
+            return 503;
+            break;
+        }
+
+        error_page 503 @maintenance;
+
+        location @maintenance {
+            rewrite ^(.*)$ /maintenance.html;
+        }
+
+        location /scripts/configs/config.json {
+            alias /opnd/config.json;
+            expires 4h;
+        }
+
+        location / {
+            root /usr/share/nginx/html;
+            index index.html;
+
+            location = /index.html {
+                expires -1;
+            }
+
+            location ~ /(css|fonts|images|scripts)$ {
+                expires 7d;
+            }
+
+            location = /login_completed/ {
+                return 200 'Authentication is pending.';
+                add_header Content-Type text/plain;
+            }
+
+            location = /login_failed/ {
+                return 401 'Authentication has failed.';
+                add_header Content-Type text/plain;
+            }
+        }
+
+        location ~ ^/(api/|api-auth/|media/|admin/|static/) {
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+            add_header 'Access-Control-Allow-Headers' 'Accept, Accept-Encoding, Authorization, Content-Type, Origin, User-Agent, X-CSRFToken, X-Requested-With' always;
+            add_header 'Access-Control-Allow-Methods' 'DELETE, GET, OPTIONS, PATCH, POST, PUT' always;
+            add_header 'Access-Control-Allow-Origin' "$http_origin" always;
+            add_header 'Access-Control-Expose-Headers' 'Link, X-Result-Count' always;
+            include uwsgi_params;
+            uwsgi_param Host $host;
+            uwsgi_param X-Forwarded-For $proxy_add_x_forwarded_for;
+            uwsgi_param X-Forwarded-Proto $http_x_forwarded_proto;
+            uwsgi_param X-Real-IP $remote_addr;
+            uwsgi_buffer_size 16k;
+            uwsgi_buffers 8 32k;
+            uwsgi_busy_buffers_size 32k;
+            uwsgi_pass waldur-mastermind-uwsgi:8000;
+        }
+      }
+    }

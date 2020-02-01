@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: waldur-mastermind-job
-          image: opennode/waldur-mastermind:{{ $.Chart.AppVersion }}
+          image: opennode/waldur-mastermind:{{ .Values.waldur.imageTag }}
           args:
             - initdb
           env:

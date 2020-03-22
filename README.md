@@ -31,4 +31,4 @@ This chart bootstraps a [Waldur](https://waldur.com/) deployment on a Kubernetes
 
 Open waldur-mastermind-worker shell and execute the following command:
 
-```waldur createstaffuser -u user -p password```
+```waldur createstaffuser -u user -p password -e admin@example.com```

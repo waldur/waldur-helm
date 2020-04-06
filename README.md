@@ -10,7 +10,7 @@ This chart bootstraps a [Waldur](https://waldur.com/) deployment on a Kubernetes
 
 1. Install Kubernetes server, for example, using [minikube](/docs/minikube.md)
 2. Install Kubernetes client, ie [kubetcl](/docs/kubectl.md)
-3. Install [Helm](/docs/heml.md)
+3. Install [Helm](/docs/helm.md)
 
 ## Installing the Chart
 
@@ -35,7 +35,7 @@ Open waldur-mastermind-worker shell and execute the following command:
 
 1. Get waldur-mastermind-worker pod name
 ```
-  # Examle:
+  # Example:
   kubectl get po -A | grep waldur-mastermind-worker # -->
   # default       waldur-mastermind-worker-6d98cd98bd-wps8n   1/1     Running     0          9m9s
 ```

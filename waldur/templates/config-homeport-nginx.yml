@@ -104,5 +104,47 @@ data:
             uwsgi_busy_buffers_size 32k;
             uwsgi_pass waldur-mastermind-uwsgi:8000;
         }
+
+        {{ if or .Values.waldur.whitelabeling.faviconPath .Values.waldur.whitelabeling.faviconBlobPath }}
+        location /images/favicon.ico {
+          alias /var/www/waldur/favicon.ico;
+        }
+        {{ end }}
+
+        {{ if .Values.waldur.whitelabeling.manifestJsonPath }}
+        location /manifest.json {
+          alias /var/www/waldur/manifest.json;
+        }
+        {{ end }}
+
+        {{ if or .Values.waldur.whitelabeling.logo96Path .Values.waldur.whitelabeling.logo96BlobPath }}
+        location /images/waldur/logo-96x96.png {
+          alias /var/www/waldur/logo-96x96.png;
+        }
+        {{ end }}
+
+        {{ if or .Values.waldur.whitelabeling.logo144Path .Values.waldur.whitelabeling.logo144BlobPath }}
+        location /images/waldur/logo-144x144.png {
+          alias /var/www/waldur/logo-144x144.png;
+        }
+        {{ end }}
+
+        {{ if or .Values.waldur.whitelabeling.logo192Path .Values.waldur.whitelabeling.logo192BlobPath }}
+        location /images/waldur/logo-192x192.png {
+          alias /var/www/waldur/logo-192x192.png;
+        }
+        {{ end }}
+
+        {{ if .Values.waldur.whitelabeling.tosHtmlPath }}
+        location /views/tos/index.html {
+          alias /var/www/waldur/tos.html;
+        }
+        {{ end }}
+
+        {{ if .Values.waldur.whitelabeling.privacyHtmlPath }}
+        location /views/policy/privacy.html  {
+          alias /var/www/waldur/privacy.html;
+        }
+        {{ end }}
       }
     }

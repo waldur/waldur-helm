@@ -48,3 +48,6 @@ Open waldur-mastermind-worker shell and execute the following command:
 ```
   waldur createstaffuser -u user -p password -e admin@example.com
 ```
+
+## White-labeling
+Instructions for while-labeling: [doc](/docs/whitelabeling.md)

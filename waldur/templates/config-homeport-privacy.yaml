@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homeport-privacy-config
+data:
+  {{ $fpath := .Values.waldur.whitelabeling.privacyHtmlPath }}
+  privacy.html: |
+{{ .Files.Get $fpath | indent 4 }}
+

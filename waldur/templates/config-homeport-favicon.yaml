@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: homeport-favicon-config
+data:
+  {{ $fpath := "" }}
+  {{ if or .Values.waldur.whitelabeling.faviconPath }}
+    {{ $fpath = .Values.waldur.whitelabeling.faviconPath }}
+  {{ else if .Values.waldur.whitelabeling.faviconBlobPath }}
+    {{ $fpath = .Values.waldur.whitelabeling.faviconBlobPath }}
+  {{ end }}
+  favicon.ico: |
+{{ .Files.Get $fpath | indent 4 }}

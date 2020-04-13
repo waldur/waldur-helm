@@ -5,5 +5,30 @@ metadata:
 data:
   config.json: |
     {
+      {{ if .Values.waldur.whitelabeling.shortPageTitle }}
+      "shortPageTitle": {{ .Values.waldur.whitelabeling.shortPageTitle | quote }},
+      {{ end }}
+
+      {{ if .Values.waldur.whitelabeling.loginLogoUrl }}
+      "loginLogo": {{ .Values.waldur.whitelabeling.loginLogoUrl | quote }},
+      {{ else if .Values.waldur.whitelabeling.loginLogoBlobPath }}
+        {{ $file :=  .Values.waldur.whitelabeling.loginLogoBlobPath }}
+        "loginLogo": {{ .Files.Get $file | quote }},
+      {{ end }}
+
+      {{ if .Values.waldur.whitelabeling.sidebarLogoUrl }}
+      "sidebarLogo": {{ .Values.waldur.whitelabeling.sidebarLogoUrl | quote }},
+      {{ else if .Values.waldur.whitelabeling.sidebarLogoBlobPath }}
+        {{ $file :=  .Values.waldur.whitelabeling.sidebarLogoBlobPath }}
+        "sidebarLogo": {{ .Files.Get $file | quote }},
+      {{ end }}
+
+      {{ if .Values.waldur.whitelabeling.poweredByLogoUrl }}
+      "poweredByLogo": {{ .Values.waldur.whitelabeling.poweredByLogoUrl | quote}},
+      {{ else if .Values.waldur.whitelabeling.poweredByLogoBlobPath }}
+        {{ $file :=  .Values.waldur.whitelabeling.poweredByLogoBlobPath }}
+        "poweredByLogo": {{ .Files.Get $file | quote }},
+      {{ end }}
+
       "apiEndpoint": "http://{{ .Values.apiUrl }}:8080/"
     }

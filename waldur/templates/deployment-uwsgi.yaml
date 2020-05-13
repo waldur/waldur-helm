@@ -5,7 +5,11 @@ metadata:
   labels:
 {{ include "waldur.labels" . | indent 4 }}
 spec:
+  {{ if .Values.extraReplicas.uwsgi }}
+  replicas: {{ add .Values.replicaCount .Values.extraReplicas.uwsgi }}
+  {{ else }}
   replicas: {{ .Values.replicaCount }}
+  {{ end }}
   selector:
     matchLabels:
       app: waldur-mastermind-uwsgi

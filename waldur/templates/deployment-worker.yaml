@@ -5,7 +5,11 @@ metadata:
   labels:
 {{ include "waldur.labels" . | indent 4 }}
 spec:
+  {{ if .Values.extraReplicas.celery }}
+  replicas: {{ add .Values.replicaCount .Values.extraReplicas.celery }}
+  {{ else }}
   replicas: {{ .Values.replicaCount }}
+  {{ end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "waldur.name" . }}

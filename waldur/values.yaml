@@ -6,7 +6,7 @@ replicaCount: 1
 
 extraReplicas:
   celery:
-  uwsgi:
+  api:
 
 imagePullSecrets: []
 nameOverride: ""
@@ -132,7 +132,6 @@ waldur:
   uwsgi:
     plugins: python36
     processes: 16
-    socket: ":8000"
   sentryDSN: ""
   whitelabeling:
     shortPageTitle: ""

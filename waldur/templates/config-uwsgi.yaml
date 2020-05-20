@@ -11,7 +11,6 @@ data:
 
     [uwsgi]
     buffer-size = 8192
-    chmod-socket = 666
     enable-metrics = true
     gid = waldur
     logto = /var/log/waldur/uwsgi.log
@@ -26,11 +25,7 @@ data:
     {{ else }}
     processes = 16
     {{ end }}
-    {{ if .Values.waldur.uwsgi.socket }}
-    socket = {{ .Values.waldur.uwsgi.socket }}
-    {{ else }}
     socket = :8000  # avoid localhost to fix binding issue
-    {{ end }}
     static-map = /static=/usr/share/waldur/static
     static-map = /media=/var/lib/waldur/media
     {{ if .Values.waldur.uwsgi.statsPush }}
@@ -38,3 +33,17 @@ data:
     {{ end }}
     uid = waldur
     enable-threads = true  # required by sentry-sdk
+
+    http-socket = :8080
+    http-enable-proxy-protocol = 1
+    http-auto-chunked = true
+    http-keepalive = 75
+    http-timeout = 75
+    offload-threads = $(UWSGI_OFFLOAD_THREADS)
+
+    add-header = Access-Control-Allow-Credentials: true
+    add-header = Access-Control-Allow-Headers: Accept, Accept-Encoding, Authorization, Content-Type, Origin, User-Agent, X-CSRFToken, X-Requested-With
+    add-header = Access-Control-Allow-Methods: DELETE, GET, OPTIONS, PATCH, POST, PUT
+    add-header = Access-Control-Allow-Origin: *
+    add-header = Access-Control-Expose-Headers Link: X-Result-Count
+    add-header = Connection: Keep-Alive

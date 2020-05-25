@@ -51,3 +51,7 @@ Open waldur-mastermind-worker shell and execute the following command:
 
 ## White-labeling
 Instructions for while-labeling: [doc](/docs/whitelabeling.md)
+
+## Custom mastermind templates
+
+Instructions for template configuration: [doc](/docs/mastermind-templates.md)

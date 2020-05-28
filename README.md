@@ -55,3 +55,18 @@ Instructions for while-labeling: [doc](/docs/whitelabeling.md)
 ## Custom mastermind templates
 
 Instructions for template configuration: [doc](/docs/mastermind-templates.md)
+
+## Installation from repository
+For this, you need to run following commands:
+1. Add waldur repository
+```
+helm repo add waldur-helm https://opennode.github.io/waldur-helm/
+```
+2. Update repo dependencies
+```
+helm repo update
+```
+3. Install waldur release
+```
+helm install waldur-helm/waldur waldur
+```

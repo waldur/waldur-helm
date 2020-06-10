@@ -12,6 +12,9 @@ This chart bootstraps a [Waldur](https://waldur.com/) deployment on a Kubernetes
 2. Install Kubernetes client, ie [kubetcl](/docs/kubectl.md)
 3. Install [Helm](/docs/helm.md)
 
+## TLS configuration
+Instructions for TLS configuration: [doc](/docs/tls-config.md)
+
 ## Installing the Chart
 
 1. Add the stable repository
@@ -20,8 +23,7 @@ This chart bootstraps a [Waldur](https://waldur.com/) deployment on a Kubernetes
 ```
 2. Install Chart dependencies:
 ```
-  # in 'waldur-helm-poc/waldur'
-  helm dep update
+  helm dep update waldur
 ```
 3. Install Helm package:
 ```

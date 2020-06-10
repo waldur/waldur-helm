@@ -5,12 +5,19 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /
+    {{ if .Values.ingress.tls.source | eq "letsEncrypt" }}
+    cert-manager.io/cluster-issuer: letsencrypt-prod-issuer
+    {{ end }}
 spec:
   rules:
-  - host: {{ .Values.homeportUrl }}
+  - host: {{ .Values.homeportHostname }}
     http:
       paths:
       - path: /
         backend:
           serviceName: waldur-homeport
           servicePort: 80
+  tls:
+  - hosts:
+    - {{ .Values.homeportHostname }}
+    secretName: homeport-certificate

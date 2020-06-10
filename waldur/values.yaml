@@ -12,8 +12,8 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-apiUrl: api.example.com
-homeportUrl: web.example.com
+apiHostname: api.example.com
+homeportHostname: web.example.com
 
 affinity: {}
 
@@ -39,9 +39,14 @@ service:
 
 storageClassName: local-storage
 
+ingress:
+  tls:
+    source: "letsEncrypt" # Possible values: `letsEncrypt` and `secret`
+    secretsDir: "tls"  # Enabled only if source == `secret`
+
 waldur:
   imageTag: latest
-  apiUrl: ""
+  apiUrl: "http://api.example.com/"
   homeportUrl: ""
   emailHost: ""
   notificationSubject: ""

@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: homeport-manifest-config
-data:
-  {{ $fpath := .Values.waldur.whitelabeling.manifestJsonPath }}
-  manifest.json: |
-{{ .Files.Get $fpath | indent 4 }}
-

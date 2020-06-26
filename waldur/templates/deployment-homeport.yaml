@@ -28,41 +28,8 @@ spec:
             - name: nginx
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
-            {{ if .Values.waldur.whitelabeling.tosHtmlPath }}
-            - name: tos
-              mountPath: /var/www/waldur/tos.html
-              subPath: tos.html
-            {{ end }}
-            {{ if .Values.waldur.whitelabeling.manifestJsonPath }}
-            - name: manifest
-              mountPath: /var/www/waldur/manifest.json
-              subPath: manifest.json
-            {{ end }}
-            {{ if .Values.waldur.whitelabeling.privacyHtmlPath }}
-            - name: privacy
-              mountPath: /var/www/waldur/privacy.html
-              subPath: privacy.html
-            {{ end }}
-            {{ if or .Values.waldur.whitelabeling.logo96Path .Values.waldur.whitelabeling.logo96BlobPath }}
-            - name: logo96
-              mountPath: /var/www/waldur/logo-96x96.png
-              subPath: logo-96x96.png
-            {{ end }}
-            {{ if or .Values.waldur.whitelabeling.logo144Path .Values.waldur.whitelabeling.logo144BlobPath }}
-            - name: logo144
-              mountPath: /var/www/waldur/logo-144x144.png
-              subPath: logo-144x144.png
-            {{ end }}
-            {{ if or .Values.waldur.whitelabeling.logo192Path .Values.waldur.whitelabeling.logo192BlobPath }}
-            - name: logo192
-              mountPath: /var/www/waldur/logo-192x192.png
-              subPath: logo-192x192.png
-            {{ end }}
-            {{ if or .Values.waldur.whitelabeling.faviconPath .Values.waldur.whitelabeling.faviconBlobPath }}
-            - name: favicon
-              mountPath: /var/www/waldur/favicon.ico
-              subPath: favicon.ico
-            {{ end }}
+            - name: vars
+              mountPath: /var/www/waldur
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
@@ -72,41 +39,9 @@ spec:
       - name: nginx
         configMap:
           name: homeport-nginx-config
-      {{ if .Values.waldur.whitelabeling.tosHtmlPath }}
-      - name: tos
+      - name: vars
         configMap:
-          name: homeport-tos-config
-      {{ end }}
-      {{ if .Values.waldur.whitelabeling.manifestJsonPath }}
-      - name: manifest
-        configMap:
-          name: homeport-manifest-config
-      {{ end }}
-      {{ if .Values.waldur.whitelabeling.privacyHtmlPath }}
-      - name: privacy
-        configMap: 
-          name: homeport-privacy-config
-      {{ end }}
-      {{ if or .Values.waldur.whitelabeling.logo96Path .Values.waldur.whitelabeling.logo96BlobPath }}    
-      - name: logo96
-        configMap: 
-          name: homeport-logo96-config
-      {{ end }}
-      {{ if or .Values.waldur.whitelabeling.logo144Path .Values.waldur.whitelabeling.logo144BlobPath }}
-      - name: logo144
-        configMap:
-          name: homeport-logo144-config
-      {{ end }}
-      {{ if or .Values.waldur.whitelabeling.logo192Path .Values.waldur.whitelabeling.logo192BlobPath }}
-      - name: logo192
-        configMap:
-          name: homeport-logo192-config
-      {{ end }}
-      {{ if or .Values.waldur.whitelabeling.faviconPath .Values.waldur.whitelabeling.faviconBlobPath }}
-      - name: favicon
-        configMap:
-          name: homeport-favicon-config
-      {{ end }}
+          name: homeport-vars-config
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

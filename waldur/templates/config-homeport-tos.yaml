@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: homeport-tos-config
-data:
-  {{ $fpath := .Values.waldur.whitelabeling.tosHtmlPath }}
-  tos.html: |
-{{ .Files.Get $fpath | indent 4 }}
-

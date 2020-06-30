@@ -64,7 +64,11 @@ spec:
               {{- end }}
                 key: {{ template "waldur.redis.secretKey" . }}
           resources:
+            {{ if .Values.hpa.api.enabled | eq "yes" }}
+            {{- toYaml .Values.hpa.api.resources | nindent 12 }}
+            {{ else }}
             {{- toYaml .Values.resources | nindent 12 }}
+            {{ end }}
           volumeMounts:
           {{- if .Values.persistence.enabled }}
             - name: media

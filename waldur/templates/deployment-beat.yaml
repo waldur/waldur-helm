@@ -58,7 +58,11 @@ spec:
               {{- end }}
                 key: {{ template "waldur.redis.secretKey" . }}
           resources:
+            {{ if .Values.hpa.celery.enabled | eq "yes" }}
+            {{- toYaml .Values.hpa.celery.beatResources | nindent 12 }}
+            {{ else }}
             {{- toYaml .Values.resources | nindent 12 }}
+            {{ end }}
           volumeMounts:
             - name: api-core
               mountPath: /etc/waldur/core.ini

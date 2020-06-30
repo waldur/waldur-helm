@@ -29,6 +29,23 @@ resources: {}
   #   cpu: 100m
   #   memory: 128Mi
 
+hpa:
+  api:
+    enabled: "no"
+    resources:
+      requests:
+        cpu: 500m
+    cpuUtilizationBorder: 70
+  celery:
+    enabled: "no"
+    workerResources:
+      requests:
+        cpu: 2000m
+    beatResources:
+      requests:
+        cpu: 300m
+    cpuUtilizationBorder: 80
+
 nodeSelector: {}
 
 tolerations: []

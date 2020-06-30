@@ -57,3 +57,6 @@ Instructions for while-labeling: [doc](/docs/whitelabeling.md)
 ## Custom mastermind templates
 
 Instructions for template configuration: [doc](/docs/mastermind-templates.md)
+
+## HPA (horizontal pod autoscaler)
+Instructions for HPA configuration: [doc](/docs/hpa.md)

@@ -80,7 +80,11 @@ spec:
               {{- end }}
                 key: {{ template "waldur.redis.secretKey" . }}
           resources:
+            {{ if .Values.hpa.celery.enabled | eq "yes" }}
+            {{- toYaml .Values.hpa.celery.workerResources | nindent 12 }}
+            {{ else }}
             {{- toYaml .Values.resources | nindent 12 }}
+            {{ end }}
           volumeMounts:
           {{- if .Values.persistence.enabled }}
             - name: media

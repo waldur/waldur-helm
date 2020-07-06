@@ -80,7 +80,7 @@ spec:
               {{- end }}
                 key: {{ template "waldur.redis.secretKey" . }}
           resources:
-            {{ if .Values.hpa.celery.enabled | eq "yes" }}
+            {{ if .Values.hpa.celery.enabled }}
             {{- toYaml .Values.hpa.celery.workerResources | nindent 12 }}
             {{ else }}
             {{- toYaml .Values.resources | nindent 12 }}
@@ -103,6 +103,27 @@ spec:
             - name: api-uwsgi
               mountPath: /etc/waldur/uwsgi.ini
               subPath: uwsgi.ini
+        {{ if .Values.logManagement.enabled }}
+            - name: waldur-log
+              mountPath: /var/log/waldur
+        - name: fluentd
+          image: fluent/fluentd-kubernetes-daemonset:v1.11.0-debian-elasticsearch7-1.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name:  FLUENT_ELASTICSEARCH_HOST
+              value: {{ .Values.logManagement.elasticHost | quote }}
+            - name:  FLUENT_ELASTICSEARCH_PORT
+              value: {{ .Values.logManagement.elasticPort | quote }}
+            - name: FLUENT_ELASTICSEARCH_SCHEME
+              value: {{ .Values.logManagement.elasticProtocol | quote }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: waldur-log
+              mountPath: /var/log/waldur
+            - name: fluentd-conf
+              mountPath: /fluentd/etc
+        {{ end }}
       volumes:
       {{- if .Values.persistence.enabled }}
       - name: media
@@ -121,6 +142,13 @@ spec:
       - name: api-uwsgi
         configMap:
           name: api-uwsgi-config
+      {{ if .Values.logManagement.enabled }}
+      - name: waldur-log
+        emptyDir: {}
+      - name: fluentd-conf
+        configMap:
+          name: fluentd-config
+      {{ end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

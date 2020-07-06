@@ -1,0 +1,39 @@
+{{ if .Values.logManagement.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-config
+data:
+  fluent.conf: |
+    <source>
+      @type tail
+      path /var/log/waldur/*.log
+      pos_file /var/log/waldur/file.log.pos
+      tag waldur.*
+      <parse>
+        @type none
+      </parse>
+      read_from_head true
+    </source>
+
+    <filter waldur.**>
+      @type record_transformer
+      <record>
+        hostname ${hostname}
+        time ${time}
+      </record>
+    </filter>
+
+    <match fluent.**>
+      @type null
+    </match>
+
+    <match waldur.**>
+      @type elasticsearch
+      @id out_es
+      include_tag_key true
+      host "#{ENV['FLUENT_ELASTICSEARCH_HOST']}"
+      port "#{ENV['FLUENT_ELASTICSEARCH_PORT']}"
+      scheme "#{ENV['FLUENT_ELASTICSEARCH_SCHEME'] || 'http'}"
+    </match>
+{{ end }}

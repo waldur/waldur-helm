@@ -60,3 +60,6 @@ Instructions for template configuration: [doc](/docs/mastermind-templates.md)
 
 ## HPA (horizontal pod autoscaler)
 Instructions for HPA configuration: [doc](/docs/hpa.md)
+
+## EFL (Elasticsearch Fluentd Kibana) for log management configuration
+Instructions for EFL configuration: [doc](/docs/log-management.md)

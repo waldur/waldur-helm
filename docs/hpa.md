@@ -5,15 +5,15 @@ If you use minikube, you need to enable `metrics-server` using next command:
 `minikube addons enable metrics-server` 
 ### Configuration
 In `values.yaml` file you can configure HPA for:
-1) API server:
+1) API server (`hpa.api` prefix):
 
-    1.1 `enabled` - flag for enabling HPA. Possible values: `yes` for enabling and `no` for disabling.
+    1.1 `enabled` - flag for enabling HPA. Possible values: `true` for enabling and `false` for disabling.
     
     1.2 `resources` - custom resources for server. `requests.cpu` param is mandatory for proper HPA work.
     
     1.3 `cpuUtilizationBorder` - border percentage of average CPU utilization per pod for deployment.
     
-2) Celery:
+2) Celery (`hpa.celery` prefix):
     
     1.1 `enabled` - flag for enabling HPA, same possible values as for API server.
     

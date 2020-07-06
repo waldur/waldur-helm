@@ -31,13 +31,13 @@ resources: {}
 
 hpa:
   api:
-    enabled: "no"
+    enabled: false
     resources:
       requests:
         cpu: 500m
     cpuUtilizationBorder: 70
   celery:
-    enabled: "no"
+    enabled: false
     workerResources:
       requests:
         cpu: 2000m
@@ -60,6 +60,12 @@ ingress:
   tls:
     source: "letsEncrypt" # Possible values: `letsEncrypt` and `secret`
     secretsDir: "tls"  # Enabled only if source == `secret`
+
+logManagement:
+  enabled: true
+  elasticHost: "elasticsearch-master.elastic.svc.cluster.local"
+  elasticPort: "9200"
+  elasticProtocol: "http"
 
 waldur:
   imageTag: latest

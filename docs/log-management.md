@@ -22,11 +22,11 @@ Elasticsearch instance runs as a standalone Helm release.
 Install Elasticsearch:
 1) Create a namespace for Elasticsearch release:
 ```
-  k create namespace elastic
+  kubectl create namespace elastic
 ```
 2) Add Elastic repo and update repos list
 ```
-  helm repo add elastic https://helm.elastic.co`
+  helm repo add elastic https://helm.elastic.co
   helm repo update
 ```
 3) Install Elasticsearch release

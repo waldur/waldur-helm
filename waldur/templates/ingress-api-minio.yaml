@@ -1,0 +1,23 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: api-minio-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: "/$1"
+    {{ if .Values.ingress.tls.source | eq "letsEncrypt" }}
+    cert-manager.io/cluster-issuer: letsencrypt-prod-issuer
+    {{ end }}
+spec:
+  rules:
+  - host: {{ .Values.apiHostname }}
+    http:
+      paths:
+      - path: /media/(.+)
+        backend:
+          serviceName: waldur-minio
+          servicePort: 9000
+  tls:
+  - hosts:
+    - {{ .Values.apiHostname }}
+    secretName: api-certificate

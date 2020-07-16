@@ -69,7 +69,7 @@ logManagement:
 
 waldur:
   imageTag: latest
-  apiUrl: "http://api.example.com/"
+  apiUrl: "https://api.example.com/"
   homeportUrl: ""
   emailHost: ""
   notificationSubject: ""
@@ -185,17 +185,16 @@ waldur:
     mastermindTemplatesPath: "mastermind_templates"
 
 postgresql:
-  enabled: true
-  nameOverride: waldur-postgresql
+  version: "11.2"
+  postgresqlHost: waldur-postgres
+  postgresqlPort: 5432
   postgresqlDatabase: waldur
   postgresqlUsername: waldur
-  # The following variables are only used when internal PG is disabled
-  # postgresqlHost: postgres
   postgresqlPassword: waldur
-  # postgresqlPort: 5432
-  # When defined the `postgresqlPassword` field is ignored
-  # existingSecret: secret-name
-  # existingSecretKey: postgresql-password
+  replicaCount: 3
+  # Uncomment if you want to specify storageClassName
+  # storageClassName: standard
+  size: 10Gi
 
 redis:
   enabled: true

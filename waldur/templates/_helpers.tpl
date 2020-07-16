@@ -74,48 +74,12 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- end -}}
 
 {{/*
-Set postgres host
-*/}}
-{{- define "waldur.postgresql.host" -}}
-{{- if .Values.postgresql.enabled -}}
-{{- template "waldur.postgresql.fullname" . -}}
-{{- else -}}
-{{- .Values.postgresql.postgresqlHost | quote -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
 Set postgres secret
 */}}
 {{- define "waldur.postgresql.secret" -}}
-{{- if .Values.postgresql.enabled -}}
-{{- template "waldur.postgresql.fullname" . -}}
-{{- else -}}
-{{- template "waldur.fullname" . -}}
-{{- end -}}
+{{ .Values.postgresql.postgresqlHost | printf "%s-auth" }}
 {{- end -}}
 
-{{/*
-Set postgres secretKey
-*/}}
-{{- define "waldur.postgresql.secretKey" -}}
-{{- if .Values.postgresql.enabled -}}
-"postgresql-password"
-{{- else -}}
-{{- default "postgresql-password" .Values.postgresql.existingSecretKey | quote -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Set postgres port
-*/}}
-{{- define "waldur.postgresql.port" -}}
-{{- if .Values.postgresql.enabled -}}
-    "5432"
-{{- else -}}
-{{- default "5432" .Values.postgresql.postgresqlPort | quote -}}
-{{- end -}}
-{{- end -}}
 
 {{/*
 Set redis host

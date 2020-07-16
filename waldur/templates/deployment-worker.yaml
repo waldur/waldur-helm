@@ -50,22 +50,21 @@ spec:
                 name: waldur-secret
                 key: GLOBAL_SECRET_KEY
           - name: POSTGRESQL_HOST
-            value: {{ template "waldur.postgresql.host" . }}
+            value: {{ .Values.postgresql.postgresqlHost }}
           - name: POSTGRESQL_PORT
-            value: {{ template "waldur.postgresql.port" . }}
+            value: {{ .Values.postgresql.postgresqlPort | quote }}
           - name: POSTGRESQL_USER
-            value: {{ default "waldur" .Values.postgresql.postgresqlUsername | quote }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ template "waldur.postgresql.secret" . }}
+                key: POSTGRES_USER
           - name: POSTGRESQL_PASSWORD
             valueFrom:
               secretKeyRef:
-              {{- if .Values.postgresql.existingSecret }}
-                name: {{ .Values.postgresql.existingSecret }}
-              {{- else }}
                 name: {{ template "waldur.postgresql.secret" . }}
-              {{- end }}
-                key: {{ template "waldur.postgresql.secretKey" . }}
+                key: POSTGRES_PASSWORD
           - name: POSTGRESQL_NAME
-            value: {{ default "waldur" .Values.postgresql.postgresqlDatabase | quote }}
+            value: {{ .Values.postgresql.postgresqlDatabase | quote }}
           - name: REDIS_HOST
             value: {{ template "waldur.redis.host" . }}
           - name: REDIS_PORT
@@ -86,11 +85,6 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
             {{ end }}
           volumeMounts:
-          {{- if .Values.persistence.enabled }}
-            - name: media
-              mountPath: /var/lib/waldur/
-              subPath: {{ .Values.persistence.subPath | default "" }}
-          {{- end }}
             - name: api-core
               mountPath: /etc/waldur/core.ini
               subPath: core.ini
@@ -125,11 +119,6 @@ spec:
               mountPath: /fluentd/etc
         {{ end }}
       volumes:
-      {{- if .Values.persistence.enabled }}
-      - name: media
-        persistentVolumeClaim:
-          claimName: {{ .Values.persistence.existingClaim | default (include "waldur.fullname" .) }}
-      {{- end }}
       - name: api-core
         configMap:
           name: api-core-config

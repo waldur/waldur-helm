@@ -25,7 +25,8 @@ Instructions for TLS configuration: [doc](/docs/tls-config.md)
 ```
   helm dep update waldur
 ```
-3. Install Helm package:
+3. Install kubedb operator: [instructions](/docs/kubedb.md)
+4. Install Helm package:
 ```
   # in 'waldur-helm-poc/'
   helm install waldur waldur

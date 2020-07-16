@@ -1,0 +1,34 @@
+apiVersion: kubedb.com/v1alpha1
+kind: Postgres
+metadata:
+  name: {{ .Values.postgresql.postgresqlHost }}
+spec:
+  version: {{ .Values.postgresql.version | quote }}
+  replicas: {{ .Values.postgresql.replicaCount }}
+  standbyMode: Warm
+  storageType: Durable
+  storage:
+    {{ if .Values.postgresql.storageClassName }}
+    storageClassName: {{ .Values.postgresql.storageClassName | quote }}
+    {{ end }}
+    accessModes:
+    - ReadWriteOnce
+    resources:
+      requests:
+        storage: {{ .Values.postgresql.size }}
+  databaseSecret:
+    secretName: {{ template "waldur.postgresql.secret" . }}
+  podTemplate:
+    spec:
+      env:
+        - name: POSTGRES_DB
+          value: {{ .Values.postgresql.postgresqlDatabase }}
+  serviceTemplate:
+    spec:
+      ports:
+      - name:  http
+        port:  {{ .Values.postgresql.postgresqlPort }}
+        targetPort: http
+  terminationPolicy: Pause
+  updateStrategy:
+    type: RollingUpdate

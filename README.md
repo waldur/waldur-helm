@@ -32,6 +32,17 @@ Instructions for TLS configuration: [doc](/docs/tls-config.md)
   # in 'waldur-helm-poc/'
   helm install waldur waldur
 ```
+**NB** After this command, Waldur release will run in `default` namespace. Please, pay attention in which namespace which release is running.
+
+For instance, you can install Waldur release in `test` namespace in the following way:
+1. Create `test` namespace:
+```
+  kubectl create namespace test
+```
+2. Install release:
+```
+  helm install waldur waldur --namespace test
+```
 
 ## Adding admin user
 

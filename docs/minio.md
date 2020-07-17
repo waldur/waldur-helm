@@ -20,4 +20,4 @@ In Waldur Helm `values.yaml` you need to setup:
 1. `minio.accessKey` - should be same as `accessKey` in `minio.values.yaml`
 2. `minio.secretKey` - should be same as `secretKey` in `minio.values.yaml`
 3. `minio.bucketName` - should be same as `defaultBucket.name` in `minio.values.yaml`
-4. `minio.endpoint` - access URL to `minio` storage (`minio` service host and port)
+4. `minio.endpoint` - access URL to `minio` storage (`minio` service host and port). See [this doc](service-endpoint.md) for details.

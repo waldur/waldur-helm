@@ -11,9 +11,7 @@ Fluentd instance runs as a sidecar (support container within a main container's 
 
 There are next options for Fluentd configuration in `values.yaml` file (`logManagement` prefix):
 1) `enabled` - flag for enabling Fluentd. Possible values: `true` for enabling and `false` for disabling.
-2) `elasticHost` - Elasticsearch service host: fully qualified name of `elasticsearch-master` service with following format: 
-    
-    `<service-name>.<namespace>.svc.<cluster-name>` (for instance `elasticsearch-master.elastic.svc.cluster.local`)
+2) `elasticHost` - Elasticsearch service host: hostname of `elasticsearch-master` service. See [this doc](service-endpoint.md) for details.
 3) `elasticPort` - Elasticsearch service port.
 4) `elasticProtocol` - communication protocol with Elasticsearch service.
 ### Elasticsearch configuration
@@ -52,6 +50,6 @@ Install Kibana:
 ```
 
 The last command uses `elastic-values.yaml`, where you can configure:
-1) `elasticsearchHosts` - `elasticsearch-master` service URL.
+1) `elasticsearchHosts` - `elasticsearch-master` service URL. See [this doc](service-endpoint.md) for details.
 2) `ingress` - ingress configuration (enabled by default). 
 3) `resources` - same resources configuration as for Elasticreach release.

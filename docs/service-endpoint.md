@@ -1,5 +1,7 @@
 ## Service endpoints
 For communication inside a cluster, pods use services. Usually, that needs to define internal endpoints with service URL format.
+
+**NB** It is important to set up `namespace` part correctly. If not, requests can come to unexpected service, which can cause errors.
 ### Endpoint format
 Fully qualified endpoint format is:
 ```

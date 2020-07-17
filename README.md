@@ -25,8 +25,9 @@ Instructions for TLS configuration: [doc](/docs/tls-config.md)
 ```
   helm dep update waldur
 ```
-3. Install kubedb operator: [instructions](/docs/kubedb.md)
-4. Install Helm package:
+3. Install kubedb operator (for postgres): [instructions](/docs/kubedb.md)
+4. Install minio (for media): [instructions](/docs/minio.md)
+5. Install Helm package:
 ```
   # in 'waldur-helm-poc/'
   helm install waldur waldur
@@ -39,7 +40,7 @@ Open waldur-mastermind-worker shell and execute the following command:
 1. Get waldur-mastermind-worker pod name
 ```
   # Example:
-  kubectl get po -A | grep waldur-mastermind-worker # -->
+  kubectl get pods -A | grep waldur-mastermind-worker # -->
   # default       waldur-mastermind-worker-6d98cd98bd-wps8n   1/1     Running     0          9m9s
 ```
 2. Connect to pod via shell

@@ -1,0 +1,21 @@
+accessKey: ""
+secretKey: ""
+serviceAccount:
+  name: minio-account
+persistence:
+  enabled: true
+  size: 5Gi
+## Uncomment if you need storage distribution
+#  mode: distributed
+#  replicas: 4
+ingress:
+  enabled: true
+  hosts:
+    - minio.host
+defaultBucket:
+  enabled: true
+  name: data
+## Uncomment if you want to change memory request
+#  resources:
+#    requests:
+#      memory: 1Gi

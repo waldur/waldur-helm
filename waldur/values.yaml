@@ -185,16 +185,17 @@ waldur:
     mastermindTemplatesPath: "mastermind_templates"
 
 postgresql:
-  version: "11.2"
+  version: "12"
   postgresqlHost: waldur-postgres
-  postgresqlPort: 5432
   postgresqlDatabase: waldur
   postgresqlUsername: waldur
-  postgresqlPassword: waldur
   replicaCount: 3
-  # Uncomment if you want to specify storageClassName
-  # storageClassName: standard
+  storageClass: ""
   size: 10Gi
+  loadBalancing:
+    enableMaster: false
+    enableReplica: false
+  enableLogicalBackup: false
 
 redis:
   enabled: true

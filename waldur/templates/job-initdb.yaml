@@ -22,7 +22,8 @@ spec:
           - name: POSTGRESQL_HOST
             value: {{ .Values.postgresql.postgresqlHost }}
           - name: POSTGRESQL_PORT
-            value: {{ .Values.postgresql.postgresqlPort | quote }}
+{{/*            value: {{ .Values.postgresql.postgresqlPort | quote }}*/}}
+            value: {{ template "waldur.postgresql.port" . }}
       containers:
         - name: waldur-mastermind-job
           image: opennode/waldur-mastermind:{{ .Values.waldur.imageTag }}
@@ -35,21 +36,21 @@ spec:
                 name: waldur-secret
                 key: GLOBAL_SECRET_KEY
           - name: POSTGRESQL_HOST
-            value: {{ .Values.postgresql.postgresqlHost }}
+            value: {{ template "waldur.postgresql.host" . }}
           - name: POSTGRESQL_PORT
-            value: {{ .Values.postgresql.postgresqlPort | quote }}
+            value: {{ template "waldur.postgresql.port" . }}
           - name: POSTGRESQL_USER
             valueFrom:
               secretKeyRef:
                 name: {{ template "waldur.postgresql.secret" . }}
-                key: POSTGRES_USER
+                key: username
           - name: POSTGRESQL_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: {{ template "waldur.postgresql.secret" . }}
-                key: POSTGRES_PASSWORD
+                key: password
           - name: POSTGRESQL_NAME
-            value: {{ .Values.postgresql.postgresqlDatabase | quote }}
+            value: {{ template "waldur.postgresql.dbname" . }}
           - name: REDIS_HOST
             value: {{ template "waldur.redis.host" . }}
           - name: REDIS_PORT

@@ -165,28 +165,28 @@ data:
     #
     # optional | values: (ip or hostname) | default: (empty string)
     #
-    host = {{ .Values.postgresql.postgresqlHost }}
+    host = {{ template "waldur.postgresql.host" . }}
 
     # Sets PostgreSQL database port
     # See also: https://docs.djangoproject.com/en/1.11/ref/settings/#port
     #
     # optional | values: (port number) | default: 5432
     #
-    port = {{ .Values.postgresql.postgresqlPort }}
+    port = {{ template "waldur.postgresql.port" . }}
 
     # Sets PostgreSQL database name
     # See also: https://docs.djangoproject.com/en/1.11/ref/settings/#name
     #
     # optional | values: (string) | default: waldur
     #
-    #name = waldur
+    name = {{ template "waldur.postgresql.dbname" }}
 
     # Sets PostgreSQL user
     # See also: https://docs.djangoproject.com/en/1.11/ref/settings/#user
     #
     # optional | values: (string) | default: waldur
     #
-    #user = waldur
+    user = {{ template "waldur.postgresql.user" }}
 
     # Sets PostgreSQL user password
     # See also: https://docs.djangoproject.com/en/1.11/ref/settings/#password

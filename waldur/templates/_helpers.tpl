@@ -74,12 +74,46 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- end -}}
 
 {{/*
+Set postgres teamId
+*/}}
+{{- define "waldur.postgresql.team" -}}
+{{ .Values.postgresql.postgresqlHost | splitList "-" | first | quote }}
+{{- end -}}
+
+{{/*
+Set postgres host
+*/}}
+{{- define "waldur.postgresql.host" -}}
+{{ .Values.postgresql.postgresqlHost | quote }}
+{{- end -}}
+
+{{/*
+Set postgres port
+*/}}
+{{- define "waldur.postgresql.port" -}}
+"5432"
+{{- end -}}
+
+{{/*
 Set postgres secret
 */}}
 {{- define "waldur.postgresql.secret" -}}
-{{ .Values.postgresql.postgresqlHost | printf "%s-auth" }}
+{{ printf "%s.%s.credentials.postgresql.acid.zalan.do" .Values.postgresql.postgresqlUsername .Values.postgresql.postgresqlHost }}
 {{- end -}}
 
+{{/*
+Set postgres database name
+*/}}
+{{- define "waldur.postgresql.dbname" -}}
+{{ .Values.postgresql.postgresqlDatabase | quote }}
+{{- end -}}
+
+{{/*
+Set postgres user
+*/}}
+{{- define "waldur.postgresql.user" -}}
+{{ .Values.postgresql.postgresqlUsername | quote }}
+{{- end -}}
 
 {{/*
 Set redis host

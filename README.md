@@ -25,7 +25,7 @@ Instructions for TLS configuration: [doc](/docs/tls-config.md)
 ```
   helm dep update waldur
 ```
-3. Install kubedb operator (for postgres): [instructions](/docs/kubedb.md)
+3. Install zalando postgres operator: [instructions](/docs/pg-operator.md)
 4. Install minio (for media): [instructions](/docs/minio.md)
 5. Install Helm package:
 ```

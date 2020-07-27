@@ -170,20 +170,19 @@ Set rabbitmq host
 Set rabbitmq AMQP port
 */}}
 {{- define "waldur.rabbitmq.amqpPort" -}}
-{{ if .Values.rabbitmq.customAMQPPort }}
-{{ .Values.rabbitmq.customAMQPPort }}
-{{ else }}
-5672
-{{ end }}
+{{ default 5672 .Values.rabbitmq.customAMQPPort }}
 {{- end -}}
 
 {{/*
 Set rabbitmq management port
 */}}
 {{- define "waldur.rabbitmq.mngmtPort" -}}
-{{ if .Values.rabbitmq.customManagementPort }}
-{{ .Values.rabbitmq.customManagementPort }}
-{{ else }}
-15672
-{{ end }}
+{{ default 15672 .Values.rabbitmq.customManagementPort }}
+{{- end -}}
+
+{{/*
+Set rabbitmq URL
+*/}}
+{{- define "waldur.rabbitmq.rmqUrl" -}}
+{{ printf "amqp://%s:%s@%s:%d" .Values.rabbitmq.user .Values.rabbitmq.password .Values.rabbitmq.host (default 5672 .Values.rabbitmq.customAMQPPort) }}
 {{- end -}}

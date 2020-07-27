@@ -21,6 +21,6 @@ For more config values, see [this section](https://github.com/helm/charts/tree/m
 In `values.yaml` file, you need to setup the following vars (`rabbitmq` prefix):
 1. `user` - should be same as `rabbitmqUsername` in the `rmq-values.yaml` file
 2. `password` - should be same as `rabbitmqPassword` in the `rmq-values.yaml` file
-3. `hostPrefix` - should be same as rabbitmq-ha release name (see `Installation` section above)
+3. `host` - rabbitmq-ha service **hostname** (See [this doc](service-endpoint.md) for details)
 4. `customManagementPort` - custom port for rabbitmq management interface 
 5. `customAMQPPort` - custom port for AMQP access

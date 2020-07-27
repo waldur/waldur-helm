@@ -33,8 +33,8 @@ data:
         redis_url = 'redis://%s:%s' % (os.environ.get('REDIS_HOST'), os.environ.get('REDIS_PORT'))
 
     CACHES['default']['LOCATION'] = redis_url
-    CELERY_BROKER_URL = redis_url
-    CELERY_RESULT_BACKEND = redis_url
+    CELERY_BROKER_URL = {{ include "waldur.rabbitmq.rmqUrl" . | quote }}
+    CELERY_RESULT_BACKEND = {{ include "waldur.rabbitmq.rmqUrl" . | quote }}
     DEFENDER_REDIS_URL = "%s/0" % redis_url
 
     EMAIL_HOST = '{{ .Values.waldur.emailHost }}'

@@ -158,3 +158,32 @@ Set redis port
 {{- default "6379" .Values.redis.port | quote -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Set rabbitmq host
+*/}}
+{{- define "waldur.rabbitmq.host" -}}
+{{ printf "%s-rabbitmq-ha" .Values.rabbitmq.hostPrefix }}
+{{- end -}}
+
+{{/*
+Set rabbitmq AMQP port
+*/}}
+{{- define "waldur.rabbitmq.amqpPort" -}}
+{{ if .Values.rabbitmq.customAMQPPort }}
+{{ .Values.rabbitmq.customAMQPPort }}
+{{ else }}
+5672
+{{ end }}
+{{- end -}}
+
+{{/*
+Set rabbitmq management port
+*/}}
+{{- define "waldur.rabbitmq.mngmtPort" -}}
+{{ if .Values.rabbitmq.customManagementPort }}
+{{ .Values.rabbitmq.customManagementPort }}
+{{ else }}
+15672
+{{ end }}
+{{- end -}}

@@ -1,0 +1,19 @@
+image:
+  repository: "locustio/locust"
+  tag: "1.1.1"
+
+master:
+  config:
+    target-host: "http://waldur-mastermind-api.default.svc.cluster.local:8080"
+    locust-host: "http://waldur-mastermind-api.default.svc.cluster.local:8080"
+    locust-mode-master: true
+    locust-locustfile: "/locust-tasks/tasks.py"
+
+
+worker: 
+  config: 
+    configmapName: "locust-tasks-config"
+    locust-mode-worker: true
+    locust-locustfile: "/locust-tasks/tasks.py"
+    locust-master-node-host: "locust-master-svc"
+  replicaCount: 3

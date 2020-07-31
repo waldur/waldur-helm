@@ -27,6 +27,7 @@ Instructions for TLS configuration: [doc](/docs/tls-config.md)
 ```
 3. Install zalando postgres operator: [instructions](/docs/pg-operator.md)
 4. Install minio (for media): [instructions](/docs/minio.md)
+5. Install RabbitMQ for task queue: [instructions](/docs/rabbitmq.md)
 5. Install Helm package:
 ```
   # in 'waldur-helm-poc/'
@@ -76,3 +77,6 @@ Instructions for HPA configuration: [doc](/docs/hpa.md)
 
 ## EFL (Elasticsearch Fluentd Kibana) for log management configuration
 Instructions for EFL configuration: [doc](/docs/log-management.md)
+
+## Stress testing
+Instructions for stress testing configuration using Locust: [doc](/docs/locust.md)

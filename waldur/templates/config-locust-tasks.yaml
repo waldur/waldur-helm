@@ -1,0 +1,9 @@
+{{ if .Values.stressTesting.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: locust-tasks-config
+data:
+  tasks.py: |-
+{{ .Values.stressTesting.locustFilePath | .Files.Get | indent 4 }}
+{{ end }}

@@ -89,6 +89,12 @@ spec:
               mountPath: {{ $path | replace $templatesRoot "" | printf "/usr/src/waldur/src/%s" }}
               subPath: {{ $path | base }}
             {{ end }}
+            {{ if .Values.waldur.saml2.enabled }}
+            - name: waldur-saml2
+              mountPath: /etc/waldur/saml2
+            - name: waldur-saml2-attr-maps
+              mountPath: /etc/waldur/saml2/attribute-maps
+            {{ end }}
         {{ if .Values.logManagement.enabled }}
             - name: waldur-log
               mountPath: /var/log/waldur
@@ -132,6 +138,14 @@ spec:
       - name: fluentd-conf
         configMap:
           name: fluentd-config
+      {{ end }}
+      {{ if .Values.waldur.saml2.enabled }}
+      - name: waldur-saml2
+        secret:
+          secretName: waldur-saml2-secret
+      - name: waldur-saml2-attr-maps
+        configMap:
+          name: waldur-saml2-attr-maps
       {{ end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

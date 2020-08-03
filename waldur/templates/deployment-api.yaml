@@ -94,6 +94,8 @@ spec:
               mountPath: /etc/waldur/saml2
             - name: waldur-saml2-attr-maps
               mountPath: /etc/waldur/saml2/attribute-maps
+            - name: waldur-saml2-cron
+              mountPath: /etc/cron.hourly
             {{ end }}
         {{ if .Values.logManagement.enabled }}
             - name: waldur-log
@@ -145,7 +147,10 @@ spec:
           secretName: waldur-saml2-secret
       - name: waldur-saml2-attr-maps
         configMap:
-          name: waldur-saml2-attr-maps
+          name: waldur-saml2-attr-maps-config
+      - name: waldur-saml2-cron
+        configMap:
+          name: waldur-saml2-cron-config
       {{ end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

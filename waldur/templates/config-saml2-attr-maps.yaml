@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: waldur-saml2-attr-maps
+  name: waldur-saml2-attr-maps-config
 data:
 {{ $attributeMapsDirTemp := .Values.waldur.saml2.dir | printf "%s/attribute-maps/*" }}
 {{ (.Files.Glob $attributeMapsDirTemp).AsConfig | indent 2 }}

@@ -1,0 +1,10 @@
+{{ if .Values.waldur.saml2.enabled }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: waldur-saml2-cron-config
+data:
+{{ $cronConfigFile := .Values.waldur.saml2.dir | printf "%s/cron/saml-metadata-refresh" }}  
+  saml-metedata-refresh: 
+{{ .Files.Get $cronConfigFile | indent 4 }}
+{{ end }}

@@ -15,6 +15,9 @@ This chart bootstraps a [Waldur](https://waldur.com/) deployment on a Kubernetes
 ## TLS configuration
 Instructions for TLS configuration: [doc](/docs/tls-config.md)
 
+## SAML2 configuration
+You can configure SAML2 for Waldur release: [instructions](/docs/saml2.md)
+
 ## Installing the Chart
 
 1. Add the stable repository

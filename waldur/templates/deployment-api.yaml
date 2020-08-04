@@ -49,19 +49,6 @@ spec:
                 key: password
           - name: POSTGRESQL_NAME
             value: {{ template "waldur.postgresql.dbname" . }}
-          - name: REDIS_HOST
-            value: {{ template "waldur.redis.host" . }}
-          - name: REDIS_PORT
-            value: {{ template "waldur.redis.port" . }}
-          - name: REDIS_PASSWORD
-            valueFrom:
-              secretKeyRef:
-              {{- if .Values.redis.existingSecret }}
-                name: {{ .Values.redis.existingSecret }}
-              {{- else }}
-                name: {{ template "waldur.redis.secret" . }}
-              {{- end }}
-                key: {{ template "waldur.redis.secretKey" . }}
           resources:
             {{ if .Values.hpa.api.enabled }}
             {{- toYaml .Values.hpa.api.resources | nindent 12 }}

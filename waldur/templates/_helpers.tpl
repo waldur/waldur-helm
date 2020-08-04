@@ -60,18 +60,6 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- end -}}
 {{- end -}}
 {{- end -}}
-{{- define "waldur.redis.fullname" -}}
-{{- if .Values.redis.fullnameOverride -}}
-{{- .Values.redis.fullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- $name := default .Chart.Name .Values.redis.nameOverride -}}
-{{- if contains $name .Release.Name -}}
-{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- printf "%s-%s" .Release.Name "waldur-redis" | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
 
 {{/*
 Set postgres teamId
@@ -113,50 +101,6 @@ Set postgres user
 */}}
 {{- define "waldur.postgresql.user" -}}
 {{ .Values.postgresql.postgresqlUsername | quote }}
-{{- end -}}
-
-{{/*
-Set redis host
-*/}}
-{{- define "waldur.redis.host" -}}
-{{- if .Values.redis.enabled -}}
-{{- template "waldur.redis.fullname" . -}}-master
-{{- else -}}
-{{- .Values.redis.host | quote -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Set redis secret
-*/}}
-{{- define "waldur.redis.secret" -}}
-{{- if .Values.redis.enabled -}}
-{{- template "waldur.redis.fullname" . -}}
-{{- else -}}
-{{- template "waldur.fullname" . -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Set redis secretKey
-*/}}
-{{- define "waldur.redis.secretKey" -}}
-{{- if .Values.redis.enabled -}}
-"redis-password"
-{{- else -}}
-{{- default "redis-password" .Values.redis.existingSecretKey | quote -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Set redis port
-*/}}
-{{- define "waldur.redis.port" -}}
-{{- if .Values.redis.enabled -}}
-    "6379"
-{{- else -}}
-{{- default "6379" .Values.redis.port | quote -}}
-{{- end -}}
 {{- end -}}
 
 {{/*

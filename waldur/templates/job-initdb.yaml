@@ -22,7 +22,6 @@ spec:
           - name: POSTGRESQL_HOST
             value: {{ .Values.postgresql.postgresqlHost }}
           - name: POSTGRESQL_PORT
-{{/*            value: {{ .Values.postgresql.postgresqlPort | quote }}*/}}
             value: {{ template "waldur.postgresql.port" . }}
       containers:
         - name: waldur-mastermind-job
@@ -51,19 +50,47 @@ spec:
                 key: password
           - name: POSTGRESQL_NAME
             value: {{ template "waldur.postgresql.dbname" . }}
-          - name: REDIS_HOST
-            value: {{ template "waldur.redis.host" . }}
-          - name: REDIS_PORT
-            value: {{ template "waldur.redis.port" . }}
-          - name: REDIS_PASSWORD
+          volumeMounts:
+            - name: api-core
+              mountPath: /etc/waldur/core.ini
+              subPath: core.ini
+            - name: api-override
+              mountPath: /etc/waldur/override.conf.py
+              subPath: override.conf.py
+            - name: api-celery
+              mountPath: /etc/waldur/celery.conf
+              subPath: celery.conf
+            - name: api-uwsgi
+              mountPath: /etc/waldur/uwsgi.ini
+              subPath: uwsgi.ini
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+        - name: waldur-mastermind-job-cache
+          image: opennode/waldur-mastermind:{{ .Values.waldur.imageTag }}
+          args:
+            - initdb-cache
+          env:
+          - name: GLOBAL_SECRET_KEY
             valueFrom:
               secretKeyRef:
-              {{- if .Values.redis.existingSecret }}
-                name: {{ .Values.redis.existingSecret }}
-              {{- else }}
-                name: {{ template "waldur.redis.secret" . }}
-              {{- end }}
-                key: {{ template "waldur.redis.secretKey" . }}
+                name: waldur-secret
+                key: GLOBAL_SECRET_KEY
+          - name: POSTGRESQL_HOST
+            value: {{ template "waldur.postgresql.host" . }}
+          - name: POSTGRESQL_PORT
+            value: {{ template "waldur.postgresql.port" . }}
+          - name: POSTGRESQL_USER
+            valueFrom:
+              secretKeyRef:
+                name: {{ template "waldur.postgresql.secret" . }}
+                key: username
+          - name: POSTGRESQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ template "waldur.postgresql.secret" . }}
+                key: password
+          - name: POSTGRESQL_NAME
+            value: {{ template "waldur.postgresql.dbname" . }}
           volumeMounts:
             - name: api-core
               mountPath: /etc/waldur/core.ini

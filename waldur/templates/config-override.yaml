@@ -25,17 +25,15 @@ data:
         },
     }
 
-    if os.environ.get('REDIS_PASSWORD'):
-        redis_url = 'redis://:%s@%s:%s' % (os.environ.get('REDIS_PASSWORD'),
-                                           os.environ.get('REDIS_HOST'),
-                                           os.environ.get('REDIS_PORT'))
-    else:
-        redis_url = 'redis://%s:%s' % (os.environ.get('REDIS_HOST'), os.environ.get('REDIS_PORT'))
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+            'LOCATION': 'waldur_cache',
+        }
+    }
 
-    CACHES['default']['LOCATION'] = redis_url
     CELERY_BROKER_URL = {{ include "waldur.rabbitmq.rmqUrl" . | quote }}
     CELERY_RESULT_BACKEND = {{ include "waldur.rabbitmq.rmqUrl" . | quote }}
-    DEFENDER_REDIS_URL = "%s/0" % redis_url
 
     EMAIL_HOST = '{{ .Values.waldur.emailHost }}'
 

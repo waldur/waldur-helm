@@ -195,30 +195,6 @@ data:
     #
     password = nodeconductor_db_password
 
-    [redis]
-    # Sets Redis host
-    # Redis is used as Celery task queue backend and Django cache backend.
-    # See also:
-    #  - https://docs.djangoproject.com/en/1.11/topics/cache/
-    #  - http://docs.celeryproject.org/en/latest/configuration.html#broker-url
-    #  - http://docs.celeryproject.org/en/latest/configuration.html#celery-result-backend
-    #
-    # optional | values: (ip or hostname) | default: localhost
-    #
-    host = nodeconductor_queue_host
-    # Sets Redis port
-    #
-    # optional | values: (port number) | default: 6379
-    #
-    #port = 6379
-
-    # Sets Redis password
-    #
-    # optional | values: (password) | default: (empty)
-    #
-    #password =
-    password = redis_pass
-
     [sentry]
     # Sets Sentry DSN (data source name)
     # If not set or set to empty string, no data will be sent to Sentry.

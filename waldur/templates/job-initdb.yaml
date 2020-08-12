@@ -50,10 +50,15 @@ spec:
                 key: password
           - name: POSTGRESQL_NAME
             value: {{ template "waldur.postgresql.dbname" . }}
+          - name: LOGGING_LOG_FILE
+            value: "/var/log/waldur/core.log"
+          - name: EVENTS_LOG_FILE
+            value: "/var/log/waldur/events.log"
+          {{ if .Values.waldur.sentryDSN }}
+          - name: SENTRY_DSN
+            value: {{ .Values.waldur.sentryDSN | quote }}
+          {{ end }}
           volumeMounts:
-            - name: api-core
-              mountPath: /etc/waldur/core.ini
-              subPath: core.ini
             - name: api-override
               mountPath: /etc/waldur/override.conf.py
               subPath: override.conf.py
@@ -91,10 +96,15 @@ spec:
                 key: password
           - name: POSTGRESQL_NAME
             value: {{ template "waldur.postgresql.dbname" . }}
+          - name: LOGGING_LOG_FILE
+            value: "/var/log/waldur/core.log"
+          - name: EVENTS_LOG_FILE
+            value: "/var/log/waldur/events.log"
+          {{ if .Values.waldur.sentryDSN }}
+          - name: SENTRY_DSN
+            value: {{ .Values.waldur.sentryDSN | quote }}
+          {{ end }}
           volumeMounts:
-            - name: api-core
-              mountPath: /etc/waldur/core.ini
-              subPath: core.ini
             - name: api-override
               mountPath: /etc/waldur/override.conf.py
               subPath: override.conf.py
@@ -107,9 +117,6 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
-      - name: api-core
-        configMap:
-          name: api-core-config
       - name: api-override
         configMap:
           name: api-override-config

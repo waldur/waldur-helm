@@ -1,9 +1,13 @@
 ## Min.io configuration
 Min.io storage is used for media data.
 
-To install `minio` release run:
+Add `minio` chart repo:
 ```
-helm install minio stable/minio -f minio-values.yaml
+  helm repo add minio https://helm.min.io/
+```
+Install `minio` release run:
+```
+  helm install minio minio/minio -f minio-values.yaml
 ```
 You can change `minio` config with next vars (in `minio.values` file):
 1. `accessKey` - access key id for storage

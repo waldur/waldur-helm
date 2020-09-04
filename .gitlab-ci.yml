@@ -1,0 +1,11 @@
+stages:
+  - lint
+
+Run linter:
+  image:
+    name: 'alpine/helm:3.3.1'
+    entrypoint: [""]
+  interruptible: true
+  stage: lint
+  script:
+    - helm lint waldur/

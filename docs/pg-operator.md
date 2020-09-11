@@ -1,6 +1,6 @@
 ## PostgreSQL operator configuration
 For PostrgreSQL management, [zalando/postgres-operator](https://github.com/zalando/postgres-operator) is used.
-### Operator installation
+### Operator installation and configuration
 To use the Helm chart, you need to clone git repository:
 ```
   git clone git@github.com:zalando/postgres-operator.git
@@ -8,8 +8,13 @@ To use the Helm chart, you need to clone git repository:
 After that, install `postgresql-operator` release: 
 ```
   helm install pg-operator \
-   postgres-operator/charts/postgres-operator
+    postgres-operator/charts/postgres-operator \
+    -f pg-operator.yaml
 ```
+
+Additional config variables can be found [there](https://postgres-operator.readthedocs.io/en/latest/reference/operator_parameters/).
+
+**NB:** setup `configKubernetes` section, especially `configKubernetes.cluster_domain` (by default it is set to local value).
 
 ### Cluster configuration
 You can change default PostgreSQL config with the following variables in `values.yaml` (`postgres` prefix):

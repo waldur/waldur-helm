@@ -1,11 +1,8 @@
 replicaCount: 3
-persistentVolume:
+persistence:
   enabled: true
-  name: "rmq-data"
   size: "10Gi"
   storageClass: ""
-rabbitmqUsername: "waldur"
-rabbitmqPassword: "waldur"
-prometheus:
-  operator:
-    enabled: false
+auth:
+  username: "waldur"
+  password: "waldur"

@@ -14,13 +14,13 @@ spec:
     spec:
       initContainers:
       - name: check-db-ready
-        image: postgres:9.6.5
+        image: postgres:{{ .Values.postgresql.version }}
         command: ['sh', '-c',
           'until pg_isready -h $POSTGRESQL_HOST -p $POSTGRESQL_PORT; 
           do echo waiting for database; sleep 2; done;']
         env:
           - name: POSTGRESQL_HOST
-            value: {{ .Values.postgresql.postgresqlHost }}
+            value: {{ template "waldur.postgresql.host" . }}
           - name: POSTGRESQL_PORT
             value: {{ template "waldur.postgresql.port" . }}
       containers:

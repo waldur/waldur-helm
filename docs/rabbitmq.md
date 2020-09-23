@@ -1,6 +1,11 @@
 ## RabbitMQ configuration
 For rabbitmq installation, [bitnami/rabbitmq](https://github.com/bitnami/charts/tree/master/bitnami/rabbitmq) is used.
 ### Installation
+Add `bitnami` repo to helm:
+```
+  helm repo add bitnami https://charts.bitnami.com/bitnami
+```
+
 Install rabbitmq-ha release:
 ```
   helm install rmq bitnami/rabbitmq -f rmq-values.yaml

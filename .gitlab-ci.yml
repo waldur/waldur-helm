@@ -1,11 +1,21 @@
-stages:
-  - lint
+include:
+  - project: "waldur/waldur-pipelines"
+    file: "/templates/stages.yml"
+  - project: "waldur/waldur-pipelines"
+    file: "/templates/test/check-merge-compatibility.yml"
 
 Run linter:
   image:
-    name: 'alpine/helm:3.3.1'
+    name: "alpine/helm:3.3.1"
     entrypoint: [""]
+  stage: test
   interruptible: true
-  stage: lint
+  rules:
+    - if: '$SKIP_TESTS == "true"'
+      when: never
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
     - helm lint waldur/

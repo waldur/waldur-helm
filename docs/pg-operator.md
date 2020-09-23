@@ -9,7 +9,7 @@ After that, install `postgresql-operator` release:
 ```
   helm install pg-operator \
     postgres-operator/charts/postgres-operator \
-    -f pg-operator.yaml
+    -f pg-operator-values.yaml
 ```
 
 Additional config variables can be found [there](https://postgres-operator.readthedocs.io/en/latest/reference/operator_parameters/).

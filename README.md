@@ -49,7 +49,6 @@ For instance, you can install Waldur release in `test` namespace in the followin
 ```
 
 ## Adding admin user
-
 Open waldur-mastermind-worker shell and execute the following command:
 
 1. Get waldur-mastermind-worker pod name

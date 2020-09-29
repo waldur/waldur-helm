@@ -187,9 +187,10 @@ waldur:
     enabled: false
     dir: "waldur_saml2"
 
-postgresql:
+postgresql_operator:
+  enabled: false
   version: "12"
-  postgresqlHost: waldur-postgres
+  postgresqlHost: waldur-postgresql
   postgresqlDatabase: waldur
   postgresqlUsername: waldur
   replicaCount: 3
@@ -199,6 +200,17 @@ postgresql:
     enableMaster: false
     enableReplica: false
   enableLogicalBackup: false
+
+postgresql:
+  enabled: true
+  postgresqlDatabase: waldur
+  postgresqlUsername: waldur
+  postgresqlPassword: waldur
+  persistence:
+    size: 10Gi
+  image:
+    tag: 12
+  exisitingSecret: ""
 
 minio:
   accessKey: ""

@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: waldur-mastermind-job
+  name: waldur-mastermind-initdb-job
   labels:
 {{ include "waldur.labels" . | indent 4 }}
 spec:
@@ -14,7 +14,7 @@ spec:
     spec:
       initContainers:
       - name: check-db-ready
-        image: postgres:{{ .Values.postgresql.version }}
+        image: postgres:{{ template "waldur.postgresql.version" . }}
         command: ['sh', '-c',
           'until pg_isready -h $POSTGRESQL_HOST -p $POSTGRESQL_PORT; 
           do echo waiting for database; sleep 2; done;']
@@ -24,7 +24,7 @@ spec:
           - name: POSTGRESQL_PORT
             value: {{ template "waldur.postgresql.port" . }}
       containers:
-        - name: waldur-mastermind-job
+        - name: waldur-mastermind-migrate
           image: opennode/waldur-mastermind:{{ .Values.waldur.imageTag }}
           args:
             - initdb
@@ -39,15 +39,12 @@ spec:
           - name: POSTGRESQL_PORT
             value: {{ template "waldur.postgresql.port" . }}
           - name: POSTGRESQL_USER
-            valueFrom:
-              secretKeyRef:
-                name: {{ template "waldur.postgresql.secret" . }}
-                key: username
+            value: {{ template "waldur.postgresql.user" . }}
           - name: POSTGRESQL_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: {{ template "waldur.postgresql.secret" . }}
-                key: password
+                key: {{ template "waldur.postgresql.secret.passwordKey" . }}
           - name: POSTGRESQL_NAME
             value: {{ template "waldur.postgresql.dbname" . }}
           - name: LOGGING_LOG_FILE
@@ -70,7 +67,7 @@ spec:
               subPath: uwsgi.ini
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-        - name: waldur-mastermind-job-cache
+        - name: waldur-mastermind-create-dbcache
           image: opennode/waldur-mastermind:{{ .Values.waldur.imageTag }}
           args:
             - initdb-cache
@@ -85,15 +82,12 @@ spec:
           - name: POSTGRESQL_PORT
             value: {{ template "waldur.postgresql.port" . }}
           - name: POSTGRESQL_USER
-            valueFrom:
-              secretKeyRef:
-                name: {{ template "waldur.postgresql.secret" . }}
-                key: username
+            value: {{ template "waldur.postgresql.user" . }}
           - name: POSTGRESQL_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: {{ template "waldur.postgresql.secret" . }}
-                key: password
+                key: {{ template "waldur.postgresql.secret.passwordKey" . }}
           - name: POSTGRESQL_NAME
             value: {{ template "waldur.postgresql.dbname" . }}
           - name: LOGGING_LOG_FILE

@@ -62,17 +62,32 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- end -}}
 
 {{/*
+Set postgres version
+*/}}
+{{- define "waldur.postgresql.version" -}}
+{{- if .Values.postgresql_operator.enabled -}}
+{{- .Values.postgresql_operator.version -}}
+{{- else -}}
+{{- .Values.postgresql.image.tag -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Set postgres teamId
 */}}
 {{- define "waldur.postgresql.team" -}}
-{{ .Values.postgresql.postgresqlHost | splitList "-" | first | quote }}
+{{ .Values.postgresql_operator.postgresqlHost | splitList "-" | first | quote }}
 {{- end -}}
 
 {{/*
 Set postgres host
 */}}
 {{- define "waldur.postgresql.host" -}}
-{{ .Values.postgresql.postgresqlHost | quote }}
+{{- if .Values.postgresql_operator.enabled -}}
+{{- .Values.postgresql_operator.postgresqlHost | quote -}}
+{{- else -}}
+"waldur-postgresql"
+{{- end -}}
 {{- end -}}
 
 {{/*
@@ -86,21 +101,46 @@ Set postgres port
 Set postgres secret
 */}}
 {{- define "waldur.postgresql.secret" -}}
-{{ printf "%s.%s.credentials.postgresql.acid.zalan.do" .Values.postgresql.postgresqlUsername .Values.postgresql.postgresqlHost }}
+{{- if .Values.postgresql_operator.enabled -}}
+{{ printf "%s.%s.credentials.postgresql.acid.zalan.do" .Values.postgresql_operator.postgresqlUsername .Values.postgresql_operator.postgresqlHost }}
+{{- else if .Values.postgresql.exisitingSecret -}}
+{{- .Values.postgresql.exisitingSecret -}}
+{{- else -}}
+"waldur-postgresql"
+{{- end -}}
+{{- end -}}
+
+{{/*
+Set postgres secret password key
+*/}}
+{{- define "waldur.postgresql.secret.passwordKey" -}}
+{{- if .Values.postgresql_operator.enabled -}}
+"password"
+{{- else -}}
+"postgresql-password"
+{{- end -}}
 {{- end -}}
 
 {{/*
 Set postgres database name
 */}}
 {{- define "waldur.postgresql.dbname" -}}
+{{- if .Values.postgresql_operator.enabled -}}
+{{ .Values.postgresql_operator.postgresqlDatabase | quote }}
+{{- else -}}
 {{ .Values.postgresql.postgresqlDatabase | quote }}
+{{- end -}}
 {{- end -}}
 
 {{/*
 Set postgres user
 */}}
 {{- define "waldur.postgresql.user" -}}
+{{- if .Values.postgresql_operator.enabled -}}
+{{ .Values.postgresql_operator.postgresqlUsername | quote }}
+{{- else -}}
 {{ .Values.postgresql.postgresqlUsername | quote }}
+{{- end -}}
 {{- end -}}
 
 {{/*

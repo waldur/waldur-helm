@@ -28,7 +28,13 @@ You can configure SAML2 for Waldur release: [instructions](/docs/saml2.md)
 ```
   helm dep update waldur
 ```
-3. Install zalando postgres operator: [instructions](/docs/pg-operator.md)
+3. Setup postgresql database:
+
+    3.1 Setup simple postgresql db: [instructions](/docs/pg-operator.md), or
+
+    3.2 Setup zalando postgres operator: [instructions](/docs/pg-operator.md)
+    
+    **NB** Only one of these two options could be run. Otherwise, db will be unavailable.
 4. Install minio (for media): [instructions](/docs/minio.md)
 5. Install RabbitMQ for task queue: [instructions](/docs/rabbitmq.md)
 5. Install Helm package:

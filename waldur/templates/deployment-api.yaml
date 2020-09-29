@@ -38,15 +38,12 @@ spec:
           - name: POSTGRESQL_PORT
             value: {{ template "waldur.postgresql.port" . }}
           - name: POSTGRESQL_USER
-            valueFrom:
-              secretKeyRef:
-                name: {{ template "waldur.postgresql.secret" . }}
-                key: username
+            value: {{ template "waldur.postgresql.user" . }}
           - name: POSTGRESQL_PASSWORD
             valueFrom:
               secretKeyRef:
                 name: {{ template "waldur.postgresql.secret" . }}
-                key: password
+                key: {{ template "waldur.postgresql.secret.passwordKey" . }}
           - name: POSTGRESQL_NAME
             value: {{ template "waldur.postgresql.dbname" . }}
           - name: LOGGING_LOG_FILE

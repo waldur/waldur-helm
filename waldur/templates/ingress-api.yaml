@@ -4,7 +4,6 @@ metadata:
   name: api-ingress
   annotations:
     nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/rewrite-target: /
     {{ if .Values.ingress.tls.source | eq "letsEncrypt" }}
     cert-manager.io/cluster-issuer: letsencrypt-prod-issuer
     {{ end }}
@@ -13,7 +12,15 @@ spec:
   - host: {{ .Values.apiHostname }}
     http:
       paths:
-      - path: /
+      - path: /api
+        backend:
+          serviceName: waldur-mastermind-api
+          servicePort: 8080
+      - path: /docs
+        backend:
+          serviceName: waldur-mastermind-api
+          servicePort: 8080
+      - path: /admin
         backend:
           serviceName: waldur-mastermind-api
           servicePort: 8080

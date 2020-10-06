@@ -67,6 +67,8 @@ Set postgres version
 {{- define "waldur.postgresql.version" -}}
 {{- if .Values.postgresql_operator.enabled -}}
 {{- .Values.postgresql_operator.version -}}
+{{- else if index .Values "postgresql-ha" "enabled" -}}
+{{- index .Values "postgresql-ha" "postgresqlImage" "tag" -}}
 {{- else -}}
 {{- .Values.postgresql.image.tag -}}
 {{- end -}}
@@ -85,6 +87,8 @@ Set postgres host
 {{- define "waldur.postgresql.host" -}}
 {{- if .Values.postgresql_operator.enabled -}}
 {{- .Values.postgresql_operator.postgresqlHost | quote -}}
+{{- else if index .Values "postgresql-ha" "enabled" -}}
+"waldur-postgresql-ha-pgpool"
 {{- else -}}
 "waldur-postgresql"
 {{- end -}}
@@ -103,8 +107,12 @@ Set postgres secret
 {{- define "waldur.postgresql.secret" -}}
 {{- if .Values.postgresql_operator.enabled -}}
 {{ printf "%s.%s.credentials.postgresql.acid.zalan.do" .Values.postgresql_operator.postgresqlUsername .Values.postgresql_operator.postgresqlHost }}
-{{- else if .Values.postgresql.exisitingSecret -}}
+{{- else if and (index .Values "postgresql-ha" "postgresql" "exisitingSecret") (index .Values "postgresql-ha" "enabled") -}}
+{{- index .Values "postgresql-ha" "postgresql" "exisitingSecret" -}}
+{{- else if and .Values.postgresql.exisitingSecret .Values.postgresql.enabled -}}
 {{- .Values.postgresql.exisitingSecret -}}
+{{- else if index .Values "postgresql-ha" "enabled" -}}
+"waldur-postgresql-ha-postgresql"
 {{- else -}}
 "waldur-postgresql"
 {{- end -}}
@@ -127,6 +135,8 @@ Set postgres database name
 {{- define "waldur.postgresql.dbname" -}}
 {{- if .Values.postgresql_operator.enabled -}}
 {{ .Values.postgresql_operator.postgresqlDatabase | quote }}
+{{- else if index .Values "postgresql-ha" "enabled" -}}
+{{ index .Values "postgresql-ha" "postgresql" "database" | quote }}
 {{- else -}}
 {{ .Values.postgresql.postgresqlDatabase | quote }}
 {{- end -}}
@@ -138,6 +148,8 @@ Set postgres user
 {{- define "waldur.postgresql.user" -}}
 {{- if .Values.postgresql_operator.enabled -}}
 {{ .Values.postgresql_operator.postgresqlUsername | quote }}
+{{- else if index .Values "postgresql-ha" "enabled" -}}
+{{ index .Values "postgresql-ha" "postgresql" "username" | quote }}
 {{- else -}}
 {{ .Values.postgresql.postgresqlUsername | quote }}
 {{- end -}}

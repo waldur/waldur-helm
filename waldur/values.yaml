@@ -212,6 +212,24 @@ postgresql:
     tag: 12
   exisitingSecret: ""
 
+postgresql-ha:
+  enabled: false
+  postgresql:
+    database: waldur
+    username: waldur
+    password: waldur
+    exisitingSecret: ""
+    replicaCount: 3
+    syncReplication: false
+    repmgrUsername: repmgr
+    repmgrPassword: waldur
+  persistence:
+    size: 10Gi
+  pgpoolImage:
+    tag: 4
+  postgresqlImage:
+    tag: 12
+
 minio:
   accessKey: ""
   secretKey: ""

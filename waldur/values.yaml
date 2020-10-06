@@ -187,22 +187,8 @@ waldur:
     enabled: false
     dir: "waldur_saml2"
 
-postgresql_operator:
-  enabled: false
-  version: "12"
-  postgresqlHost: waldur-postgresql
-  postgresqlDatabase: waldur
-  postgresqlUsername: waldur
-  replicaCount: 3
-  storageClass: ""
-  size: 10Gi
-  loadBalancing:
-    enableMaster: false
-    enableReplica: false
-  enableLogicalBackup: false
-
 postgresql:
-  enabled: true
+  enabled: false
   postgresqlDatabase: waldur
   postgresqlUsername: waldur
   postgresqlPassword: waldur
@@ -213,7 +199,7 @@ postgresql:
   exisitingSecret: ""
 
 postgresql-ha:
-  enabled: false
+  enabled: true
   postgresql:
     database: waldur
     username: waldur
@@ -234,7 +220,6 @@ minio:
   accessKey: ""
   secretKey: ""
   bucketName: data
-
   ## min.io service endpoint used for communication inside a cluster
   endpoint: "http://minio.default.svc.cluster.local:9000" ## See docs/service-endpoint.md for details.
 

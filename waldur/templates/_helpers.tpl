@@ -45,29 +45,10 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
 
 {{/*
-Create a default fully qualified app name.
-We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-*/}}
-{{- define "waldur.postgresql.fullname" -}}
-{{- if .Values.postgresql.fullnameOverride -}}
-{{- .Values.postgresql.fullnameOverride | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- $name := default .Chart.Name .Values.postgresql.nameOverride -}}
-{{- if contains $name .Release.Name -}}
-{{- .Release.Name | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- printf "%s-%s" .Release.Name "waldur-postgresql" | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
 Set postgres version
 */}}
 {{- define "waldur.postgresql.version" -}}
-{{- if .Values.postgresql_operator.enabled -}}
-{{- .Values.postgresql_operator.version -}}
-{{- else if index .Values "postgresql-ha" "enabled" -}}
+{{- if index .Values "postgresql-ha" "enabled" -}}
 {{- index .Values "postgresql-ha" "postgresqlImage" "tag" -}}
 {{- else -}}
 {{- .Values.postgresql.image.tag -}}
@@ -75,19 +56,10 @@ Set postgres version
 {{- end -}}
 
 {{/*
-Set postgres teamId
-*/}}
-{{- define "waldur.postgresql.team" -}}
-{{ .Values.postgresql_operator.postgresqlHost | splitList "-" | first | quote }}
-{{- end -}}
-
-{{/*
 Set postgres host
 */}}
 {{- define "waldur.postgresql.host" -}}
-{{- if .Values.postgresql_operator.enabled -}}
-{{- .Values.postgresql_operator.postgresqlHost | quote -}}
-{{- else if index .Values "postgresql-ha" "enabled" -}}
+{{- if index .Values "postgresql-ha" "enabled" -}}
 "waldur-postgresql-ha-pgpool"
 {{- else -}}
 "waldur-postgresql"
@@ -105,9 +77,7 @@ Set postgres port
 Set postgres secret
 */}}
 {{- define "waldur.postgresql.secret" -}}
-{{- if .Values.postgresql_operator.enabled -}}
-{{ printf "%s.%s.credentials.postgresql.acid.zalan.do" .Values.postgresql_operator.postgresqlUsername .Values.postgresql_operator.postgresqlHost }}
-{{- else if and (index .Values "postgresql-ha" "postgresql" "exisitingSecret") (index .Values "postgresql-ha" "enabled") -}}
+{{- if and (index .Values "postgresql-ha" "postgresql" "exisitingSecret") (index .Values "postgresql-ha" "enabled") -}}
 {{- index .Values "postgresql-ha" "postgresql" "exisitingSecret" -}}
 {{- else if and .Values.postgresql.exisitingSecret .Values.postgresql.enabled -}}
 {{- .Values.postgresql.exisitingSecret -}}
@@ -122,20 +92,14 @@ Set postgres secret
 Set postgres secret password key
 */}}
 {{- define "waldur.postgresql.secret.passwordKey" -}}
-{{- if .Values.postgresql_operator.enabled -}}
-"password"
-{{- else -}}
 "postgresql-password"
-{{- end -}}
 {{- end -}}
 
 {{/*
 Set postgres database name
 */}}
 {{- define "waldur.postgresql.dbname" -}}
-{{- if .Values.postgresql_operator.enabled -}}
-{{ .Values.postgresql_operator.postgresqlDatabase | quote }}
-{{- else if index .Values "postgresql-ha" "enabled" -}}
+{{- if index .Values "postgresql-ha" "enabled" -}}
 {{ index .Values "postgresql-ha" "postgresql" "database" | quote }}
 {{- else -}}
 {{ .Values.postgresql.postgresqlDatabase | quote }}
@@ -146,9 +110,7 @@ Set postgres database name
 Set postgres user
 */}}
 {{- define "waldur.postgresql.user" -}}
-{{- if .Values.postgresql_operator.enabled -}}
-{{ .Values.postgresql_operator.postgresqlUsername | quote }}
-{{- else if index .Values "postgresql-ha" "enabled" -}}
+{{- if index .Values "postgresql-ha" "enabled" -}}
 {{ index .Values "postgresql-ha" "postgresql" "username" | quote }}
 {{- else -}}
 {{ .Values.postgresql.postgresqlUsername | quote }}

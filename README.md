@@ -30,9 +30,9 @@ You can configure SAML2 for Waldur release: [instructions](/docs/saml2.md)
 ```
 3. Setup postgresql database:
 
-    3.1 Setup simple postgresql db: [instructions](/docs/postgres-db-ha.md), or
+    3.1 Setup simple postgresql db: [instructions](/docs/postgres-db.md), or
 
-    3.2 Setup postgres-ha db: [instructions](/docs/postgres-db.md)
+    3.2 Setup postgres-ha db: [instructions](/docs/postgres-db-ha.md)
     
     **NB** Only one of these two options could be run. Otherwise, db will be unavailable.
 4. Install minio (for media): [instructions](/docs/minio.md)

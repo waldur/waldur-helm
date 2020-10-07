@@ -11,23 +11,20 @@ data:
 
       {{ if .Values.waldur.whitelabeling.loginLogoUrl }}
       "loginLogo": {{ .Values.waldur.whitelabeling.loginLogoUrl | quote }},
-      {{ else if .Values.waldur.whitelabeling.loginLogoBlobPath }}
-        {{ $file :=  .Values.waldur.whitelabeling.loginLogoBlobPath }}
-        "loginLogo": {{ .Files.Get $file | quote }},
+      {{ else if .Values.waldur.whitelabeling.loginLogoPath }}
+      "loginLogo": "images/login_logo.png",
       {{ end }}
 
       {{ if .Values.waldur.whitelabeling.sidebarLogoUrl }}
       "sidebarLogo": {{ .Values.waldur.whitelabeling.sidebarLogoUrl | quote }},
-      {{ else if .Values.waldur.whitelabeling.sidebarLogoBlobPath }}
-        {{ $file :=  .Values.waldur.whitelabeling.sidebarLogoBlobPath }}
-        "sidebarLogo": {{ .Files.Get $file | quote }},
+      {{ else if .Values.waldur.whitelabeling.sidebarLogoPath }}
+      "sidebarLogo": "images/sidebar_logo.png",
       {{ end }}
 
       {{ if .Values.waldur.whitelabeling.poweredByLogoUrl }}
       "poweredByLogo": {{ .Values.waldur.whitelabeling.poweredByLogoUrl | quote}},
-      {{ else if .Values.waldur.whitelabeling.poweredByLogoBlobPath }}
-        {{ $file :=  .Values.waldur.whitelabeling.poweredByLogoBlobPath }}
-        "poweredByLogo": {{ .Files.Get $file | quote }},
+      {{ else if .Values.waldur.whitelabeling.poweredByLogoPath }}
+      "poweredByLogo": "images/poweredby_logo.png",
       {{ end }}
 
       "apiEndpoint": {{ .Values.waldur.apiUrl | quote}}

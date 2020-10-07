@@ -12,8 +12,8 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-apiHostname: api.example.com
-homeportHostname: web.example.com
+apiHostname: waldur.local
+homeportHostname: waldur.local
 
 affinity: {}
 
@@ -69,7 +69,7 @@ logManagement:
 
 waldur:
   imageTag: latest
-  apiUrl: "https://api.example.com/" ## NB: this string must match `https://<hostname>/` pattern (or similar with `http` protocol)
+  apiUrl: "https://waldur.local/" ## NB: this string must match `https://<hostname>/` pattern (or similar with `http` protocol)
   homeportUrl: ""
   emailHost: ""
   notificationSubject: ""
@@ -165,20 +165,16 @@ waldur:
     shortPageTitle: ""
     modePageTitle: ""
     loginLogoUrl: ""
-    loginLogoBlobPath: ""
+    loginLogoPath: ""
     sidebarLogoUrl: ""
-    sidebarLogoBlobPath: ""
+    sidebarLogoPath: ""
     poweredByLogoUrl: ""
-    poweredByLogoBlobPath: ""
+    poweredByLogoPath: ""
     faviconPath: ""
-    faviconBlobPath: ""
-    manifestJsonPath: ""
     logo96Path: ""
-    logo96BlobPath: ""
     logo144Path: ""
-    logo144BlobPath: ""
     logo192Path: ""
-    logo192BlobPath: ""
+    manifestJsonPath: ""
     tosHtmlPath: ""
     privacyHtmlPath: ""
   mastermindTemplating:
@@ -188,7 +184,7 @@ waldur:
     dir: "waldur_saml2"
 
 postgresql:
-  enabled: false
+  enabled: true
   postgresqlDatabase: waldur
   postgresqlUsername: waldur
   postgresqlPassword: waldur
@@ -199,7 +195,7 @@ postgresql:
   exisitingSecret: ""
 
 postgresql-ha:
-  enabled: true
+  enabled: false
   postgresql:
     database: waldur
     username: waldur

@@ -1,0 +1,17 @@
+{{ if .Values.bootstrap.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mastermind-bootstrap-config
+data:
+  bootstrapper: |-
+    #!/bin/bash
+    cd /root/{{ .Values.bootstrap.dir }}
+    ./{{ .Values.bootstrap.script }}
+
+  {{ $bootstrapPathPattern := .Values.bootstrap.dir | printf "%s/**" }}
+  {{ range $path, $data := .Files.Glob $bootstrapPathPattern }}
+  {{ $path | base }}: |-
+{{ $data | toString | indent 4 }}
+  {{ end }}
+{{ end }}

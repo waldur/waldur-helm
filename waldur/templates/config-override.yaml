@@ -83,6 +83,17 @@ data:
     })
     {{ end }}
 
+    {{ if has "EDUTEAMS" .Values.waldur.authMethods }}
+    WALDUR_AUTH_SOCIAL.update({
+        'EDUTEAMS_LABEL': '{{ .Values.waldur.eduteams.label }}',
+        'EDUTEAMS_CLIENT_ID': '{{ .Values.waldur.eduteams.clientId }}',
+        'EDUTEAMS_SECRET': '{{ .Values.waldur.eduteams.secret }}',
+        'EDUTEAMS_AUTH_URL': '{{ .Values.waldur.eduteams.authUrl }}',
+        'EDUTEAMS_TOKEN_URL': '{{ .Values.waldur.eduteams.tokenUrl }}',
+        'EDUTEAMS_USERINFO_URL': '{{ .Values.waldur.eduteams.userinfoUrl }}',
+    })
+    {{ end }}
+
     {{ if has "LDAP" .Values.waldur.authMethods }}
     #
     # LDAP

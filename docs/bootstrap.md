@@ -7,8 +7,8 @@ Example script:
   set -e
 
   echo "[+] Creating staff user"
-  gosu waldur sh -c "waldur createstaffuser -u admin -p admin -e admin@somemail.com"
-  echo "[+] Finish"
+  gosu waldur sh -c "waldur createstaffuser -u admin -p admin -e admin@example.com"
+  echo "[+] Done"
 
   exit 0
 ```

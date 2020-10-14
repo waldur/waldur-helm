@@ -40,7 +40,37 @@ data:
       {{ end }}
       ],
       {{ end }}
+
+      {{ if has "billing" .Values.waldur.features }}
+      "accountingMode": "billing",
+      {{ else }}
+      "hideOrganizationBillingStep": true,
+      {{ end }}
+
+      {{ if has "secure_session" .Values.waldur.features }}
+      "authStorage": "sessionStorage",
+      {{ end }}
+
+      {{ if .Values.waldur.currencyName }}
+      "currency": {{ .Values.waldur.currencyName | quote }},
+      {{ end }}
+
+      {{ if .Values.waldur.homeport.googleAnalyticsID }}
+      "GoogleAnalyticsID": {{ .Values.waldur.homeport.googleAnalyticsID | quote }},
+      {{ end }}
+
+      {{ if .Values.waldur.sentryDSN }}
+      "SENTRY_DSN": {{ .Values.waldur.sentryDSN | quote }},
+      {{ end }}
+
+      {{ if .Values.waldur.homeport.userMandatoryFields }}
+      "userMandatoryFields": {{ .Values.waldur.homeport.userMandatoryFields | toJson }},
+      {{ end }}
       
+      {{ if .Values.waldur.homeport.userRegistrationHiddenFields }}
+      "userRegistrationHiddenFields": {{ .Values.waldur.homeport.userRegistrationHiddenFields | toJson }},
+      {{ end }}
+
       {{ if .Values.waldur.whitelabeling.shortPageTitle }}
       "shortPageTitle": {{ .Values.waldur.whitelabeling.shortPageTitle | quote }},
       {{ end }}

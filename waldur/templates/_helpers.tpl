@@ -125,20 +125,6 @@ Set rabbitmq host
 {{- end -}}
 
 {{/*
-Set rabbitmq AMQP port
-*/}}
-{{- define "waldur.rabbitmq.amqpPort" -}}
-{{ default 5672 .Values.rabbitmq.customAMQPPort }}
-{{- end -}}
-
-{{/*
-Set rabbitmq management port
-*/}}
-{{- define "waldur.rabbitmq.mngmtPort" -}}
-{{ default 15672 .Values.rabbitmq.customManagementPort }}
-{{- end -}}
-
-{{/*
 Set rabbitmq URL
 */}}
 {{- define "waldur.rabbitmq.rmqUrl" -}}

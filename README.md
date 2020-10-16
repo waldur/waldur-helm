@@ -98,7 +98,7 @@ Delete initdb job (if exitsts):
   kubectl delete job waldur-mastermind-initdb-job || true
 ```
 
-Upgrade Waldur dependensies and release:
+Upgrade Waldur dependencies and release:
 ```bash
   helm dep update waldur/
   helm upgrade waldur waldur/

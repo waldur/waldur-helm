@@ -53,3 +53,23 @@ The last command uses `elastic-values.yaml`, where you can configure:
 1) `elasticsearchHosts` - `elasticsearch-master` service URL. See [this doc](service-endpoint.md) for details.
 2) `ingress` - ingress configuration (enabled by default). 
 3) `resources` - same resources configuration as for Elasticreach release.
+
+### Log viewing
+After configuration, you can view logs by opening
+```
+  http://<kibana-values.ingress.hosts[0]>/
+``` 
+in your browser. 
+
+This works only if you set `kibana-values.ingress.enabled=true` and add some hostname into `kibana-values.ingress.hosts` list.
+
+You can also use kubernetes proxy instead of ingress. For this:
+Bind proxy to a specific port on your local machine:
+```
+  kubectl proxy --port=8080
+```
+
+Access kibana dashboard:
+```
+  http://localhost:8080/api/v1/namespaces/elastic/services/http:kibana-kibana:http/proxy
+```

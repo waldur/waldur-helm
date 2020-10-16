@@ -91,3 +91,24 @@ Instructions for bootstrap: [doc](/docs/bootstrap.md)
 
 ## Stress testing
 Instructions for stress testing configuration using Locust: [doc](/docs/locust.md)
+
+## Waldur Helm chart release upgrading
+Delete initdb job (if exitsts):
+```bash
+  kubectl delete job waldur-mastermind-initdb-job || true
+```
+
+Upgrade Waldur dependensies and release:
+```bash
+  helm dep update waldur/
+  helm upgrade waldur waldur/
+```
+
+Restart deployments to apply configmaps changes:
+
+```bash
+  kubectl rollout restart deployment waldur-mastermind-beat
+  kubectl rollout restart deployment waldur-mastermind-api
+  kubectl rollout restart deployment waldur-mastermind-worker
+  kubectl rollout restart deployment waldur-homeport
+```

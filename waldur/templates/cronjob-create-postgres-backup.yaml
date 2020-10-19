@@ -4,6 +4,8 @@ metadata:
   name: create-postgres-backup-job
 spec:
   schedule: {{ .Values.postgres_backup.schedule | quote }}
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
       template:
@@ -15,7 +17,10 @@ spec:
               args: [
                   "-c",
                   'echo "$PGPASS" > /root/.pgpass && chmod 600 /root/.pgpass &&
-                  pg_dump -U postgres_admin -h postgres test_database >
+                  pg_dump 
+                    -U {{ include "waldur.postgresql.user" . }} 
+                    -h {{ include "waldur.postgresql.host" . }} 
+                      {{ include "waldur.postgresql.dbname" . }} >
                   /var/backups/backup-$(date +"%m-%d-%Y-%H-%M").sql']
               env:
                 - name: PGPASS
@@ -30,3 +35,4 @@ spec:
             - name: postgres-backup-storage
               persistentVolumeClaim:
                 claimName: postgres-backup-storage
+          restartPolicy: Never

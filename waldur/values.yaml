@@ -237,6 +237,11 @@ postgresql-ha:
   postgresqlImage:
     tag: 12
 
+postgres_backup:
+  size: 5Gi
+  schedule: "0 5 * * *"
+  storageClass: ""
+
 minio:
   accessKey: ""
   secretKey: ""

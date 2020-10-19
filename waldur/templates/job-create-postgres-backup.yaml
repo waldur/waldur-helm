@@ -1,0 +1,32 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: create-postgres-backup-job
+spec:
+  schedule: {{ .Values.postgres_backup.schedule | quote }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: "postgres-backup"
+              image: postgres:{{ template "waldur.postgresql.version" . }}
+              command: ["/bin/sh"]
+              args: [
+                  "-c",
+                  'echo "$PGPASS" > /root/.pgpass && chmod 600 /root/.pgpass &&
+                  pg_dump -U postgres_admin -h postgres test_database >
+                  /var/backups/backup-$(date +"%m-%d-%Y-%H-%M").sql']
+              env:
+                - name: PGPASS
+                  valueFrom:
+                    secretKeyRef:
+                      name: pgpass
+                      key: pgpass
+              volumeMounts:
+                - mountPath: /var/backups
+                  name: postgres-backup-storage
+          volumes:
+            - name: postgres-backup-storage
+              persistentVolumeClaim:
+                claimName: postgres-backup-storage

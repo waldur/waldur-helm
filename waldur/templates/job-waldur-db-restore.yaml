@@ -1,0 +1,67 @@
+{{ if .Values.postgres_backup.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: waldur-db-restore-job
+  labels:
+    app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    app.kubernetes.io/version: {{ .Chart.AppVersion }}
+    helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+  annotations:
+    "helm.sh/hook": post-upgrade
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": before-hook-creation, hook-succeeded, hook-failed
+spec:
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+        app.kubernetes.io/instance: {{ .Release.Name | quote }}
+        app.kubernetes.io/version: {{ .Chart.AppVersion }}
+        helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    spec:
+      containers:
+        - name: "postgres-backup"
+          image: postgres:{{ template "waldur.postgresql.version" . }}
+          command: ["/bin/sh"]
+          args: [
+            "-c",
+            'echo "$PGPASS" > /root/.pgpass                     &&
+            chmod 600 /root/.pgpass                             &&
+            cd /var/backups/                                    &&
+            export BACKUP_FILE=$(ls | sort -r | head --lines=1) &&
+            cat $BACKUP_FILE |
+            psql 
+              -U $POSTGRESQL_USER
+              -h $POSTGRESQL_HOST 
+              -d $POSTGRESQL_NAME'
+          ]
+          env:
+            - name: POSTGRESQL_HOST
+              value: {{ template "waldur.postgresql.host" . }}
+            - name: POSTGRESQL_PORT
+              value: {{ template "waldur.postgresql.port" . }}
+            - name: POSTGRESQL_USER
+              value: {{ template "waldur.postgresql.user" . }}
+            - name: POSTGRESQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "waldur.postgresql.secret" . }}
+                  key: {{ template "waldur.postgresql.secret.passwordKey" . }}
+            - name: POSTGRESQL_NAME
+              value: {{ template "waldur.postgresql.dbname" . }}
+            - name: PGPASS
+              valueFrom:
+                secretKeyRef:
+                  name: pgpass
+                  key: pgpass
+          volumeMounts:
+            - name: postgres-backup-storage
+              mountPath: /var/backups
+      volumes:
+        - name: postgres-backup-storage
+          persistentVolumeClaim:
+            claimName: postgres-backup-storage
+      restartPolicy: Never
+{{ end }}

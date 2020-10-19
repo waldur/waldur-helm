@@ -1,7 +1,8 @@
+{{ if .Values.postgres_backup.enabled }}
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: create-postgres-backup-job
+  name: waldur-db-backup-cronjob
 spec:
   schedule: {{ .Values.postgres_backup.schedule | quote }}
   successfulJobsHistoryLimit: 1
@@ -15,14 +16,24 @@ spec:
               image: postgres:{{ template "waldur.postgresql.version" . }}
               command: ["/bin/sh"]
               args: [
-                  "-c",
-                  'echo "$PGPASS" > /root/.pgpass && chmod 600 /root/.pgpass &&
-                  pg_dump 
-                    -U {{ include "waldur.postgresql.user" . }} 
-                    -h {{ include "waldur.postgresql.host" . }} 
-                      {{ include "waldur.postgresql.dbname" . }} >
-                  /var/backups/backup-$(date +"%m-%d-%Y-%H-%M").sql']
+                "-c",
+                'echo "$PGPASS" > /root/.pgpass && 
+                chmod 600 /root/.pgpass         &&
+                pg_dump 
+                  -U $POSTGRESQL_USER
+                  -h $POSTGRESQL_HOST 
+                  $POSTGRESQL_NAME >
+                /var/backups/backup-$(date +"%m-%d-%Y-%H-%M").sql'
+              ]
               env:
+                - name: POSTGRESQL_HOST
+                  value: {{ template "waldur.postgresql.host" . }}
+                - name: POSTGRESQL_PORT
+                  value: {{ template "waldur.postgresql.port" . }}
+                - name: POSTGRESQL_USER
+                  value: {{ template "waldur.postgresql.user" . }}
+                - name: POSTGRESQL_NAME
+                  value: {{ template "waldur.postgresql.dbname" . }}
                 - name: PGPASS
                   valueFrom:
                     secretKeyRef:
@@ -36,3 +47,4 @@ spec:
               persistentVolumeClaim:
                 claimName: postgres-backup-storage
           restartPolicy: Never
+{{ end }}

@@ -469,3 +469,7 @@ data:
     AWS_STORAGE_BUCKET_NAME = '{{ .Values.minio.bucketName }}'
     AWS_S3_ENDPOINT_URL = '{{ .Values.minio.endpoint }}'
     CONVERT_MEDIA_URLS_TO_MASTERMIND_NETLOC = True
+
+    {{ if .Values.waldur.defaultFromEmail }}
+    DEFAULT_FROM_EMAIL = '{{ .Values.waldur.defaultFromEmail }}'
+    {{ end }}

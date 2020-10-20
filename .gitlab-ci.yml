@@ -54,7 +54,7 @@ Test release installation:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
     - time helm install rmq bitnami/rabbitmq -f rmq-values.yaml
-    - time helm install waldur waldur/ --set ingress.tls.source=secret,logManagement.enabled=false
+    - time helm install waldur waldur/ --set ingress.tls.source=secret,logManagement.enabled=false --timeout 10m0s
     - helm list
     - kubectl get pods
 

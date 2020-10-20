@@ -40,8 +40,8 @@ spec:
                       name: pgpass
                       key: pgpass
               volumeMounts:
-                - mountPath: /var/backups
-                  name: postgres-backup-storage
+                - name: postgres-backup-storage
+                  mountPath: /var/backups
           volumes:
             - name: postgres-backup-storage
               persistentVolumeClaim:

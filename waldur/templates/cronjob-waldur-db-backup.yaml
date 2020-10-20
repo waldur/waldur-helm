@@ -17,11 +17,18 @@ spec:
               command: ["/bin/sh"]
               args: [
                 "-c",
-                'echo "$PGPASS" > /root/.pgpass && 
-                chmod 600 /root/.pgpass         &&
+                'OLD_BACKUPS=$(find /var/backups -type f -name "*.sql" -mtime 1) &&
+                echo "[+] Backups for last 24 hours since now: $OLD_BACKUPS"     &&
+                if [ -n "$OLD_BACKUPS" ]; then
+                  echo "[+] Deleting old backups";
+                  rm $OLD_BACKUPS;
+                fi                                                               &&
+                echo "$PGPASS" > /root/.pgpass                                   &&
+                chmod 600 /root/.pgpass                                          &&
+                echo "[+] Creating backups"                                      &&
                 pg_dump 
                   -U $POSTGRESQL_USER
-                  -h $POSTGRESQL_HOST 
+                  -h $POSTGRESQL_HOST
                   $POSTGRESQL_NAME >
                 /var/backups/backup-$(date +"%m-%d-%Y-%H-%M").sql'
               ]

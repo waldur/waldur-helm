@@ -5,7 +5,7 @@ metadata:
 data:
   backup: |-
     #!/bin/bash
-    echo "[+] $(whoami)"
+    echo "[+] Setting up pgpass"
     echo "$PGPASS" > /root/.pgpass
     chmod 600 /root/.pgpass
     echo "[+] Creating backups"
@@ -14,10 +14,20 @@ data:
       -h $POSTGRESQL_HOST \
       $POSTGRESQL_NAME > /var/backups/backup-$(date +"%m-%d-%Y-%H-%M").sql
     {{ if gt (.Values.postgresBackup.retentionDays | int) -1 }}
-    echo "[+] Deleting old backups";
-    OLD_BACKUPS=$(find /var/backups -type f -name "*.sql" -mtime {{ .Values.postgresBackup.retentionDays }})
-    echo "[+] Backups for last {{ .Values.postgresBackup.retentionDays }} days since now: $OLD_BACKUPS"
-    if [ -n "$OLD_BACKUPS" ]; then
+    echo "[+] Deleting old backups"
+
+    export RETENTION_DAYS={{ .Values.postgresBackup.retentionDays }}
+    export MIN_BACKUPS_NUMBER={{ .Values.postgresBackup.minNumber }}
+    export BACKUPS_NUMBER=$(find /var/backups -type f -name "*.sql" | wc -l)
+    export EXTRA_BACKUPS_NUMBER=$(( $BACKUPS_NUMBER - $MIN_BACKUPS_NUMBER ))
+
+    echo "[+] Total number of backups   : $BACKUPS_NUMBER"
+    echo "[+] Minimum number of backups : $MIN_BACKUPS_NUMBER"
+    echo "[+] Number of extra backups   : $EXTRA_BACKUPS_NUMBER"
+
+    if [ $EXTRA_BACKUPS_NUMBER -gt 0 ]; then
+      export OLD_BACKUPS=$(find /var/backups -type f -name "*.sql" -mtime $RETENTION_DAYS | sort | head --lines=$EXTRA_BACKUPS_NUMBER)
+      echo "[+] Backups for last $RETENTION_DAYS days: $OLD_BACKUPS"
       rm -v $OLD_BACKUPS;
     fi
     {{ end }}

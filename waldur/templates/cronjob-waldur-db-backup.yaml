@@ -1,10 +1,10 @@
-{{ if .Values.postgres_backup.enabled }}
+{{ if .Values.postgresBackup.enabled }}
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
   name: waldur-db-backup-cronjob
 spec:
-  schedule: {{ .Values.postgres_backup.schedule | quote }}
+  schedule: {{ .Values.postgresBackup.schedule | quote }}
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 1
   jobTemplate:
@@ -15,23 +15,7 @@ spec:
             - name: "postgres-backup"
               image: postgres:{{ template "waldur.postgresql.version" . }}
               command: ["/bin/sh"]
-              args: [
-                "-c",
-                'OLD_BACKUPS=$(find /var/backups -type f -name "*.sql" -mtime 1) &&
-                echo "[+] Backups for last 24 hours since now: $OLD_BACKUPS"     &&
-                if [ -n "$OLD_BACKUPS" ]; then
-                  echo "[+] Deleting old backups";
-                  rm $OLD_BACKUPS;
-                fi                                                               &&
-                echo "$PGPASS" > /root/.pgpass                                   &&
-                chmod 600 /root/.pgpass                                          &&
-                echo "[+] Creating backups"                                      &&
-                pg_dump 
-                  -U $POSTGRESQL_USER
-                  -h $POSTGRESQL_HOST
-                  $POSTGRESQL_NAME >
-                /var/backups/backup-$(date +"%m-%d-%Y-%H-%M").sql'
-              ]
+              args: ["-c", "backup"]
               env:
                 - name: POSTGRESQL_HOST
                   value: {{ template "waldur.postgresql.host" . }}
@@ -49,9 +33,16 @@ spec:
               volumeMounts:
                 - name: postgres-backup-storage
                   mountPath: /var/backups
+                - name: postgres-backup-script
+                  mountPath: /usr/local/bin/backup
+                  subPath: backup
           volumes:
             - name: postgres-backup-storage
               persistentVolumeClaim:
                 claimName: postgres-backup-storage
+            - name: postgres-backup-script
+              configMap:
+                name: waldur-db-backup-script
+                defaultMode: 0777
           restartPolicy: Never
 {{ end }}

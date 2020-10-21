@@ -1,0 +1,23 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: waldur-db-backup-script
+data:
+  backup: |-
+    #!/bin/bash
+    echo "[+] $(whoami)"
+    echo "$PGPASS" > /root/.pgpass
+    chmod 600 /root/.pgpass
+    echo "[+] Creating backups"
+    pg_dump \
+      -U $POSTGRESQL_USER \
+      -h $POSTGRESQL_HOST \
+      $POSTGRESQL_NAME > /var/backups/backup-$(date +"%m-%d-%Y-%H-%M").sql
+    {{ if gt (.Values.postgresBackup.retentionDays | int) -1 }}
+    echo "[+] Deleting old backups";
+    OLD_BACKUPS=$(find /var/backups -type f -name "*.sql" -mtime {{ .Values.postgresBackup.retentionDays }})
+    echo "[+] Backups for last {{ .Values.postgresBackup.retentionDays }} days since now: $OLD_BACKUPS"
+    if [ -n "$OLD_BACKUPS" ]; then
+      rm -v $OLD_BACKUPS;
+    fi
+    {{ end }}

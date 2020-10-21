@@ -237,11 +237,12 @@ postgresql-ha:
   postgresqlImage:
     tag: 12
 
-postgres_backup:
+postgresBackup:
   enabled: false
   size: 5Gi
   schedule: "0 5 * * *"
   storageClass: ""
+  retentionDays: 365
 
 minio:
   accessKey: ""

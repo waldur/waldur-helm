@@ -1,13 +1,13 @@
-{{ if .Values.postgres_backup.enabled }}
+{{ if .Values.postgresBackup.enabled }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: postgres-backup-storage
 spec:
-  storageClassName: {{ .Values.postgres_backup.storageClass | quote }}
+  storageClassName: {{ .Values.postgresBackup.storageClass | quote }}
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: {{ .Values.postgres_backup.size }}
+      storage: {{ .Values.postgresBackup.size }}
 {{ end }}

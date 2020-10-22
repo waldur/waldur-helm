@@ -1,0 +1,54 @@
+{{ if .Values.postgresBackup.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: waldur-db-backup-job
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  template:
+    spec:
+      containers:
+        - name: "postgres-backup-hook"
+          image: {{ .Values.postgresBackup.image }}
+          command: ["/bin/sh"]
+          args: ["-c", "backup"]
+          env:
+            - name: POSTGRESQL_HOST
+              value: {{ template "waldur.postgresql.host" . }}
+            - name: POSTGRESQL_PORT
+              value: {{ template "waldur.postgresql.port" . }}
+            - name: POSTGRESQL_USER
+              value: {{ template "waldur.postgresql.user" . }}
+            - name: POSTGRESQL_NAME
+              value: {{ template "waldur.postgresql.dbname" . }}
+            - name: PGPASS
+              valueFrom:
+                secretKeyRef:
+                  name: pgpass
+                  key: pgpass
+            - name: MINIO_SERVER
+              value: "http://minio:9000"
+            - name: MINIO_ACCESS_KEY
+              value: {{ .Values.minio.accessKey | quote }}
+            - name: MINIO_SECRET_KEY
+              value: {{ .Values.minio.secretKey | quote }}
+            - name: MINIO_BUCKET
+              value: {{ .Values.minio.bucketName | quote }}
+            - name: MINIO_API_VERSION
+              value: "S3v4"
+          volumeMounts:
+            - name: postgres-backup-script
+              mountPath: /usr/local/bin/backup
+              subPath: backup
+      volumes:
+        - name: postgres-backup-script
+          configMap:
+            name: waldur-db-backup-script
+            defaultMode: 0777
+      restartPolicy: Never
+{{ end }}

@@ -1,0 +1,53 @@
+{{ if .Values.postgresBackup.enabled }}
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: waldur-db-backup-cronjob
+spec:
+  schedule: {{ .Values.postgresBackup.schedule | quote }}
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: "postgres-backup-cronjob"
+              image: {{ .Values.postgresBackup.image }}
+              command: ["/bin/sh"]
+              args: ["-c", "backup"]
+              env:
+                - name: POSTGRESQL_HOST
+                  value: {{ template "waldur.postgresql.host" . }}
+                - name: POSTGRESQL_PORT
+                  value: {{ template "waldur.postgresql.port" . }}
+                - name: POSTGRESQL_USER
+                  value: {{ template "waldur.postgresql.user" . }}
+                - name: POSTGRESQL_NAME
+                  value: {{ template "waldur.postgresql.dbname" . }}
+                - name: PGPASS
+                  valueFrom:
+                    secretKeyRef:
+                      name: pgpass
+                      key: pgpass
+                - name: MINIO_SERVER
+                  value: "http://minio:9000"
+                - name: MINIO_ACCESS_KEY
+                  value: {{ .Values.minio.accessKey | quote }}
+                - name: MINIO_SECRET_KEY
+                  value: {{ .Values.minio.secretKey | quote }}
+                - name: MINIO_BUCKET
+                  value: {{ .Values.minio.bucketName | quote }}
+                - name: MINIO_API_VERSION
+                  value: "S3v4"
+              volumeMounts:
+                - name: postgres-backup-script
+                  mountPath: /usr/local/bin/backup
+                  subPath: backup
+          volumes:
+            - name: postgres-backup-script
+              configMap:
+                name: waldur-db-backup-script
+                defaultMode: 0777
+          restartPolicy: Never
+{{ end }}

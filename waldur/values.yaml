@@ -238,6 +238,14 @@ postgresql-ha:
   postgresqlImage:
     tag: 12
 
+postgresBackup:
+  enabled: false
+  schedule: "0 5 * * *"
+  rotationSchedule: "0 6 * * 6"
+  retentionDays: 365
+  minNumber: 10
+  image: opennode/postgres-minio:0.1.0
+
 minio:
   accessKey: ""
   secretKey: ""

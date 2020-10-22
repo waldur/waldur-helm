@@ -1,0 +1,36 @@
+{{ if .Values.postgresBackup.enabled }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: waldur-db-backup-script
+data:
+  backup: |-
+    #!/bin/bash
+    export LOCAL_PG_BACKUPS_DIR=/var/backups/postgres
+    export MINIO_PG_BACKUPS_DIR=pg/$MINIO_BUCKET/backups/postgres
+    export BACKUP_NAME=waldur-$(date +"%m-%d-%Y-%H-%M").sql.gz
+
+    echo "[+] LOCAL_PG_BACKUPS_DIR  : $LOCAL_PG_BACKUPS_DIR"
+    echo "[+] MINIO_PG_BACKUPS_DIR  : $MINIO_PG_BACKUPS_DIR"
+    echo "[+] BACKUP_NAME           : $BACKUP_NAME"
+
+    mkdir -p $LOCAL_PG_BACKUPS_DIR || true
+
+    echo "[+] Setting up pgpass"
+    echo "$PGPASS" > /root/.pgpass
+    chmod 600 /root/.pgpass
+
+    echo "[+] Creating backups"
+    pg_dump \
+      -U $POSTGRESQL_USER \
+      -h $POSTGRESQL_HOST \
+      $POSTGRESQL_NAME | gzip -9 > $LOCAL_PG_BACKUPS_DIR/$BACKUP_NAME
+    echo "[+] Backup $LOCAL_PG_BACKUPS_DIR/$BACKUP_NAME was created"
+
+    echo "[+] Setting up the postgres alias for minio server ($MINIO_SERVER)"
+    mc alias set pg "$MINIO_SERVER" "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY" --api "$MINIO_API_VERSION" > /dev/null
+
+    echo "[+] Copy new backup to $MINIO_PG_BACKUPS_DIR"
+    mc cp $LOCAL_PG_BACKUPS_DIR/$BACKUP_NAME $MINIO_PG_BACKUPS_DIR/
+    echo "[+] Finished"
+{{ end }}

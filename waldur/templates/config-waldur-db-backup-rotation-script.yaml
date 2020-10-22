@@ -1,0 +1,34 @@
+{{ if and (.Values.postgresBackup.enabled) (gt (.Values.postgresBackup.retentionDays | int) -1) }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: waldur-db-backup-rotation-script
+data:
+  backup-rotation: |-
+    #!/bin/bash
+    export MINIO_PG_BACKUPS_DIR=pg/$MINIO_BUCKET/backups/postgres
+    export RETENTION_DAYS={{ .Values.postgresBackup.retentionDays }}
+    export MIN_BACKUPS_NUMBER={{ .Values.postgresBackup.minNumber }}
+
+    echo "[+] MINIO_PG_BACKUPS_DIR: $MINIO_PG_BACKUPS_DIR"
+
+    echo "[+] Setting up the postgres alias for minio server ($MINIO_SERVER)"
+    mc alias set pg "$MINIO_SERVER" "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY" --api "$MINIO_API_VERSION" > /dev/null
+
+    export BACKUPS_NUMBER=$(mc find $MINIO_PG_BACKUPS_DIR -name "*.sql.gz" | wc -l)
+    export EXTRA_BACKUPS_NUMBER=$(( $BACKUPS_NUMBER - $MIN_BACKUPS_NUMBER ))
+
+    echo "[+] Deleting old backups"
+    echo "[+] Total number of backups   : $BACKUPS_NUMBER"
+    echo "[+] Minimum number of backups : $MIN_BACKUPS_NUMBER"
+    echo "[+] Number of extra backups   : $EXTRA_BACKUPS_NUMBER"
+
+    if [ $EXTRA_BACKUPS_NUMBER -gt 0 ]; then
+      export OLD_BACKUPS=$(mc find $MINIO_PG_BACKUPS_DIR -name "*.sql.gz" --older-than ${RETENTION_DAYS}d0h0m | sort | head --lines=$EXTRA_BACKUPS_NUMBER)
+      echo "[+] Backups older than $RETENTION_DAYS days: $OLD_BACKUPS"
+      echo "[+] Deleting them"
+      mc rm $OLD_BACKUPS
+    fi
+
+    echo "[+] Finished"
+{{ end }}

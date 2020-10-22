@@ -72,12 +72,13 @@ Open waldur-mastermind-worker shell and execute the following command:
 ```
   waldur createstaffuser -u user -p password -e admin@example.com
 ```
+## PostgreSQL backups management
+ Instructions for PostgreSQL backups management: [doc](/docs/postgres-backup-management.md)
 
 ## White-labeling
 Instructions for while-labeling: [doc](/docs/whitelabeling.md)
 
 ## Custom mastermind templates
-
 Instructions for template configuration: [doc](/docs/mastermind-templates.md)
 
 ## HPA (horizontal pod autoscaler)

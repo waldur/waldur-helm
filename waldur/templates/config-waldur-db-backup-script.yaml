@@ -1,3 +1,4 @@
+{{ if .Values.postgresBackup.enabled }}
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -5,29 +6,31 @@ metadata:
 data:
   backup: |-
     #!/bin/bash
+    export LOCAL_PG_BACKUPS_DIR=/var/backups/postgres
+    export MINIO_PG_BACKUPS_DIR=pg/$MINIO_BUCKET/backups/postgres
+    export BACKUP_NAME=backup-$(date +"%m-%d-%Y-%H-%M").sql
+
+    echo "[+] LOCAL_PG_BACKUPS_DIR  : $LOCAL_PG_BACKUPS_DIR"
+    echo "[+] MINIO_PG_BACKUPS_DIR  : $MINIO_PG_BACKUPS_DIR"
+    echo "[+] BACKUP_NAME           : $BACKUP_NAME"
+
+    mkdir -p $LOCAL_PG_BACKUPS_DIR || true
+
     echo "[+] Setting up pgpass"
     echo "$PGPASS" > /root/.pgpass
     chmod 600 /root/.pgpass
+
     echo "[+] Creating backups"
     pg_dump \
       -U $POSTGRESQL_USER \
       -h $POSTGRESQL_HOST \
-      $POSTGRESQL_NAME > /var/backups/backup-$(date +"%m-%d-%Y-%H-%M").sql
-    {{ if gt (.Values.postgresBackup.retentionDays | int) -1 }}
-    echo "[+] Deleting old backups"
+      $POSTGRESQL_NAME > $LOCAL_PG_BACKUPS_DIR/$BACKUP_NAME
+    echo "[+] Backup $LOCAL_PG_BACKUPS_DIR/$BACKUP_NAME was created"
 
-    export RETENTION_DAYS={{ .Values.postgresBackup.retentionDays }}
-    export MIN_BACKUPS_NUMBER={{ .Values.postgresBackup.minNumber }}
-    export BACKUPS_NUMBER=$(find /var/backups -type f -name "*.sql" | wc -l)
-    export EXTRA_BACKUPS_NUMBER=$(( $BACKUPS_NUMBER - $MIN_BACKUPS_NUMBER ))
+    echo "[+] Setting up the postgres alias for minio server ($MINIO_SERVER)"
+    mc alias set pg "$MINIO_SERVER" "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY" --api "$MINIO_API_VERSION" > /dev/null
 
-    echo "[+] Total number of backups   : $BACKUPS_NUMBER"
-    echo "[+] Minimum number of backups : $MIN_BACKUPS_NUMBER"
-    echo "[+] Number of extra backups   : $EXTRA_BACKUPS_NUMBER"
-
-    if [ $EXTRA_BACKUPS_NUMBER -gt 0 ]; then
-      export OLD_BACKUPS=$(find /var/backups -type f -name "*.sql" -mtime $RETENTION_DAYS | sort | head --lines=$EXTRA_BACKUPS_NUMBER)
-      echo "[+] Backups for last $RETENTION_DAYS days: $OLD_BACKUPS"
-      rm -v $OLD_BACKUPS;
-    fi
-    {{ end }}
+    echo "[+] Copy new backup to $MINIO_PG_BACKUPS_DIR"
+    mc cp $LOCAL_PG_BACKUPS_DIR/$BACKUP_NAME $MINIO_PG_BACKUPS_DIR/
+    echo "[+] Finished"
+{{ end }}

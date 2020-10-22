@@ -1,27 +1,22 @@
 {{ if .Values.postgresBackup.enabled }}
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
-  name: waldur-db-restore
+  name: waldur-db-backup-job
   labels:
 {{ include "waldur.labels" . | indent 4 }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation
 spec:
-  replicas: {{ default 1 .Values.replicaCount | int }}
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: {{ include "waldur.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
   template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: {{ include "waldur.name" . }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
       containers:
-        - name: "waldur-postgres-restore"
+        - name: "postgres-backup-hook"
           image: opennode/postgres-minio:{{ .Values.postgresBackup.imageTag }}
           command: ["/bin/sh"]
-          args: ["-c", "while true; do sleep 100; done;"]
+          args: ["-c", "backup"]
           env:
             - name: POSTGRESQL_HOST
               value: {{ template "waldur.postgresql.host" . }}
@@ -29,11 +24,6 @@ spec:
               value: {{ template "waldur.postgresql.port" . }}
             - name: POSTGRESQL_USER
               value: {{ template "waldur.postgresql.user" . }}
-            - name: POSTGRESQL_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "waldur.postgresql.secret" . }}
-                  key: {{ template "waldur.postgresql.secret.passwordKey" . }}
             - name: POSTGRESQL_NAME
               value: {{ template "waldur.postgresql.dbname" . }}
             - name: PGPASS
@@ -51,4 +41,14 @@ spec:
               value: {{ .Values.minio.bucketName | quote }}
             - name: MINIO_API_VERSION
               value: "S3v4"
+          volumeMounts:
+            - name: postgres-backup-script
+              mountPath: /usr/local/bin/backup
+              subPath: backup
+      volumes:
+        - name: postgres-backup-script
+          configMap:
+            name: waldur-db-backup-script
+            defaultMode: 0777
+      restartPolicy: Never
 {{ end }}

@@ -241,9 +241,11 @@ postgresBackup:
   enabled: false
   size: 5Gi
   schedule: "0 5 * * *"
+  rotationSchedule: "0 6 * * 6"
   storageClass: ""
   retentionDays: 365
   minNumber: 10
+  imageTag: "0.1.0"
 
 minio:
   accessKey: ""

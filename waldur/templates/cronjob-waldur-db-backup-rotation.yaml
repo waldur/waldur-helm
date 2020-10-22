@@ -1,10 +1,10 @@
-{{ if .Values.postgresBackup.enabled }}
+{{ if and (.Values.postgresBackup.enabled) (gt (.Values.postgresBackup.retentionDays | int) -1) }}
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
-  name: waldur-db-backup-cronjob
+  name: waldur-db-backup-rotation-cronjob
 spec:
-  schedule: {{ .Values.postgresBackup.schedule | quote }}
+  schedule: {{ .Values.postgresBackup.rotationSchedule | quote }}
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 1
   jobTemplate:
@@ -15,7 +15,7 @@ spec:
             - name: "postgres-backup-cronjob"
               image: opennode/postgres-minio:{{ .Values.postgresBackup.imageTag }}
               command: ["/bin/sh"]
-              args: ["-c", "backup"]
+              args: ["-c", "backup-rotation"]
               env:
                 - name: POSTGRESQL_HOST
                   value: {{ template "waldur.postgresql.host" . }}
@@ -41,13 +41,13 @@ spec:
                 - name: MINIO_API_VERSION
                   value: "S3v4"
               volumeMounts:
-                - name: postgres-backup-script
-                  mountPath: /usr/local/bin/backup
-                  subPath: backup
+                - name: postgres-backup-rotation-script
+                  mountPath: /usr/local/bin/backup-rotation
+                  subPath: backup-rotation
           volumes:
-            - name: postgres-backup-script
+            - name: postgres-backup-rotation-script
               configMap:
-                name: waldur-db-backup-script
+                name: waldur-db-backup-rotation-script
                 defaultMode: 0777
           restartPolicy: Never
 {{ end }}

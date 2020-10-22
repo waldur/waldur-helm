@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: "waldur-postgres-restore"
-          image: opennode/postgres-minio:{{ .Values.postgresBackup.imageTag }}
+          image: {{ .Values.postgresBackup.image }}
           command: ["/bin/sh"]
           args: ["-c", "while true; do sleep 100; done;"]
           env:

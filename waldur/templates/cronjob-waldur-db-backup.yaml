@@ -13,7 +13,7 @@ spec:
         spec:
           containers:
             - name: "postgres-backup-cronjob"
-              image: opennode/postgres-minio:{{ .Values.postgresBackup.imageTag }}
+              image: {{ .Values.postgresBackup.image }}
               command: ["/bin/sh"]
               args: ["-c", "backup"]
               env:

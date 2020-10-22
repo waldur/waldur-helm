@@ -73,7 +73,7 @@ Open waldur-mastermind-worker shell and execute the following command:
   waldur createstaffuser -u user -p password -e admin@example.com
 ```
 ## PostgreSQL backups management
- Instructions for PostgreSQL backups management: [doc](/docs/pg-backup-management.md)
+ Instructions for PostgreSQL backups management: [doc](/docs/postgres-backup-management.md)
 
 ## White-labeling
 Instructions for while-labeling: [doc](/docs/whitelabeling.md)

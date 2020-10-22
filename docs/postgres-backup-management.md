@@ -10,4 +10,4 @@ Backup configuration values (`postgresBackup` prefix):
 - `rotationSchedule` - cron-like schedule for backups rotation
 - `retentionDays` - number of days for backups retetion
 - `minNumber` - minnimum number of backups to store (takes presedence over `retentionDays` variable)
-- `imageTag` - tag of [opennode/postgres-minio](https://hub.docker.com/r/opennode/postgres-minio) image
+- `image` - image containing `potgres` and `minio` (client) binaries ([opennode/postgres-minio](https://hub.docker.com/r/opennode/postgres-minio) by default)

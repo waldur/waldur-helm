@@ -26,7 +26,8 @@ Run linter:
   stage: test
   interruptible: true
   services:
-    - "docker:19.03.13-dind"
+    - name: "docker:19.03.13-dind"
+      command: ["--mtu=1400"]
   variables:
     DOCKER_DRIVER: overlay2
   before_script:

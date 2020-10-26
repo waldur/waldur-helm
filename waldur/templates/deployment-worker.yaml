@@ -12,13 +12,11 @@ spec:
   {{ end }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "waldur.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      app: waldur-mastermind-worker
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ include "waldur.name" . }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
+        app: waldur-mastermind-worker
     spec:
       containers:
         - name: waldur-mastermind-worker

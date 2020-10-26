@@ -8,13 +8,11 @@ spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "waldur.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      app: waldur-mastermind-beat
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ include "waldur.name" . }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
+        app: waldur-mastermind-beat
     spec:
       containers:
         - name: waldur-mastermind-beat

@@ -11,7 +11,7 @@ Run linter:
   stage: test
   interruptible: true
   rules:
-    - if: '$SKIP_TESTS == "true"'
+    - if: '$SKIP_TESTS == "true" || $SKIP_TESTS == "yes"'
       when: never
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
       when: never

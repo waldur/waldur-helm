@@ -9,13 +9,11 @@ spec:
   replicas: {{ default 1 .Values.replicaCount | int }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "waldur.name" . }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      app: waldur-db-restore
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ include "waldur.name" . }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
+        app: waldur-db-restore
     spec:
       containers:
         - name: "waldur-postgres-restore"

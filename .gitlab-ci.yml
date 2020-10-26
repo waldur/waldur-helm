@@ -46,6 +46,7 @@ Run linter:
 Test release installation:
   extends: .Test template
   rules:
+    - when: never
     - if: '$SKIP_TESTS == "true"'
       when: never
     - if: '$CI_PIPELINE_SOURCE == "schedule"'

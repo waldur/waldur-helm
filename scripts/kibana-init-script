@@ -1,0 +1,79 @@
+#!/bin/bash
+set -e
+
+export BEAT_POD=$(kubectl get --no-headers=true pods -o name | grep beat)
+
+export ILM_POLICY_NAME=fluentd-ilm-policy
+export ILM_ROLLOVER_MAX_AGE=30d
+export ILM_ROLLOVER_MAX_SIZE=50gb
+export ILM_DELETE_MIN_AGE=30d
+
+export INDEX_NAME=fluentd
+export INDEX_ALIAS=fluentd-alias
+export INDEX_PATTERN_ID=fluentd*
+export INDEX_PATTERN_TITLE=fluentd*
+
+echo "[+] BEAT_POD = $BEAT_POD"
+
+echo "[+] Creating $INDEX_PATTERN_TITLE index pattern"
+
+kubectl exec $BEAT_POD -c  waldur-mastermind-beat -- \
+  curl -sS -f -X POST "http://kibana-kibana:5601/api/saved_objects/index-pattern/$INDEX_PATTERN_ID" \
+  -H 'Content-Type: application/json' -H 'kbn-xsrf: anything' \
+  -d"{\"attributes\":{\"title\":\"$INDEX_PATTERN_TITLE\"}}"
+
+echo "[+]"
+echo '[+] Created pattern:'
+
+kubectl exec $BEAT_POD -c  waldur-mastermind-beat -- \
+  curl -sS "http://kibana-kibana:5601/api/saved_objects/index-pattern/$INDEX_PATTERN_ID"
+
+echo "[+]"
+echo "[+] Creating $INDEX_PATTERN_TITLE ILM policy"
+
+kubectl exec $BEAT_POD -c  waldur-mastermind-beat -- \
+  curl -sS -X POST "http:///kibana-kibana:5601/api/index_lifecycle_management/policies" \
+  -H  'Content-Type: application/json' \
+  -H 'kbn-xsrf: anything'  \
+  -d"{
+    \"name\": \"$ILM_POLICY_NAME\",
+    \"phases\": {
+      \"hot\": {
+        \"actions\": {
+          \"rollover\": {
+            \"max_age\": \"$ILM_ROLLOVER_MAX_AGE\",
+            \"max_size\": \"$ILM_ROLLOVER_MAX_SIZE\"
+          },
+          \"set_priority\": {
+            \"priority\": 100
+          }
+        }
+      },
+      \"delete\": {
+        \"min_age\": \"$ILM_DELETE_MIN_AGE\",
+        \"actions\": {
+          \"delete\": {}
+        }
+      }
+    }
+  }"
+
+echo "[+]"
+echo "[+] Creating $INDEX_ALIAS alias for $INDEX_NAME index"
+
+kubectl exec $BEAT_POD -c  waldur-mastermind-beat -- \
+  curl -sS -X PUT "http://elasticsearch-master:9200/$INDEX_NAME/_alias/$INDEX_ALIAS"
+
+echo "[+]"
+echo "[+] Linking $INDEX_NAME index to $ILM_POLICY_NAME policy"
+
+kubectl exec $BEAT_POD -c  waldur-mastermind-beat -- \
+  curl -sS 'http://kibana-kibana:5601/api/index_lifecycle_management/index/add' \
+  -H 'Content-Type: application/json' -H 'kbn-xsrf: anything'  \
+  -d "{
+    \"indexName\": \"$INDEX_NAME\",
+    \"policyName\": \"$ILM_POLICY_NAME\",
+    \"alias\": \"$INDEX_ALIAS\"
+  }"
+
+exit 0

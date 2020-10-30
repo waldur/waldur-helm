@@ -54,6 +54,11 @@ The last command uses `elastic-values.yaml`, where you can configure:
 2) `ingress` - ingress configuration (enabled by default). 
 3) `resources` - same resources configuration as for Elasticreach release.
 
+You can create index pattern, ILM policy and link them together using `kibana-init-script`:
+```
+  scripts/kibana-init-script
+```
+
 ### Log viewing
 After configuration, you can view logs by opening
 ```

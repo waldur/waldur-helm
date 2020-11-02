@@ -1,48 +1,76 @@
 #!/bin/bash
 set -e
 
-export BEAT_POD=$(kubectl get --no-headers=true pods -o name | grep beat)
+BEAT_POD=$(kubectl get --no-headers=true pods -o name | grep beat)
 
-export ILM_POLICY_NAME=fluentd-ilm-policy
-export ILM_ROLLOVER_MAX_AGE=30d
-export ILM_ROLLOVER_MAX_SIZE=50gb
-export ILM_DELETE_MIN_AGE=30d
+DEFAULT_KIBANA_HOST="kibana-kibana"
 
-export INDEX_NAME=fluentd
-export INDEX_ALIAS=fluentd-alias
-export INDEX_PATTERN_ID=fluentd*
-export INDEX_PATTERN_TITLE=fluentd*
+DEFAULT_INDEX_NAME="fluentd"
+DEFAULT_INDEX_ALIAS="fluentd-alias"
 
-echo "[+] BEAT_POD = $BEAT_POD"
+DEFAULT_INDEX_PATTERN_ID="fluentd*"
+DEFAULT_INDEX_PATTERN_TITLE="fluentd*"
 
-echo "[+] Creating $INDEX_PATTERN_TITLE index pattern"
+DEFAULT_ILM_POLICY_NAME="fluentd-ilm-policy"
+DEFAULT_ILM_ROLLOVER_MAX_AGE="30d"
+DEFAULT_ILM_ROLLOVER_MAX_SIZE="50gb"
+DEFAULT_ILM_DELETE_MIN_AGE="30d"
 
-kubectl exec $BEAT_POD -c  waldur-mastermind-beat -- \
-  curl -sS -f -X POST "http://kibana-kibana:5601/api/saved_objects/index-pattern/$INDEX_PATTERN_ID" \
+
+LOCAL_KIBANA_HOST=${KIBANA_HOST:-$DEFAULT_KIBANA_HOST}
+
+LOCAL_INDEX_NAME=${INDEX_NAME:-$DEFAULT_INDEX_NAME}
+LOCAL_INDEX_ALIAS=${INDEX_ALIAS:-$DEFAULT_INDEX_ALIAS}
+
+LOCAL_INDEX_PATTERN_ID=${INDEX_PATTERN_ID:-$DEFAULT_INDEX_PATTERN_ID}
+LOCAL_INDEX_PATTERN_TITLE=${INDEX_PATTERN_TITLE:-$DEFAULT_INDEX_PATTERN_TITLE}
+
+LOCAL_ILM_POLICY_NAME=${ILM_POLICY_NAME:-$DEFAULT_ILM_POLICY_NAME}
+LOCAL_ILM_ROLLOVER_MAX_AGE=${ILM_ROLLOVER_MAX_AGE:-$DEFAULT_ILM_ROLLOVER_MAX_AGE}
+LOCAL_ILM_ROLLOVER_MAX_SIZE=${ILM_ROLLOVER_MAX_SIZE:-$DEFAULT_ILM_ROLLOVER_MAX_SIZE}
+LOCAL_ILM_DELETE_MIN_AGE=${ILM_DELETE_MIN_AGE:-$DEFAULT_ILM_DELETE_MIN_AGE}
+
+echo "[+] BEAT_POD                    = $BEAT_POD"
+echo "[+] LOCAL_KIBANA_HOST           = $LOCAL_KIBANA_HOST"
+echo "[+] LOCAL_INDEX_NAME            = $LOCAL_INDEX_NAME"
+echo "[+] LOCAL_INDEX_ALIAS           = $LOCAL_INDEX_ALIAS"
+echo "[+] LOCAL_INDEX_PATTERN_ID      = $LOCAL_INDEX_PATTERN_ID"
+echo "[+] LOCAL_INDEX_PATTERN_TITLE   = $LOCAL_INDEX_PATTERN_TITLE"
+echo "[+] LOCAL_ILM_POLICY_NAME       = $LOCAL_ILM_POLICY_NAME"
+echo "[+] LOCAL_ILM_ROLLOVER_MAX_AGE  = $LOCAL_ILM_ROLLOVER_MAX_AGE"
+echo "[+] LOCAL_ILM_ROLLOVER_MAX_SIZE = $LOCAL_ILM_ROLLOVER_MAX_SIZE"
+echo "[+] LOCAL_ILM_DELETE_MIN_AGE    = $LOCAL_ILM_DELETE_MIN_AGE"
+
+echo ""
+
+echo "[+] Creating $LOCAL_INDEX_PATTERN_TITLE index pattern"
+
+kubectl exec $BEAT_POD -c waldur-mastermind-beat -- \
+  curl -sS -f -X POST "http://$LOCAL_KIBANA_HOST:5601/api/saved_objects/index-pattern/$LOCAL_INDEX_PATTERN_ID" \
   -H 'Content-Type: application/json' -H 'kbn-xsrf: anything' \
-  -d"{\"attributes\":{\"title\":\"$INDEX_PATTERN_TITLE\"}}"
+  -d"{\"attributes\":{\"title\":\"$LOCAL_INDEX_PATTERN_TITLE\"}}"
 
 echo "[+]"
 echo '[+] Created pattern:'
 
-kubectl exec $BEAT_POD -c  waldur-mastermind-beat -- \
-  curl -sS "http://kibana-kibana:5601/api/saved_objects/index-pattern/$INDEX_PATTERN_ID"
+kubectl exec $BEAT_POD -c waldur-mastermind-beat -- \
+  curl -sS "http://$LOCAL_KIBANA_HOST:5601/api/saved_objects/index-pattern/$LOCAL_INDEX_PATTERN_ID"
 
 echo "[+]"
-echo "[+] Creating $INDEX_PATTERN_TITLE ILM policy"
+echo "[+] Creating $LOCAL_INDEX_PATTERN_TITLE ILM policy"
 
-kubectl exec $BEAT_POD -c  waldur-mastermind-beat -- \
-  curl -sS -X POST "http:///kibana-kibana:5601/api/index_lifecycle_management/policies" \
+kubectl exec $BEAT_POD -c waldur-mastermind-beat -- \
+  curl -sS -X POST "http:///$LOCAL_KIBANA_HOST:5601/api/index_lifecycle_management/policies" \
   -H  'Content-Type: application/json' \
   -H 'kbn-xsrf: anything'  \
   -d"{
-    \"name\": \"$ILM_POLICY_NAME\",
+    \"name\": \"$LOCAL_ILM_POLICY_NAME\",
     \"phases\": {
       \"hot\": {
         \"actions\": {
           \"rollover\": {
-            \"max_age\": \"$ILM_ROLLOVER_MAX_AGE\",
-            \"max_size\": \"$ILM_ROLLOVER_MAX_SIZE\"
+            \"max_age\": \"$LOCAL_ILM_ROLLOVER_MAX_AGE\",
+            \"max_size\": \"$LOCAL_ILM_ROLLOVER_MAX_SIZE\"
           },
           \"set_priority\": {
             \"priority\": 100
@@ -50,7 +78,7 @@ kubectl exec $BEAT_POD -c  waldur-mastermind-beat -- \
         }
       },
       \"delete\": {
-        \"min_age\": \"$ILM_DELETE_MIN_AGE\",
+        \"min_age\": \"$LOCAL_ILM_DELETE_MIN_AGE\",
         \"actions\": {
           \"delete\": {}
         }
@@ -59,21 +87,21 @@ kubectl exec $BEAT_POD -c  waldur-mastermind-beat -- \
   }"
 
 echo "[+]"
-echo "[+] Creating $INDEX_ALIAS alias for $INDEX_NAME index"
+echo "[+] Creating $LOCAL_INDEX_ALIAS alias for $LOCAL_INDEX_NAME index"
 
-kubectl exec $BEAT_POD -c  waldur-mastermind-beat -- \
-  curl -sS -X PUT "http://elasticsearch-master:9200/$INDEX_NAME/_alias/$INDEX_ALIAS"
+kubectl exec $BEAT_POD -c waldur-mastermind-beat -- \
+  curl -sS -X PUT "http://elasticsearch-master:9200/$LOCAL_INDEX_NAME/_alias/$LOCAL_INDEX_ALIAS"
 
 echo "[+]"
-echo "[+] Linking $INDEX_NAME index to $ILM_POLICY_NAME policy"
+echo "[+] Linking $LOCAL_INDEX_NAME index to $LOCAL_ILM_POLICY_NAME policy"
 
-kubectl exec $BEAT_POD -c  waldur-mastermind-beat -- \
-  curl -sS 'http://kibana-kibana:5601/api/index_lifecycle_management/index/add' \
+kubectl exec $BEAT_POD -c waldur-mastermind-beat -- \
+  curl -sS "http://$LOCAL_KIBANA_HOST:5601/api/index_lifecycle_management/index/add" \
   -H 'Content-Type: application/json' -H 'kbn-xsrf: anything'  \
   -d "{
-    \"indexName\": \"$INDEX_NAME\",
-    \"policyName\": \"$ILM_POLICY_NAME\",
-    \"alias\": \"$INDEX_ALIAS\"
+    \"indexName\": \"$LOCAL_INDEX_NAME\",
+    \"policyName\": \"$LOCAL_ILM_POLICY_NAME\",
+    \"alias\": \"$LOCAL_INDEX_ALIAS\"
   }"
 
 exit 0

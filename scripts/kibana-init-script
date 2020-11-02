@@ -60,7 +60,7 @@ echo "[+]"
 echo "[+] Creating $LOCAL_INDEX_PATTERN_TITLE ILM policy"
 
 kubectl exec $BEAT_POD -c waldur-mastermind-beat -- \
-  curl -sS -X POST "http:///$LOCAL_KIBANA_HOST:5601/api/index_lifecycle_management/policies" \
+  curl -sS -X POST "http://$LOCAL_KIBANA_HOST:5601/api/index_lifecycle_management/policies" \
   -H  'Content-Type: application/json' \
   -H 'kbn-xsrf: anything'  \
   -d"{

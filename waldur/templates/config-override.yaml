@@ -384,12 +384,12 @@ data:
     })
     WALDUR_SUPPORT['ISSUE'].update({
         'caller_field': 'Request participants',
-    {{ if .Values.waldur.support.servicedesk.organizationField }}
-        'organisation_field': '{{ .Values.waldur.support.servicedesk.organizationField }}',
+    {{ if .Values.waldur.support.organizationField }}
+        'organisation_field': '{{ .Values.waldur.support.organizationField }}',
     {{ end }}
     })
     WALDUR_SUPPORT['PROJECT'].update({
-        'key': '{{ .Values.waldur.support.servicedesk.projectKey }}',
+        'key': '{{ .Values.waldur.support.projectKey }}',
     })
 
     ISSUE_LINK_TEMPLATE = '{{ .Values.waldur.support.homeportIssueUrl }}'

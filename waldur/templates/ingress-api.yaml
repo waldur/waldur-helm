@@ -4,6 +4,7 @@ metadata:
   name: api-ingress
   annotations:
     nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     {{ if .Values.ingress.tls.source | eq "letsEncrypt" }}
     cert-manager.io/cluster-issuer: letsencrypt-prod-issuer
     {{ end }}

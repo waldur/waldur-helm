@@ -1,0 +1,25 @@
+{{ if .Values.postgresBackup.enabled }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: waldur-db-backup-minio-auth
+data:
+  minio-auth: |-
+    #!/bin/bash
+    export MINIO_PG_BACKUPS_DIR=pg/$MINIO_BUCKET/backups/postgres
+
+    echo "[+] LOCAL_PG_BACKUPS_DIR  : $LOCAL_PG_BACKUPS_DIR"
+    echo "[+] MINIO_PG_BACKUPS_DIR  : $MINIO_PG_BACKUPS_DIR"
+
+    echo "[+] Setting up pgpass"
+    echo "$PGPASS" > /root/.pgpass
+    chmod 600 /root/.pgpass
+
+    echo "[+] Setting up the postgres alias for minio server ($MINIO_SERVER)"
+    mc alias set pg "$MINIO_SERVER" "$MINIO_ACCESS_KEY" "$MINIO_SECRET_KEY" --api "$MINIO_API_VERSION" > /dev/null
+
+    echo "[+] Last 5 backups"
+    mc ls $MINIO_PG_BACKUPS_DIR | sort -r | head --lines=5
+
+    echo "[+] Finished"
+{{ end }}

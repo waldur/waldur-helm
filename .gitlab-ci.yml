@@ -11,7 +11,9 @@ Run linter:
   stage: test
   interruptible: true
   rules:
-    - if: '$SKIP_TESTS == "true"'
+    - if: '$SKIP_TESTS == "true" || $SKIP_TESTS == "yes"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
       when: never
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
       when: never
@@ -26,7 +28,8 @@ Run linter:
   stage: test
   interruptible: true
   services:
-    - "docker:19.03.13-dind"
+    - name: "docker:19.03.13-dind"
+      command: ["--mtu=1300"]
   variables:
     DOCKER_DRIVER: overlay2
   before_script:
@@ -45,6 +48,7 @@ Run linter:
 Test release installation:
   extends: .Test template
   rules:
+    - when: never
     - if: '$SKIP_TESTS == "true"'
       when: never
     - if: '$CI_PIPELINE_SOURCE == "schedule"'

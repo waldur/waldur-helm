@@ -1,0 +1,148 @@
+#!/bin/bash
+set -e
+
+BEAT_POD=$(kubectl get --no-headers=true pods -o name | grep beat)
+
+DEFAULT_KIBANA_HOST="kibana-kibana"
+DEFAULT_ELASTIC_HOST="elasticsearch-master"
+
+DEFAULT_INDEX_NAME="fluentd"
+DEFAULT_INDEX_ALIAS="fluentd-alias"
+
+DEFAULT_INDEX_PATTERN_ID="fluentd*"
+DEFAULT_INDEX_PATTERN_TITLE="fluentd*"
+
+DEFAULT_ILM_POLICY_NAME="fluentd-ilm-policy"
+DEFAULT_ILM_ROLLOVER_MAX_AGE="30d"
+DEFAULT_ILM_ROLLOVER_MAX_SIZE="50gb"
+DEFAULT_ILM_DELETE_MIN_AGE="30d"
+
+
+LOCAL_KIBANA_HOST=${KIBANA_HOST:-$DEFAULT_KIBANA_HOST}
+LOCAL_ELASTIC_HOST=${ELASTIC_HOST:-$DEFAULT_ELASTIC_HOST}
+
+LOCAL_INDEX_NAME=${INDEX_NAME:-$DEFAULT_INDEX_NAME}
+LOCAL_INDEX_ALIAS=${INDEX_ALIAS:-$DEFAULT_INDEX_ALIAS}
+
+LOCAL_INDEX_PATTERN_ID=${INDEX_PATTERN_ID:-$DEFAULT_INDEX_PATTERN_ID}
+LOCAL_INDEX_PATTERN_TITLE=${INDEX_PATTERN_TITLE:-$DEFAULT_INDEX_PATTERN_TITLE}
+
+LOCAL_ILM_POLICY_NAME=${ILM_POLICY_NAME:-$DEFAULT_ILM_POLICY_NAME}
+LOCAL_ILM_ROLLOVER_MAX_AGE=${ILM_ROLLOVER_MAX_AGE:-$DEFAULT_ILM_ROLLOVER_MAX_AGE}
+LOCAL_ILM_ROLLOVER_MAX_SIZE=${ILM_ROLLOVER_MAX_SIZE:-$DEFAULT_ILM_ROLLOVER_MAX_SIZE}
+LOCAL_ILM_DELETE_MIN_AGE=${ILM_DELETE_MIN_AGE:-$DEFAULT_ILM_DELETE_MIN_AGE}
+
+echo "[+] BEAT_POD                    = $BEAT_POD"
+echo "[+] LOCAL_KIBANA_HOST           = $LOCAL_KIBANA_HOST"
+echo "[+] LOCAL_INDEX_NAME            = $LOCAL_INDEX_NAME"
+echo "[+] LOCAL_INDEX_ALIAS           = $LOCAL_INDEX_ALIAS"
+echo "[+] LOCAL_INDEX_PATTERN_ID      = $LOCAL_INDEX_PATTERN_ID"
+echo "[+] LOCAL_INDEX_PATTERN_TITLE   = $LOCAL_INDEX_PATTERN_TITLE"
+echo "[+] LOCAL_ILM_POLICY_NAME       = $LOCAL_ILM_POLICY_NAME"
+echo "[+] LOCAL_ILM_ROLLOVER_MAX_AGE  = $LOCAL_ILM_ROLLOVER_MAX_AGE"
+echo "[+] LOCAL_ILM_ROLLOVER_MAX_SIZE = $LOCAL_ILM_ROLLOVER_MAX_SIZE"
+echo "[+] LOCAL_ILM_DELETE_MIN_AGE    = $LOCAL_ILM_DELETE_MIN_AGE"
+
+echo "[+]---------------------------------------------------------------------------------------"
+echo "[+] Checking $LOCAL_INDEX_PATTERN_ID pattern existence"
+
+PATTERN_STATUS_CODE=$(kubectl exec $BEAT_POD -c waldur-mastermind-beat -- \
+  curl -o /dev/null -sw "%{http_code}\n" "http://$LOCAL_KIBANA_HOST:5601/api/saved_objects/index-pattern/$LOCAL_INDEX_PATTERN_ID")
+
+echo "[+] PATTERN_STATUS_CODE = $PATTERN_STATUS_CODE"
+
+if [ "$PATTERN_STATUS_CODE" != "200" ]; then 
+  echo "[+] Creating $LOCAL_INDEX_PATTERN_TITLE index pattern"
+
+  kubectl exec $BEAT_POD -c waldur-mastermind-beat -- \
+    curl -sS -f -X POST "http://$LOCAL_KIBANA_HOST:5601/api/saved_objects/index-pattern/$LOCAL_INDEX_PATTERN_ID" \
+    -H 'Content-Type: application/json' \
+    -H 'kbn-xsrf: anything' \
+    -d"{\"attributes\":{\"title\":\"$LOCAL_INDEX_PATTERN_TITLE\"}}"
+else
+  echo "[+] $LOCAL_INDEX_PATTERN_TITLE index pattern already exists"
+fi
+
+echo "[+]---------------------------------------------------------------------------------------"
+echo "[+] Checking $LOCAL_ILM_POLICY_NAME policy existence"
+
+ILM_STATUS_CODE=$(kubectl exec $BEAT_POD -c waldur-mastermind-beat -- \
+  curl -o /dev/null -sw "%{http_code}\n" "http://$LOCAL_ELASTIC_HOST:9200/_ilm/policy/$LOCAL_ILM_POLICY_NAME")
+
+echo "[+] ILM_STATUS_CODE = $ILM_STATUS_CODE"
+
+if [ "$ILM_STATUS_CODE" != "200" ]; then 
+  echo "[+] Creating $LOCAL_INDEX_PATTERN_TITLE ILM policy"
+
+  kubectl exec $BEAT_POD -c waldur-mastermind-beat -- \
+    curl -sS -X POST "http://$LOCAL_KIBANA_HOST:5601/api/index_lifecycle_management/policies" \
+    -H  'Content-Type: application/json' \
+    -H 'kbn-xsrf: anything'  \
+    -d"{
+      \"name\": \"$LOCAL_ILM_POLICY_NAME\",
+      \"phases\": {
+        \"hot\": {
+          \"actions\": {
+            \"rollover\": {
+              \"max_age\": \"$LOCAL_ILM_ROLLOVER_MAX_AGE\",
+              \"max_size\": \"$LOCAL_ILM_ROLLOVER_MAX_SIZE\"
+            },
+            \"set_priority\": {
+              \"priority\": 100
+            }
+          }
+        },
+        \"delete\": {
+          \"min_age\": \"$LOCAL_ILM_DELETE_MIN_AGE\",
+          \"actions\": {
+            \"delete\": {}
+          }
+        }
+      }
+    }"
+else
+  echo "[+] $LOCAL_INDEX_PATTERN_TITLE ILM policy already exists"
+fi
+
+echo "[+]---------------------------------------------------------------------------------------"
+echo "[+] Checking $LOCAL_INDEX_ALIAS alias for $LOCAL_INDEX_NAME index existence"
+
+INDEX_ALIAS_STATUS_CODE=$(kubectl exec $BEAT_POD -c waldur-mastermind-beat -- \
+  curl -o /dev/null -sw "%{http_code}\n" "http://$LOCAL_ELASTIC_HOST:9200/$LOCAL_INDEX_NAME/_alias/$LOCAL_INDEX_ALIAS")
+
+echo "[+] INDEX_ALIAS_STATUS_CODE = $INDEX_ALIAS_STATUS_CODE"
+
+if [ "$INDEX_ALIAS_STATUS_CODE" != "200" ]; then 
+  echo "[+] Creating $LOCAL_INDEX_ALIAS alias for $LOCAL_INDEX_NAME index"
+
+  kubectl exec $BEAT_POD -c waldur-mastermind-beat -- \
+    curl -sS -X PUT "http://$LOCAL_ELASTIC_HOST:9200/$LOCAL_INDEX_NAME/_alias/$LOCAL_INDEX_ALIAS"
+else
+  echo "[+] $LOCAL_INDEX_ALIAS alias for $LOCAL_INDEX_NAME index already exists"
+fi
+
+echo "[+]---------------------------------------------------------------------------------------"
+echo "[+] Checking $LOCAL_INDEX_NAME index to $LOCAL_ILM_POLICY_NAME policy link existence"
+
+INDEX_ILM_LINK_EXISTS=$(kubectl exec $BEAT_POD -c waldur-mastermind-beat -- \
+  curl -s "http://$LOCAL_ELASTIC_HOST:9200/$LOCAL_INDEX_NAME" | grep lifecycle | wc -l)
+
+echo "[+] INDEX_ILM_LINK_EXISTS = $INDEX_ILM_LINK_EXISTS"
+
+if [ "$INDEX_ILM_LINK_EXISTS" != "1" ]; then
+  echo "[+] Linking $LOCAL_INDEX_NAME index to $LOCAL_ILM_POLICY_NAME policy"
+
+  kubectl exec $BEAT_POD -c waldur-mastermind-beat -- \
+    curl -sS -X POST "http://$LOCAL_KIBANA_HOST:5601/api/index_lifecycle_management/index/add" \
+    -H 'Content-Type: application/json' -H 'kbn-xsrf: anything'  \
+    -d "{
+      \"indexName\": \"$LOCAL_INDEX_NAME\",
+      \"policyName\": \"$LOCAL_ILM_POLICY_NAME\",
+      \"alias\": \"$LOCAL_INDEX_ALIAS\"
+    }"
+else
+  echo "[+] $LOCAL_INDEX_NAME index to $LOCAL_ILM_POLICY_NAME policy link already exists"
+fi
+
+echo "[+] Finished"
+exit 0

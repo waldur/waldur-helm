@@ -70,6 +70,8 @@ data:
             root /usr/share/nginx/html;
             index index.html;
 
+            try_files $uri $uri/ /index.html;
+
             location = /index.html {
                 expires -1;
             }

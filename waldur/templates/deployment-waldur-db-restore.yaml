@@ -49,4 +49,14 @@ spec:
               value: {{ .Values.minio.bucketName | quote }}
             - name: MINIO_API_VERSION
               value: "S3v4"
+          volumeMounts:
+            - name: waldur-db-backup-minio-auth
+              mountPath: /usr/local/bin/db-backup-minio-auth
+              subPath: minio-auth
+      volumes:
+        - name: waldur-db-backup-minio-auth
+          configMap:
+            name: waldur-db-backup-minio-auth
+            defaultMode: 0777
+
 {{ end }}

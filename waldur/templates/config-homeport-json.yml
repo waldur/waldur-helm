@@ -51,6 +51,12 @@ data:
       "authStorage": "sessionStorage",
       {{ end }}
 
+      "enabledFeatures": [
+        {{ if has "enable_project_member_role" .Values.waldur.features }}
+        "project.support"
+        {{ end }}
+      ],
+
       {{ if .Values.waldur.currencyName }}
       "currency": {{ .Values.waldur.currencyName | quote }},
       {{ end }}

@@ -130,6 +130,10 @@ data:
       "userRegistrationHiddenFields": {{ .Values.waldur.homeport.userRegistrationHiddenFields | toJson }},
       {{ end }}
 
+      {{ if .Values.waldur.whitelabeling.modePageTitle }}
+      "modePageTitle": {{ .Values.waldur.whitelabeling.modePageTitle | quote }},
+      {{ end }}
+
       {{ if .Values.waldur.whitelabeling.shortPageTitle }}
       "shortPageTitle": {{ .Values.waldur.whitelabeling.shortPageTitle | quote }},
       {{ end }}

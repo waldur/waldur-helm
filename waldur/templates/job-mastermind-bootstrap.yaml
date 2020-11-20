@@ -61,9 +61,6 @@ spec:
           - name: api-celery
             mountPath: /etc/waldur/celery.conf
             subPath: celery.conf
-          - name: api-uwsgi
-            mountPath: /etc/waldur/uwsgi.ini
-            subPath: uwsgi.ini
           - name: bootstrap-config
             mountPath: /usr/local/bin/bootstrapper
             subPath: bootstrapper
@@ -84,7 +81,4 @@ spec:
         - name: api-celery
           configMap:
             name: api-celery-config
-        - name: api-uwsgi
-          configMap:
-            name: api-uwsgi-config
 {{ end }}

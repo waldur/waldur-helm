@@ -68,9 +68,6 @@ spec:
             - name: api-celery
               mountPath: /etc/waldur/celery.conf
               subPath: celery.conf
-            - name: api-uwsgi
-              mountPath: /etc/waldur/uwsgi.ini
-              subPath: uwsgi.ini
             {{ $templatesPath := .Values.waldur.mastermindTemplating.mastermindTemplatesPath }}
             {{ $templatesRoot := $templatesPath | printf "%s/"}}
             {{ $templatesPathPattern := $templatesPath | printf "%s/**" }}
@@ -115,9 +112,6 @@ spec:
       - name: api-celery
         configMap:
           name: api-celery-config
-      - name: api-uwsgi
-        configMap:
-          name: api-uwsgi-config
       - name: waldur-mastermind-template
         configMap:
           name: mastermind-template-config

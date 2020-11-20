@@ -59,9 +59,6 @@ spec:
             - name: api-celery
               mountPath: /etc/waldur/celery.conf
               subPath: celery.conf
-            - name: api-uwsgi
-              mountPath: /etc/waldur/uwsgi.ini
-              subPath: uwsgi.ini
         {{ if .Values.logManagement.enabled }}
             - name: waldur-log
               mountPath: /var/log/waldur
@@ -90,9 +87,6 @@ spec:
       - name: api-celery
         configMap:
           name: api-celery-config
-      - name: api-uwsgi
-        configMap:
-          name: api-uwsgi-config
       {{ if .Values.logManagement.enabled }}
       - name: waldur-log
         emptyDir: {}

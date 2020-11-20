@@ -67,9 +67,6 @@ spec:
             - name: api-celery
               mountPath: /etc/waldur/celery.conf
               subPath: celery.conf
-            - name: api-uwsgi
-              mountPath: /etc/waldur/uwsgi.ini
-              subPath: uwsgi.ini
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
         - name: waldur-mastermind-create-dbcache
@@ -110,9 +107,6 @@ spec:
             - name: api-celery
               mountPath: /etc/waldur/celery.conf
               subPath: celery.conf
-            - name: api-uwsgi
-              mountPath: /etc/waldur/uwsgi.ini
-              subPath: uwsgi.ini
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
@@ -122,9 +116,6 @@ spec:
       - name: api-celery
         configMap:
           name: api-celery-config
-      - name: api-uwsgi
-        configMap:
-          name: api-uwsgi-config
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

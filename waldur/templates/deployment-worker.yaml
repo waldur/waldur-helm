@@ -21,6 +21,7 @@ spec:
       containers:
         - name: waldur-mastermind-worker
           image: opennode/waldur-mastermind:{{ .Values.waldur.imageTag }}
+          imagePullPolicy: {{ .Values.waldur.pullPolicy }}
           args:
             - "worker"
           livenessProbe:

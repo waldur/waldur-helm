@@ -17,6 +17,7 @@ spec:
       containers:
         - name: waldur-mastermind-beat
           image: opennode/waldur-mastermind:{{ .Values.waldur.imageTag }}
+          imagePullPolicy: {{ .Values.waldur.pullPolicy }}
           args:
             - "beat"
           env:

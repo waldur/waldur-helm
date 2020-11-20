@@ -17,6 +17,7 @@ spec:
       containers:
         - name: waldur-homeport
           image: opennode/waldur-homeport:{{ .Values.waldur.imageTag }}
+          imagePullPolicy: {{ .Values.waldur.pullPolicy }}
           ports:
             - name: http
               containerPort: 80

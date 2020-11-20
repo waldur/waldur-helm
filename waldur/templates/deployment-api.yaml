@@ -21,6 +21,7 @@ spec:
       containers:
         - name: waldur-mastermind-api
           image: opennode/waldur-mastermind:{{ .Values.waldur.imageTag }}
+          imagePullPolicy: {{ .Values.waldur.pullPolicy }}
           args:
             - "mastermind"
           ports:

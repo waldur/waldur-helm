@@ -18,6 +18,7 @@ spec:
       containers:
         - name: "waldur-postgres-restore"
           image: {{ .Values.postgresBackup.image }}
+          imagePullPolicy: {{ .Values.waldur.pullPolicy }}
           command: ["/bin/sh"]
           args: ["-c", "while true; do sleep 100; done;"]
           env:

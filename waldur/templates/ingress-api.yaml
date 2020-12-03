@@ -1,4 +1,4 @@
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: api-ingress
@@ -14,21 +14,33 @@ spec:
     http:
       paths:
       - path: /api
+        pathType: Prefix
         backend:
-          serviceName: waldur-mastermind-api
-          servicePort: 8080
+          service:
+            name: waldur-mastermind-api
+            port:
+              number: 8080
       - path: /docs
+        pathType: Prefix
         backend:
-          serviceName: waldur-mastermind-api
-          servicePort: 8080
+          service:
+            name: waldur-mastermind-api
+            port:
+              number: 8080
       - path: /admin
+        pathType: Prefix
         backend:
-          serviceName: waldur-mastermind-api
-          servicePort: 8080
+          service:
+            name: waldur-mastermind-api
+            port:
+              number: 8080
       - path: /static
+        pathType: Prefix
         backend:
-          serviceName: waldur-mastermind-api
-          servicePort: 8080
+          service:
+            name: waldur-mastermind-api
+            port:
+              number: 8080
   tls:
   - hosts:
     - {{ .Values.apiHostname }}

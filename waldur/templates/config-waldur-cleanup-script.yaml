@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: waldur-cleanup-script-config
+data:
+  waldur-cleanup: |-
+    #!/bin/sh
+
+    echo "[+] Running clear sessions command"
+    waldur clearsessions
+    echo "[+] Running delete revisions command"
+    waldur deleterevisions --keep 5 --days=90
+    echo "[+] Finished"

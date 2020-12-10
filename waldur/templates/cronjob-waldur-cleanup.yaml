@@ -1,0 +1,55 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: waldur-cleanup-cronjob
+spec:
+  schedule: "0 5 * * *"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: waldur-cleanup
+              image: opennode/waldur-mastermind:{{ .Values.waldur.imageTag }}
+              imagePullPolicy: {{ .Values.waldur.pullPolicy }}
+              args:
+                - waldur-cleanup
+              env:
+                - name: GLOBAL_SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: waldur-secret
+                      key: GLOBAL_SECRET_KEY
+                - name: POSTGRESQL_HOST
+                  value: {{ template "waldur.postgresql.host" . }}
+                - name: POSTGRESQL_PORT
+                  value: {{ template "waldur.postgresql.port" . }}
+                - name: POSTGRESQL_USER
+                  value: {{ template "waldur.postgresql.user" . }}
+                - name: POSTGRESQL_NAME
+                  value: {{ template "waldur.postgresql.dbname" . }}
+                - name: POSTGRESQL_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ template "waldur.postgresql.secret" . }}
+                      key: {{ template "waldur.postgresql.secret.passwordKey" . }}
+                - name: LOGGING_LOG_FILE
+                  value: "/var/log/waldur/core.log"
+                - name: EVENTS_LOG_FILE
+                  value: "/var/log/waldur/events.log"
+                {{ if .Values.waldur.sentryDSN }}
+                - name: SENTRY_DSN
+                  value: {{ .Values.waldur.sentryDSN | quote }}
+                {{ end }}
+              volumeMounts:
+                - name: waldur-cleanup-script
+                  mountPath: /usr/local/bin/waldur-cleanup
+                  subPath: waldur-cleanup
+          volumes:
+            - name: waldur-cleanup-script
+              configMap:
+                name: waldur-cleanup-script-config
+                defaultMode: 0777
+          restartPolicy: Never

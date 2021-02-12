@@ -427,18 +427,6 @@ data:
     })
     {{ end }}
 
-    {{ if .Values.waldur.marketplace.openstack.instance_category_uuid }}
-    WALDUR_MARKETPLACE_OPENSTACK.update({
-        'INSTANCE_CATEGORY_UUID': '{{ .Values.waldur.marketplace.openstack.instanceCategoryUUID }}',
-    })
-    {{ end }}
-
-    {{ if .Values.waldur.marketplace.openstack.volumeCategoryUUID }}
-    WALDUR_MARKETPLACE_OPENSTACK.update({
-        'VOLUME_CATEGORY_UUID': '{{ .Values.waldur.marketplace.openstack.volumeCategoryUUID }}',
-    })
-    {{ end }}
-
     {{ if .Values.waldur.marketplace.openstack.tenantCategoryUUID }}
     WALDUR_MARKETPLACE_OPENSTACK.update({
         'TENANT_CATEGORY_UUID': '{{ .Values.waldur.marketplace.openstack.tenantCategoryUUID }}',

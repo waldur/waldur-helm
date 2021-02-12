@@ -24,6 +24,13 @@ spec:
           imagePullPolicy: {{ .Values.waldur.pullPolicy }}
           args:
             - "mastermind"
+          livenessProbe:
+            httpGet:
+              path: /health-check/?format=json
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 25
+            timeoutSeconds: 20
           ports:
             - name: http
               containerPort: 8080

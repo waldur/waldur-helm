@@ -22,7 +22,7 @@ You can configure SAML2 for Waldur release: [instructions](/docs/saml2.md)
 
 1. Add the stable repository
 ```
-  helm repo add stable https://kubernetes-charts.storage.googleapis.com
+  helm repo add stable https://charts.helm.sh/stable
 ```
 2. Install Chart dependencies:
 ```

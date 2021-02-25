@@ -55,13 +55,6 @@ data:
     })
     {{ end }}
 
-    {{ if has "GOOGLE" .Values.waldur.authMethods}}
-    WALDUR_AUTH_SOCIAL.update({
-        'GOOGLE_SECRET': '{{ .Values.waldur.google.secret }}',
-        'GOOGLE_CLIENT_ID': '{{ .Values.waldur.google.clientId }}',
-    })
-    {{ end }}
-
     {{ if has "SMARTIDEE" .Values.waldur.authMethods}}
     WALDUR_AUTH_SOCIAL.update({
         'SMARTIDEE_SECRET': '{{ .Values.waldur.smartid.secret }}',
@@ -71,7 +64,7 @@ data:
 
     {{ if has "SELF_REGISTRATION" .Values.waldur.authMethods }}
     WALDUR_AUTH_SOCIAL.update({
-        'USER_ACTIVATION_URL_TEMPLATE': '{{ .Values.waldur.url }}#/activate/{user_uuid}/{token}/',
+        'USER_ACTIVATION_URL_TEMPLATE': '{{ .Values.waldur.url }}/activate/{user_uuid}/{token}/',
     })
     {{ end }}
 
@@ -231,12 +224,12 @@ data:
 
     # Authentication callback URL templates
     WALDUR_CORE.update({
-        'LOGIN_COMPLETED_URL': '{{ .Values.waldur.url }}#/login_completed/{token}/{method}/',
-        'LOGIN_FAILED_URL': '{{ .Values.waldur.url }}#/login_failed/',
-        'LOGOUT_COMPLETED_URL': '{{ .Values.waldur.url }}#/logout_completed/',
-        'LOGOUT_FAILED_URL': '{{ .Values.waldur.url }}#/logout_failed/',
-        'INVITATION_APPROVE_URL': '{{ .Values.waldur.url }}#/invitation_approve/{token}/',
-        'INVITATION_REJECT_URL': '{{ .Values.waldur.url }}#/invitation_reject/{token}/',
+        'LOGIN_COMPLETED_URL': '{{ .Values.waldur.url }}/login_completed/{token}/{method}/',
+        'LOGIN_FAILED_URL': '{{ .Values.waldur.url }}/login_failed/',
+        'LOGOUT_COMPLETED_URL': '{{ .Values.waldur.url }}/logout_completed/',
+        'LOGOUT_FAILED_URL': '{{ .Values.waldur.url }}/logout_failed/',
+        'INVITATION_APPROVE_URL': '{{ .Values.waldur.url }}/invitation_approve/{token}/',
+        'INVITATION_REJECT_URL': '{{ .Values.waldur.url }}/invitation_reject/{token}/',
     })
 
     {{ if .Values.waldur.site.address }}
@@ -283,8 +276,8 @@ data:
     {{ if .Values.waldur.marketplace.notify_staff }}
     WALDUR_MARKETPLACE['NOTIFY_STAFF_ABOUT_APPROVALS'] = True
     {{ end }}
-    WALDUR_MARKETPLACE['ORDER_LINK_TEMPLATE'] = '{{ .Values.waldur.url }}#/projects/{project_uuid}/marketplace-order-list/'
-    WALDUR_MARKETPLACE['ORDER_ITEM_LINK_TEMPLATE'] = '{{ .Values.waldur.url }}#/projects/{project_uuid}/marketplace-order-item-details/{order_item_uuid}/'
+    WALDUR_MARKETPLACE['ORDER_LINK_TEMPLATE'] = '{{ .Values.waldur.url }}/projects/{project_uuid}/marketplace-order-list/'
+    WALDUR_MARKETPLACE['ORDER_ITEM_LINK_TEMPLATE'] = '{{ .Values.waldur.url }}/projects/{project_uuid}/marketplace-order-item-details/{order_item_uuid}/'
 
     {{ if has "waldur_marketplace_notify_about_resource_change_disabled" .Values.waldur.features }}
     WALDUR_MARKETPLACE['NOTIFY_ABOUT_RESOURCE_CHANGE'] = False
@@ -303,20 +296,7 @@ data:
     })
     {{ end }}
 
-    {{ if has "ansible" .Values.waldur.features }}
-    WALDUR_ANSIBLE_COMMON.update({
-        'API_URL': '{{ .Values.waldur.apiUrl }}api/',
-        'PUBLIC_KEY_UUID': '{{ .Values.waldur.ansible.sshPublicKeyUUID }}',
-    })
-    {{ end }}
-
-    {{ if has "python_management" .Values.waldur.features }}
-    WALDUR_PYTHON_MANAGEMENT.update({
-        'SYNC_PIP_PACKAGES_TASK_ENABLED': True,
-    })
-    {{ end }}
-
-    WALDUR_INVOICES['INVOICE_LINK_TEMPLATE'] = '{{ .Values.waldur.url }}#/billing/{uuid}/'
+    WALDUR_INVOICES['INVOICE_LINK_TEMPLATE'] = '{{ .Values.waldur.url }}/billing/{uuid}/'
 
     {{ if has "billing" .Values.waldur.features }}
     WALDUR_INVOICES['ISSUER_DETAILS'].update({
@@ -392,12 +372,13 @@ data:
         'key': '{{ .Values.waldur.support.projectKey }}',
     })
 
-    ISSUE_LINK_TEMPLATE = '{{ .Values.waldur.support.homeportIssueUrl }}'
+    ISSUE_LINK_TEMPLATE = '{{ .Values.waldur.url }}/support/issue/{uuid}/'
+
+    WALDUR_MARKETPLACE_SUPPORT['REQUEST_LINK_TEMPLATE'] = '{{ .Values.waldur.url }}/support/projects/{project_uuid}/support/{request_uuid}/'
 
     {{ else }}
     WALDUR_SUPPORT.update({
         'ENABLED': False,
-        'OFFERINGS': {},  # disable custom offerings
     })
     {{ end }}
 

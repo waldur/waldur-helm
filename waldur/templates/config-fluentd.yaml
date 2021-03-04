@@ -32,6 +32,7 @@ data:
       @type elasticsearch
       @id out_es
       include_tag_key true
+      index_name #{ENV['FLUENT_INDEX_NAME']}"
       host "#{ENV['FLUENT_ELASTICSEARCH_HOST']}"
       port "#{ENV['FLUENT_ELASTICSEARCH_PORT']}"
       scheme "#{ENV['FLUENT_ELASTICSEARCH_SCHEME'] || 'http'}"

@@ -73,6 +73,8 @@ spec:
               value: {{ .Values.logManagement.elasticPort | quote }}
             - name: FLUENT_ELASTICSEARCH_SCHEME
               value: {{ .Values.logManagement.elasticProtocol | quote }}
+            - name: FLUENT_INDEX_NAME
+              value: {{ .Values.logManagement.fluentIndexName | quote }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:

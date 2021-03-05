@@ -6,13 +6,13 @@ BEAT_POD=$(kubectl get --no-headers=true pods -o name | grep beat)
 DEFAULT_KIBANA_HOST="kibana-kibana"
 DEFAULT_ELASTIC_HOST="elasticsearch-master"
 
-DEFAULT_INDEX_NAME="fluentd"
-DEFAULT_INDEX_ALIAS="fluentd-alias"
+DEFAULT_INDEX_NAME="waldur"
+DEFAULT_INDEX_ALIAS="waldur-alias"
 
-DEFAULT_INDEX_PATTERN_ID="fluentd*"
-DEFAULT_INDEX_PATTERN_TITLE="fluentd*"
+DEFAULT_INDEX_PATTERN_ID="waldur*"
+DEFAULT_INDEX_PATTERN_TITLE="waldur*"
 
-DEFAULT_ILM_POLICY_NAME="fluentd-ilm-policy"
+DEFAULT_ILM_POLICY_NAME="waldur-ilm-policy"
 DEFAULT_ILM_ROLLOVER_MAX_AGE="30d"
 DEFAULT_ILM_ROLLOVER_MAX_SIZE="50gb"
 DEFAULT_ILM_DELETE_MIN_AGE="30d"
@@ -51,7 +51,7 @@ PATTERN_STATUS_CODE=$(kubectl exec $BEAT_POD -c waldur-mastermind-beat -- \
 
 echo "[+] PATTERN_STATUS_CODE = $PATTERN_STATUS_CODE"
 
-if [ "$PATTERN_STATUS_CODE" != "200" ]; then 
+if [ "$PATTERN_STATUS_CODE" != "200" ]; then
   echo "[+] Creating $LOCAL_INDEX_PATTERN_TITLE index pattern"
 
   kubectl exec $BEAT_POD -c waldur-mastermind-beat -- \
@@ -71,7 +71,7 @@ ILM_STATUS_CODE=$(kubectl exec $BEAT_POD -c waldur-mastermind-beat -- \
 
 echo "[+] ILM_STATUS_CODE = $ILM_STATUS_CODE"
 
-if [ "$ILM_STATUS_CODE" != "200" ]; then 
+if [ "$ILM_STATUS_CODE" != "200" ]; then
   echo "[+] Creating $LOCAL_INDEX_PATTERN_TITLE ILM policy"
 
   kubectl exec $BEAT_POD -c waldur-mastermind-beat -- \
@@ -112,7 +112,7 @@ INDEX_ALIAS_STATUS_CODE=$(kubectl exec $BEAT_POD -c waldur-mastermind-beat -- \
 
 echo "[+] INDEX_ALIAS_STATUS_CODE = $INDEX_ALIAS_STATUS_CODE"
 
-if [ "$INDEX_ALIAS_STATUS_CODE" != "200" ]; then 
+if [ "$INDEX_ALIAS_STATUS_CODE" != "200" ]; then
   echo "[+] Creating $LOCAL_INDEX_ALIAS alias for $LOCAL_INDEX_NAME index"
 
   kubectl exec $BEAT_POD -c waldur-mastermind-beat -- \

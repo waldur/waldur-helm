@@ -8,7 +8,7 @@ data:
     #!/bin/bash
     export MINIO_PG_BACKUPS_DIR=pg/$MINIO_BUCKET/backups/postgres
     export RETENTION_DAYS={{ .Values.postgresBackup.retentionDays }}
-    export MIN_BACKUPS_NUMBER={{ .Values.postgresBackup.minNumber }}
+    export MIN_BACKUPS_NUMBER={{ .Values.postgresBackup.maxNumber }}
 
     echo "[+] MINIO_PG_BACKUPS_DIR: $MINIO_PG_BACKUPS_DIR"
 

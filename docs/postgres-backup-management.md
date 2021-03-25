@@ -5,11 +5,11 @@ There are three jobs for backups managemet:
 - CronJob for backups rotation (running by a schedule `postgresBackup.rotationSchedule`)
 
 Backup configuration values (`postgresBackup` prefix):
-- `enabled` - boolean flag for enabling/disabling backups 
+- `enabled` - boolean flag for enabling/disabling backups
 - `schedule` - cron-like schedule for backups
 - `rotationSchedule` - cron-like schedule for backups rotation
 - `retentionDays` - number of days for backups retetion
-- `minNumber` - minnimum number of backups to store (takes presedence over `retentionDays` variable)
+- `maxNumber` - maximum number of backups to store (takes presedence over `retentionDays` variable)
 - `image` - image containing `potgres` and `minio` (client) binaries ([opennode/postgres-minio](https://hub.docker.com/r/opennode/postgres-minio) by default)
 
 ## Backups restoration

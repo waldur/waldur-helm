@@ -19,9 +19,9 @@ spec:
     spec:
       initContainers:
       - name: check-db-ready
-        image: postgres:{{ template "waldur.postgresql.version" . }}
+        image: {{ .Values.waldur.initdbImageName }}:{{ template "waldur.postgresql.version" . }}
         command: ['sh', '-c',
-          'until pg_isready -h $POSTGRESQL_HOST -p $POSTGRESQL_PORT; 
+          'until pg_isready -h $POSTGRESQL_HOST -p $POSTGRESQL_PORT;
           do echo waiting for database; sleep 2; done;']
         env:
           - name: POSTGRESQL_HOST
@@ -30,7 +30,7 @@ spec:
             value: {{ template "waldur.postgresql.port" . }}
       containers:
         - name: waldur-mastermind-migrate
-          image: opennode/waldur-mastermind:{{ .Values.waldur.imageTag }}
+          image: {{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
           args:
             - initdb
           env:
@@ -70,7 +70,7 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
         - name: waldur-mastermind-create-dbcache
-          image: opennode/waldur-mastermind:{{ .Values.waldur.imageTag }}
+          image: {{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
           args:
             - initdb-cache
           env:

@@ -12,7 +12,7 @@ spec:
         spec:
           containers:
             - name: waldur-cleanup
-              image: opennode/waldur-mastermind:{{ .Values.waldur.imageTag }}
+              image: {{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
               imagePullPolicy: {{ .Values.waldur.pullPolicy }}
               args:
                 - waldur-cleanup

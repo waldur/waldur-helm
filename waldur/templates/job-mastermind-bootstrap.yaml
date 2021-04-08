@@ -24,7 +24,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: bootstrap-job
-        image: "opennode/waldur-mastermind:{{ .Values.waldur.imageTag }}"
+        image: {{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
         args:
           - bootstrapper
         env:

@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: waldur-mastermind-api
-          image: opennode/waldur-mastermind:{{ .Values.waldur.imageTag }}
+          image: {{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
           imagePullPolicy: {{ .Values.waldur.pullPolicy }}
           args:
             - "mastermind"
@@ -88,7 +88,7 @@ spec:
             - name: waldur-log
               mountPath: /var/log/waldur
         - name: fluentd
-          image: fluent/fluentd-kubernetes-daemonset:v1.11.0-debian-elasticsearch7-1.0
+          image: {{ .Values.logManagement.fluentImageName }}:{{ .Values.logManagement.fluentImageTag }}
           imagePullPolicy: IfNotPresent
           env:
             - name:  FLUENT_ELASTICSEARCH_HOST

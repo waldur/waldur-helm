@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: waldur-homeport
-          image: {{ .Values.waldur.homeport.imageName }}:{{ .Values.waldur.imageTag }}
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.homeport.imageName }}:{{ .Values.waldur.imageTag }}
           imagePullPolicy: {{ .Values.waldur.pullPolicy }}
           ports:
             - name: http

@@ -33,7 +33,13 @@ data:
     }
 
     CELERY_BROKER_URL = {{ include "waldur.rabbitmq.rmqUrl" . | quote }}
-    CELERY_RESULT_BACKEND = {{ include "waldur.rabbitmq.rmqUrl" . | quote }}
+
+    postgresql_host = os.environ.get('POSTGRESQL_HOST')
+    postgresql_port = os.environ.get('POSTGRESQL_PORT')
+    postgresql_user = os.environ.get('POSTGRESQL_USER')
+    postgresql_password = os.environ.get('POSTGRESQL_PASSWORD')
+    postgresql_name = 'celery_results'
+    CELERY_RESULT_BACKEND = f'db+postgresql://{postgresql_user}:{postgresql_password}@{postgresql_host}:{postgresql_port}/{postgresql_name}'
 
     EMAIL_HOST = '{{ .Values.waldur.emailHost }}'
 

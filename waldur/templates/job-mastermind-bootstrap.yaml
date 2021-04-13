@@ -24,7 +24,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: bootstrap-job
-        image: {{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
+        image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
         args:
           - bootstrapper
         env:

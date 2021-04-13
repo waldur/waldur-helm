@@ -13,7 +13,7 @@ spec:
         spec:
           containers:
             - name: "postgres-backup-cronjob"
-              image: {{ .Values.postgresBackup.image }}
+              image: {{ .Values.global.imageRegistry }}/{{ .Values.postgresBackup.image }}
               command: ["/bin/sh"]
               args: ["-c", "backup"]
               env:

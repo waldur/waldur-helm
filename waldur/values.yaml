@@ -73,7 +73,7 @@ logManagement:
 waldur:
   imageName: "opennode/waldur-mastermind"
   imageTag: "latest"
-  initdbImageName: "postgres"
+  initdbImageName: "bitnami/postgresql"
   pullPolicy: Always
   url: "https://waldur.local/" ## NB: this string must match `https://<hostname>/` pattern (or similar with `http` protocol)
   emailHost: ""
@@ -261,3 +261,6 @@ rabbitmq:
 stressTesting:
   enabled: false
   locustFilePath: "locust_task/locust_test.py"
+
+global:
+  imageRegistry: "docker.io"

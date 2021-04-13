@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: waldur-mastermind-worker
-          image: {{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
           imagePullPolicy: {{ .Values.waldur.pullPolicy }}
           args:
             - "worker"
@@ -29,7 +29,7 @@ spec:
               command:
                 - "/bin/bash"
                 - "-c"
-                - "celery inspect -q -A waldur_core.server -d celery@$HOSTNAME ping"
+                - "celery -A waldur_core.server inspect -d celery@$HOSTNAME ping"
             initialDelaySeconds: 15
             periodSeconds: 25
             timeoutSeconds: 20
@@ -38,7 +38,7 @@ spec:
               command:
                 - "/bin/bash"
                 - "-c"
-                - "celery inspect -q -A waldur_core.server -d celery@$HOSTNAME ping"
+                - "celery -A waldur_core.server inspect -d celery@$HOSTNAME ping"
             initialDelaySeconds: 20
             periodSeconds: 25
             timeoutSeconds: 20
@@ -86,12 +86,12 @@ spec:
             - name: waldur-log
               mountPath: /var/log/waldur
         - name: fluentd
-          image: {{ .Values.logManagement.fluentImageName }}:{{ .Values.logManagement.fluentImageTag }}
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.logManagement.fluentImageName }}:{{ .Values.logManagement.fluentImageTag }}
           imagePullPolicy: IfNotPresent
           env:
-            - name:  FLUENT_ELASTICSEARCH_HOST
+            - name: FLUENT_ELASTICSEARCH_HOST
               value: {{ .Values.logManagement.elasticHost | quote }}
-            - name:  FLUENT_ELASTICSEARCH_PORT
+            - name: FLUENT_ELASTICSEARCH_PORT
               value: {{ .Values.logManagement.elasticPort | quote }}
             - name: FLUENT_ELASTICSEARCH_SCHEME
               value: {{ .Values.logManagement.elasticProtocol | quote }}

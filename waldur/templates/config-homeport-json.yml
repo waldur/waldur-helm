@@ -17,24 +17,24 @@ data:
       {{ if has "lv" .Values.waldur.languageChoices }}
           { "code": "lv", "label": "Latvian" },
       {{ end }}
-      {% if 'lt' in waldur_homeport_additional_languages|default([]) %}
+      {{ if has "lt" .Values.waldur.languageChoices }}
           { "code": "lt", "label": "Lithuanian" },
-      {% endif %}
+      {{ end }}
       {{ if has "ru" .Values.waldur.languageChoices }}
           { "code": "ru", "label": "Russian" },
       {{ end }}
       {{ if has "it" .Values.waldur.languageChoices }}
           { "code": "it", "label": "Italian" },
       {{ end }}
-      {% if 'da' in waldur_homeport_additional_languages|default([]) %}
+      {{ if has "da" .Values.waldur.languageChoices }}
           { "code": "da", "label": "Danish" },
-      {% endif %}
+      {{ end }}
       {{ if has "de" .Values.waldur.languageChoices }}
           { "code": "de", "label": "German" },
       {{ end }}
-      {% if 'sv' in waldur_homeport_additional_languages|default([]) %}
+      {{ if has "sv" .Values.waldur.languageChoices }}
           { "code": "sv", "label": "Swedish" },
-      {% endif %}
+      {{ end }}
       {{ if has "es" .Values.waldur.languageChoices }}
           { "code": "es", "label": "Spanish" },
       {{ end }}

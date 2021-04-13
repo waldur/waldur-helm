@@ -385,12 +385,6 @@ data:
     })
     {{ end }}
 
-    {{ if .Values.waldur.marketplace.openstack.tenantCategoryUUID }}
-    WALDUR_MARKETPLACE_OPENSTACK.update({
-        'TENANT_CATEGORY_UUID': '{{ .Values.waldur.marketplace.openstack.tenantCategoryUUID }}',
-    })
-    {{ end }}
-
     {{ if has "paypal" .Values.waldur.features }}
     #
     # waldur-paypal

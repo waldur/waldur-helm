@@ -1,11 +1,13 @@
 ## Locust cofiguration
-
+This chart uses Locust tool for stress testing.
 ### Installation
-Install locust release:
+Locust runs as another standalone Helm release.
+
+Install Locust:
 ```
   helm install locust stable/locust -f locust-values.yaml
 ```
-After chart installation, some instructions regarding access to web-ui for locust printed in stdout. See [this section](https://docs.locust.io/en/stable/quickstart.html#locust-s-web-interface) for more information about ui interaction. 
+After release installation, some instructions regarding access to WEB UI for Locust printed in stdout. See [this section](https://docs.locust.io/en/stable/quickstart.html#locust-s-web-interface) for more information about UI interaction.
 ### Configuration
 You can change locust config with the folloving variables in `locust-values.yaml`:
 1. `image.repository` - repository of locust image

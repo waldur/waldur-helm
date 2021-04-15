@@ -1,5 +1,5 @@
 ## Bootstrap configuration
-You can create a bootstrapping script and helm will run it right after Waldur release installation.
+You can create a bootstrapping script and Helm will run it right after Waldur release installation.
 
 Example script:
 ```bash
@@ -7,7 +7,7 @@ Example script:
   set -e
 
   echo "[+] Creating staff user"
-  gosu waldur sh -c "waldur createstaffuser -u admin -p admin -e admin@example.com"
+  waldur createstaffuser -u admin -p admin -e admin@example.com
   echo "[+] Done"
 
   exit 0
@@ -27,6 +27,6 @@ Moreover, that is better to install release with `--wait` flag:
 
 This allows running migrations job before a bootstrap one. (more info: [link](https://helm.sh/docs/topics/charts_hooks/), `Hooks and the Release Lifecycle` section)
 
-**NB**: 
+**NB**:
 * A script, which contains interaction with a db can fail due to not all migrations are applied. Automatical reruning of the bootstrap job is normal behaviour in such situations.
 * Hence, the script should be **idempotent**.

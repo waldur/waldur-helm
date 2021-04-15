@@ -1,7 +1,6 @@
 ## PostgreSQL backup configuration
-There are three jobs for backups managemet:
+There are the following jobs for backups managemet:
 - CronJob for backups creation (running by a schedule `postgresBackup.schedule`)
-- Simple Job for backups creation (running before Waldur Helm release upgrade)
 - CronJob for backups rotation (running by a schedule `postgresBackup.rotationSchedule`)
 
 Backup configuration values (`postgresBackup` prefix):
@@ -10,7 +9,7 @@ Backup configuration values (`postgresBackup` prefix):
 - `rotationSchedule` - cron-like schedule for backups rotation
 - `retentionDays` - number of days for backups retetion
 - `maxNumber` - maximum number of backups to store (takes presedence over `retentionDays` variable)
-- `image` - image containing `potgres` and `minio` (client) binaries ([opennode/postgres-minio](https://hub.docker.com/r/opennode/postgres-minio) by default)
+- `image` - Docker image containing `potgres` and `minio` (client) binaries ([opennode/postgres-minio](https://hub.docker.com/r/opennode/postgres-minio) by default)
 
 ## Backups restoration
 To restore backups you need to shell into `waldur-db-restore` pod and execute the following script:

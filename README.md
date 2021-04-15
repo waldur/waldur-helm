@@ -9,14 +9,8 @@ This chart bootstraps a [Waldur](https://waldur.com/) deployment on a Kubernetes
 ## Installing prerequisites
 
 1. Install Kubernetes server, for example, using [minikube](/docs/minikube.md)
-2. Install Kubernetes client, ie [kubetcl](/docs/kubectl.md)
+2. Install Kubernetes client, i.e. [kubetcl](/docs/kubectl.md)
 3. Install [Helm](/docs/helm.md)
-
-## TLS configuration
-Instructions for TLS configuration: [doc](/docs/tls-config.md)
-
-## SAML2 configuration
-You can configure SAML2 for Waldur release: [instructions](/docs/saml2.md)
 
 ## Installing the Chart
 
@@ -33,7 +27,7 @@ You can configure SAML2 for Waldur release: [instructions](/docs/saml2.md)
     3.1 Setup simple postgresql db: [instructions](/docs/postgres-db.md), or
 
     3.2 Setup postgres-ha db: [instructions](/docs/postgres-db-ha.md)
-    
+
     **NB** Only one of these two options could be run. Otherwise, db will be unavailable.
 4. Install minio (for media): [instructions](/docs/minio.md)
 5. Install RabbitMQ for task queue: [instructions](/docs/rabbitmq.md)
@@ -72,26 +66,6 @@ Open waldur-mastermind-worker shell and execute the following command:
 ```
   waldur createstaffuser -u user -p password -e admin@example.com
 ```
-## PostgreSQL backups management
- Instructions for PostgreSQL backups management: [doc](/docs/postgres-backup-management.md)
-
-## White-labeling
-Instructions for while-labeling: [doc](/docs/whitelabeling.md)
-
-## Custom mastermind templates
-Instructions for template configuration: [doc](/docs/mastermind-templates.md)
-
-## HPA (horizontal pod autoscaler)
-Instructions for HPA configuration: [doc](/docs/hpa.md)
-
-## EFL (Elasticsearch Fluentd Kibana) for log management configuration
-Instructions for EFL configuration: [doc](/docs/log-management.md)
-
-## Boostrapping
-Instructions for bootstrap: [doc](/docs/bootstrap.md)
-
-## Stress testing
-Instructions for stress testing configuration using Locust: [doc](/docs/locust.md)
 
 ## Waldur Helm chart release upgrading
 Delete initdb job (if exitsts):
@@ -113,3 +87,6 @@ Restart deployments to apply configmaps changes:
   kubectl rollout restart deployment waldur-mastermind-worker
   kubectl rollout restart deployment waldur-homeport
 ```
+
+## Configuration docs
+Configuration documentation: [index](docs/index.md)

@@ -4,11 +4,6 @@ metadata:
   name: homeport-files-config
 data:
   {{ $fpath := "" }}
-  {{ if .Values.waldur.whitelabeling.manifestJsonPath }}
-    {{ $fpath = .Values.waldur.whitelabeling.manifestJsonPath }}
-  manifest.json: |
-{{ .Files.Get $fpath | indent 4 }}
-  {{end}}
 
   {{ if .Values.waldur.whitelabeling.privacyHtmlPath }}
     {{ $fpath = .Values.waldur.whitelabeling.privacyHtmlPath }}

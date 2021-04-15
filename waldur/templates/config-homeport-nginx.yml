@@ -133,12 +133,6 @@ data:
         }
         {{ end }}
 
-        {{ if .Values.waldur.whitelabeling.manifestJsonPath }}
-        location /manifest.json {
-          alias /var/www/waldur/files/manifest.json;
-        }
-        {{ end }}
-
         {{ if .Values.waldur.whitelabeling.tosHtmlPath }}
         location /views/tos/index.html {
           alias /var/www/waldur/files/tos.html;

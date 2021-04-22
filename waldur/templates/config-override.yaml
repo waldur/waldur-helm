@@ -421,3 +421,42 @@ data:
     {{ if .Values.waldur.defaultFromEmail }}
     DEFAULT_FROM_EMAIL = '{{ .Values.waldur.defaultFromEmail }}'
     {{ end }}
+
+    {{ if .Values.waldur.languageChoices }}
+    LANGUAGES = (
+    {{ if has "et" .Values.waldur.languageChoices }}
+        ('et', 'Eesti'),
+    {{ end }}
+    {{ if has "lt" .Values.waldur.languageChoices }}
+        ('lt', 'Lietuvių'),
+    {{ end }}
+    {{ if has "lv" .Values.waldur.languageChoices }}
+        ('lv', 'Latviešu'),
+    {{ end }}
+    {{ if has "ru" .Values.waldur.languageChoices }}
+        ('ru', 'Русский'),
+    {{ end }}
+    {{ if has "it" .Values.waldur.languageChoices }}
+        ('it', 'Italiano'),
+    {{ end }}
+    {{ if has "de" .Values.waldur.languageChoices }}
+        ('de', 'Deutsch'),
+    {{ end }}
+    {{ if has "da" .Values.waldur.languageChoices }}
+        ('da', 'Dansk'),
+    {{ end }}
+    {{ if has "sv" .Values.waldur.languageChoices }}
+        ('sv', 'Svenska'),
+    {{ end }}
+    {{ if has "es" .Values.waldur.languageChoices }}
+        ('es', 'Español'),
+    {{ end }}
+    {{ if has "fr" .Values.waldur.languageChoices }}
+        ('fr', 'Français'),
+    {{ end }}
+    {{ if has "nb" .Values.waldur.languageChoices }}
+        ('nb', 'Norsk (bokmål)'),
+    {{ end }}
+        ('en', 'English'),
+    )
+    {{ end }}

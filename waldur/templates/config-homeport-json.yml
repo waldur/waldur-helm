@@ -9,47 +9,6 @@ data:
       "defaultLanguage": {{ .Values.waldur.defaultLanguage | quote }},
       {{ end }}
 
-      {{ if .Values.waldur.languageChoices }}
-      "languageChoices": [
-      {{ if has "et" .Values.waldur.languageChoices }}
-          { "code": "et", "label": "Estonian" },
-      {{ end }}
-      {{ if has "lv" .Values.waldur.languageChoices }}
-          { "code": "lv", "label": "Latvian" },
-      {{ end }}
-      {{ if has "lt" .Values.waldur.languageChoices }}
-          { "code": "lt", "label": "Lithuanian" },
-      {{ end }}
-      {{ if has "ru" .Values.waldur.languageChoices }}
-          { "code": "ru", "label": "Russian" },
-      {{ end }}
-      {{ if has "it" .Values.waldur.languageChoices }}
-          { "code": "it", "label": "Italian" },
-      {{ end }}
-      {{ if has "da" .Values.waldur.languageChoices }}
-          { "code": "da", "label": "Danish" },
-      {{ end }}
-      {{ if has "de" .Values.waldur.languageChoices }}
-          { "code": "de", "label": "German" },
-      {{ end }}
-      {{ if has "sv" .Values.waldur.languageChoices }}
-          { "code": "sv", "label": "Swedish" },
-      {{ end }}
-      {{ if has "es" .Values.waldur.languageChoices }}
-          { "code": "es", "label": "Spanish" },
-      {{ end }}
-      {{ if has "ita" .Values.waldur.languageChoices }}
-          { "code": "ita", "display_code": "en", "label": "English" }
-      {{ else if has "neic" .Values.waldur.languageChoices }}
-          { "code": "neic", "display_code": "en", "label": "English" }
-      {{ else if has "par" .Values.waldur.languageChoices }}
-          { "code": "par", "display_code": "en", "label": "English" }
-      {{ else }}
-          { "code": "en", "label": "English" }
-      {{ end }}
-      ],
-      {{ end }}
-
       {{ if has "billing" .Values.waldur.features }}
       "accountingMode": "billing",
       {{ else }}

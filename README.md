@@ -1,6 +1,7 @@
-# Waldur
+# Waldur Helm
 
-Waldur is a platform for creating hybrid cloud solutions. It allows building enterprise-grade systems and providing self-service environment for the end-users.
+Waldur is a platform for creating hybrid cloud solutions. It allows building enterprise-grade systems and
+providing self-service environment for the end-users.
 
 ## Introduction
 
@@ -9,7 +10,7 @@ This chart bootstraps a [Waldur](https://waldur.com/) deployment on a Kubernetes
 ## Installing prerequisites
 
 1. Install Kubernetes server, for example, using [minikube](/docs/minikube.md)
-2. Install Kubernetes client, i.e. [kubetcl](/docs/kubectl.md)
+2. Install Kubernetes client, i.e. [kubectl](/docs/kubectl.md)
 3. Install [Helm](/docs/helm.md)
 
 ## Installing the Chart
@@ -22,13 +23,13 @@ This chart bootstraps a [Waldur](https://waldur.com/) deployment on a Kubernetes
 ```
   helm dep update waldur
 ```
-3. Setup postgresql database:
+3. Setup database:
 
-    3.1 Setup simple postgresql db: [instructions](/docs/postgres-db.md), or
+    3.1 Setup single PostgreSQL DB: [instructions](/docs/postgres-db.md), or
 
-    3.2 Setup postgres-ha db: [instructions](/docs/postgres-db-ha.md)
+    3.2 Setup PostgreSQL HA DB: [instructions](/docs/postgres-db-ha.md)
 
-    **NB** Only one of these two options could be run. Otherwise, db will be unavailable.
+    **NB** Only one of these two options should be used. Otherwise, DB will be unavailable.
 4. Install minio (for media): [instructions](/docs/minio.md)
 5. Install RabbitMQ for task queue: [instructions](/docs/rabbitmq.md)
 5. Install Helm package:
@@ -39,6 +40,7 @@ This chart bootstraps a [Waldur](https://waldur.com/) deployment on a Kubernetes
 **NB** After this command, Waldur release will run in `default` namespace. Please, pay attention in which namespace which release is running.
 
 For instance, you can install Waldur release in `test` namespace in the following way:
+
 1. Create `test` namespace:
 ```
   kubectl create namespace test

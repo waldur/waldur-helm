@@ -30,7 +30,7 @@ This chart bootstraps a [Waldur](https://waldur.com/) deployment on a Kubernetes
     3.2 Setup PostgreSQL HA DB: [instructions](/docs/postgres-db-ha.md)
 
     **NB** Only one of these two options should be used. Otherwise, DB will be unavailable.
-4. Install minio (for media): [instructions](/docs/minio.md)
+4. Install minio (for database backups): [instructions](/docs/minio.md)
 5. Install RabbitMQ for task queue: [instructions](/docs/rabbitmq.md)
 5. Install Helm package:
 ```

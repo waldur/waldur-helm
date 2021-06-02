@@ -197,6 +197,9 @@ data:
 
     {{ if has "owner_can_manage_customer" .Values.waldur.features }}
     WALDUR_CORE['OWNER_CAN_MANAGE_CUSTOMER'] = True
+    {{ end }}
+
+    {{ if has "owner_can_register_service_provider" .Values.waldur.features }}
     WALDUR_MARKETPLACE['OWNER_CAN_REGISTER_SERVICE_PROVIDER'] = True
     {{ end }}
 

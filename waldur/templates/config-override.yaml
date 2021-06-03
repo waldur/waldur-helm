@@ -55,21 +55,21 @@ data:
     WALDUR_CORE['AUTHENTICATION_METHODS'] = {{ .Values.waldur.authMethods|toJson }}
     WALDUR_CORE['HOMEPORT_URL'] = '{{ .Values.waldur.url }}'
 
-    {{ if has "FACEBOOK" .Values.waldur.authMethods }}
+    {{ if and (has "FACEBOOK" .Values.waldur.authMethods) (not (has "waldur_auth_social" .Values.waldur.disabledExtensions)) }}
     WALDUR_AUTH_SOCIAL.update({
       'FACEBOOK_SECRET': '{{ .Values.waldur.facebook.secret }}',
       'FACEBOOK_CLIENT_ID': '{{ .Values.waldur.facebook.clientId }}',
     })
     {{ end }}
 
-    {{ if has "SMARTIDEE" .Values.waldur.authMethods}}
+    {{ if and (has "SMARTIDEE" .Values.waldur.authMethods) (not (has "waldur_auth_social" .Values.waldur.disabledExtensions)) }}
     WALDUR_AUTH_SOCIAL.update({
         'SMARTIDEE_SECRET': '{{ .Values.waldur.smartid.secret }}',
         'SMARTIDEE_CLIENT_ID': '{{ .Values.waldur.smartid.clientId }}',
     })
     {{ end }}
 
-    {{ if has "TARA" .Values.waldur.authMethods }}
+    {{ if and (has "TARA" .Values.waldur.authMethods) (not (has "waldur_auth_social" .Values.waldur.disabledExtensions)) }}
     WALDUR_AUTH_SOCIAL.update({
         'TARA_SECRET': '{{ .Values.waldur.tara.secret }}',
         'TARA_CLIENT_ID': '{{ .Values.waldur.tara.clientId }}',
@@ -77,7 +77,7 @@ data:
     })
     {{ end }}
 
-    {{ if has "EDUTEAMS" .Values.waldur.authMethods }}
+    {{ if and (has "EDUTEAMS" .Values.waldur.authMethods) (not (has "waldur_auth_social" .Values.waldur.disabledExtensions)) }}
     WALDUR_AUTH_SOCIAL.update({
         'EDUTEAMS_LABEL': '{{ .Values.waldur.eduteams.label }}',
         'EDUTEAMS_CLIENT_ID': '{{ .Values.waldur.eduteams.clientId }}',
@@ -145,7 +145,7 @@ data:
     # waldur-freeipa
     #
 
-    {{ if has "freeipa" .Values.waldur.features }}
+    {{ if and (has "freeipa" .Values.waldur.features) (not (has "waldur_freeipa" .Values.waldur.disabledExtensions)) }}
     WALDUR_FREEIPA.update({
         'ENABLED': True,
         'GROUPNAME_PREFIX': '{{ .Values.waldur.freeipa.groupnamePrefix }}',
@@ -157,13 +157,13 @@ data:
     })
     {{ end }}
 
-    {{ if has "freeipa_group_synchronization_disabled" .Values.waldur.features }}
+    {{ if and (has "freeipa_group_synchronization_disabled" .Values.waldur.features) (not (has "waldur_freeipa" .Values.waldur.disabledExtensions)) }}
     WALDUR_FREEIPA.update({
         'GROUP_SYNCHRONIZATION_ENABLED': False,
     })
     {{ end }}
 
-    {{ if has "VALIMO" .Values.waldur.authMethods }}
+    {{ if and (has "VALIMO" .Values.waldur.authMethods) (not (has "waldur_auth_valimo" .Values.waldur.disabledExtensions)) }}
     WALDUR_AUTH_VALIMO.update({
         'AP_ID': '{{ .Values.waldur.valimo.apId }}',
         'AP_PWD': '{{ .Values.waldur.valimo.apPwd }}',
@@ -216,12 +216,16 @@ data:
 
     {{ if has "manager_can_approve_order" .Values.waldur.features }}
     WALDUR_MARKETPLACE['MANAGER_CAN_APPROVE_ORDER'] = True
+    {{ if not (has "waldur_openstack.openstack" .Values.waldur.disabledExtensions) }}
     WALDUR_OPENSTACK['MANAGER_CAN_MANAGE_TENANTS'] = True
+    {{ end }}
     {{ end }}
 
     {{ if has "admin_can_approve_order" .Values.waldur.features }}
     WALDUR_MARKETPLACE['ADMIN_CAN_APPROVE_ORDER'] = True
+    {{ if not (has "waldur_openstack.openstack" .Values.waldur.disabledExtensions) }}
     WALDUR_OPENSTACK['ADMIN_CAN_MANAGE_TENANTS'] = True
+    {{ end }}
     {{ end }}
 
     {{ if has "create_default_project_on_organization_creation" .Values.waldur.features }}
@@ -284,7 +288,7 @@ data:
     #
     # waldur-mastermind
     #
-    {{ if has "influx_analytics" .Values.waldur.features }}
+    {{ if and (has "influx_analytics" .Values.waldur.features) (not (has "waldur_analytics" .Values.waldur.disabledExtensions)) }}
     WALDUR_ANALYTICS.update({
         'ENABLED': True,
         'INFLUXDB': {
@@ -328,7 +332,7 @@ data:
     })
     {{ end }}
 
-    {{ if has "support_basic" .Values.waldur.features }}
+    {{ if and (has "support_basic" .Values.waldur.features) (not (has "waldur_support" .Values.waldur.disabledExtensions)) }}
     WALDUR_SUPPORT.update({
     {{ if .Values.waldur.support.customBackend }}
         'ACTIVE_BACKEND': '{{ .Values.waldur.support.customBackend }}',
@@ -339,6 +343,7 @@ data:
     })
     {{ end }}
 
+    {{ if not (has "waldur_support" .Values.waldur.disabledExtensions) }}
     {{ if has "support" .Values.waldur.features }}
     WALDUR_SUPPORT.update({
         'ACTIVE_BACKEND': 'waldur_mastermind.support.backend.atlassian:ServiceDeskBackend',
@@ -372,11 +377,12 @@ data:
         'ENABLED': False,
     })
     {{ end }}
+    {{ end }}
 
     #
     # waldur-openstack
     #
-
+    {{ if not (has "waldur_openstack.openstack" .Values.waldur.disabledExtensions) }}
     {{ if has "show_openstack_credentials" .Values.waldur.features }}
     WALDUR_OPENSTACK.update({
         'TENANT_CREDENTIALS_VISIBLE': True,  # enable display of OpenStack credentials to users
@@ -386,20 +392,21 @@ data:
         'TENANT_CREDENTIALS_VISIBLE': False,  # disable display of OpenStack credentials to users
     })
     {{ end }}
+    {{ end }}
 
-    {{ if has "show_openstack_console" .Values.waldur.features }}
+    {{ if and (has "show_openstack_console" .Values.waldur.features) (not (has "waldur_openstack.openstack_tenant" .Values.waldur.disabledExtensions)) }}
     WALDUR_OPENSTACK_TENANT.update({
         'ALLOW_CUSTOMER_USERS_OPENSTACK_CONSOLE_ACCESS': True,
     })
     {{ end }}
 
-    {{ if has "disable_openstack_private_offering_creation" .Values.waldur.features }}
+    {{ if and (has "disable_openstack_private_offering_creation" .Values.waldur.features) (not (has "waldur_mastermind.marketplace_openstack" .Values.waldur.disabledExtensions)) }}
     WALDUR_MARKETPLACE_OPENSTACK.update({
         'AUTOMATICALLY_CREATE_PRIVATE_OFFERING': False,
     })
     {{ end }}
 
-    {{ if has "paypal" .Values.waldur.features }}
+    {{ if and (has "paypal" .Values.waldur.features) (not (has "waldur_paypal" .Values.waldur.disabledExtensions)) }}
     #
     # waldur-paypal
     #

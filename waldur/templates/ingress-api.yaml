@@ -24,6 +24,13 @@ spec:
             name: waldur-mastermind-api
             port:
               number: 8080
+      - path: /api-auth
+        pathType: Prefix
+        backend:
+          service:
+            name: waldur-mastermind-api
+            port:
+              number: 8080
       - path: /docs
         pathType: Prefix
         backend:

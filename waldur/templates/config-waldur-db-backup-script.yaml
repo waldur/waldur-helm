@@ -16,10 +16,6 @@ data:
 
     mkdir -p $LOCAL_PG_BACKUPS_DIR || true
 
-    echo "[+] Setting up pgpass"
-    echo "$PGPASS" > /root/.pgpass
-    chmod 600 /root/.pgpass
-
     echo "[+] Creating backups"
     pg_dump \
       -U $POSTGRESQL_USER \

@@ -17,19 +17,19 @@ spec:
               command: ["/bin/sh"]
               args: ["-c", "backup"]
               env:
-                - name: POSTGRESQL_HOST
+                - name: PGHOST
                   value: {{ template "waldur.postgresql.host" . }}
-                - name: POSTGRESQL_PORT
+                - name: PGPORT
                   value: {{ template "waldur.postgresql.port" . }}
-                - name: POSTGRESQL_USER
+                - name: PGUSER
                   value: {{ template "waldur.postgresql.user" . }}
-                - name: POSTGRESQL_NAME
+                - name: PGDATABASE
                   value: {{ template "waldur.postgresql.dbname" . }}
-                - name: PGPASS
+                - name: PGPASSWORD
                   valueFrom:
                     secretKeyRef:
-                      name: pgpass
-                      key: pgpass
+                      name: {{ template "waldur.postgresql.secret" . }}
+                      key: {{ template "waldur.postgresql.secret.passwordKey" . }}
                 - name: MINIO_SERVER
                   value: "http://minio:9000"
                 - name: MINIO_ACCESS_KEY

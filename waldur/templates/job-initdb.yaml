@@ -43,6 +43,8 @@ spec:
               value: {{ template "waldur.postgresql.port" . }}
             - name: PGUSER
               value: {{ template "waldur.postgresql.user" . }}
+            - name: PGDATABASE
+              value: {{ template "waldur.postgresql.dbname" . }}
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:

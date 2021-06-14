@@ -210,33 +210,9 @@ bootstrap:
   dir: "bootstrap"
 
 postgresql:
-  enabled: true
-  postgresqlDatabase: waldur
-  postgresqlUsername: waldur
-  postgresqlPassword: waldur
-  persistence:
-    size: 10Gi
-  image:
-    tag: 12
-  exisitingSecret: ""
-
-postgresql-ha:
-  enabled: false
-  postgresql:
-    database: waldur
-    username: waldur
-    password: waldur
-    exisitingSecret: ""
-    replicaCount: 3
-    syncReplication: false
-    repmgrUsername: repmgr
-    repmgrPassword: waldur
-  persistence:
-    size: 10Gi
-  pgpoolImage:
-    tag: 4
-  postgresqlImage:
-    tag: 12
+  HAEnabed: false
+  database: "waldur"
+  username: "waldur"
 
 postgresBackup:
   enabled: false

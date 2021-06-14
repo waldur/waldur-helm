@@ -48,21 +48,17 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 Set postgres version
 */}}
 {{- define "waldur.postgresql.version" -}}
-{{- if index .Values "postgresql-ha" "enabled" -}}
-{{- index .Values "postgresql-ha" "postgresqlImage" "tag" -}}
-{{- else -}}
-{{- .Values.postgresql.image.tag -}}
-{{- end -}}
+12
 {{- end -}}
 
 {{/*
 Set postgres host
 */}}
 {{- define "waldur.postgresql.host" -}}
-{{- if index .Values "postgresql-ha" "enabled" -}}
-"waldur-postgresql-ha-pgpool"
+{{- if .Values.postgresql.HAEnabed -}}
+"postgresql-ha-waldur-pgpool"
 {{- else -}}
-"waldur-postgresql"
+"postgresql-waldur"
 {{- end -}}
 {{- end -}}
 
@@ -77,14 +73,10 @@ Set postgres port
 Set postgres secret
 */}}
 {{- define "waldur.postgresql.secret" -}}
-{{- if and (index .Values "postgresql-ha" "postgresql" "exisitingSecret") (index .Values "postgresql-ha" "enabled") -}}
-{{- index .Values "postgresql-ha" "postgresql" "exisitingSecret" -}}
-{{- else if and .Values.postgresql.exisitingSecret .Values.postgresql.enabled -}}
-{{- .Values.postgresql.exisitingSecret -}}
-{{- else if index .Values "postgresql-ha" "enabled" -}}
-"waldur-postgresql-ha-postgresql"
+{{- if .Values.postgresql.HAEnabed -}}
+"postgresql-ha-waldur-postgresql"
 {{- else -}}
-"waldur-postgresql"
+"postgresql-waldur"
 {{- end -}}
 {{- end -}}
 
@@ -99,22 +91,14 @@ Set postgres secret password key
 Set postgres database name
 */}}
 {{- define "waldur.postgresql.dbname" -}}
-{{- if index .Values "postgresql-ha" "enabled" -}}
-{{ index .Values "postgresql-ha" "postgresql" "database" | quote }}
-{{- else -}}
-{{ .Values.postgresql.postgresqlDatabase | quote }}
-{{- end -}}
+{{ .Values.postgresql.database | quote }}
 {{- end -}}
 
 {{/*
 Set postgres user
 */}}
 {{- define "waldur.postgresql.user" -}}
-{{- if index .Values "postgresql-ha" "enabled" -}}
-{{ index .Values "postgresql-ha" "postgresql" "username" | quote }}
-{{- else -}}
-{{ .Values.postgresql.postgresqlUsername | quote }}
-{{- end -}}
+{{ .Values.postgresql.username | quote }}
 {{- end -}}
 
 {{/*

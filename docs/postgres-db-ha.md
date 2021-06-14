@@ -1,18 +1,23 @@
-## PostgreSQL HA chart configuration 
-[bitnami/postgresql-ha](https://github.com/bitnami/charts/tree/master/bitnami/postgresql-ha) is used as a pluggable dependency for Waldur Helm chart.
+## PostgreSQL HA chart configuration
+[bitnami/postgresql-ha](https://github.com/bitnami/charts/tree/master/bitnami/postgresql-ha) is used as a highly available database for Waldur.
+
+Install `postgresql-ha` release:
+```
+  helm install postgresql-ha bitnami/postgresql-ha -f postgresql-ha-values.yaml --version 6.7.0
+```
 ### Chart configuration
-You can change default PostgreSQL config with the following variables in `values.yaml` (`postgres-ha` prefix):
-1. `enabled` - boolean flag for enabling/disabling `postgres-ha` chart. **NB:** must be different than `.Values.postgresql.enabled`
-2. `postgresql.database` - name of a database
-3. `postgresql.username` - name of a database user
-4. `postgresql.password` - password of a database user
-5. `postgresql.exisitingSecret` - secret with passwords (if exists)
-6. `postgresql.replicaCount` - number of db replicas
-7. `postgresql.syncReplication` - enable/disable synchronous replication
-8. `postgresql.repmgrUsername` - username of `repmgr` user
-9. `postgresql.repmgrPassword` - password of `repmgr` user
-10. `persistence.size` - size of a database (for each replica)
-11. `pgpoolImage.tag` - tag of `Pgpool` iamge. Possible tags for default image can be found [here](https://hub.docker.com/r/bitnami/pgpool/tags)
-11. `postgresqlImage.tag` - tag of `PostgreSQL` image. Possible tags for default image can be found [here](https://hub.docker.com/r/bitnami/postgresql-repmgr/tags/)
+You can change default PostgreSQL config with the following variables in `values.yaml` (`postgresql-ha-values.yaml` file):
+1. `postgresql.database` - name of a database. **NB**: must match `postgresql.database` value in `waldur/values.yaml`
+2. `postgresql.username` - name of a database user. **NB**: must match `postgresql.username` value in `waldur/values.yaml`
+3. `postgresql.password` - password of a database user
+4. `postgresql.replicaCount` - number of db replicas
+5. `postgresql.syncReplication` - enable/disable synchronous replication
+6. `postgresql.repmgrUsername` - username of `repmgr` user
+7. `postgresql.repmgrPassword` - password of `repmgr` user
+8. `persistence.size` - size of a database (for each replica)
+9. `pgpoolImage.tag` - tag of `Pgpool` image. Possible tags for default image can be found [here](https://hub.docker.com/r/bitnami/pgpool/tags)
+10. `postgresqlImage.tag` - tag of `PostgreSQL` image. Possible tags for default image can be found [here](https://hub.docker.com/r/bitnami/postgresql-repmgr/tags/)
+11. `pgpoolImage.tag` - registry of `Pgpool` image.
+12. `postgresqlImage.tag` - registry of `PostgreSQL` image.
 
 More information related to possible values [here](https://github.com/bitnami/charts/tree/master/bitnami/postgresql-ha#parameters).

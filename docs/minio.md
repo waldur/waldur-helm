@@ -1,11 +1,11 @@
 ## Min.io configuration
-Min.io storage is used for media data.
+Min.io storage is used as a database backup storage.
 
 Add `minio` chart repo:
 ```
   helm repo add minio https://helm.min.io/
 ```
-Install `minio` release run:
+Install `minio` release:
 ```
   helm install minio minio/minio -f minio-values.yaml
 ```
@@ -14,7 +14,7 @@ You can change `minio` config with next vars (in `minio.values` file):
 2. `secretKey` - secret key itself
 3. `serviceAccount.name` - name of the service account for min.io
 4. `persistence.enabled` - persistence enabling flag
-5. `persistence.size` - size of storage per each pod 
+5. `persistence.size` - size of storage per each pod
 6. `ingress` - ingress settings
 7. `defaultBucket` - default bucket settings
 

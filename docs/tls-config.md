@@ -16,7 +16,7 @@ helm repo update
 helm install \
   cert-manager jetstack/cert-manager \
   --namespace cert-manager \
-  --version v0.15.1 \
+  --version v1.4.0 \
   --set installCRDs=true
 ```
 5. After that, `waldur` release is ready for installation.

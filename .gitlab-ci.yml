@@ -31,14 +31,8 @@ Run linter:
   image: $HELM_TEST_IMAGE
   stage: test
   interruptible: true
-  services:
-    - name: "docker:19.03.13-dind"
-      command: ["--mtu=1300"]
-  variables:
-    DOCKER_DRIVER: overlay2
   before_script:
-    - kind create cluster --config=gitlab-ci/kind-config.yaml --wait 5m
-    - sed -i -E -e 's/localhost|0\.0\.0\.0/docker/g' "$HOME/.kube/config"
+    - export KUBECONFIG=${K8S_CONFIG_WALDUR_HELM_TEST}
     - apk update
     - apk add curl git
     - kubectl config view
@@ -46,7 +40,6 @@ Run linter:
     - helm repo add stable https://charts.helm.sh/stable
     - helm repo add bitnami https://charts.bitnami.com/bitnami
     - helm repo update
-    - kubectl cluster-info
     - helm dependency update waldur/
 
 Test release installation:
@@ -67,7 +60,9 @@ Test release installation and readiness:
   rules:
     - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "schedule"'
   script:
-    - helm install rmq bitnami/rabbitmq -f rmq-values.yaml --wait
+    - helm install postgresql bitnami/postgresql --version 9.8.2 -f ./waldur_helm/postgresql-values.yaml
+    - helm install rmq bitnami/rabbitmq --version 8.15.2 -f rmq-values.yaml --wait
     - helm install waldur waldur/ --set ingress.tls.source=secret,logManagement.enabled=false --wait --timeout 60m0s
     - helm list
     - kubectl get pods
+    - helm un postgresql rmq waldur

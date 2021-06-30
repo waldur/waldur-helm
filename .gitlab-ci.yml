@@ -1,68 +1,76 @@
+# You can override the included template(s) by including variable overrides
+# SAST customization: https://docs.gitlab.com/ee/user/application_security/sast/#customizing-the-sast-settings
+# Secret Detection customization: https://docs.gitlab.com/ee/user/application_security/secret_detection/#customizing-settings
+# Note that environment variables can be set in several places
+# See https://docs.gitlab.com/ee/ci/variables/#priority-of-environment-variables
 include:
-  - project: "waldur/waldur-pipelines"
-    file: "/templates/stages.yml"
-  - project: "waldur/waldur-pipelines"
-    file: "/templates/test/check-merge-compatibility.yml"
-  - project: "waldur/waldur-pipelines"
-    file: "/templates/release/sync-to-github.yml"
-
+- project: waldur/waldur-pipelines
+  file: "/templates/stages.yml"
+- project: waldur/waldur-pipelines
+  file: "/templates/test/check-merge-compatibility.yml"
+- project: waldur/waldur-pipelines
+  file: "/templates/release/sync-to-github.yml"
+- template: Security/SAST.gitlab-ci.yml
 variables:
-  GITHUB_OPENNODE_REPO_URL: "git@github.com:opennode/waldur-helm.git"
-  GITHUB_WALDUR_REPO_URL: "git@github.com:waldur/waldur-helm.git"
-
+  GITHUB_OPENNODE_REPO_URL: git@github.com:opennode/waldur-helm.git
+  GITHUB_WALDUR_REPO_URL: git@github.com:waldur/waldur-helm.git
 Run linter:
   image:
-    name: "alpine/helm:3.3.1"
-    entrypoint: [""]
+    name: alpine/helm:3.3.1
+    entrypoint:
+    - ''
   stage: test
   interruptible: true
   rules:
-    - if: '$SKIP_TESTS == "true" || $SKIP_TESTS == "yes"'
-      when: never
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-      when: never
-    - if: '$CI_COMMIT_BRANCH == "master"'
-    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  - if: $SKIP_TESTS == "true" || $SKIP_TESTS == "yes"
+    when: never
+  - if: $CI_PIPELINE_SOURCE == "schedule"
+    when: never
+  - if: $CI_COMMIT_BRANCH == "master"
+  - if: "$CI_COMMIT_TAG =~ /^v\\d+\\.\\d+\\.\\d+$/"
+  - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   script:
-    - helm lint waldur/
-
-.Test template:
-  image: $HELM_TEST_IMAGE
+  - helm lint waldur/
+".Test template":
+  image: "$HELM_TEST_IMAGE"
   stage: test
   interruptible: true
   before_script:
-    - export KUBECONFIG=${K8S_CONFIG_WALDUR_HELM_TEST}
-    - apk update
-    - apk add curl git
-    - kubectl config view
-    - kubectl config current-context
-    - helm repo add stable https://charts.helm.sh/stable
-    - helm repo add bitnami https://charts.bitnami.com/bitnami
-    - helm repo update
-    - helm dependency update waldur/
-
+  - export KUBECONFIG=${K8S_CONFIG_WALDUR_HELM_TEST}
+  - apk update
+  - apk add curl git
+  - kubectl config view
+  - kubectl config current-context
+  - helm repo add stable https://charts.helm.sh/stable
+  - helm repo add bitnami https://charts.bitnami.com/bitnami
+  - helm repo update
+  - helm dependency update waldur/
 Test release installation:
-  extends: .Test template
+  extends: ".Test template"
   rules:
-    - if: '$SKIP_TESTS == "true"'
-      when: never
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
-      when: never
-    - if: '$CI_COMMIT_BRANCH == "master"'
-    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  - if: $SKIP_TESTS == "true"
+    when: never
+  - if: $CI_PIPELINE_SOURCE == "schedule"
+    when: never
+  - if: $CI_COMMIT_BRANCH == "master"
+  - if: "$CI_COMMIT_TAG =~ /^v\\d+\\.\\d+\\.\\d+$/"
+  - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   script:
-    - helm install waldur waldur/ --set ingress.tls.source=secret,logManagement.enabled=false --dry-run --debug
-
+  - helm install waldur waldur/ --set ingress.tls.source=secret,logManagement.enabled=false
+    --dry-run --debug
 Test release installation and readiness:
-  extends: .Test template
+  extends: ".Test template"
   rules:
-    - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "schedule"'
+  - if: $CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "schedule"
   script:
-    - helm install postgresql bitnami/postgresql --version 9.8.2 -f postgresql-values.yaml
-    - helm install rmq bitnami/rabbitmq --version 8.15.2 -f rmq-values.yaml --wait
-    - helm install waldur waldur/ --set ingress.tls.source=secret,logManagement.enabled=false --wait --timeout 60m0s
-    - helm list
-    - kubectl get pods
-    - helm un postgresql rmq waldur
+  - helm install postgresql bitnami/postgresql --version 9.8.2 -f postgresql-values.yaml
+  - helm install rmq bitnami/rabbitmq --version 8.15.2 -f rmq-values.yaml --wait
+  - helm install waldur waldur/ --set ingress.tls.source=secret,logManagement.enabled=false
+    --wait --timeout 60m0s
+  - helm list
+  - kubectl get pods
+  - helm un postgresql rmq waldur
+stages:
+- test
+sast:
+  stage: test

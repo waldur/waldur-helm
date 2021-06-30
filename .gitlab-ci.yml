@@ -66,3 +66,9 @@ Test release installation and readiness:
     - helm list
     - kubectl get pods
     - helm un postgresql rmq waldur
+
+Sync to UT HPC GitLab:
+  extends: Sync to github
+  variables:
+    GITHUB_OPENNODE_REPO_URL: "git@gitlab.hpc.ut.ee:puhuri/waldur-helm.git"
+    GITHUB_WALDUR_REPO_URL: ""

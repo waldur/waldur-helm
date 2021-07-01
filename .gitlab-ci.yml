@@ -62,7 +62,7 @@ Test release installation and readiness:
   script:
     - helm install postgresql bitnami/postgresql --version 9.8.2 -f postgresql-values.yaml
     - helm install rmq bitnami/rabbitmq --version 8.15.2 -f rmq-values.yaml --set replicaCount=1 --wait
-    - helm install waldur waldur/ --set ingress.tls.source=secret,logManagement.enabled=false --wait --timeout 60m0s
+    - helm install waldur waldur/ --set ingress.tls.source=secret,rabbitmq.host=rmq-rabbitmq --wait --timeout 60m0s
     - helm list
     - kubectl get pods
     - helm un postgresql rmq waldur

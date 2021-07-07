@@ -81,12 +81,23 @@ spec:
               subPath: {{ $path | base }}
             {{ end }}
             {{ if .Values.waldur.saml2.enabled }}
-            - name: waldur-saml2
+            - name: waldur-saml2-certs
               mountPath: /etc/waldur/saml2
-            - name: waldur-saml2-attr-maps
-              mountPath: /etc/waldur/saml2/attribute-maps
             - name: waldur-saml2-cron
               mountPath: /etc/cron.hourly
+            - name: waldur-saml2-conf
+              mountPath: /etc/waldur/saml2.conf.py
+              subPath: saml2.conf.py
+            {{ end }}
+            {{ if .Values.waldur.ssh_public_key_path }}
+            - name: waldur-ssh-pub-key
+              mountPath: /etc/waldur/id_rsa.pub
+              subPath: id_rsa.pub
+            {{ end }}
+            {{ if .Values.waldur.ssh_private_key_path }}
+            - name: waldur-ssh-key
+              mountPath: /etc/waldur/id_rsa
+              subPath: id_rsa
             {{ end }}
         {{ if .Values.logManagement.enabled }}
             - name: waldur-log
@@ -129,15 +140,26 @@ spec:
           name: fluentd-config
       {{ end }}
       {{ if .Values.waldur.saml2.enabled }}
-      - name: waldur-saml2
+      - name: waldur-saml2-certs
         secret:
           secretName: waldur-saml2-secret
-      - name: waldur-saml2-attr-maps
-        configMap:
-          name: waldur-saml2-attr-maps-config
       - name: waldur-saml2-cron
         configMap:
           name: waldur-saml2-cron-config
+      - name: waldur-saml2-conf
+        configMap:
+          name: waldur-saml2-conf-config
+      {{ end }}
+      {{ if .Values.waldur.ssh_public_key_path }}
+      - name: waldur-ssh-pub-key
+        configMap:
+          name: waldur-ssh-pub-key-config
+      {{ end }}
+      {{ if .Values.waldur.ssh_private_key_path }}
+      - name: waldur-ssh-key
+        secret:
+          secretName: waldur-ssh-key-config
+          defaultMode: 0600
       {{ end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

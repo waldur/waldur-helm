@@ -465,3 +465,15 @@ data:
         ('en', 'English'),
     )
     {{ end }}
+
+
+    {{ if has "pid_datacite" .Values.waldur.features }}
+    WALDUR_PID['DATACITE'].update({
+        'REPOSITORY_ID': '{{ .Values.waldur.pid_datacite.repository_id }}',
+        'PASSWORD': '{{ .Values.waldur.pid_datacite.password }}',
+        'PREFIX': '{{ .Values.waldur.pid_datacite.prefix }}',
+        'API_URL': '{{ .Values.waldur.pid_datacite.url }}',
+        'PUBLISHER': '{{ .Values.waldur.pid_datacite.publisher }}',
+        'COLLECTION_DOI': '{{ .Values.waldur.pid_datacite.collection_doi }}',
+    })
+    {{ end }}

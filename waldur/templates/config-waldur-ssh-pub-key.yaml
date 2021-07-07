@@ -1,0 +1,9 @@
+{{ if .Values.waldur.ssh_public_key_path }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: waldur-ssh-pub-key-config
+data:
+  id_rsa.pub:
+{{ .Files.Get .Values.waldur.ssh_public_key_path | indent 4 }}
+{{ end }}

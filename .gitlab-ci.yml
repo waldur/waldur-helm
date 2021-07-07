@@ -53,21 +53,40 @@ Test release installation:
     - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
-    - helm install waldur waldur/ --set ingress.tls.source=secret,logManagement.enabled=false --dry-run --debug
+    - helm install waldur waldur/ --set ingress.tls.source=secret,logManagement.enabled=false,global.imageRegistry=registry.hpc.ut.ee/mirror --dry-run --debug
 
 Test release installation and readiness:
   extends: .Test template
   rules:
     - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "schedule"'
+      allow_failure: true
   script:
-    - helm install postgresql bitnami/postgresql --version 9.8.2 -f postgresql-values.yaml
-    - helm install rmq bitnami/rabbitmq --version 8.15.2 -f rmq-values.yaml --set replicaCount=1 --wait
-    - helm install waldur waldur/ --set ingress.tls.source=secret,rabbitmq.host=rmq-rabbitmq --wait --timeout 60m0s
+    - helm install postgresql bitnami/postgresql --version 9.8.2 -f postgresql-values.yaml --set image.registry=registry.hpc.ut.ee/mirror
+    - helm install rmq bitnami/rabbitmq --version 8.15.2 -f rmq-values.yaml --set replicaCount=1,image.registry=registry.hpc.ut.ee/mirror --wait
+    - helm install waldur waldur/ --set ingress.tls.source=secret,rabbitmq.host=rmq-rabbitmq,global.imageRegistry=registry.hpc.ut.ee/mirror --wait --timeout 60m0s
     - helm list
     - kubectl get pods
-    - helm un postgresql rmq waldur
-    - kubectl delete pvc data-postgresql-waldur-0
-    - kubectl delete pvc data-rmq-rabbitmq-0
+
+Cleanup releases:
+  extends: .Test template
+  stage: .post
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "schedule"'
+      when: always
+  script:
+    - export KUBECONFIG=${K8S_CONFIG_WALDUR_HELM_TEST}
+    - export RELEASES=$(helm ls --short)
+    - echo $RELEASES
+    - |
+      if [ "$RELEASES" ]; then
+        echo "[+] There are the following releases in Helm for removal: $RELEASES"
+        echo "[+] Removing all of them"
+        helm uninstall $RELEASES
+      else
+        echo "[+] There are no Helm releases for removal"
+      fi
+    - kubectl delete pvc data-postgresql-waldur-0 || true
+    - kubectl delete pvc data-rmq-rabbitmq-0 || true
 
 Sync to UT HPC GitLab:
   extends: Sync to github

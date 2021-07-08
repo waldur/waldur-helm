@@ -80,7 +80,7 @@ spec:
               mountPath: {{ $path | replace $templatesRoot "" | printf "/usr/src/waldur/src/%s" }}
               subPath: {{ $path | base }}
             {{ end }}
-            {{ if .Values.waldur.saml2.enabled }}
+            {{ if has "SAML2" .Values.waldur.authMethods }}
             - name: waldur-saml2-certs
               mountPath: /etc/waldur/saml2
             - name: waldur-saml2-cron
@@ -139,7 +139,7 @@ spec:
         configMap:
           name: fluentd-config
       {{ end }}
-      {{ if .Values.waldur.saml2.enabled }}
+      {{ if has "SAML2" .Values.waldur.authMethods }}
       - name: waldur-saml2-certs
         secret:
           secretName: waldur-saml2-secret

@@ -52,7 +52,7 @@ data:
     TIME_ZONE = '{{ .Values.waldur.timeZone }}'
     {{ end }}
 
-    WALDUR_CORE['AUTHENTICATION_METHODS'] = {{ .Values.waldur.authMethods|toJson }}
+    WALDUR_CORE['AUTHENTICATION_METHODS'] = {{ .Values.waldur.authMethods | toJson }}
     WALDUR_CORE['HOMEPORT_URL'] = '{{ .Values.waldur.url }}'
 
     {{ if and (has "FACEBOOK" .Values.waldur.authMethods) (not (has "waldur_auth_social" .Values.waldur.disabledExtensions)) }}

@@ -1,4 +1,4 @@
-{{ if .Values.waldur.saml2.enabled }}
+{{ if has "SAML2" .Values.waldur.authMethods }}
 apiVersion: v1
 kind: ConfigMap
 metadata:

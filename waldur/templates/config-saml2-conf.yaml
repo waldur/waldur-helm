@@ -5,6 +5,6 @@ metadata:
   name: waldur-saml2-conf-config
 data:
 {{ $configFile := .Values.waldur.saml2.dir | printf "%s/saml2.conf.py" }}
-  saml2.conf.py:
+  saml2.conf.py: |-
 {{ .Files.Get $configFile | indent 4 }}
 {{ end }}

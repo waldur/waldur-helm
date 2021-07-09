@@ -77,6 +77,17 @@ data:
     })
     {{ end }}
 
+    {{ if and (has "KEYCLOAK" .Values.waldur.authMethods) (not (has "waldur_auth_social" .Values.waldur.disabledExtensions)) }}
+    WALDUR_AUTH_SOCIAL.update({
+        'KEYCLOAK_AUTH_URL': '{{ .Values.waldur.keycloak.auth_url }}',
+        'KEYCLOAK_CLIENT_ID': '{{ .Values.waldur.keycloak.client_id }}',
+        'KEYCLOAK_LABEL': '{{ .Values.waldur.keycloak.label }}',
+        'KEYCLOAK_SECRET': '{{ .Values.waldur.keycloak.secret }}',
+        'KEYCLOAK_TOKEN_URL': '{{ .Values.waldur.keycloak.token_url }}',
+        'KEYCLOAK_USERINFO_URL': '{{ .Values.waldur.keycloak.userinfo_url }}',
+    })
+    {{ end }}
+
     {{ if and (has "EDUTEAMS" .Values.waldur.authMethods) (not (has "waldur_auth_social" .Values.waldur.disabledExtensions)) }}
     WALDUR_AUTH_SOCIAL.update({
         'EDUTEAMS_LABEL': '{{ .Values.waldur.eduteams.label }}',

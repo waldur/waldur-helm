@@ -56,7 +56,7 @@ Set postgres host
 */}}
 {{- define "waldur.postgresql.host" -}}
 {{- if .Values.postgresql.HAEnabed -}}
-"postgresql-ha-waldur-pgpool"
+"	waldur-postgresql-ha-pgpool"
 {{- else -}}
 "postgresql-waldur"
 {{- end -}}
@@ -74,9 +74,9 @@ Set postgres secret
 */}}
 {{- define "waldur.postgresql.secret" -}}
 {{- if .Values.postgresql.HAEnabed -}}
-"postgresql-ha-waldur-postgresql"
+"waldur-postgresql-ha-postgresql"
 {{- else -}}
-"postgresql-waldur"
+"waldur-postgresql"
 {{- end -}}
 {{- end -}}
 

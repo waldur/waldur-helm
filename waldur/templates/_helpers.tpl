@@ -55,7 +55,7 @@ Set postgres version
 Set postgres host
 */}}
 {{- define "waldur.postgresql.host" -}}
-{{- if .Values.postgresql.HAEnabed -}}
+{{- if .Values.postgresql.HAEnabled -}}
 "postgresql-ha-waldur-pgpool"
 {{- else -}}
 "postgresql-waldur"
@@ -73,7 +73,7 @@ Set postgres port
 Set postgres secret
 */}}
 {{- define "waldur.postgresql.secret" -}}
-{{- if .Values.postgresql.HAEnabed -}}
+{{- if .Values.postgresql.HAEnabled -}}
 "postgresql-ha-waldur-postgresql"
 {{- else -}}
 "postgresql-waldur"

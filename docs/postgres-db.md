@@ -5,6 +5,9 @@ Install `postgresql` release:
 ```
   helm install postgresql bitnami/postgresql --version 9.8.2 -f postgresql-values.yaml
 ```
+
+**NB**: the value `postgresql.HAEnabled` for waldur release must be `false`.
+
 ### Chart configuration
 You can change default PostgreSQL config with the following variables in `postgresql-values.yaml`:
 1. `postgresqlDatabase` - name of a database. **NB**: must match `postgresql.database` value in `waldur/values.yaml`

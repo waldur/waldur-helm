@@ -82,7 +82,7 @@ spec:
             {{ end }}
             {{ if has "SAML2" .Values.waldur.authMethods }}
             - name: waldur-saml2-certs
-              mountPath: /etc/waldur/saml2
+              mountPath: /etc/waldur/saml2/credentials
             - name: waldur-saml2-cron
               mountPath: /etc/cron.hourly
             - name: waldur-saml2-conf

@@ -55,21 +55,23 @@ data:
     WALDUR_CORE['AUTHENTICATION_METHODS'] = {{ .Values.waldur.authMethods | toJson }}
     WALDUR_CORE['HOMEPORT_URL'] = '{{ .Values.waldur.url }}'
 
-    {{ if and (has "FACEBOOK" .Values.waldur.authMethods) (not (has "waldur_auth_social" .Values.waldur.disabledExtensions)) }}
+    {{ if and (has "SOCIAL_SIGNUP" .Values.waldur.authMethods) (not (has "waldur_auth_social" .Values.waldur.disabledExtensions)) }}
+
+    {{ if has "FACEBOOK" .Values.waldur.socialAuthMethods }}
     WALDUR_AUTH_SOCIAL.update({
       'FACEBOOK_SECRET': '{{ .Values.waldur.facebook.secret }}',
       'FACEBOOK_CLIENT_ID': '{{ .Values.waldur.facebook.clientId }}',
     })
     {{ end }}
 
-    {{ if and (has "SMARTIDEE" .Values.waldur.authMethods) (not (has "waldur_auth_social" .Values.waldur.disabledExtensions)) }}
+    {{ if has "SMARTIDEE" .Values.waldur.socialAuthMethods }}
     WALDUR_AUTH_SOCIAL.update({
         'SMARTIDEE_SECRET': '{{ .Values.waldur.smartid.secret }}',
         'SMARTIDEE_CLIENT_ID': '{{ .Values.waldur.smartid.clientId }}',
     })
     {{ end }}
 
-    {{ if and (has "TARA" .Values.waldur.authMethods) (not (has "waldur_auth_social" .Values.waldur.disabledExtensions)) }}
+    {{ if has "TARA" .Values.waldur.socialAuthMethods }}
     WALDUR_AUTH_SOCIAL.update({
         'TARA_SECRET': '{{ .Values.waldur.tara.secret }}',
         'TARA_CLIENT_ID': '{{ .Values.waldur.tara.clientId }}',
@@ -77,7 +79,7 @@ data:
     })
     {{ end }}
 
-    {{ if and (has "KEYCLOAK" .Values.waldur.authMethods) (not (has "waldur_auth_social" .Values.waldur.disabledExtensions)) }}
+    {{ if has "KEYCLOAK" .Values.waldur.socialAuthMethods }}
     WALDUR_AUTH_SOCIAL.update({
         'KEYCLOAK_AUTH_URL': '{{ .Values.waldur.keycloak.auth_url }}',
         'KEYCLOAK_CLIENT_ID': '{{ .Values.waldur.keycloak.client_id }}',
@@ -88,7 +90,7 @@ data:
     })
     {{ end }}
 
-    {{ if and (has "EDUTEAMS" .Values.waldur.authMethods) (not (has "waldur_auth_social" .Values.waldur.disabledExtensions)) }}
+    {{ if has "EDUTEAMS" .Values.waldur.socialAuthMethods }}
     WALDUR_AUTH_SOCIAL.update({
         'EDUTEAMS_LABEL': '{{ .Values.waldur.eduteams.label }}',
         'EDUTEAMS_CLIENT_ID': '{{ .Values.waldur.eduteams.clientId }}',
@@ -104,6 +106,8 @@ data:
         'ENABLE_EDUTEAMS_SYNC': True,
         {{ end }}
     })
+    {{ end }}
+
     {{ end }}
 
     {{ if has "LDAP" .Values.waldur.authMethods }}

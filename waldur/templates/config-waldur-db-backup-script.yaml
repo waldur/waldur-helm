@@ -6,6 +6,8 @@ metadata:
 data:
   backup: |-
     #!/bin/bash
+    set -e
+
     export LOCAL_PG_BACKUPS_DIR=/var/backups/postgres
     export MINIO_PG_BACKUPS_DIR=pg/$MINIO_BUCKET/backups/postgres
     export BACKUP_NAME=waldur-$(date +"%m-%d-%Y-%H-%M").sql.gz
@@ -17,10 +19,7 @@ data:
     mkdir -p $LOCAL_PG_BACKUPS_DIR || true
 
     echo "[+] Creating backups"
-    pg_dump \
-      -U $POSTGRESQL_USER \
-      -h $POSTGRESQL_HOST \
-      $POSTGRESQL_NAME | gzip -9 > $LOCAL_PG_BACKUPS_DIR/$BACKUP_NAME
+    pg_dump | gzip -9 > $LOCAL_PG_BACKUPS_DIR/$BACKUP_NAME
     echo "[+] Backup $LOCAL_PG_BACKUPS_DIR/$BACKUP_NAME was created"
 
     echo "[+] Setting up the postgres alias for minio server ($MINIO_SERVER)"

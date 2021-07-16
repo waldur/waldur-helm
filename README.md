@@ -34,26 +34,15 @@ This chart bootstraps a [Waldur](https://waldur.com/) deployment on a Kubernetes
 5. Install RabbitMQ for task queue: [instructions](/docs/rabbitmq.md)
 5. Install Helm package:
 ```
-  # in 'waldur-helm-poc/'
+  # in 'waldur-helm/'
   helm install waldur waldur
 ```
 **NB** After this command, Waldur release will run in `default` namespace. Please, pay attention in which namespace which release is running.
 
-For instance, you can install Waldur release in `test` namespace in the following way:
+## Access waldur-mastermind-worker shell 
+In order to add admin users, add categories, and interact with Waldur, we need to get shell access to the waldur-mastermind-worker. 
 
-1. Create `test` namespace:
-```
-  kubectl create namespace test
-```
-2. Install release:
-```
-  helm install waldur waldur --namespace test
-```
-
-## Adding admin user
-Open waldur-mastermind-worker shell and execute the following command:
-
-1. Get waldur-mastermind-worker pod name
+1. Get waldur-mastermind-worker pod name by running the following kubectl command:
 ```
   # Example:
   kubectl get pods -A | grep waldur-mastermind-worker # -->
@@ -64,10 +53,32 @@ Open waldur-mastermind-worker shell and execute the following command:
   # Example:
   kubectl exec -it waldur-mastermind-worker-6d98cd98bd-wps8n -- /bin/bash
 ```
-3. Execute command to add admin user
+3. You now have shell access. See the underneath examples for creating admin accounts and importing categories to Waldur marketplace. 
+
+## Adding admin user
+Open waldur-mastermind-worker shell as described above, and execute the following command:
+
+1. Execute command to add admin user
 ```
   waldur createstaffuser -u user -p password -e admin@example.com
 ```
+
+## Importing categories to marketplace
+Open waldur-mastermind-worker shell as described above, and execute the following command:
+
+1. Execute the command followed by each category to be imported, seperated by spacing.
+```
+  waldur load_categories 
+  
+  # Example: 
+  waldur load_categories backup consultancy collocation cms db email hpc lumi licenses vm vpc network operations security storage measurement_devices
+  
+```
+
+2. In order to utilise Waldur with OpenStack, we need to define the default categories for VM, VPC and Storage services. Login to the Waldur API by accessing your selected API URL, followed by /admin. Sign in with your admin credentials. 
+
+3. Select Marketplace -> Marketplace -> Categories. From here, select the category to be defined, and select the default category option. Save your changes and repeat for other categories. Waldur Marketplace is now ready for integration. 
+
 
 ## Waldur Helm chart release upgrading
 Delete initdb job (if exitsts):

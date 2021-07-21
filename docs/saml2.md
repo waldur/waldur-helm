@@ -5,5 +5,4 @@ To configure SAML2 for Waldur:
 3. Place necessary files in the directory with the following manner (`.` is the source directory root):
     - `sp.crt` -> `./`
     - `sp.pem` -> `./`
-    - `saml-metadata-refresh` (for cron.hourly) -> `./cron/`
     - `saml2.conf.py` -> `./`

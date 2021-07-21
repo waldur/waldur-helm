@@ -134,6 +134,64 @@ spec:
               subPath: celery.conf
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+{{ if has "SAML2" .Values.waldur.authMethods }}
+        - name: waldur-mastermind-saml2-metadata-sync
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
+          args:
+            - saml2-metadata-sync
+          env:
+          - name: GLOBAL_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: waldur-secret
+                key: GLOBAL_SECRET_KEY
+          - name: POSTGRESQL_HOST
+            value: {{ template "waldur.postgresql.host" . }}
+          - name: POSTGRESQL_PORT
+            value: {{ template "waldur.postgresql.port" . }}
+          - name: POSTGRESQL_USER
+            value: {{ template "waldur.postgresql.user" . }}
+          - name: POSTGRESQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ template "waldur.postgresql.secret" . }}
+                key: {{ template "waldur.postgresql.secret.passwordKey" . }}
+          - name: POSTGRESQL_NAME
+            value: {{ template "waldur.postgresql.dbname" . }}
+          - name: LOGGING_LOG_FILE
+            value: "/var/log/waldur/core.log"
+          - name: EVENTS_LOG_FILE
+            value: "/var/log/waldur/events.log"
+          {{ if has "TAAT" .Values.waldur.saml2.federations }}
+          - name: TAAT_METADATA_URL
+            value: https://taeva.taat.edu.ee/metadata/metadata.taat+hub+prod+idp.xml
+          {{ end }}
+          {{ if has "EDUGAIN" .Values.waldur.saml2.federations }}
+          - name: EDUGAIN_METADATA_URL
+            value: http://md.incommon.org/InCommon/InCommon-metadata-idp-only.xml
+          {{ end }}
+          {{ if has "HAKA_TEST" .Values.waldur.saml2.federations }}
+          - name: HAKA_TEST_METADATA_URL
+            value: https://haka.funet.fi/metadata/haka_test_metadata_signed.xml
+          {{ end }}
+          {{ if has "HAKA_PROD" .Values.waldur.saml2.federations }}
+          - name: HAKA_PROD_METADATA_URL
+            value: https://haka.funet.fi/metadata/haka-metadata.xml
+          {{ end }}
+          {{ if .Values.waldur.sentryDSN }}
+          - name: SENTRY_DSN
+            value: {{ .Values.waldur.sentryDSN | quote }}
+          {{ end }}
+          volumeMounts:
+            - name: api-override
+              mountPath: /etc/waldur/override.conf.py
+              subPath: override.conf.py
+            - name: api-celery
+              mountPath: /etc/waldur/celery.conf
+              subPath: celery.conf
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+{{ end }}
       volumes:
       - name: api-override
         configMap:

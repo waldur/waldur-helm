@@ -189,6 +189,11 @@ spec:
             - name: api-celery
               mountPath: /etc/waldur/celery.conf
               subPath: celery.conf
+            - name: waldur-saml2-certs
+              mountPath: /etc/waldur/saml2/credentials
+            - name: waldur-saml2-conf
+              mountPath: /etc/waldur/saml2.conf.py
+              subPath: saml2.conf.py
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
 {{ end }}
@@ -199,6 +204,14 @@ spec:
       - name: api-celery
         configMap:
           name: api-celery-config
+      {{ if has "SAML2" .Values.waldur.authMethods }}
+      - name: waldur-saml2-certs
+        secret:
+          secretName: waldur-saml2-secret
+      - name: waldur-saml2-conf
+        configMap:
+          name: waldur-saml2-conf-config
+      {{ end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

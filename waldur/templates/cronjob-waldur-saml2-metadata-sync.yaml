@@ -67,6 +67,11 @@ spec:
               - name: api-celery
                 mountPath: /etc/waldur/celery.conf
                 subPath: celery.conf
+              - name: waldur-saml2-certs
+                mountPath: /etc/waldur/saml2/credentials
+              - name: waldur-saml2-conf
+                mountPath: /etc/waldur/saml2.conf.py
+                subPath: saml2.conf.py
           volumes:
             - name: api-override
               configMap:
@@ -74,5 +79,11 @@ spec:
             - name: api-celery
               configMap:
                 name: api-celery-config
+            - name: waldur-saml2-certs
+              secret:
+                secretName: waldur-saml2-secret
+            - name: waldur-saml2-conf
+              configMap:
+                name: waldur-saml2-conf-config
           restartPolicy: Never
 {{ end }}

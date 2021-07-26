@@ -1,26 +1,28 @@
-image.repository: "minio/minio"
-image.tag: "RELEASE.2020-11-06T23-17-07Z"
-mcImage.repository: "minio/mc"
-mcImage.tag: "RELEASE.2020-10-03T02-54-56Z"
+image.registry: "docker.io"
+image.repository: "bitnami/minio"
+image.tag: "2021.6.17"
+clientImage.registry: "docker.io"
+clientImage.repository: "bitnami/minio-client"
+clientImage.tag: "2021.6.13"
 
-accessKey: ""
-secretKey: ""
+accessKey:
+  password: ""
+secretKey:
+  password: ""
 serviceAccount:
   name: minio-account
 persistence:
   enabled: true
   size: 5Gi
-## Uncomment if you need storage distribution
-#  mode: distributed
-#  replicas: 4
+
 ingress:
   enabled: true
-  hosts:
-    - minio.host
-defaultBucket:
-  enabled: true
-  name: data
+  hostname: minio.local
+defaultBuckets: 'data'
+
 ## Uncomment if you want to change memory request
 #  resources:
 #    requests:
+#      memory: 1Gi
+#    limits:
 #      memory: 1Gi

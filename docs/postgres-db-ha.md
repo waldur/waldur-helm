@@ -1,6 +1,11 @@
 ## PostgreSQL HA chart configuration
 [bitnami/postgresql-ha](https://github.com/bitnami/charts/tree/master/bitnami/postgresql-ha) is used as a highly available database for Waldur.
 
+Add `bitnami` repo to helm:
+```
+  helm repo add bitnami https://charts.bitnami.com/bitnami
+```
+
 Install `postgresql-ha` release:
 ```
   helm install postgresql-ha bitnami/postgresql-ha -f postgresql-ha-values.yaml --version 6.7.0

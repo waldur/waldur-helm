@@ -66,6 +66,13 @@ spec:
             name: waldur-mastermind-api
             port:
               number: 8080
+      - path: /health-check
+        pathType: Prefix
+        backend:
+          service:
+            name: waldur-mastermind-api
+            port:
+              number: 8080
   tls:
   - hosts:
     - {{ .Values.apiHostname }}

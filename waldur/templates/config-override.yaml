@@ -444,6 +444,7 @@ data:
 
     {{ if .Values.waldur.languageChoices }}
     LANGUAGES = (
+        ('en', 'English'),
     {{ if has "et" .Values.waldur.languageChoices }}
         ('et', 'Eesti'),
     {{ end }}
@@ -477,7 +478,6 @@ data:
     {{ if has "nb" .Values.waldur.languageChoices }}
         ('nb', 'Norsk (bokmål)'),
     {{ end }}
-        ('en', 'English'),
     )
     {{ end }}
 

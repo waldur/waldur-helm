@@ -130,9 +130,17 @@ data:
       {{ end }}
 
       {{ if .Values.waldur.whitelabeling.poweredByLogoUrl }}
-      "poweredByLogo": {{ .Values.waldur.whitelabeling.poweredByLogoUrl | quote}},
+      "poweredByLogo": {{ .Values.waldur.whitelabeling.poweredByLogoUrl | quote }},
       {{ else if .Values.waldur.whitelabeling.poweredByLogoPath }}
       "poweredByLogo": "images/poweredby_logo.png",
+      {{ end }}
+
+      {{ if .Values.waldur.homeport.docsLink }}
+      "docsLink": {{ .Values.waldur.homeport.docsLink | quote }},
+      {{ end }}
+
+      {{ if .Values.waldur.homeport.invitationCivilCodeHelpText }}
+      "invitationCivilCodeHelpText": {{ .Values.waldur.homeport.invitationCivilCodeHelpText | quote }},
       {{ end }}
 
       "apiEndpoint": {{ .Values.waldur.url | quote}}

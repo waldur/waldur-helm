@@ -15,10 +15,6 @@ data:
       "hideOrganizationBillingStep": true,
       {{ end }}
 
-      {{ if has "academic_domain" .Values.waldur.features }}
-      "domain": "academic",
-      {{ end }}
-
       {{ if has "secure_session" .Values.waldur.features }}
       "authStorage": "sessionStorage",
       {{ end }}

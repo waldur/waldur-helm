@@ -492,3 +492,7 @@ data:
         'COLLECTION_DOI': '{{ .Values.waldur.pid_datacite.collection_doi }}',
     })
     {{ end }}
+
+    {{ if has "academic_domain" .Values.waldur.features }}
+        WALDUR_CORE["TRANSLATION_DOMAIN"] = "academic"
+    {{ end }}

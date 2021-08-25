@@ -81,10 +81,6 @@ data:
         "_needed_until_trailing_comma_is_supported_in_json_dict"
       ],
 
-      {{ if .Values.waldur.currencyName }}
-      "currency": {{ .Values.waldur.currencyName | quote }},
-      {{ end }}
-
       {{ if .Values.waldur.homeport.googleAnalyticsID }}
       "GoogleAnalyticsID": {{ .Values.waldur.homeport.googleAnalyticsID | quote }},
       {{ end }}

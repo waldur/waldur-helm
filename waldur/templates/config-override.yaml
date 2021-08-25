@@ -57,13 +57,6 @@ data:
 
     {{ if and (has "SOCIAL_SIGNUP" .Values.waldur.authMethods) (not (has "waldur_auth_social" .Values.waldur.disabledExtensions)) }}
 
-    {{ if has "FACEBOOK" .Values.waldur.socialAuthMethods }}
-    WALDUR_AUTH_SOCIAL.update({
-      'FACEBOOK_SECRET': '{{ .Values.waldur.facebook.secret }}',
-      'FACEBOOK_CLIENT_ID': '{{ .Values.waldur.facebook.clientId }}',
-    })
-    {{ end }}
-
     {{ if has "SMARTIDEE" .Values.waldur.socialAuthMethods }}
     WALDUR_AUTH_SOCIAL.update({
         'SMARTIDEE_SECRET': '{{ .Values.waldur.smartid.secret }}',

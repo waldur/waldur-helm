@@ -283,6 +283,10 @@ data:
     WALDUR_CORE['GOOGLE_ANALYTICS_ID'] = {{ .Values.waldur.homeport.googleAnalyticsID | quote }}
     {{ end }}
 
+    {{ if has "organization_domain_visible" .Values.waldur.features }}
+    WALDUR_CORE['ORGANIZATION_DOMAIN_VISIBLE'] = True
+    {{ end }}
+
     {{ if has "marketplace" .Values.waldur.features }}
     #
     # waldur-marketplace

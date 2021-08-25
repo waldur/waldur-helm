@@ -489,3 +489,7 @@ data:
     {{ if has "academic_domain" .Values.waldur.features }}
     WALDUR_CORE["TRANSLATION_DOMAIN"] = "academic"
     {{ end }}
+
+    {{ if .Values.waldur.defaultLanguage }}
+    LANGUAGE_CODE = {{ .Values.waldur.defaultLanguage | quote }}
+    {{ end }}

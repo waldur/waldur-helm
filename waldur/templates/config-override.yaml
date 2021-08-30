@@ -492,3 +492,8 @@ data:
     {{ if .Values.waldur.defaultLanguage }}
     LANGUAGE_CODE = {{ .Values.waldur.defaultLanguage | quote }}
     {{ end }}
+
+    {{ if .Values.waldur.homeport.docsLink }}
+    WALDUR_CORE['DOCS_URL'] = {{ .Values.waldur.homeport.docsLink | quote }}
+    {{ end }}
+

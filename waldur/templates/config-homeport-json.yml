@@ -123,5 +123,5 @@ data:
       "invitationCivilCodeHelpText": {{ .Values.waldur.homeport.invitationCivilCodeHelpText | quote }},
       {{ end }}
 
-      "apiEndpoint": {{ .Values.waldur.url | quote}}
+      "apiEndpoint": {{ printf "%s://%s/" .Values.apiScheme .Values.apiHostname | quote }}
     }

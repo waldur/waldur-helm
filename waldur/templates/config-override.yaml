@@ -53,7 +53,7 @@ data:
     {{ end }}
 
     WALDUR_CORE['AUTHENTICATION_METHODS'] = {{ .Values.waldur.authMethods | toJson }}
-    WALDUR_CORE['HOMEPORT_URL'] = '{{ .Values.waldur.url }}'
+    WALDUR_CORE['HOMEPORT_URL'] = '{{ printf "%s://%s/" .Values.homeportScheme .Values.homeportHostname }}'
 
     {{ if and (has "SOCIAL_SIGNUP" .Values.waldur.authMethods) (not (has "waldur_auth_social" .Values.waldur.disabledExtensions)) }}
 

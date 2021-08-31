@@ -31,7 +31,7 @@ spec:
                       name: {{ template "waldur.postgresql.secret" . }}
                       key: {{ template "waldur.postgresql.secret.passwordKey" . }}
                 - name: MINIO_SERVER
-                  value: "http://minio:9000"
+                  value: {{ .Values.minio.endpoint | quote }}
                 - name: MINIO_ACCESS_KEY
                   value: {{ .Values.minio.accessKey | quote }}
                 - name: MINIO_SECRET_KEY

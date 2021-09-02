@@ -82,13 +82,37 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
             - name: FLUENT_ELASTICSEARCH_HOST
-              value: {{ .Values.logManagement.elasticHost | quote }}
+              value: {{ .Values.logManagement.fluentd.elasticHost | quote }}
             - name: FLUENT_ELASTICSEARCH_PORT
-              value: {{ .Values.logManagement.elasticPort | quote }}
+              value: {{ .Values.logManagement.fluentd.elasticPort | quote }}
             - name: FLUENT_ELASTICSEARCH_SCHEME
-              value: {{ .Values.logManagement.elasticProtocol | quote }}
-            - name: FLUENT_INDEX_NAME
-              value: {{ .Values.logManagement.fluentIndexName | quote }}
+              value: {{ .Values.logManagement.fluentd.elasticProtocol | quote }}
+            - name: FLUENT_ELASTICSEARCH_LOGSTASH_INDEX_NAME
+              value: {{ .Values.logManagement.fluentd.indexName | quote }}
+            {{ if .Values.logManagement.fluentd.elasticPath }}
+            - name: FLUENT_ELASTICSEARCH_PATH
+              value: {{ .Values.logManagement.fluentd.elasticPath | quote }}
+            {{ end }}
+            {{ if .Values.logManagement.fluentd.ssl_verify }}
+            - name: FLUENT_ELASTICSEARCH_SSL_VERIFY
+              value: {{ .Values.logManagement.fluentd.ssl_verify | quote }}
+            {{ end }}
+            {{ if .Values.logManagement.fluentd.ssl_version }}
+            - name: FLUENT_ELASTICSEARCH_SSL_VERSION
+              value: {{ .Values.logManagement.fluentd.ssl_version | quote }}
+            {{ end }}
+            {{ if .Values.logManagement.fluentd.user }}
+            - name: FLUENT_ELASTICSEARCH_USER
+              value: {{ .Values.logManagement.fluentd.user | quote }}
+            {{ end }}
+            {{ if .Values.logManagement.fluentd.password }}
+            - name: FLUENT_ELASTICSEARCH_PASSWORD
+              value: {{ .Values.logManagement.fluentd.password | quote }}
+            {{ end }}
+            {{ if .Values.logManagement.fluentd.logstash_format }}
+            - name: FLUENT_ELASTICSEARCH_LOGSTASH_FORMAT
+              value: {{ .Values.logManagement.fluentd.logstash_format | quote }}
+            {{ end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:

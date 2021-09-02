@@ -67,10 +67,17 @@ logManagement:
   enabled: false
   fluentImageName: "fluent/fluentd-kubernetes-daemonset"
   fluentImageTag: "v1.11.0-debian-elasticsearch7-1.0"
-  fluentIndexName: waldur
-  elasticHost: "elasticsearch-master.elastic.svc.cluster.local" ## See docs/service-endpoint.md for details.
-  elasticPort: "9200"
-  elasticProtocol: "http"
+  fluentd:
+    indexName: waldur
+    elasticHost: "elasticsearch-master.elastic.svc.cluster.local" ## See docs/service-endpoint.md for details.
+    elasticPort: "9200"
+    elasticProtocol: "http"
+    elasticPath: ""
+    ssl_verify: "true"
+    ssl_version: "TLSv1_2"
+    user: ""
+    password: ""
+    logstash_format: "false"
 
 celery:
   worker:

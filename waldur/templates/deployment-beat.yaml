@@ -39,10 +39,6 @@ spec:
                 key: {{ template "waldur.postgresql.secret.passwordKey" . }}
           - name: POSTGRESQL_NAME
             value: {{ template "waldur.postgresql.dbname" . }}
-          - name: LOGGING_LOG_FILE
-            value: "/var/log/waldur/core.log"
-          - name: EVENTS_LOG_FILE
-            value: "/var/log/waldur/events.log"
           {{ if .Values.waldur.sentryDSN }}
           - name: SENTRY_DSN
             value: {{ .Values.waldur.sentryDSN | quote }}

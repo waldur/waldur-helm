@@ -15,47 +15,6 @@ data:
       "authStorage": "sessionStorage",
       {{ end }}
 
-      "enabledFeatures": [
-        "billing",
-        "eventlog",
-        "import",
-        "notifications",
-        "projectCostDetails",
-        "support.users",
-        "support.organizations",
-        "support.resources-treemap",
-        "support.shared-providers",
-        "team",
-      {{ if has "slurm" .Values.waldur.features }}
-        "slurm",
-      {{ end }}
-      {{ if not (has "disabled_offering_comments" .Values.waldur.features) }}
-        "offering.comments",
-      {{ end }}
-      {{ if not (has "disable_private_marketplace_offerings"  .Values.waldur.features) }}
-        "marketplace.my-offerings",
-      {{ end }}
-      {{ if has "compliancy" .Values.waldur.features }}
-        "marketplace.checklist",
-      {{ end }}
-      {{ if has "conceal_prices" .Values.waldur.features }}
-        "marketplace.conceal_prices",
-      {{ end }}
-      {{ if not (has "disable_volume_types" .Values.waldur.features) }}
-        "openstack.volume-types",
-      {{ end }}
-      {{ if not (has "disable_user_ssh_keys" .Values.waldur.features) }}
-        "user.ssh-keys",
-      {{ end }}
-      {{ if has "marketplace.tos" .Values.waldur.features }}
-        "marketplace.termsOfService",
-      {{ end }}
-      {{ if has "enable_project_member_role" .Values.waldur.features }}
-        "project.support",
-      {{ end }}
-        "_needed_until_trailing_comma_is_supported_in_json_dict"
-      ],
-
       {{ if .Values.waldur.sentryDSN }}
       "SENTRY_DSN": {{ .Values.waldur.sentryDSN | quote }},
       {{ end }}

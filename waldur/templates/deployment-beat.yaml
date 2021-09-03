@@ -64,6 +64,12 @@ spec:
             - name: api-celery
               mountPath: /etc/waldur/celery.conf
               subPath: celery.conf
+            - name: logging-override
+              mountPath: /etc/waldur/logging.conf.py
+              subPath: logging.conf.py
+            - name: logging-override
+              mountPath: /usr/local/bin/beat
+              subPath: beat
             {{ if .Values.waldur.ssh_public_key_path }}
             - name: waldur-ssh-pub-key
               mountPath: /etc/waldur/id_rsa.pub
@@ -104,6 +110,15 @@ spec:
       - name: api-celery
         configMap:
           name: api-celery-config
+      - name: logging-override
+        configMap:
+          name: mastermind-logging-override-config
+          items:
+            - key: beat
+              path: beat
+              mode: 0755
+            - key: logging.conf.py
+              path: logging.conf.py
       {{ if .Values.logManagement.enabled }}
       - name: waldur-log
         emptyDir: {}

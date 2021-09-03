@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mastermind-config-features-json
+data:
+  features.json: |
+    {
+      {{ if not (has "disabled_offering_comments" .Values.waldur.features) }}
+        "support.offering_comments": true,
+      {{ end }}
+      {{ if not (has "disable_private_marketplace_offerings" .Values.waldur.features) }}
+        "marketplace.private_offerings": true,
+      {{ end }}
+      {{ if has "compliancy" .Values.waldur.features }}
+        "marketplace.checklist": true,
+      {{ end }}
+      {{ if has "conceal_prices" .Values.waldur.features }}
+        "marketplace.conceal_prices": true,
+      {{ end }}
+      {{ if not (has "disable_volume_types" .Values.waldur.features) }}
+        "openstack.volume_types": true,
+      {{ end }}
+      {{ if not (has "disable_user_ssh_keys" .Values.waldur.features) }}
+        "user.ssh_keys": true,
+      {{ end }}
+      {{ if has "marketplace.tos" .Values.waldur.features }}
+        "marketplace.terms_of_service": true,
+      {{ end }}
+      {{ if has "enable_project_member_role" .Values.waldur.features }}
+        "project.member_role": true,
+      {{ end }}
+        "customer.billing": true,
+        "customer.events": true,
+        "project.events": true
+        "marketplace.import_resources": true,
+        "user.notifications": true,
+        "project.estimated_cost": true,
+        "support.users": true,
+        "support.customers_list": true,
+        "support.resources_treemap": true,
+        "support.shared_providers": true,
+        "customer.team": true,
+        "project.team": true
+    }

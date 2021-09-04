@@ -24,8 +24,7 @@ spec:
       containers:
       - name: load-features-job
         image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
-        args:
-          - ["waldur", "load_features", "/etc/waldur/features.json"]
+        args: ["waldur", "load_features", "/etc/waldur/features.json"]
         env:
           - name: GLOBAL_SECRET_KEY
             valueFrom:

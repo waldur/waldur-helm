@@ -24,8 +24,25 @@ Run linter:
     - if: '$CI_COMMIT_BRANCH == "master"'
     - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  before_script:
+    - apk update
+    - apk add jq python3
+    - apk add yq --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
   script:
     - helm lint waldur/
+    # lint for correctness of known configuration
+    - mkdir rendered-templates && helm template waldur --output-dir rendered-templates/
+    - yq e '.data."features.json"' rendered-templates/waldur/templates/config-features-json.yml | jq
+    - yq e '.data."config.json"' rendered-templates/waldur/templates/config-homeport-json.yml | jq
+    - yq e '.data."override.conf.py"' rendered-templates/waldur/templates/config-override.yaml > rendered-templates/waldur/templates/override.conf.py
+    - python3 -m py_compile rendered-templates/waldur/templates/override.conf.py
+    - yq e '.data."logging.conf.py"' rendered-templates/waldur/templates/config-mastermind-logging-override.yaml > rendered-templates/waldur/templates/logging.conf.py
+    - python3 -m py_compile rendered-templates/waldur/templates/logging.conf.py
+  artifacts:
+    expire_in: 1 week
+    when: always
+    paths:
+      - rendered-templates
 
 .Test template:
   image: $HELM_TEST_IMAGE

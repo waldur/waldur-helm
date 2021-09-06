@@ -15,6 +15,12 @@ spec:
       labels:
         app: waldur-db-restore
     spec:
+      {{ if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range $i, $val := .Values.imagePullSecrets }}
+        - name: {{ $val }}
+        {{ end -}}
+      {{ end }}
       containers:
         - name: "waldur-postgres-restore"
           image: {{ .Values.global.imageRegistry }}/{{ .Values.postgresBackup.image }}

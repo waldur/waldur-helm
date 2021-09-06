@@ -19,6 +19,12 @@ spec:
       labels:
         app: waldur-mastermind-worker
     spec:
+      {{ if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range $i, $val := .Values.imagePullSecrets }}
+        - name: {{ $val }}
+        {{ end -}}
+      {{ end }}
       containers:
         - name: waldur-mastermind-worker
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}

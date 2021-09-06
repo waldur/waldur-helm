@@ -14,6 +14,12 @@ spec:
       labels:
         app: waldur-homeport
     spec:
+      {{ if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range $i, $val := .Values.imagePullSecrets }}
+        - name: {{ $val }}
+        {{ end -}}
+      {{ end }}
       containers:
         - name: waldur-homeport
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.homeport.imageName }}:{{ .Values.waldur.imageTag }}

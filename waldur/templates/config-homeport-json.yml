@@ -13,10 +13,6 @@ data:
       "authStorage": "sessionStorage",
       {{ end }}
 
-      {{ if .Values.waldur.sentryDSN }}
-      "SENTRY_DSN": {{ .Values.waldur.sentryDSN | quote }},
-      {{ end }}
-
       {{ if .Values.waldur.whitelabeling.loginLogoUrl }}
       "loginLogo": {{ .Values.waldur.whitelabeling.loginLogoUrl | quote }},
       {{ else if .Values.waldur.whitelabeling.loginLogoPath }}

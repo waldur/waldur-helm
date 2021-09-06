@@ -512,3 +512,7 @@ data:
     {{ if .Values.waldur.homeport.invitationCivilCodeHelpText }}
     WALDUR_CORE["INVITATION_CIVIL_CODE_HELP_TEXT"] = {{ .Values.waldur.homeport.invitationCivilCodeHelpText | quote }}
     {{ end }}
+
+    {{ if .Values.waldur.sentryDSN }}
+    WALDUR_CORE["HOMEPORT_SENTRY_DSN"] = {{ .Values.waldur.sentryDSN | quote }}
+    {{ end }}

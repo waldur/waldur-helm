@@ -30,13 +30,15 @@ This chart bootstraps a [Waldur](https://waldur.com/) deployment on a Kubernetes
     3.2 Setup PostgreSQL HA DB: [instructions](/docs/postgres-db-ha.md)
 
     **NB** Only one of these two options should be used. Otherwise, DB will be unavailable.
+
 4. Install minio (for database backups): [instructions](/docs/minio.md)
 5. Install RabbitMQ for task queue: [instructions](/docs/rabbitmq.md)
-5. Install Helm package:
+6. Install Helm package:
 ```
   # in 'waldur-helm-poc/'
   helm install waldur waldur
 ```
+
 **NB** After this command, Waldur release will run in `default` namespace. Please, pay attention in which namespace which release is running.
 
 For instance, you can install Waldur release in `test` namespace in the following way:
@@ -49,6 +51,8 @@ For instance, you can install Waldur release in `test` namespace in the followin
 ```
   helm install waldur waldur --namespace test
 ```
+
+However, postgresql release and waldur should be installed in the same namespace in order to share a common secret with DB credentials.
 
 ## Adding admin user
 Open waldur-mastermind-worker shell and execute the following command:
@@ -70,6 +74,7 @@ Open waldur-mastermind-worker shell and execute the following command:
 ```
 
 ## Waldur Helm chart release upgrading
+
 Delete initdb job (if exists):
 ```bash
   kubectl delete job waldur-mastermind-initdb-job || true
@@ -95,5 +100,12 @@ Restart deployments to apply configmaps changes:
   kubectl rollout restart deployment waldur-homeport
 ```
 
+## Private registry setup
+
+A user can use private registry for Docker images.
+For this, the corresponding credentials should be registered in a secret, name of which should be placed in `.Values.imagePullSecrets`.
+A secret can be created trough [CLI](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#create-a-secret-by-providing-credentials-on-the-command-line).
+
 ## Configuration docs
+
 Configuration documentation: [index](docs/index.md)

@@ -7,8 +7,6 @@ data:
     {
       {{ if has "billing" .Values.waldur.features }}
       "accountingMode": "billing",
-      {{ else }}
-      "hideOrganizationBillingStep": true,
       {{ end }}
 
       {{ if has "secure_session" .Values.waldur.features }}

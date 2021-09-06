@@ -177,6 +177,9 @@ spec:
             - name: api-celery
               mountPath: /etc/waldur/celery.conf
               subPath: celery.conf
+            - name: config-features-json
+              mountPath: /etc/waldur/features.json
+              subPath: features.json
             - name: waldur-saml2-certs
               mountPath: /etc/waldur/saml2/credentials
             - name: waldur-saml2-conf
@@ -192,6 +195,9 @@ spec:
       - name: api-celery
         configMap:
           name: api-celery-config
+      - name: config-features-json
+        configMap:
+          name: mastermind-config-features-json
       {{ if has "SAML2" .Values.waldur.authMethods }}
       - name: waldur-saml2-certs
         secret:

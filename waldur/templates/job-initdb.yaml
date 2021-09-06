@@ -88,6 +88,9 @@ spec:
             - name: api-celery
               mountPath: /etc/waldur/celery.conf
               subPath: celery.conf
+            - name: config-features-json
+              mountPath: /etc/waldur/features.json
+              subPath: features.json
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
         - name: waldur-mastermind-create-dbcache
@@ -177,9 +180,6 @@ spec:
             - name: api-celery
               mountPath: /etc/waldur/celery.conf
               subPath: celery.conf
-            - name: config-features-json
-              mountPath: /etc/waldur/features.json
-              subPath: features.json
             - name: waldur-saml2-certs
               mountPath: /etc/waldur/saml2/credentials
             - name: waldur-saml2-conf

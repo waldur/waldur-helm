@@ -29,6 +29,9 @@ data:
       {{ if has "enable_project_member_role" .Values.waldur.features }}
         "project.member_role": true,
       {{ end }}
+      {{ if has "organization_domain_visible" .Values.waldur.features }}
+        "customer.show_domain": true,
+      {{ end }}
         "customer.billing": true,
         "customer.events": true,
         "project.events": true

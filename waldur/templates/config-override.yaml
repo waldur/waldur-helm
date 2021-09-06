@@ -203,6 +203,14 @@ data:
     WALDUR_CORE['SITE_LOGO'] = '/etc/waldur/logo.png'
     {{ end }}
 
+    {{ if .Values.waldur.whitelabeling.modePageTitle }}
+    WALDUR_CORE["FULL_PAGE_TITLE"] = {{ .Values.waldur.whitelabeling.modePageTitle | quote }}
+    {{ end }}
+
+    {{ if .Values.waldur.whitelabeling.shortPageTitle }}
+    WALDUR_CORE["SHORT_PAGE_TITLE"] = {{ .Values.waldur.whitelabeling.shortPageTitle | quote }}
+    {{ end }}
+
     {{ if has "owner_can_manage_customer" .Values.waldur.features }}
     WALDUR_CORE['OWNER_CAN_MANAGE_CUSTOMER'] = True
     {{ end }}

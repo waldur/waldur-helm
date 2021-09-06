@@ -25,14 +25,6 @@ data:
       "userRegistrationHiddenFields": {{ .Values.waldur.homeport.userRegistrationHiddenFields | toJson }},
       {{ end }}
 
-      {{ if .Values.waldur.whitelabeling.modePageTitle }}
-      "modePageTitle": {{ .Values.waldur.whitelabeling.modePageTitle | quote }},
-      {{ end }}
-
-      {{ if .Values.waldur.whitelabeling.shortPageTitle }}
-      "shortPageTitle": {{ .Values.waldur.whitelabeling.shortPageTitle | quote }},
-      {{ end }}
-
       {{ if .Values.waldur.whitelabeling.loginLogoUrl }}
       "loginLogo": {{ .Values.waldur.whitelabeling.loginLogoUrl | quote }},
       {{ else if .Values.waldur.whitelabeling.loginLogoPath }}

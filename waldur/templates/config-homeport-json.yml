@@ -13,23 +13,5 @@ data:
       "authStorage": "sessionStorage",
       {{ end }}
 
-      {{ if .Values.waldur.whitelabeling.loginLogoUrl }}
-      "loginLogo": {{ .Values.waldur.whitelabeling.loginLogoUrl | quote }},
-      {{ else if .Values.waldur.whitelabeling.loginLogoPath }}
-      "loginLogo": "images/login_logo.png",
-      {{ end }}
-
-      {{ if .Values.waldur.whitelabeling.sidebarLogoUrl }}
-      "sidebarLogo": {{ .Values.waldur.whitelabeling.sidebarLogoUrl | quote }},
-      {{ else if .Values.waldur.whitelabeling.sidebarLogoPath }}
-      "sidebarLogo": "images/sidebar_logo.png",
-      {{ end }}
-
-      {{ if .Values.waldur.whitelabeling.poweredByLogoUrl }}
-      "poweredByLogo": {{ .Values.waldur.whitelabeling.poweredByLogoUrl | quote }},
-      {{ else if .Values.waldur.whitelabeling.poweredByLogoPath }}
-      "poweredByLogo": "images/poweredby_logo.png",
-      {{ end }}
-
       "apiEndpoint": {{ printf "%s://%s/" .Values.apiScheme .Values.apiHostname | quote }}
     }

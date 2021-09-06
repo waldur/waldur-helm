@@ -516,3 +516,21 @@ data:
     {{ if .Values.waldur.sentryDSN }}
     WALDUR_CORE["HOMEPORT_SENTRY_DSN"] = {{ .Values.waldur.sentryDSN | quote }}
     {{ end }}
+
+    {{ if .Values.waldur.whitelabeling.loginLogoUrl }}
+    WALDUR_CORE["LOGIN_LOGO"] = {{ .Values.waldur.whitelabeling.loginLogoUrl | quote }}
+    {{ else if .Values.waldur.whitelabeling.loginLogoPath }}
+    WALDUR_CORE["LOGIN_LOGO"] = "images/login_logo.png"
+    {{ end }}
+
+    {{ if .Values.waldur.whitelabeling.sidebarLogoUrl }}
+    WALDUR_CORE["SIDEBAR_LOGO"] = {{ .Values.waldur.whitelabeling.sidebarLogoUrl | quote }}
+    {{ else if .Values.waldur.whitelabeling.sidebarLogoPath }}
+    WALDUR_CORE["SIDEBAR_LOGO"] = "images/sidebar_logo.png"
+    {{ end }}
+
+    {{ if .Values.waldur.whitelabeling.poweredByLogoUrl }}
+    WALDUR_CORE["POWERED_BY_LOGO"] = {{ .Values.waldur.whitelabeling.poweredByLogoUrl | quote }}
+    {{ else if .Values.waldur.whitelabeling.poweredByLogoPath }}
+    WALDUR_CORE["POWERED_BY_LOGO"] = "images/poweredby_logo.png"
+    {{ end }}

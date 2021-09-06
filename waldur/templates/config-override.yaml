@@ -509,3 +509,6 @@ data:
     WALDUR_CORE['DOCS_URL'] = {{ .Values.waldur.homeport.docsLink | quote }}
     {{ end }}
 
+    {{ if .Values.waldur.homeport.invitationCivilCodeHelpText }}
+    WALDUR_CORE["INVITATION_CIVIL_CODE_HELP_TEXT"] = {{ .Values.waldur.homeport.invitationCivilCodeHelpText | quote }}
+    {{ end }}

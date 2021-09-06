@@ -35,9 +35,5 @@ data:
       "poweredByLogo": "images/poweredby_logo.png",
       {{ end }}
 
-      {{ if .Values.waldur.homeport.invitationCivilCodeHelpText }}
-      "invitationCivilCodeHelpText": {{ .Values.waldur.homeport.invitationCivilCodeHelpText | quote }},
-      {{ end }}
-
       "apiEndpoint": {{ printf "%s://%s/" .Values.apiScheme .Values.apiHostname | quote }}
     }

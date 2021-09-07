@@ -83,14 +83,7 @@ Test release installation and readiness:
     - helm install waldur waldur/ --set ingress.tls.source=secret,rabbitmq.host=rmq-rabbitmq,global.imageRegistry=registry.hpc.ut.ee/mirror --wait --timeout 60m0s
     - helm list
     - kubectl get pods
-
-Cleanup releases:
-  extends: .Test template
-  stage: .post
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "schedule"'
-      when: always
-  script:
+  after_script:
     - export KUBECONFIG=${K8S_CONFIG_WALDUR_HELM_TEST}
     - export RELEASES=$(helm ls --short)
     - echo $RELEASES

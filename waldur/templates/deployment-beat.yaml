@@ -82,29 +82,6 @@ spec:
               mountPath: /etc/waldur/id_rsa
               subPath: id_rsa
             {{ end }}
-        {{ if .Values.logManagement.enabled }}
-            - name: waldur-log
-              mountPath: /var/log/waldur
-        - name: fluentd
-          image: {{ .Values.global.imageRegistry }}/{{ .Values.logManagement.fluentImageName }}:{{ .Values.logManagement.fluentImageTag }}
-          imagePullPolicy: IfNotPresent
-          env:
-            - name: FLUENT_ELASTICSEARCH_HOST
-              value: {{ .Values.logManagement.elasticHost | quote }}
-            - name: FLUENT_ELASTICSEARCH_PORT
-              value: {{ .Values.logManagement.elasticPort | quote }}
-            - name: FLUENT_ELASTICSEARCH_SCHEME
-              value: {{ .Values.logManagement.elasticProtocol | quote }}
-            - name: FLUENT_INDEX_NAME
-              value: {{ .Values.logManagement.fluentIndexName | quote }}
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
-          volumeMounts:
-            - name: waldur-log
-              mountPath: /var/log/waldur
-            - name: fluentd-conf
-              mountPath: /fluentd/etc
-        {{ end }}
       volumes:
       - name: api-override
         configMap:
@@ -121,13 +98,6 @@ spec:
               mode: 0755
             - key: logging.conf.py
               path: logging.conf.py
-      {{ if .Values.logManagement.enabled }}
-      - name: waldur-log
-        emptyDir: {}
-      - name: fluentd-conf
-        configMap:
-          name: fluentd-config
-      {{ end }}
       {{ if .Values.waldur.ssh_public_key_path }}
       - name: waldur-ssh-pub-key
         configMap:

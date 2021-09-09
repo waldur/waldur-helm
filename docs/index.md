@@ -3,7 +3,6 @@
 Outline:
 
 - [Private registry setup](private-registry.md)
-- [Log management](log-management.md)
 - [Postgres backup management](postgres-backup-management.md)
 - [TLS](tls-config.md)
 - [White-labeling](whitelabeling.md)

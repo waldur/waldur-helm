@@ -70,7 +70,7 @@ Test release installation:
     - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
-    - helm install waldur waldur/ --set ingress.tls.source=secret,logManagement.enabled=false,global.imageRegistry=registry.hpc.ut.ee/mirror --dry-run --debug
+    - helm install waldur waldur/ --set ingress.tls.source=secret,global.imageRegistry=registry.hpc.ut.ee/mirror --dry-run --debug
 
 Test release installation and readiness:
   extends: .Test template

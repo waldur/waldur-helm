@@ -63,15 +63,6 @@ ingress:
     source: "letsEncrypt" # Possible values: `letsEncrypt` and `secret`
     secretsDir: "tls"  # Enabled only if source == `secret`
 
-logManagement:
-  enabled: false
-  fluentImageName: "fluent/fluentd-kubernetes-daemonset"
-  fluentImageTag: "v1.11.0-debian-elasticsearch7-1.0"
-  fluentIndexName: waldur
-  elasticHost: "elasticsearch-master.elastic.svc.cluster.local" ## See docs/service-endpoint.md for details.
-  elasticPort: "9200"
-  elasticProtocol: "http"
-
 celery:
   worker:
     enabled: true

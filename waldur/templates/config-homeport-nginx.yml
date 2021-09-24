@@ -140,8 +140,11 @@ data:
         {{ end }}
 
         {{ if .Values.waldur.whitelabeling.privacyHtmlPath }}
-        location /views/policy/privacy.html  {
+        location /views/policy/privacy.html {
           alias /var/www/waldur/files/privacy.html;
+        }
+        location /views/policy/privacy-full.html {
+          alias /var/www/waldur/files/privacy-full.html;
         }
         {{ end }}
       }

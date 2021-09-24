@@ -1,5 +1,7 @@
-## White-labeling instructions
+# White-labeling instructions
+
 To setup white-labeling, you can define next variables in `waldur/values.yaml` file:
+
 * `shortPageTitle` - custom prefix for page title
 * `modePageTitle` - custom page title
 * `loginLogoUrl` - URL to custom image for login page (sample dimensions: 300x81px)
@@ -15,6 +17,8 @@ To setup white-labeling, you can define next variables in `waldur/values.yaml` f
 * `tosHtmlPath` - path to custom terms of service file (`tos.html`)
 * `privacyHtmlPath` - path to custom privacy statement file (`privacy.html`)
 
-##### NB:
-- the `*Path` values take place only if respectful `*Url` values are not specified. If both types are defined, the precedence is taken by `URL`(`*Url`) for all cases.
-- all of imported files must be within chart root directory
+**NB:**
+
+    - the `*Path` values take place only if respectful `*Url` values are not specified.
+    If both types are defined, the precedence is taken by `URL`(`*Url`) for all cases.
+    - all of imported files must be within chart root directory

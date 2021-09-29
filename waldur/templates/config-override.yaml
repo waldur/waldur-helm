@@ -99,6 +99,9 @@ data:
         {{ if .Values.waldur.eduteams.enableSync }}
         'ENABLE_EDUTEAMS_SYNC': True,
         {{ end }}
+        {{ if and (.Values.waldur.eduteams.remoteClientID) (.Values.waldur.eduteams.remoteSecret) }}
+        'REMOTE_EDUTEAMS_ENABLED': True,
+        {{ end }}
     })
     {{ end }}
 

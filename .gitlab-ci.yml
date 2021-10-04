@@ -110,6 +110,10 @@ Upload docs:
     entrypoint: [""]
   stage: deploy
   interruptible: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop" && $CI_PIPELINE_SOURCE == "schedule"'
+    # TODO: drop after testing
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:
     - cd /tmp/
     - git clone "https://gitlab-ci-token:$GITLAB_TOKEN@$CI_SERVER_HOST/waldur/waldur-docs.git"
@@ -118,7 +122,9 @@ Upload docs:
     - cd waldur-docs/
     - cp -v $CI_PROJECT_DIR/README.md docs/admin-guide/deployment/helm/index.md
     - cp -rv $CI_PROJECT_DIR/docs/ docs/admin-guide/deployment/helm/
+    - git status
     - git add docs/admin-guide/deployment/helm/
+    - git status
     - git commit -m 'Update Waldur Helm docs'
     - git branch new-configuration-guide
     - git push --set-upstream origin new-configuration-guide:master

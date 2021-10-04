@@ -115,4 +115,8 @@ Upload docs:
     - git config --global user.name "$GITLAB_USER_NAME"
     - git config --global user.email "$GITLAB_USER_EMAIL"
     - cp -v README.md waldur-docs/docs/admin-guide/deployment/helm/index.md
-    - cp -rv docs/ waldur-docs/docs/admin-guide/deployment/helm
+    - cp -rv docs/ waldur-docs/docs/admin-guide/deployment/helm/docs/
+    - git add waldur-docs/docs/admin-guide/deployment/helm
+    - git commit -m 'Update Waldur Helm docs'
+    - git branch new-configuration-guide
+    - git push --set-upstream origin new-configuration-guide:master

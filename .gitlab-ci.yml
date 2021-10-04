@@ -103,3 +103,16 @@ Sync to UT HPC GitLab:
   variables:
     GITHUB_OPENNODE_REPO_URL: "git@gitlab.hpc.ut.ee:waldur/waldur-helm.git"
     GITHUB_WALDUR_REPO_URL: ""
+
+Upload docs:
+  image:
+    name: registry.hpc.ut.ee/mirror/alpine/git:v2.30.2
+    entrypoint: [""]
+  stage: deploy
+  interruptible: true
+  script:
+    - git clone "https://gitlab-ci-token:$GITLAB_TOKEN@$CI_SERVER_HOST/waldur/waldur-docs.git"
+    - git config --global user.name "$GITLAB_USER_NAME"
+    - git config --global user.email "$GITLAB_USER_EMAIL"
+    - cp -v README.md waldur-docs/docs/admin-guide/deployment/helm/index.md
+    - cp -rv docs/ waldur-docs/docs/admin-guide/deployment/helm

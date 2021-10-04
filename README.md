@@ -9,9 +9,9 @@ This chart bootstraps a [Waldur](https://waldur.com/) deployment on a Kubernetes
 
 ## Installing prerequisites
 
-1. Install Kubernetes server, for example, using [minikube](/docs/minikube.md)
-2. Install Kubernetes client, i.e. [kubectl](/docs/kubectl.md)
-3. Install [Helm](/docs/helm.md)
+1. Install Kubernetes server, for example, using [minikube](docs/minikube.md)
+2. Install Kubernetes client, i.e. [kubectl](docs/kubectl.md)
+3. Install [Helm](docs/helm.md)
 
 ## Installing the Chart
 
@@ -25,14 +25,14 @@ This chart bootstraps a [Waldur](https://waldur.com/) deployment on a Kubernetes
 ```
 3. Setup database:
 
-    3.1 Setup single PostgreSQL DB: [instructions](/docs/postgres-db.md), or
+    3.1 Setup single PostgreSQL DB: [instructions](docs/postgres-db.md), or
 
-    3.2 Setup PostgreSQL HA DB: [instructions](/docs/postgres-db-ha.md)
+    3.2 Setup PostgreSQL HA DB: [instructions](docs/postgres-db-ha.md)
 
     **NB** Only one of these two options should be used. Otherwise, DB will be unavailable.
 
-4. Install minio (for database backups): [instructions](/docs/minio.md)
-5. Install RabbitMQ for task queue: [instructions](/docs/rabbitmq.md)
+4. Install minio (for database backups): [instructions](docs/minio.md)
+5. Install RabbitMQ for task queue: [instructions](docs/rabbitmq.md)
 6. Install Helm package:
 ```
   # in 'waldur-helm-poc/'

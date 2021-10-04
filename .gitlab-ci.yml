@@ -111,12 +111,14 @@ Upload docs:
   stage: deploy
   interruptible: true
   script:
+    - cd /tmp/
     - git clone "https://gitlab-ci-token:$GITLAB_TOKEN@$CI_SERVER_HOST/waldur/waldur-docs.git"
     - git config --global user.name "$GITLAB_USER_NAME"
     - git config --global user.email "$GITLAB_USER_EMAIL"
-    - cp -v README.md waldur-docs/docs/admin-guide/deployment/helm/index.md
-    - cp -rv docs/ waldur-docs/docs/admin-guide/deployment/helm/docs/
-    - git add waldur-docs/docs/admin-guide/deployment/helm
+    - cd waldur-docs/
+    - cp -v $CI_PROJECT_DIR/README.md docs/admin-guide/deployment/helm/index.md
+    - cp -rv $CI_PROJECT_DIR/docs/ docs/admin-guide/deployment/helm/
+    - git add docs/admin-guide/deployment/helm/
     - git commit -m 'Update Waldur Helm docs'
     - git branch new-configuration-guide
     - git push --set-upstream origin new-configuration-guide:master

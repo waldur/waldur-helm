@@ -108,7 +108,8 @@ Upload docs:
   image:
     name: registry.hpc.ut.ee/mirror/alpine/git:v2.30.2
     entrypoint: [""]
-  stage: deploy
+  # TODO: drop after testing
+  stage: test
   interruptible: true
   rules:
     - if: '$CI_COMMIT_BRANCH == "develop" && $CI_PIPELINE_SOURCE == "schedule"'
@@ -122,6 +123,9 @@ Upload docs:
     - cd waldur-docs/
     - cp -v $CI_PROJECT_DIR/README.md docs/admin-guide/deployment/helm/index.md
     - cp -rv $CI_PROJECT_DIR/docs/ docs/admin-guide/deployment/helm/
+    - pwd
+    - ls -l
+    - ls -l docs/admin-guide/deployment/helm/
     - git status
     - git add docs/admin-guide/deployment/helm/
     - git status

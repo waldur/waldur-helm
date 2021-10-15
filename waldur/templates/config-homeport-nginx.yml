@@ -121,6 +121,12 @@ data:
         }
         {{ end }}
 
+        {{ if .Values.waldur.whitelabeling.logo120Path }}
+        location /images/waldur/logo120x120.png {
+          alias /var/www/waldur/icons/logo120x120.png;
+        }
+        {{ end }}
+
         {{ if .Values.waldur.whitelabeling.logo144Path }}
         location /images/waldur/logo-144x144.png {
           alias /var/www/waldur/icons/logo-144x144.png;

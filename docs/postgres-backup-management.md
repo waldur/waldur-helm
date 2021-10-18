@@ -32,6 +32,6 @@ pod and execute the following script:
   db-backup-minio-auth
   mc cp pg/$MINIO_BUCKET/backups/postgres/<selected backup> backup.sql.gz
   gzip -d backup.sql.gz
-  cat backup.sql | psql -U $POSTGRESQL_USER -h $POSTGRESQL_HOST -d $POSTGRESQL_NAME
+  psql < backup.sql
   rm backup.sql
 ```

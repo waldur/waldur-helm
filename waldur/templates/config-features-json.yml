@@ -20,8 +20,8 @@ data:
       {{ if not (has "disable_volume_types" .Values.waldur.features) }}
         "openstack.volume_types": true,
       {{ end }}
-      {{ if not (has "disable_user_ssh_keys" .Values.waldur.features) }}
-        "user.ssh_keys": true,
+      {{ if has "disable_user_ssh_keys" .Values.waldur.features }}
+        "user.ssh_keys": false,
       {{ end }}
       {{ if has "marketplace.tos" .Values.waldur.features }}
         "marketplace.terms_of_service": true,

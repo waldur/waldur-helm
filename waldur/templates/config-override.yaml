@@ -508,6 +508,10 @@ data:
     WALDUR_CORE["TRANSLATION_DOMAIN"] = "academic"
     {{ end }}
 
+    {{ if has "academic_shared_domain" .Values.waldur.features }}
+    WALDUR_CORE["TRANSLATION_DOMAIN"] = "academic_shared"
+    {{ end }}
+
     {{ if .Values.waldur.defaultLanguage }}
     LANGUAGE_CODE = {{ .Values.waldur.defaultLanguage | quote }}
     {{ end }}

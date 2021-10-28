@@ -5,6 +5,10 @@ metadata:
   name: waldur-metrics-exporter
   labels:
 {{ include "waldur.labels" . | indent 4 }}
+  annotations:
+    prometheus.io/scrape: 'true'
+    prometheus.io/scrape-path: '/metrics'
+    prometheus.io/scrape-port: '8080'
 spec:
   type: ClusterIP
   ports:

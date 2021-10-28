@@ -13,9 +13,6 @@ spec:
     metadata:
       labels:
         app: waldur-metrics-exporter
-        prometheus.io/scrape: 'true'
-        prometheus.io/scrape-path: '/metrics'
-        prometheus.io/scrape-port: '8080'
     spec:
       {{ if .Values.imagePullSecrets }}
       imagePullSecrets:

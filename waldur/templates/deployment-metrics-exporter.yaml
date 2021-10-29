@@ -30,7 +30,7 @@ spec:
             protocol: TCP
         env:
           - name: WALDUR_API_URL
-            value: {{ printf "%s://%s/api/" .Values.apiScheme .Values.apiHostname | quote }}
+            value: "http://waldur-mastermind-api:8080/api/"
           - name: WALDUR_API_TOKEN
             valueFrom:
               secretKeyRef:

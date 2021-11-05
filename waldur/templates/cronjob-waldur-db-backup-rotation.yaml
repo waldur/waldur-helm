@@ -1,4 +1,4 @@
-{{ if and (.Values.postgresBackup.enabled) (gt (.Values.postgresBackup.retentionDays | int) -1) }}
+{{ if and (.Values.postgresBackup.enabled) }}
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:

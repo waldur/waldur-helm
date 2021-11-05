@@ -14,10 +14,7 @@ Backup configuration values (`postgresBackup` prefix):
 
 - `rotationSchedule` - cron-like schedule for backups rotation
 
-- `retentionDays` - number of days for backups retetion
-
 - `maxNumber` - maximum number of backups to store
-  (takes presedence over `retentionDays` variable)
 
 - `image` - Docker image containing `potgres` and `minio` (client) binaries
   ([opennode/postgres-minio](https://hub.docker.com/r/opennode/postgres-minio)

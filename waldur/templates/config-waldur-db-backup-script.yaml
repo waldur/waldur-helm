@@ -10,7 +10,7 @@ data:
 
     export LOCAL_PG_BACKUPS_DIR=/var/backups/postgres
     export MINIO_PG_BACKUPS_DIR=pg/$MINIO_BUCKET/backups/postgres
-    export BACKUP_NAME={{ .Values.postgresBackup.name }}-$(date +"%m-%d-%Y-%H-%M").sql.gz
+    export BACKUP_NAME={{ .Values.postgresBackup.name }}-$(date +"%Y-%m-%d-%H-%M").sql.gz
 
     echo "[+] LOCAL_PG_BACKUPS_DIR  : $LOCAL_PG_BACKUPS_DIR"
     echo "[+] MINIO_PG_BACKUPS_DIR  : $MINIO_PG_BACKUPS_DIR"

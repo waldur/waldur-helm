@@ -275,10 +275,6 @@ data:
     WALDUR_CORE['SITE_PHONE'] = '{{ .Values.waldur.site.phone }}'
     {{ end }}
 
-    {{ if has "disable_signup_without_invitation" .Values.waldur.features }}
-    WALDUR_CORE['ALLOW_SIGNUP_WITHOUT_INVITATION'] = False
-    {{ end }}
-
     {{ if has "only_staff_can_invite_users" .Values.waldur.features }}
     WALDUR_CORE['ONLY_STAFF_CAN_INVITE_USERS'] = True
     {{ end }}

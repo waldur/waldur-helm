@@ -533,7 +533,7 @@ data:
     {{ end }}
 
     {{ if .Values.waldur.whitelabeling.brandColor }}
-    WALDUR_CORE["BRAND_COLOR"] = {{ .Values.waldur.homeport.brandColor | quote }}
+    WALDUR_CORE["BRAND_COLOR"] = {{ .Values.waldur.whitelabeling.homeport.brandColor | quote }}
     {{ end }}
 
     {{ if .Values.waldur.whitelabeling.heroImagePath }}
@@ -541,13 +541,13 @@ data:
     {{ end }}
 
     {{ if .Values.waldur.whitelabeling.heroLinkLabel }}
-    WALDUR_CORE["HERO_LINK_LABEL"] = {{ .Values.waldur.homeport.heroLinkLabel | quote }}
+    WALDUR_CORE["HERO_LINK_LABEL"] = {{ .Values.waldur.whitelabeling.heroLinkLabel | quote }}
     {{ end }}
 
     {{ if .Values.waldur.whitelabeling.heroLinkUrl }}
-    WALDUR_CORE["HERO_LINK_URL"] = {{ .Values.waldur.homeport.heroLinkUrl | quote }}
+    WALDUR_CORE["HERO_LINK_URL"] = {{ .Values.waldur.whitelabeling.heroLinkUrl | quote }}
     {{ end }}
 
     {{ if .Values.waldur.whitelabeling.siteDescription }}
-    WALDUR_CORE["SITE_DESCRIPTION"] = {{ .Values.waldur.homeport.siteDescription | quote }}
+    WALDUR_CORE["SITE_DESCRIPTION"] = {{ .Values.waldur.whitelabeling.siteDescription | quote }}
     {{ end }}

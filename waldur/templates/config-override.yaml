@@ -547,3 +547,7 @@ data:
     {{ if .Values.waldur.whitelabeling.heroLinkUrl }}
     WALDUR_CORE["HERO_LINK_URL"] = {{ .Values.waldur.homeport.heroLinkUrl | quote }}
     {{ end }}
+
+    {{ if .Values.waldur.whitelabeling.siteDescription }}
+    WALDUR_CORE["SITE_DESCRIPTION"] = {{ .Values.waldur.homeport.siteDescription | quote }}
+    {{ end }}

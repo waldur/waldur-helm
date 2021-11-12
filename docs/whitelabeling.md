@@ -17,6 +17,7 @@ To setup white-labeling, you can define next variables in `waldur/values.yaml` f
 * `heroImagePath` - Relative path to image rendered at hero section of HomePort landing page.
 * `heroLinkLabel` - Label for link in hero section of HomePort landing page. It can be lead to support site or blog post.
 * `heroLinkUrl` - Link URL in hero section of HomePort landing page.
+* `siteDescription` - text at hero section of HomePort landing page.
 
 **NB:**
 

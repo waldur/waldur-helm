@@ -47,7 +47,7 @@ spec:
                 name: waldur-secret
                 key: EVERYPAY_PASSWORD
           - name: WALDUR_SIDECAR_URL
-            value: "{{ printf "%s://%s/uvk-everypay/" .Values.apiScheme .Values.apiHostname | quote }}"
+            value: {{ printf "%s://%s/uvk-everypay/" .Values.apiScheme .Values.apiHostname | quote }}
         {{- with .Values.nodeSelector }}
         nodeSelector:
           {{- toYaml . | nindent 8 }}

@@ -99,11 +99,6 @@ Test release installation and readiness:
     - kubectl delete pvc data-postgresql-waldur-0 || true
     - kubectl delete pvc data-rmq-rabbitmq-0 || true
 
-Sync to UT HPC GitLab:
-  extends: Sync to github
-  variables:
-    GITHUB_WALDUR_REPO_URL: "git@gitlab.hpc.ut.ee:waldur/waldur-helm.git"
-
 Upload docs:
   image:
     name: registry.hpc.ut.ee/mirror/alpine/git:v2.30.2

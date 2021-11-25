@@ -19,7 +19,7 @@ Install `postgresql` release:
 
 ## Chart configuration
 
-1ou can change default PostgreSQL config with the following variables in `postgresql-values.yaml`:
+You can change default PostgreSQL config with the following variables in `postgresql-values.yaml`:
 
 1. `postgresqlDatabase` - name of a database.
     **NB**: must match `postgresql.database` value in `waldur/values.yaml`

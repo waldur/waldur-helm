@@ -15,7 +15,7 @@ on a Kubernetes cluster using the [Helm](https://helm.sh) package manager.
 1. Install Kubernetes client, i.e. [kubectl](docs/kubectl.md)
 1. Install [Helm](docs/helm.md)
 
-## Installing the Chart
+## Installing the chart
 
 1. Add the stable repository
 
@@ -23,7 +23,7 @@ on a Kubernetes cluster using the [Helm](https://helm.sh) package manager.
   helm repo add stable https://charts.helm.sh/stable
 ```
 
-1. Install Chart dependencies:
+1. Install chart dependencies:
 
 ```bash
   helm dep update waldur
@@ -44,7 +44,6 @@ on a Kubernetes cluster using the [Helm](https://helm.sh) package manager.
 1. Install Helm package:
 
 ```bash
-  # in 'waldur-helm-poc/'
   helm install waldur waldur
 ```
 

@@ -24,6 +24,20 @@ spec:
         - name: waldur-homeport
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.homeport.imageName }}:{{ .Values.waldur.imageTag }}
           imagePullPolicy: {{ .Values.waldur.pullPolicy }}
+          livenessProbe:
+            httpGet:
+              host: localhost
+              port: 80
+              path: /scripts/configs/config.json
+            initialDelaySeconds: 3
+            periodSeconds: 3
+          readinessProbe:
+            httpGet:
+              host: localhost
+              port: 80
+              path: /scripts/configs/config.json
+            initialDelaySeconds: 3
+            periodSeconds: 3
           ports:
             - name: http
               containerPort: 80

@@ -24,6 +24,20 @@ spec:
       - name: waldur-metrics-exporter
         image: {{ .Values.global.imageRegistry }}/opennode/waldur-prometheus-exporter:latest
         imagePullPolicy: {{ .Values.waldur.pullPolicy }}
+        livenessProbe:
+          httpGet:
+            host: localhost
+            port: 8080
+            path: /metrics/
+          initialDelaySeconds: 3
+          periodSeconds: 3
+        readinessProbe:
+          httpGet:
+            host: localhost
+            port: 8080
+            path: /metrics/
+          initialDelaySeconds: 3
+          periodSeconds: 3
         ports:
           - name: http
             containerPort: 8080

@@ -30,6 +30,20 @@ spec:
           imagePullPolicy: {{ .Values.waldur.pullPolicy }}
           args:
             - "mastermind"
+          livenessProbe:
+            httpGet:
+              host: localhost
+              port: 8080
+              path: /api/configuration/
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              host: localhost
+              port: 8080
+              path: /api/configuration/
+            initialDelaySeconds: 5
+            periodSeconds: 5
           ports:
             - name: http
               containerPort: 8080

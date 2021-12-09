@@ -32,14 +32,12 @@ spec:
             - "mastermind"
           livenessProbe:
             httpGet:
-              host: localhost
               port: 8080
               path: /api/configuration/
             initialDelaySeconds: 5
             periodSeconds: 5
           readinessProbe:
             httpGet:
-              host: localhost
               port: 8080
               path: /api/configuration/
             initialDelaySeconds: 5

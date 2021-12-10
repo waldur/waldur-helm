@@ -34,14 +34,16 @@ spec:
             httpGet:
               port: 8080
               path: /api/configuration/
-            initialDelaySeconds: 500 # Wait for all migrations to apply
+            initialDelaySeconds: 15
             periodSeconds: 5
+            failureThreshold: 100
           readinessProbe:
             httpGet:
               port: 8080
               path: /api/configuration/
-            initialDelaySeconds: 500
+            initialDelaySeconds: 15
             periodSeconds: 5
+            failureThreshold: 100
           ports:
             - name: http
               containerPort: 8080

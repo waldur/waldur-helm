@@ -12,6 +12,9 @@ metadata:
     {{ if .Values.ingress.tls.source | eq "letsEncrypt" }}
     cert-manager.io/cluster-issuer: letsencrypt-prod-issuer
     {{ end }}
+    {{ if .Values.ingress.whitelistSourceRange }}
+    nginx.ingress.kubernetes.io/whitelist-source-range: "{{ .Values.ingress.whitelistSourceRange }}"
+    {{ end }}
 spec:
   rules:
   - host: {{ .Values.apiHostname }}

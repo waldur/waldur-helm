@@ -26,14 +26,12 @@ spec:
         imagePullPolicy: {{ .Values.waldur.pullPolicy }}
         livenessProbe:
           httpGet:
-            host: localhost
             port: 8080
             path: /metrics/
           initialDelaySeconds: 3
           periodSeconds: 3
         readinessProbe:
           httpGet:
-            host: localhost
             port: 8080
             path: /metrics/
           initialDelaySeconds: 3

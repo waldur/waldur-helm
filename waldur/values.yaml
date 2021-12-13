@@ -62,6 +62,7 @@ ingress:
   tls:
     source: "letsEncrypt" # Possible values: `letsEncrypt` and `secret`
     secretsDir: "tls"  # Enabled only if source == `secret`
+  whitelistSourceRange: '' # E.g. '192.168.22.0/24'
 
 celery:
   worker:

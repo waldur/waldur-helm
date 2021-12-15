@@ -9,7 +9,7 @@ metadata:
   name: uvk-everypay-ingress
   annotations:
     nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/rewrite-target: /invoice-paid
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     {{ if .Values.ingress.tls.source | eq "letsEncrypt" }}
     cert-manager.io/cluster-issuer: letsencrypt-prod-issuer
@@ -19,7 +19,7 @@ spec:
   - host: {{ .Values.apiHostname }}
     http:
       paths:
-      - path: /uvk-everypay
+      - path: /uvk-everypay/(.*)
         pathType: Prefix
         backend:
           service:

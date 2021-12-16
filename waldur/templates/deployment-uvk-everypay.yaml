@@ -70,11 +70,25 @@ spec:
         env:
           - name: WALDUR_API_URL
             value: "http://waldur-mastermind-api:8080/api/"
+          - name: WALDUR_URL
+            value: "{{ .Values.homeportScheme }}://{{ .Values.homeportHostname }}"
           - name: WALDUR_API_TOKEN
             valueFrom:
               secretKeyRef:
                 name: waldur-secret
                 key: WALDUR_STAFF_API_TOKEN
+          - name: EVERYPAY_GATEWAY
+            value: "{{ .Values.waldur.uvkEverypay.everypayGateway }}"
+          - name: EVERYPAY_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: waldur-secret
+                key: EVERYPAY_USERNAME
+          - name: EVERYPAY_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: waldur-secret
+                key: EVERYPAY_PASSWORD
         {{- with .Values.nodeSelector }}
         nodeSelector:
           {{- toYaml . | nindent 8 }}

@@ -304,6 +304,10 @@ data:
     # waldur-marketplace
     #
 
+    {{ if has "disable_resource_end_date" .Values.waldur.features }}
+    WALDUR_MARKETPLACE['ENABLE_RESOURCE_END_DATE'] = False
+    {{ end }}
+
     {{ if .Values.waldur.marketplace.notify_staff }}
     WALDUR_MARKETPLACE['NOTIFY_STAFF_ABOUT_APPROVALS'] = True
     {{ end }}

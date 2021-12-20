@@ -14,7 +14,6 @@ metadata:
     {{ if .Values.ingress.tls.source | eq "letsEncrypt" }}
     cert-manager.io/cluster-issuer: letsencrypt-prod-issuer
     {{ end }}
-    nginx.ingress.kubernetes.io/whitelist-source-range: 52.30.154.251, 52.31.43.193 # IPs of Everypay servers
 spec:
   rules:
   - host: {{ .Values.apiHostname }}

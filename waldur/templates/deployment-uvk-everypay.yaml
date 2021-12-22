@@ -89,31 +89,31 @@ spec:
               secretKeyRef:
                 name: waldur-secret
                 key: EVERYPAY_PASSWORD
-        - name: MAIL_SERVER
-          value: {{ .Values.waldur.mail.host }}
-        {{ if .Values.waldur.mail.port }}
-        - name: MAIL_PORT
-          value: {{ .Values.waldur.mail.port }}
-        {{ end }}
-        {{ if .Values.waldur.mail.password }}
-        - name: MAIL_USERNAME
-          value: {{ .Values.waldur.mail.username }}
-        {{ end }}
-        {{ if .Values.waldur.mail.password }}
-        - name: MAIL_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: waldur-secret
-              key: MAIL_PASSWORD
-        {{ end }}
-        - name: MAIL_USE_TLS
-          value: {{ .Values.waldur.mail.useTLS }}
-        - name: MAIL_USE_SSL
-          value: {{ .Values.waldur.mail.useSSL }}
-        - name: MAIL_FROM
-          value: {{ .Values.waldur.mail.from }}
-        - name: MAIL_REPLY_TO
-          value: {{ .Values.waldur.mail.replyTo }}
+          - name: MAIL_SERVER
+            value: {{ .Values.waldur.mail.host }}
+          {{ if .Values.waldur.mail.port }}
+          - name: MAIL_PORT
+            value: {{ .Values.waldur.mail.port }}
+          {{ end }}
+          {{ if .Values.waldur.mail.password }}
+          - name: MAIL_USERNAME
+            value: {{ .Values.waldur.mail.username }}
+          {{ end }}
+          {{ if .Values.waldur.mail.password }}
+          - name: MAIL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: waldur-secret
+                key: MAIL_PASSWORD
+          {{ end }}
+          - name: MAIL_USE_TLS
+            value: {{ .Values.waldur.mail.useTLS }}
+          - name: MAIL_USE_SSL
+            value: {{ .Values.waldur.mail.useSSL }}
+          - name: MAIL_FROM
+            value: {{ .Values.waldur.mail.from }}
+          - name: MAIL_REPLY_TO
+            value: {{ .Values.waldur.mail.replyTo }}
         {{- with .Values.nodeSelector }}
         nodeSelector:
           {{- toYaml . | nindent 8 }}

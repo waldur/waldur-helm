@@ -90,14 +90,14 @@ spec:
                 name: waldur-secret
                 key: EVERYPAY_PASSWORD
           - name: MAIL_SERVER
-            value: {{ .Values.waldur.mail.host }}
+            value: {{ .Values.waldur.mail.host | quote }}
           {{ if .Values.waldur.mail.port }}
           - name: MAIL_PORT
-            value: {{ .Values.waldur.mail.port }}
+            value: {{ .Values.waldur.mail.port | quote }}
           {{ end }}
-          {{ if .Values.waldur.mail.password }}
+          {{ if .Values.waldur.mail.username }}
           - name: MAIL_USERNAME
-            value: {{ .Values.waldur.mail.username }}
+            value: {{ .Values.waldur.mail.username | quote }}
           {{ end }}
           {{ if .Values.waldur.mail.password }}
           - name: MAIL_PASSWORD
@@ -107,13 +107,13 @@ spec:
                 key: MAIL_PASSWORD
           {{ end }}
           - name: MAIL_USE_TLS
-            value: {{ .Values.waldur.mail.useTLS }}
+            value: {{ .Values.waldur.mail.useTLS | quote }}
           - name: MAIL_USE_SSL
-            value: {{ .Values.waldur.mail.useSSL }}
+            value: {{ .Values.waldur.mail.useSSL | quote }}
           - name: MAIL_FROM
-            value: {{ .Values.waldur.mail.from }}
+            value: {{ .Values.waldur.mail.from | quote }}
           - name: MAIL_REPLY_TO
-            value: {{ .Values.waldur.mail.replyTo }}
+            value: {{ .Values.waldur.mail.replyTo | quote }}
         {{- with .Values.nodeSelector }}
         nodeSelector:
           {{- toYaml . | nindent 8 }}

@@ -555,3 +555,7 @@ data:
     {{ if .Values.waldur.whitelabeling.siteDescription }}
     WALDUR_CORE["SITE_DESCRIPTION"] = {{ .Values.waldur.whitelabeling.siteDescription | quote }}
     {{ end }}
+
+    {{ if .Values.waldur.mastermindUrl }}
+    WALDUR_CORE["MASTERMIND_URL"] = {{ .Values.waldur.mastermindUrl | quote }}
+    {{ end }}

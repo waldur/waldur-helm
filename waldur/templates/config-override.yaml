@@ -453,6 +453,10 @@ data:
     DEFAULT_FROM_EMAIL = '{{ .Values.waldur.mail.from }}'
     {{ end }}
 
+    {{ if .Values.waldur.mail.replyTo }}
+    DEFAULT_REPLY_TO_EMAIL = '{{ .Values.waldur.mail.replyTo }}'
+    {{ end }}
+
     {{ if .Values.waldur.languageChoices }}
     LANGUAGES = (
         ('en', 'English'),

@@ -109,6 +109,9 @@ spec:
               mountPath: /etc/waldur/id_rsa
               subPath: id_rsa
             {{ end }}
+            - name: waldur-script-kubeconfig
+              mountPath: /etc/waldur/kubeconfig
+              subPath: kubeconfig
       volumes:
       - name: api-override
         configMap:
@@ -134,6 +137,12 @@ spec:
       - name: waldur-ssh-key
         secret:
           secretName: waldur-ssh-key-config
+          defaultMode: 0600
+      {{ end }}
+      {{ if .Values.waldur.marketplace.script.enabled }}
+      - name: waldur-script-kubeconfig
+        secret:
+          secretName: waldur-script-kubeconfig
           defaultMode: 0600
       {{ end }}
       {{- with .Values.nodeSelector }}

@@ -312,6 +312,20 @@ data:
     WALDUR_MARKETPLACE['NOTIFY_STAFF_ABOUT_APPROVALS'] = True
     {{ end }}
 
+    {{ if .Values.waldur.marketplace.script.enabled }}
+    WALDUR_MARKETPLACE_SCRIPT['SCRIPT_RUN_MODE'] = 'k8s'
+    WALDUR_MARKETPLACE_SCRIPT['K8S_CONFIG_PATH'] = '/etc/waldur/kubeconfig'
+    {{ if .Values.waldur.marketplace.script.k8sNamespace }}
+    WALDUR_MARKETPLACE_SCRIPT['K8S_NAMESPACE'] = "{{ .Values.waldur.marketplace.script.k8sNamespace }}"
+    {{ end }}
+    {{ if .Values.waldur.marketplace.script.dockerImages }}
+    WALDUR_MARKETPLACE_SCRIPT['DOCKER_IMAGES'] = {{ .Values.waldur.marketplace.script.dockerImages | toJson }}
+    {{ end }}
+    {{ if .Values.waldur.marketplace.script.jobTimeout }}
+    WALDUR_MARKETPLACE_SCRIPT['K8S_JOB_TIMEOUT'] = {{ .Values.waldur.marketplace.script.jobTimeout }}
+    {{ end }}
+    {{ end }}
+
     {{ if has "waldur_marketplace_notify_about_resource_change_disabled" .Values.waldur.features }}
     WALDUR_MARKETPLACE['NOTIFY_ABOUT_RESOURCE_CHANGE'] = False
     {{ end }}

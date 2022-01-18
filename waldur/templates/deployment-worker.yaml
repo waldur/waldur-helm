@@ -109,9 +109,11 @@ spec:
               mountPath: /etc/waldur/id_rsa
               subPath: id_rsa
             {{ end }}
+            {{ if .Values.waldur.marketplace.script.enabled }}
             - name: waldur-script-kubeconfig
               mountPath: /etc/waldur/kubeconfig
               subPath: kubeconfig
+            {{ end }}
       volumes:
       - name: api-override
         configMap:

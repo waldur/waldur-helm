@@ -79,16 +79,6 @@ data:
             location ~ /(css|fonts|images|scripts)$ {
                 expires 7d;
             }
-
-            location = /login_completed/ {
-                return 200 'Authentication is pending.';
-                add_header Content-Type text/plain;
-            }
-
-            location = /login_failed/ {
-                return 401 'Authentication has failed.';
-                add_header Content-Type text/plain;
-            }
         }
 
         {{ if .Values.waldur.whitelabeling.loginLogoPath }}

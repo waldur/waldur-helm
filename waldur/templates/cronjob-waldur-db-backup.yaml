@@ -1,5 +1,9 @@
 {{ if .Values.postgresBackup.enabled }}
+{{- if or ( gt .Capabilities.KubeVersion.Major "1" ) ( ge .Capabilities.KubeVersion.Minor "21" ) }}
+apiVersion: batch/v1
+{{- else }}
 apiVersion: batch/v1beta1
+{{- end }}
 kind: CronJob
 metadata:
   name: waldur-db-backup-cronjob

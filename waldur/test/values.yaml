@@ -1,0 +1,291 @@
+# Default values for waldur.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+extraReplicas:
+  celery: 1
+  api: 1
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+apiScheme: "http"
+homeportScheme: "http"
+apiHostname: waldur.local
+homeportHostname: waldur.local
+
+affinity: {}
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+hpa:
+  api:
+    enabled: false
+    resources:
+      requests:
+        cpu: 500m
+    cpuUtilizationBorder: 70
+  celery:
+    enabled: false
+    workerResources:
+      requests:
+        cpu: 2000m
+    beatResources:
+      requests:
+        cpu: 300m
+    cpuUtilizationBorder: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+service:
+  type: ClusterIP
+  port: 80
+
+storageClassName: local-storage
+
+ingress:
+  tls:
+    source: "secret" # Possible values: `letsEncrypt` and `secret`
+    secretsDir: "tls"  # Enabled only if source == `secret`
+  whitelistSourceRange: '' # E.g. '192.168.22.0/24'
+
+celery:
+  worker:
+    enabled: true
+
+waldur:
+  imageName: "opennode/waldur-mastermind"
+  imageTag: "latest"
+  initdbImageName: "bitnami/postgresql"
+  pullPolicy: Always
+  secretKey: "SecretKeyChangeMe"
+  supportToken: "support-token"
+  staffToken: "staff-token"
+  disabledExtensions: []
+  mail:
+    host: ""
+    port: ""
+    username: ""
+    password: ""
+    useTLS: "false"
+    useSSL: "false"
+    from: ""
+    replyTo: ""
+  notificationSubject: "Test subject"
+  timeZone: "UTC"
+  features: []
+  currencyName: "EUR"
+  mastermindUrl: "http://waldur.example.com/"
+  site:
+    name: "Waldur"
+    logo: ""
+    address: "Example address"
+    email: "waldur@example.com"
+    phone: "test phone"
+  defaultLanguage: "en"
+  languageChoices:
+    - en
+    - et
+    - de
+    - es
+    - ru
+    - lv
+    - it
+  authMethods:
+    - LOCAL_SIGNIN
+    - LDAP
+    - SAML2
+    - SOCIAL_SIGNUP
+  socialAuthMethods:
+    - SMARTIDEE
+    - TARA
+    - KEYCLOAK
+    - EDUTEAMS
+  smartid:
+    secret: "smartid-secret"
+    clientId: "smartid-clientid"
+  tara:
+    secret: "tara-secret"
+    clientId: "tara-clientid"
+  keycloak:
+    auth_url: "/auth/realms/Waldur/protocol/openid-connect/auth"
+    client_id: "waldur"
+    label: "Keycloak"
+    secret: "keycloac-secret"
+    token_url: "http://keycloak-url/token"
+    userinfo_url: "http://keycloak-url/userinfo"
+  eduteams:
+    label: "eduTEAMS"
+    clientId: "eduteams-clientid"
+    secret: "eduteams-secret"
+    authUrl: "https://eduteams-url/authorization"
+    tokenUrl: "https://eduteams-url/token"
+    userinfoUrl: "https://eduteams-url/userinfo"
+    remoteRefreshToken: ""
+    remoteClientID: ""
+    remoteSecret: ""
+    remoteUserinfoUrl: ""
+    remoteTokenUrl: ""
+    enableSync: false
+  ldap:
+    host: "ldap://ipa.address"
+    baseDN: "cn=accounts,dc=demo1,dc=freeipa,dc=org"
+    userDN: "cn=users,cn=accounts,dc=demo1,dc=freeipa,dc=org"
+    user: "wladur"
+    password: "ldap-secret"
+    admins: "cn=admins,"
+    support: "cn=support,"
+  freeipa:
+    hostname: "ipa.address"
+    password: "freeipa-secret"
+    username: "waldur"
+    verifySSL: "false"
+    groupnamePrefix: "pref_"
+    usernamePrefix: "pref_"
+  valimo:
+    apId: ""
+    apPwd: ""
+    dnsname: ""
+    url: ""
+    signatureProfile: ""
+    label: ""
+    mobilePrefix: ""
+  paypal:
+    secret: ""
+    clientId: ""
+  invoice:
+    company: ""
+    address: ""
+    country: ""
+    email: ""
+    postalCode: ""
+    phoneCountryCode: ""
+    phoneNationalNumber: ""
+    bank: ""
+    bankAccount: ""
+    vatCode: ""
+    paymentInterval: ""
+  slurm:
+    customerPrefix: "test_cst_"
+    projectPrefix: "test_pr_"
+    allocationPrefix: "test_alloc"
+  support:
+    customBackend: "waldur_mastermind.support.backend.atlassian:ServiceDeskBackend"
+    servicedeskEmail: "waldur@example.com"
+    servicedeskToken: "support-token"
+    servicedeskUsername: ""
+    servicedeskPassword: ""
+    servicedeskUrl: "https://sd-url/"
+    organizationField: "Reporter organization"
+    projectKey: "WAL"
+  marketplace:
+    notify_staff: false
+    script:
+      enabled: true
+      dockerImages:
+        python: "opennode/python-script-runner:0.1.1"
+        shell: "alpine:3"
+      kubeconfigPath: "test/k8s/kubeconfig"
+      k8sNamespace: "default"
+      jobTimeout: 1800
+  pid_datacite:
+    repository_id: "repo.test"
+    password: "datacite-pid"
+    prefix: "11.11111"
+    url: "https://datacite-url/dois"
+    publisher: "WaldurTest"
+    collection_doi: ""
+  uwsgi:
+    plugins: python38
+    processes: 16
+  sentryDSN: ""
+  whitelabeling:
+    shortPageTitle: "Waldur Helm Test"
+    modePageTitle: "Waldur Helm Test"
+    loginLogoPath: "test/images/login-logo.png"
+    sidebarLogoPath: "test/images/login-logo.png"
+    poweredByLogoPath: "test/images/login-logo.png"
+    faviconPath: "test/images/favicon.png"
+    tosHtmlPath: "test/files/tos.html"
+    brandColor: ""
+    heroImagePath: ""
+    heroLinkLabel: ""
+    heroLinkUrl: ""
+    privacyHtmlPath: "test/files/privacy.html"
+    siteDescription: "Waldur Helm Test"
+  mastermindTemplating:
+    mastermindTemplatesPath: "mastermind_templates"
+  saml2:
+    dir: "test/waldur_saml2"
+    federations: []
+  ssh_public_key_path: "test/ssh/id_rsa"
+  ssh_private_key_path: "test/ssh/id_rsa.pub"
+  homeport:
+    imageName: "opennode/waldur-homeport"
+    googleAnalyticsID: ""
+    userMandatoryFields: {}
+    userRegistrationHiddenFields: {}
+    docsLink: "https://docs.waldur.com"
+    invitationCivilCodeHelpText: ""
+  metricsExporter:
+    enabled: true
+  uvkEverypay:
+    enabled: true
+    uvkServer: "https://uvk-test.ut.ee/client/a74/server.php?format=JSON&action=uvk__"
+    everypayGateway: "https://igw-demo.every-pay.com/api/v4"
+    everypayUsername: "abc"
+    everypayPassword: "S0meP4ssw0rd?@#$"
+
+bootstrap:
+  enabled: true
+  script: "bootstrap.sh"
+  dir: "test/bootstrap"
+
+postgresql:
+  database: "waldur"
+  username: "waldur"
+
+postgresBackup:
+  enabled: false
+  schedule: "0 5 * * *"
+  rotationSchedule: "0 6 * * 6"
+  maxNumber: 10
+  image: opennode/postgres-minio:0.1.0
+  name: "waldur"
+
+minio:
+  accessKey: ""
+  secretKey: ""
+  bucketName: data
+  ## min.io service endpoint used for communication inside a cluster
+  endpoint: "http://minio:9000" ## See docs/service-endpoint.md for details.
+
+rabbitmq:
+  user: "waldur"
+  password: "waldur"
+  ## hostname of rabbitmq service
+  host: "rmq-rabbitmq" ## See docs/service-endpoint.md for details.
+  customManagementPort:
+  customAMQPPort:
+
+stressTesting:
+  enabled: false
+  locustFilePath: "locust_task/locust_test.py"
+
+global:
+  imageRegistry: "registry.hpc.ut.ee/mirror"

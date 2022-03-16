@@ -72,8 +72,12 @@ Test release installation and readiness:
   extends: .Test template
   rules:
     - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "schedule"'
-      allow_failure: true
   script:
+    - helm up postgresql || true
+    - helm up rmq || true
+    - helm up waldur || true
+    - kubectl delete pvc data-postgresql-waldur-0 || true
+    - kubectl delete pvc data-rmq-rabbitmq-0 || true
     - helm install postgresql bitnami/postgresql --version 9.8.2 -f postgresql-values.yaml --set image.registry=registry.hpc.ut.ee/mirror
     - helm install rmq bitnami/rabbitmq --version 8.15.2 -f rmq-values.yaml --set replicaCount=1,image.registry=registry.hpc.ut.ee/mirror --wait
     - helm install waldur waldur/ -f waldur/test/values.yaml --set waldur.uvkEverypay.enabled=false --wait --timeout 60m0s

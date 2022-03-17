@@ -73,9 +73,9 @@ Test release installation and readiness:
   rules:
     - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "schedule"'
   script:
-    - helm up postgresql || true
-    - helm up rmq || true
-    - helm up waldur || true
+    - helm un postgresql || true
+    - helm un rmq || true
+    - helm un waldur || true
     - kubectl delete pvc data-postgresql-waldur-0 || true
     - kubectl delete pvc data-rmq-rabbitmq-0 || true
     - helm install postgresql bitnami/postgresql --version 9.8.2 -f postgresql-values.yaml --set image.registry=registry.hpc.ut.ee/mirror

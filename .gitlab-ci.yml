@@ -55,6 +55,16 @@ Run linter:
     - helm repo update
     - helm dependency update waldur/
 
+.Cleanup template:
+  image: $HELM_TEST_IMAGE
+  script:
+    - export KUBECONFIG=${K8S_CONFIG_WALDUR_HELM_TEST}
+    - helm un postgresql || true
+    - helm un rmq || true
+    - helm un waldur || true
+    - kubectl delete pvc data-postgresql-waldur-0 || true
+    - kubectl delete pvc data-rmq-rabbitmq-0 || true
+
 Test release installation:
   extends: .Test template
   rules:
@@ -73,21 +83,24 @@ Test release installation and readiness:
   rules:
     - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "schedule"'
   script:
-    - helm un postgresql || true
-    - helm un rmq || true
-    - helm un waldur || true
-    - kubectl delete pvc data-postgresql-waldur-0 || true
-    - kubectl delete pvc data-rmq-rabbitmq-0 || true
     - helm install postgresql bitnami/postgresql --version 9.8.2 -f postgresql-values.yaml --set image.registry=registry.hpc.ut.ee/mirror
     - helm install rmq bitnami/rabbitmq --version 8.15.2 -f rmq-values.yaml --set replicaCount=1,image.registry=registry.hpc.ut.ee/mirror --wait
-    - helm install waldur waldur/ -f waldur/test/values.yaml --set waldur.uvkEverypay.enabled=false --wait --timeout 60m0s
+    - helm install waldur waldur/ -f waldur/test/values.yaml --set waldur.uvkEverypay.enabled=false --wait --timeout 40m0s
     - helm list
     - kubectl get pods
-  after_script:
-    - export KUBECONFIG=${K8S_CONFIG_WALDUR_HELM_TEST}
-    - helm un postgresql rmq waldur
-    - kubectl delete pvc data-postgresql-waldur-0 || true
-    - kubectl delete pvc data-rmq-rabbitmq-0 || true
+
+Cleanup previous test deployment:
+  extends: .Cleanup template
+  stage: .pre
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "schedule"'
+
+Cleanup test deployment:
+  extends: .Cleanup template
+  stage: .post
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "schedule"'
+
 
 Upload docs:
   image:

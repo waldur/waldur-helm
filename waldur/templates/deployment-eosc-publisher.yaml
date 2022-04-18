@@ -53,6 +53,10 @@ spec:
             value: {{ .Values.eosc.eoscRefreshUrl | quote }}
           - name: WALDUR_URL
             value: http://waldur-mastermind-api:8080/api/
+          - name: CUSTOMER_UUID
+            value: {{ .Values.eosc.waldurCustomerUUUID | quote }}
+          - name: ORGANIZATION_EID
+            value: {{ .Values.eosc.eoscOrgEID | quote }}
           {{- with .Values.nodeSelector }}
           nodeSelector:
             {{- toYaml . | nindent 8 }}

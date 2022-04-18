@@ -1,0 +1,68 @@
+{{ if .Values.eosc.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: waldur-eosc-publisher
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: eosc-publisher
+  template:
+    metadata:
+      labels:
+        app: eosc-publisher
+    spec:
+      {{ if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range $i, $val := .Values.imagePullSecrets }}
+        - name: {{ $val }}
+        {{ end -}}
+      {{ end }}
+      containers:
+        - name: waldur-eosc-publisher
+          image: {{ .Values.global.imageRegistry }}/opennode/waldur-eosc-publisher:latest
+          imagePullPolicy: {{ .Values.waldur.pullPolicy }}
+          # TODO
+          # livenessProbe:
+          # readinessProbe:
+          env:
+          - name: EOSC_URL
+            value: {{ .Values.eosc.eoscUrl | quote }}
+          - name: OFFERING_URL
+            value: {{ .Values.eosc.eoscOfferingUrl | quote }}
+          - name: WALDUR_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: waldur-eosc-secret
+                key: waldurToken
+          - name: OFFERING_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: waldur-eosc-secret
+                key: offeringToken
+          - name: REFRESH_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: waldur-eosc-secret
+                key: refreshToken
+          - name: CLIENT_ID
+            value: {{ .Values.eosc.eoscClientID | quote }}
+          - name: REFRESH_TOKEN_URL
+            value: {{ .Values.eosc.eoscRefreshUrl | quote }}
+          - name: WALDUR_URL
+            value: http://waldur-mastermind-api:8080/api/
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 8 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 8 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 8 }}
+          {{- end }}
+{{ end }}

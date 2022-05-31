@@ -62,6 +62,8 @@ Run linter:
     - helm un postgresql || true
     - helm un rmq || true
     - helm un waldur || true
+    - kubectl delete job waldur-mastermind-initdb-job || true
+    - kubectl delete job waldur-bootstrap-job || true
     - kubectl delete pvc data-postgresql-waldur-0 || true
     - kubectl delete pvc data-rmq-rabbitmq-0 || true
 

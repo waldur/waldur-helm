@@ -116,12 +116,20 @@ waldur:
     - TARA
     - KEYCLOAK
     - EDUTEAMS
+  localIdp:
+    name: "Local IDP"
+    label: "Local IDP label"
+    managementUrl: ""
+    protectedFields: []
   smartid:
     secret: "smartid-secret"
     clientId: "smartid-clientid"
   tara:
     secret: "tara-secret"
     clientId: "tara-clientid"
+    managementUrl: ""
+    protectedFields:
+      - "full_name"
   keycloak:
     auth_url: "/auth/realms/Waldur/protocol/openid-connect/auth"
     client_id: "waldur"
@@ -129,6 +137,9 @@ waldur:
     secret: "keycloac-secret"
     token_url: "http://keycloak-url/token"
     userinfo_url: "http://keycloak-url/userinfo"
+    managementUrl: ""
+    protectedFields:
+      - "full_name"
   eduteams:
     label: "eduTEAMS"
     clientId: "eduteams-clientid"
@@ -136,6 +147,9 @@ waldur:
     authUrl: "https://eduteams-url/authorization"
     tokenUrl: "https://eduteams-url/token"
     userinfoUrl: "https://eduteams-url/userinfo"
+    managementUrl: "https://eduteams-url.example.com/"
+    protectedFields:
+      - "full_name"
     remoteRefreshToken: ""
     remoteClientID: ""
     remoteSecret: ""
@@ -165,6 +179,8 @@ waldur:
     signatureProfile: ""
     label: ""
     mobilePrefix: ""
+    managementUrl: ""
+    protectedFields: []
   paypal:
     secret: ""
     clientId: ""
@@ -244,6 +260,7 @@ waldur:
     invitationCivilCodeHelpText: ""
   metricsExporter:
     enabled: true
+    includeAnnotations: false
   uvkEverypay:
     enabled: true
     uvkServer: "https://uvk-test.ut.ee/client/a74/server.php?format=JSON&action=uvk__"

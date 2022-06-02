@@ -109,12 +109,20 @@ waldur:
   authMethods:
     - LOCAL_SIGNIN
   socialAuthMethods: []
+  localIdp:
+    name: ""
+    label: ""
+    managementUrl: ""
+    protectedFields: []
   smartid:
     secret: ""
     clientId: ""
   tara:
     secret: ""
     clientId: ""
+    managementUrl: ""
+    protectedFields:
+      - "full_name"
   keycloak:
     auth_url: ""
     client_id: ""
@@ -122,6 +130,9 @@ waldur:
     secret: ""
     token_url: ""
     userinfo_url: ""
+    managementUrl: ""
+    protectedFields:
+      - "full_name"
   eduteams:
     label: "eduTEAMS"
     clientId: ""
@@ -129,6 +140,9 @@ waldur:
     authUrl: "https://proxy.acc.eduteams.org/saml2sp/OIDC/authorization"
     tokenUrl: "https://proxy.acc.eduteams.org/OIDC/token"
     userinfoUrl: "https://proxy.acc.eduteams.org/OIDC/userinfo"
+    managementUrl: ""
+    protectedFields:
+      - "full_name"
     remoteRefreshToken: ""
     remoteClientID: ""
     remoteSecret: ""
@@ -158,6 +172,8 @@ waldur:
     signatureProfile: ""
     label: ""
     mobilePrefix: ""
+    managementUrl: ""
+    protectedFields: []
   paypal:
     secret: ""
     clientId: ""
@@ -235,6 +251,7 @@ waldur:
     invitationCivilCodeHelpText: ""
   metricsExporter:
     enabled: false
+    includeAnnotations: true
   uvkEverypay:
     enabled: false
     uvkServer: "https://uvk-test.ut.ee/client/a74/server.php?format=JSON&action=uvk__"

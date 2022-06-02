@@ -69,6 +69,8 @@ data:
         'TARA_SECRET': '{{ .Values.waldur.tara.secret }}',
         'TARA_CLIENT_ID': '{{ .Values.waldur.tara.clientId }}',
         'TARA_SANDBOX': False,
+        'TARA_MANAGEMENT_URL': '{{ .Values.waldur.tara.managementUrl }}',
+        'TARA_USER_PROTECTED_FIELDS': {{ .Values.waldur.tara.protectedFields | toJson }},
     })
     {{ end }}
 
@@ -80,6 +82,8 @@ data:
         'KEYCLOAK_SECRET': '{{ .Values.waldur.keycloak.secret }}',
         'KEYCLOAK_TOKEN_URL': '{{ .Values.waldur.keycloak.token_url }}',
         'KEYCLOAK_USERINFO_URL': '{{ .Values.waldur.keycloak.userinfo_url }}',
+        'KEYCLOAK_MANAGEMENT_URL': '{{ .Values.waldur.keycloak.managementUrl }}',
+        'KEYCLOAK_USER_PROTECTED_FIELDS': {{ .Values.waldur.keycloak.protectedFields | toJson }},
     })
     {{ end }}
 
@@ -91,6 +95,8 @@ data:
         'EDUTEAMS_AUTH_URL': '{{ .Values.waldur.eduteams.authUrl }}',
         'EDUTEAMS_TOKEN_URL': '{{ .Values.waldur.eduteams.tokenUrl }}',
         'EDUTEAMS_USERINFO_URL': '{{ .Values.waldur.eduteams.userinfoUrl }}',
+        'EDUTEAMS_MANAGEMENT_URL': '{{ .Values.waldur.eduteams.managementUrl }}',
+        'EDUTEAMS_USER_PROTECTED_FIELDS': {{ .Values.waldur.eduteams.protectedFields | toJson }},
         'REMOTE_EDUTEAMS_REFRESH_TOKEN': '{{ .Values.waldur.eduteams.remoteRefreshToken }}',
         'REMOTE_EDUTEAMS_CLIENT_ID': '{{ .Values.waldur.eduteams.remoteClientID }}',
         'REMOTE_EDUTEAMS_SECRET': '{{ .Values.waldur.eduteams.remoteSecret }}',
@@ -190,6 +196,8 @@ data:
     {{ if .Values.waldur.valimo.mobilePrefix }}
         'MOBILE_PREFIX': '{{ .Values.waldur.valimo.mobilePrefix }}',
     {{ end }}
+        'USER_MANAGEMENT_URL': '{{ .Values.waldur.valimo.managementUrl }}',
+        'USER_PROTECTED_FIELDS': {{ .Values.waldur.valimo.protectedFields | toJson }},
     })
     {{ end }}
 
@@ -569,6 +577,13 @@ data:
     {{ if .Values.waldur.whitelabeling.heroLinkUrl }}
     WALDUR_CORE["HERO_LINK_URL"] = {{ .Values.waldur.whitelabeling.heroLinkUrl | quote }}
     {{ end }}
+
+    WALDUR_CORE.update({
+        'LOCAL_IDP_NAME': '{{ .Values.waldur.localIdp.name }}',
+        'LOCAL_IDP_LABEL': '{{ .Values.waldur.localIdp.label }}',
+        'LOCAL_IDP_MANAGEMENT_URL': '{{ .Values.waldur.localIdp.managementUrl }}',
+        'LOCAL_IDP_PROTECTED_FIELDS': {{ .Values.waldur.localIdp.protectedFields | toJson }},
+    })
 
     {{ if .Values.waldur.whitelabeling.siteDescription }}
     WALDUR_CORE["SITE_DESCRIPTION"] = {{ .Values.waldur.whitelabeling.siteDescription | quote }}

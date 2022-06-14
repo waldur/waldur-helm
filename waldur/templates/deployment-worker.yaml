@@ -99,6 +99,14 @@ spec:
             - name: logging-override
               mountPath: /usr/local/bin/worker
               subPath: worker
+            {{ $templatesPath := .Values.waldur.mastermindTemplating.mastermindTemplatesPath }}
+            {{ $templatesRoot := $templatesPath | printf "%s/"}}
+            {{ $templatesPathPattern := $templatesPath | printf "%s/**" }}
+            {{ range $path, $_ := .Files.Glob $templatesPathPattern }}
+            - name: waldur-mastermind-template
+              mountPath: {{ $path | replace $templatesRoot "" | printf "/usr/src/waldur/src/%s" }}
+              subPath: {{ $path | base }}
+            {{ end }}
             {{ if .Values.waldur.ssh_public_key_path }}
             - name: waldur-ssh-pub-key
               mountPath: /etc/waldur/id_rsa.pub
@@ -131,6 +139,9 @@ spec:
               mode: 0755
             - key: logging.conf.py
               path: logging.conf.py
+      - name: waldur-mastermind-template
+        configMap:
+          name: mastermind-template-config
       {{ if .Values.waldur.ssh_public_key_path }}
       - name: waldur-ssh-pub-key
         configMap:

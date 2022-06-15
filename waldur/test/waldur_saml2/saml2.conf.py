@@ -9,8 +9,6 @@ WALDUR_AUTH_SAML2.update({
     'xmlsec_binary': '/usr/bin/xmlsec1',
     # required for assertion consumer, single logout services and entity ID
     'base_url': 'https://waldur.example.com',
-    # directory with TAAT attribute mapping
-    'attribute_map_dir': '/etc/waldur/saml2/attribute-maps',
     # set to True to output debugging information
     'debug': True,
     # IdPs metadata XML files stored locally

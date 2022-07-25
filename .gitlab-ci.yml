@@ -23,6 +23,7 @@ Run linter:
   before_script:
     - apk update
     - apk add jq python3
+    - apk add -X http://dl-cdn.alpinelinux.org/alpine/edge/community -u alpine-keys
     - apk add yq --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
   script:
     - helm lint waldur/

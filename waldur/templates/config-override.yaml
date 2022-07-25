@@ -592,3 +592,11 @@ data:
     {{ if .Values.waldur.mastermindUrl }}
     WALDUR_CORE["MASTERMIND_URL"] = {{ .Values.waldur.mastermindUrl | quote }}
     {{ end }}
+
+    {{ if .Values.waldur.support.skipVerify }}
+    WALDUR_JIRA.update(
+        {
+            'VERIFY_SSL': False
+        }
+    )
+    {{ end }}

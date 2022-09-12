@@ -12,7 +12,7 @@ Add `bitnami` repo to helm:
 Install `postgresql` release:
 
 ```bsah
-  helm install postgresql bitnami/postgresql --version 10.15.0 -f postgresql-values.yaml
+  helm install postgresql bitnami/postgresql --version 9.8.2 -f postgresql-values.yaml
 ```
 
 **NB**: the value `postgresql.HAEnabled` for waldur release must be `false`.

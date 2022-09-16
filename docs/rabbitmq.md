@@ -15,7 +15,7 @@ Add `bitnami` repo to helm:
 Install rabbitmq-ha release:
 
 ```bash
-  helm install rmq bitnami/rabbitmq -f rmq-values.yaml
+  helm install rmq bitnami/rabbitmq --version 10.3.5 -f rmq-values.yaml
 ```
 
 ## Configuration

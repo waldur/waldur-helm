@@ -442,6 +442,12 @@ data:
     {{ end }}
     {{ end }}
 
+    {{ if has "allow_direct_external_network_connection" .Values.waldur.features }}
+    WALDUR_OPENSTACK_TENANT.update({
+        'ALLOW_DIRECT_EXTERNAL_NETWORK_CONNECTION': True,
+    })
+    {{ end }}
+
     {{ if and (has "show_openstack_console" .Values.waldur.features) (not (has "waldur_openstack.openstack_tenant" .Values.waldur.disabledExtensions)) }}
     WALDUR_OPENSTACK_TENANT.update({
         'ALLOW_CUSTOMER_USERS_OPENSTACK_CONSOLE_ACCESS': True,

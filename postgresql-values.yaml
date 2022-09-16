@@ -1,10 +1,14 @@
 nameOverride: "waldur"
 
-postgresqlDatabase: "waldur"
-postgresqlUsername: "waldur"
-postgresqlPassword: "waldur"
-persistence:
-  size: "10Gi"
+auth:
+  username: "waldur"
+  password: "waldur"
+  database: "waldur"
+
+primary:
+  persistence:
+    size: "10Gi"
+
 image:
   registry: "docker.io"
   tag: 12

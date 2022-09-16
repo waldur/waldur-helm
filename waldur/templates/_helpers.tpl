@@ -84,7 +84,7 @@ Set postgres secret
 Set postgres secret password key
 */}}
 {{- define "waldur.postgresql.secret.passwordKey" -}}
-"postgresql-password"
+"password"
 {{- end -}}
 
 {{/*

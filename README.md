@@ -17,16 +17,17 @@ on a Kubernetes cluster using the [Helm](https://helm.sh) package manager.
 
 ## Installing the chart
 
+1. Clone [waldur-helm repository](https://github.com/waldur/waldur-helm)
+
+```bash
+  git clone https://github.com/waldur/waldur-helm.git
+  cd waldur-helm
+```
+
 1. Add the stable repository
 
 ```bash
   helm repo add stable https://charts.helm.sh/stable
-```
-
-1. Install chart dependencies:
-
-```bash
-  helm dep update waldur
 ```
 
 1. Setup database:

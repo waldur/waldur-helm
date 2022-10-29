@@ -197,6 +197,11 @@ spec:
             - name: waldur-saml2-conf
               mountPath: /etc/waldur/saml2.conf.py
               subPath: saml2.conf.py
+            {{ if has "CUSTOM" .Values.waldur.saml2.federations }}
+            - name: waldur-saml2-idp-metadata
+              mountPath: /etc/waldur/saml2/metadata/idp_metadata.xml
+              subPath: idp_metadata.xml
+            {{ end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
 {{ end }}
@@ -217,6 +222,11 @@ spec:
       - name: waldur-saml2-conf
         configMap:
           name: waldur-saml2-conf-config
+      {{ end }}
+      {{ if has "CUSTOM" .Values.waldur.saml2.federations }}
+      - name: waldur-saml2-idp-metadata
+        configMap:
+          name: waldur-idp-custom-metadata-config
       {{ end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

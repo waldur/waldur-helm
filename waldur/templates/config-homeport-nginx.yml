@@ -130,5 +130,50 @@ data:
           alias /var/www/waldur/files/privacy-full.html;
         }
         {{ end }}
+        # next
+            {{ if .Values.waldur.whitelabeling.loginLogoPath }}
+        location /next/images/login_logo.png {
+          alias /var/www/waldur/icons/login_logo.png;
+        }
+        {{ end }}
+
+        {{ if .Values.waldur.whitelabeling.sidebarLogoPath }}
+        location /next/images/sidebar_logo.png {
+          alias /var/www/waldur/icons/sidebar_logo.png;
+        }
+        {{ end }}
+
+        {{ if .Values.waldur.whitelabeling.poweredByLogoPath }}
+        location /next/images/poweredby_logo.png {
+          alias /var/www/waldur/icons/poweredby_logo.png;
+        }
+        {{ end }}
+
+        {{ if .Values.waldur.whitelabeling.faviconPath }}
+        location /next/images/favicon.ico {
+          alias /var/www/waldur/icons/favicon.ico;
+        }
+        {{ end }}
+
+        {{ if .Values.waldur.whitelabeling.heroImagePath }}
+        location /next/images/hero_image.jpg {
+          alias /var/www/waldur/icons/hero_image.jpg;
+        }
+        {{ end }}
+
+        {{ if .Values.waldur.whitelabeling.tosHtmlPath }}
+        location /next/views/tos/index.html {
+          alias /var/www/waldur/files/tos.html;
+        }
+        {{ end }}
+
+        {{ if .Values.waldur.whitelabeling.privacyHtmlPath }}
+        location /next/views/policy/privacy.html {
+          alias /var/www/waldur/files/privacy.html;
+        }
+        location /next/views/policy/privacy-full.html {
+          alias /var/www/waldur/files/privacy-full.html;
+        }
+        {{ end }}
       }
     }

@@ -85,6 +85,19 @@ data:
                 expires 7d;
             }
         }
+        
+        location /next/ {
+            rewrite ^/next/(.*) /$1 break;
+            root /usr/share/nginx/html/next;
+            index index.html;
+
+            try_files $uri $uri/ /next/index.html;
+        }
+
+        location = /next/ {
+            root /usr/share/nginx/html;
+            index index.html;
+        }
 
         {{ if .Values.waldur.whitelabeling.loginLogoPath }}
         location /images/login_logo.png {
@@ -130,8 +143,9 @@ data:
           alias /var/www/waldur/files/privacy-full.html;
         }
         {{ end }}
+
         # next
-            {{ if .Values.waldur.whitelabeling.loginLogoPath }}
+        {{ if .Values.waldur.whitelabeling.loginLogoPath }}
         location /next/images/login_logo.png {
           alias /var/www/waldur/icons/login_logo.png;
         }

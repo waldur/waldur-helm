@@ -95,6 +95,11 @@ spec:
             - name: config-features-json
               mountPath: /etc/waldur/features.json
               subPath: features.json
+            {{ if .Values.waldur.mastermindTemplating.mastermindTemplatesPath }}
+            - name: waldur-mastermind-template
+              mountPath: /etc/waldur/notifications-templates.yaml
+              subPath: "mastermind-templates.yaml"
+            {{ end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
         - name: waldur-mastermind-create-dbcache
@@ -215,6 +220,11 @@ spec:
       - name: config-features-json
         configMap:
           name: mastermind-config-features-json
+      {{ if .Values.waldur.mastermindTemplating.mastermindTemplatesPath }}
+      - name: waldur-mastermind-template
+        configMap:
+          name: mastermind-template-config
+      {{ end }}
       {{ if has "SAML2" .Values.waldur.authMethods }}
       - name: waldur-saml2-certs
         secret:

@@ -98,14 +98,6 @@ spec:
             - name: logging-override
               mountPath: /etc/waldur/uwsgi.ini
               subPath: uwsgi.ini
-            {{ $templatesPath := .Values.waldur.mastermindTemplating.mastermindTemplatesPath }}
-            {{ $templatesRoot := $templatesPath | printf "%s/"}}
-            {{ $templatesPathPattern := $templatesPath | printf "%s/**" }}
-            {{ range $path, $_ := .Files.Glob $templatesPathPattern }}
-            - name: waldur-mastermind-template
-              mountPath: {{ $path | replace $templatesRoot "" | printf "/usr/src/waldur/src/%s" }}
-              subPath: {{ $path | base }}
-            {{ end }}
             {{ if has "SAML2" .Values.waldur.authMethods }}
             - name: waldur-saml2-certs
               mountPath: /etc/waldur/saml2/credentials
@@ -130,9 +122,6 @@ spec:
       - name: api-celery
         configMap:
           name: api-celery-config
-      - name: waldur-mastermind-template
-        configMap:
-          name: mastermind-template-config
       - name: logging-override
         configMap:
           name: mastermind-logging-override-config

@@ -3,13 +3,36 @@
 If you want to configure custom mastermind templates, you should:
 
 1. Setup `waldur.mastermindTemplating.mastermindTemplatesPath`
-    in values.yaml (by default, it is equal to `mastermind_templates`)
+    in values.yaml (by default, it is equal to `mastermind_templates/mastermind-templates.yaml`)
 
-1. Put all the custom template files in the mentioned directory
-    with respect to their placement in the source code repository.
-    For example, if you want to replace default `waldur_core/users/templates/users/invitation_approved_message.html`,
-    you should put custom `invitation_approved_message.html`
-    file into `<mastermindTemplatesPath>/waldur_core/users/templates/users/` directory.
-    Hence, the custom template will present in
-    `<mastermindTemplatesPath>/waldur_core/users/templates/users/invitation_approved_message.html`
-    file.
+1. Put all the custom templates into the file in a following way:
+
+**NB**: The keys in the file should have `<waldur_application_name>/<event_name>_<postfix>.<extension>`, where `<postfix>` can be either `message` or `subject`, and `<extension>` - either `txt` or `html`
+
+```yaml
+<file-name1>: |
+    <Custom content1>
+<file-name2>: |
+    <Custom content2>
+...
+```
+
+Example:
+
+```yaml
+users/invitation_notification_message.txt: |
+    Hi!
+users/invitation_notification_message.html: |
+    <html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>Invitation has been created</title>
+    </head>
+    <body>
+    <p>
+        Hi!
+    </p>
+    </body>
+    </html>
+...
+```

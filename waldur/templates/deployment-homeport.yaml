@@ -52,8 +52,6 @@ spec:
               subPath: nginx.conf
             - name: icons
               mountPath: /var/www/waldur/icons
-            - name: files
-              mountPath: /var/www/waldur/files
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
@@ -66,9 +64,6 @@ spec:
       - name: icons
         configMap:
           name: homeport-icons-config
-      - name: files
-        configMap:
-          name: homeport-files-config
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

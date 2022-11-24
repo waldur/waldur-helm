@@ -100,6 +100,16 @@ spec:
               mountPath: /etc/waldur/notifications-templates.yaml
               subPath: "mastermind-templates.yaml"
             {{ end }}
+            {{ if .Values.waldur.whitelabeling.privacyHtmlPath }}
+            - name: waldur-mastermind-user-agreements
+              mountPath: /etc/waldur/privacy-policy.html
+              subPath: "mastermind-pp.html"
+            {{ end }}
+            {{ if .Values.waldur.whitelabeling.tosHtmlPath }}
+            - name: waldur-mastermind-user-agreements
+              mountPath: /etc/waldur/terms-of-service.html
+              subPath: "mastermind-tos.html"
+            {{ end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
         - name: waldur-mastermind-create-dbcache
@@ -224,6 +234,11 @@ spec:
       - name: waldur-mastermind-template
         configMap:
           name: mastermind-template-config
+      {{ end }}
+      {{ if or (.Values.waldur.whitelabeling.privacyHtmlPath) (.Values.waldur.whitelabeling.tosHtmlPath) }}
+      - name: waldur-mastermind-user-agreements
+        configMap:
+          name: mastermind-user-agreement-config
       {{ end }}
       {{ if has "SAML2" .Values.waldur.authMethods }}
       - name: waldur-saml2-certs

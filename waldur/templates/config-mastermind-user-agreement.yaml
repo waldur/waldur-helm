@@ -1,27 +1,21 @@
+{{ if or (.Values.waldur.whitelabeling.privacyHtmlPath) (.Values.waldur.whitelabeling.tosHtmlPath) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: homeport-files-config
+  name: mastermind-user-agreement-config
 data:
   {{ $fpath := "" }}
 
   {{ if .Values.waldur.whitelabeling.privacyHtmlPath }}
     {{ $fpath = .Values.waldur.whitelabeling.privacyHtmlPath }}
-  privacy.html: |
+  mastermind-pp.html: |
 {{ .Files.Get $fpath | indent 4 }}
-  privacy-full.html: |
-    <html>
-    <head>
-      <title>{{ .Values.waldur.site.name }} Privacy Policy</title>
-    </head>
-    <body>
-{{ .Files.Get $fpath | indent 8 }}
-    </body>
-    </html>
   {{ end }}
 
   {{ if .Values.waldur.whitelabeling.tosHtmlPath }}
     {{ $fpath = .Values.waldur.whitelabeling.tosHtmlPath }}
-  tos.html: |
+  mastermind-tos.html: |
 {{ .Files.Get $fpath | indent 4 }}
   {{ end }}
+
+{{ end }}

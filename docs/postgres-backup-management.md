@@ -22,13 +22,51 @@ Backup configuration values (`postgresBackup` prefix):
 
 ## Backups restoration
 
-To restore backups you need to shell into `waldur-db-restore`
-pod and execute the following script:
+To restore backups you need to:
+
+1. Connect to the restoration pod. The major prerequisite for this is stopping the Waldur backend pods to avoid errors. **NB: During restoration process, the site will be unavailable**. For this, please execute the following lines in the Kubernetes node:
+
+```bash
+# Stop all the API pods
+kubectl scale --replicas=0 deployment/waldur-mastermind-api
+# Stop all the Celery worker pods
+kubectl scale --replicas=0 deployment/waldur-mastermind-worker
+# Connect to the restoration pod
+kubectl exec -it deployment/waldur-db-restore -- bash
+```
+
+This will give you access to a terminal of a restoration pod. In this shell, please, execute the command:
+
+```bash
+db-backup-minio-auth
+```
+
+This will print the recent 5 backups available for restoration. Example:
+
+```bash
+root@waldur-db-restore-ff7f586bb-nb8jt:/# db-backup-minio-auth
+[+] LOCAL_PG_BACKUPS_DIR :
+[+] MINIO_PG_BACKUPS_DIR : pg/data/backups/postgres
+[+] Setting up the postgres alias for minio server (http://minio.default.svc.cluster.local:9000)
+[+] Last 5 backups
+[2022-12-01 05:00:02 UTC]  91KiB backup-2022-12-01-05-00.sql.gz
+[2022-11-30 05:00:02 UTC]  91KiB backup-2022-11-30-05-00.sql.gz
+[2022-11-29 05:00:02 UTC]  91KiB backup-2022-11-29-05-00.sql.gz
+[2022-11-28 16:30:37 UTC]  91KiB backup-2022-11-28-16-30.sql.gz
+[2022-11-28 16:28:27 UTC]  91KiB backup-2022-11-28-16-28.sql.gz
+[+] Finished
+```
+
+As you can see, the backup name contains the date and time when it was created in `YYYY-mm-dd-HH-MM` format. You can freely choose the one you need.
 
 ```bash
   db-backup-minio-auth
-  mc cp pg/$MINIO_BUCKET/backups/postgres/<selected backup> backup.sql.gz
+  export $BACKUP_FILENAME=<SELECTED_BACKUP>
+  mc cp pg/$MINIO_BUCKET/backups/postgres/$BACKUP_FILENAME backup.sql.gz
   gzip -d backup.sql.gz
+  # Be careful: the next lines have potentially danger operations
+  dropdb waldur
+  createdb waldur
   psql < backup.sql
   rm backup.sql
 ```

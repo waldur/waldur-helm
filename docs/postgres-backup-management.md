@@ -65,8 +65,37 @@ As you can see, the backup name contains the date and time when it was created i
   mc cp pg/$MINIO_BUCKET/backups/postgres/$BACKUP_FILENAME backup.sql.gz
   gzip -d backup.sql.gz
   # Be careful: the next lines have potentially danger operations
-  dropdb waldur
+  psql -d postgres -c "SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = 'waldur' AND pid <> pg_backend_pid();"
+  psql -d postgres -c 'DROP DATABASE waldur;'
   createdb waldur
-  psql < backup.sql
+  psql -f backup.sql
   rm backup.sql
 ```
+
+If you want to use a pre-existing backup from an external system, copy the backup file:
+
+1. Copy the backup file to your local machine
+1. Copy the file to pod
+
+  ```bash
+  export RESTORATION_POD_NAME=$(kubectl get pods --template '{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}' | grep restore)
+  kubectl cp <BACKUP_FILE> $RESTORATION_POD_NAME:/tmp/
+  ```
+
+1. Connect to pod's terminal
+
+  ```bash
+  kubectl exec -it $RESTORATION_POD_NAME -- bash
+  ```
+
+1. Apply the backup
+
+  ```bash
+  gzip -d /tmp/backup.sql.gz
+  # Be careful: the next lines have potentially danger operations
+  psql -d postgres -c "SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = 'waldur' AND pid <> pg_backend_pid();"
+  psql -d postgres -c 'DROP DATABASE waldur;'
+  createdb waldur
+  psql -f /tmp/backup.sql
+  rm /tmp/backup.sql
+  ```

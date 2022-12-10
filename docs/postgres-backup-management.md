@@ -61,7 +61,7 @@ As you can see, the backup name contains the date and time when it was created i
 
 ```bash
   db-backup-minio-auth
-  export $BACKUP_FILENAME=<SELECTED_BACKUP>
+  export BACKUP_FILENAME=<SELECTED_BACKUP>
   mc cp pg/$MINIO_BUCKET/backups/postgres/$BACKUP_FILENAME backup.sql.gz
   gzip -d backup.sql.gz
   # Be careful: the next lines have potentially danger operations

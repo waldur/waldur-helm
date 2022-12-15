@@ -63,6 +63,7 @@ ingress:
     source: "letsEncrypt" # Possible values: `letsEncrypt` and `secret`
     secretsDir: "tls"  # Enabled only if source == `secret`
   whitelistSourceRange: '' # E.g. '192.168.22.0/24'
+  whitelistSourceRangeAdmin: '' # Same as whitelistSourceRange, but for /admin endpoint in Mastermind
 
 celery:
   worker:

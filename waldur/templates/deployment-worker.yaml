@@ -99,6 +99,10 @@ spec:
             - name: logging-override
               mountPath: /usr/local/bin/worker
               subPath: worker
+            {{ if has "VALIMO" .Values.waldur.authMethods }}
+            - name: waldur-valimo-certs
+              mountPath: /etc/waldur/valimo
+            {{ end }}
             {{ if .Values.waldur.ssh_public_key_path }}
             - name: waldur-ssh-pub-key
               mountPath: /etc/waldur/id_rsa.pub
@@ -131,6 +135,11 @@ spec:
               mode: 0755
             - key: logging.conf.py
               path: logging.conf.py
+      {{ if has "VALIMO" .Values.waldur.authMethods }}
+      - name: waldur-valimo-certs
+        secret:
+          secretName: waldur-valimo-secret
+      {{ end }}
       {{ if .Values.waldur.ssh_public_key_path }}
       - name: waldur-ssh-pub-key
         configMap:

@@ -77,7 +77,7 @@ WALDUR_AUTH_SAML2.update({
 SAML_ATTRIBUTE_MAPPING = WALDUR_AUTH_SAML2['SAML_ATTRIBUTE_MAPPING']
 
 SAML_CONFIG.update({
-    'xmlsec_binary': WALDUR_AUTH_SAML2['XMLSEX_BINARY'],
+    'xmlsec_binary': WALDUR_AUTH_SAML2['XMLSEC_BINARY'],
     'entityid': WALDUR_CORE['MASTERMIND_URL'] + '/api-auth/saml2/metadata/',
     'attribute_map_dir': WALDUR_AUTH_SAML2['ATTRIBUTE_MAP_DIR'],
     'name': WALDUR_AUTH_SAML2['DISPLAY_NAME'],

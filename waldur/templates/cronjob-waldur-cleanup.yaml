@@ -47,6 +47,18 @@ spec:
                 - name: SENTRY_DSN
                   value: {{ .Values.waldur.sentryDSN | quote }}
                 {{ end }}
+                {{ if .Values.proxy.httpsProxy }}
+                - name: https_proxy
+                  value: {{ .Values.proxy.httpsProxy | quote }}
+                {{ end }}
+                {{ if .Values.proxy.httpProxy }}
+                - name: http_proxy
+                  value: {{ .Values.proxy.httpProxy | quote }}
+                {{ end }}
+                {{ if .Values.proxy.noProxy }}
+                - name: no_proxy
+                  value: {{ .Values.proxy.noProxy | quote }}
+                {{ end }}
               volumeMounts:
                 - name: waldur-cleanup-script
                   mountPath: /usr/local/bin/waldur-cleanup

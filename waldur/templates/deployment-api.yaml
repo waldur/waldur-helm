@@ -79,6 +79,18 @@ spec:
           - name: WALDUR_DISABLED_EXTENSIONS
             value: {{ .Values.waldur.disabledExtensions | toJson | quote }}
           {{ end }}
+          {{ if .Values.proxy.httpsProxy }}
+          - name: https_proxy
+            value: {{ .Values.proxy.httpsProxy | quote }}
+          {{ end }}
+          {{ if .Values.proxy.httpProxy }}
+          - name: http_proxy
+            value: {{ .Values.proxy.httpProxy | quote }}
+          {{ end }}
+          {{ if .Values.proxy.noProxy }}
+          - name: no_proxy
+            value: {{ .Values.proxy.noProxy | quote }}
+          {{ end }}
           resources:
             {{ if .Values.hpa.api.enabled }}
             {{- toYaml .Values.hpa.api.resources | nindent 12 }}

@@ -11,3 +11,4 @@ Outline:
 - [HPA](hpa.md)
 - [Stress testing](locust.md)
 - [IP whitelisting](ip-whitelisting.md)
+- [Proxy setup](proxy-setup.md)

@@ -12,8 +12,8 @@ on a Kubernetes cluster using the [Helm](https://helm.sh) package manager.
 ## Installing prerequisites
 
 1. Install Kubernetes server, for example, using [minikube](docs/minikube.md)
-1. Install Kubernetes client, i.e. [kubectl](docs/kubectl.md)
-1. Install [Helm](docs/helm.md)
+2. Install Kubernetes client, i.e. [kubectl](docs/kubectl.md)
+3. Install [Helm](docs/helm.md)
 
 ## Installing the chart
 
@@ -31,18 +31,14 @@ on a Kubernetes cluster using the [Helm](https://helm.sh) package manager.
 ```
 
 1. Setup database:
-
     3.1 Setup single PostgreSQL DB: [instructions](docs/postgres-db.md), or
-
     3.2 Setup PostgreSQL HA DB: [instructions](docs/postgres-db-ha.md)
 
     **NB** Only one of these two options should be used. Otherwise, DB will be unavailable.
 
-1. Install minio (for database backups): [instructions](docs/minio.md)
-
-1. Install RabbitMQ for task queue: [instructions](docs/rabbitmq.md)
-
-1. Install Helm package:
+2. Install minio (for database backups): [instructions](docs/minio.md)
+3. Install RabbitMQ for task queue: [instructions](docs/rabbitmq.md)
+4. Install Helm package:
 
 ```bash
   helm install waldur waldur

@@ -3,13 +3,13 @@
 Plan:
 
 1. Scale api, beat, worker -> 0
-1. Backup — using backup job
-1. group_vars/puhuri_core_prd - helm_pg_ha_enabled: no ===> CANCEL THE UPDATING PIPELINE!
-1. Run dependency update ==> leads to a working single psql
-1. Restore DB — using recovery job
-1. Run a common update pipeline
-1. Validate that login works
-1. Drop old psql ha, drop pvc
+2. Backup — using backup job
+3. group_vars/puhuri_core_prd - helm_pg_ha_enabled: no ===> CANCEL THE UPDATING PIPELINE!
+4. Run dependency update ==> leads to a working single psql
+5. Restore DB — using recovery job
+6. Run a common update pipeline
+7. Validate that login works
+8. Drop old psql ha, drop pvc
 
 ```bash
 # Backup

@@ -24,15 +24,15 @@ In `values.yaml` file you can configure HPA for:
     1.3 `cpuUtilizationBorder` - border percentage of
         average CPU utilization per pod for deployment.
 
-1. Celery (`hpa.celery` prefix):
+2. Celery (`hpa.celery` prefix):
 
-    1.1 `enabled` - flag for enabling HPA, the same possible values as for API server.
+    2.1 `enabled` - flag for enabling HPA, the same possible values as for API server.
 
-    1.2 `workerResources` - custom resources for celery worker.
+    2.2 `workerResources` - custom resources for celery worker.
         `requests.cpu` param is mandatory for proper HPA work.
 
-    1.3 `beatResources` - custom resources for celery beat.
+    2.3 `beatResources` - custom resources for celery beat.
         `requests.cpu` param is mandatory for proper HPA work.
 
-    1.4 `cpuUtilizationBorder` - border percentage of
+    2.4 `cpuUtilizationBorder` - border percentage of
         average CPU utilization per pod for deployment.

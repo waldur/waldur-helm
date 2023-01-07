@@ -23,19 +23,19 @@ Install rabbitmq-ha release:
 You can change rabbitmq config with the following variables in `rmq-values.yaml`:
 
 1. `replicaCount` - number RMQ instances
-1. `persistence.enabled` - enable/disable persistence
-1. `persistence.size` - size for singe PV
-1. `persistence.storageClass` - storage class for PV
-1. `auth.username` - username for RMQ user
-1. `auth.password` - password for RMQ user
+2. `persistence.enabled` - enable/disable persistence
+3. `persistence.size` - size for singe PV
+4. `persistence.storageClass` - storage class for PV
+5. `auth.username` - username for RMQ user
+6. `auth.password` - password for RMQ user
 
 For more config values, see [this section](https://github.com/bitnami/charts/tree/master/bitnami/rabbitmq#parameters)
 
 In `values.yaml` file, you need to setup the following vars (`rabbitmq` prefix):
 
 1. `user` - should be same as `auth.username` in the `rmq-values.yaml` file
-1. `password` - should be same as `auth.password` in the `rmq-values.yaml` file
-1. `host` - rabbitmq-ha service **hostname**
+2. `password` - should be same as `auth.password` in the `rmq-values.yaml` file
+3. `host` - rabbitmq-ha service **hostname**
     (See [this doc](service-endpoint.md) for details)
-1. `customManagementPort` - custom port for rabbitmq management interface
-1. `customAMQPPort` - custom port for AMQP access
+4. `customManagementPort` - custom port for rabbitmq management interface
+5. `customAMQPPort` - custom port for AMQP access

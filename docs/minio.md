@@ -17,12 +17,12 @@ Install `minio` release:
 You can change `minio` config with next vars (in `minio.values` file):
 
 1. `accessKey.password` - access key id for storage
-1. `secretKey.password` - secret key itself
-1. `serviceAccount.name` - name of the service account for MinIO
-1. `persistence.enabled` - persistence enabling flag
-1. `persistence.size` - size of storage per each pod
-1. `ingress` - ingress settings
-1. `defaultBuckets` - default buckets created after
+2. `secretKey.password` - secret key itself
+3. `serviceAccount.name` - name of the service account for MinIO
+4. `persistence.enabled` - persistence enabling flag
+5. `persistence.size` - size of storage per each pod
+6. `ingress` - ingress settings
+7. `defaultBuckets` - default buckets created after
     release installation (comma-separated list of strings)
 
 For more configuration values follow [this link](https://github.com/bitnami/charts/tree/master/bitnami/minio#parameters).
@@ -30,7 +30,7 @@ For more configuration values follow [this link](https://github.com/bitnami/char
 In Waldur Helm `values.yaml` you need to setup:
 
 1. `minio.accessKey` - should be same as `accessKey` in `minio.values.yaml`
-1. `minio.secretKey` - should be same as `secretKey` in `minio.values.yaml`
-1. `minio.bucketName` - should be same as a value from `defaultBuckets` list in `minio-values.yaml`
-1. `minio.endpoint` - access URL to `minio` storage
+2. `minio.secretKey` - should be same as `secretKey` in `minio.values.yaml`
+3. `minio.bucketName` - should be same as a value from `defaultBuckets` list in `minio-values.yaml`
+4. `minio.endpoint` - access URL to `minio` storage
     (`minio` service host and port). See [this doc](service-endpoint.md) for details.

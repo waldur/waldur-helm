@@ -22,9 +22,9 @@ Backup configuration values (`postgresBackup` prefix):
 
 ## Backups restoration
 
-To restore backups you need to:
-
-1. Connect to the restoration pod. The major prerequisite for this is stopping the Waldur backend pods to avoid errors. **NB: During restoration process, the site will be unavailable**. For this, please execute the following lines in the Kubernetes node:
+To restore backups you need to connect to the restoration pod. The major prerequisite for this is stopping the
+Waldur backend pods to avoid errors. **NB: During restoration process, the site will be unavailable**. For this,
+please execute the following lines in the Kubernetes node:
 
 ```bash
 # Stop all the API pods
@@ -77,20 +77,20 @@ As you can see, the backup name contains the date and time when it was created i
 If you want to use a pre-created backup from an external system, copy the backup file:
 
 1. Copy the backup file to your local machine
-1. Copy the file to pod
+2. Copy the file to pod
 
     ```bash
     export RESTORATION_POD_NAME=$(kubectl get pods --template '{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}' | grep restore)
     kubectl cp <BACKUP_FILE> $RESTORATION_POD_NAME:/tmp/backup.sql.gz
     ```
 
-1. Connect to pod's terminal
+3. Connect to pod's terminal
 
     ```bash
     kubectl exec -it $RESTORATION_POD_NAME -- bash
     ```
 
-1. Apply the backup
+4. Apply the backup
 
     ```bash
     gzip -d /tmp/backup.sql.gz

@@ -22,8 +22,8 @@ should be placed in `bootstrap.dir` directory.
 Additional configuration variables (`bootstrap` prefix):
 
 1. `enabled` - enable/disable bootstrap
-1. `script` - main script file in `bootstrap.dir` folder.
-1. `dir` -  directory with all bootstrap files
+2. `script` - main script file in `bootstrap.dir` folder.
+3. `dir` -  directory with all bootstrap files
 
 Moreover, that is better to install release with `--wait` flag:
 

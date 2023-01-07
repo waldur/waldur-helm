@@ -6,7 +6,7 @@ It you want co configure [letsencrypt](https://letsencrypt.org/)
 certification, you need to:
 
 1. Set `ingress.tls.source="letsEncrypt"` in `values.yaml`
-1. Create namespace for cert-manager
+2. Create namespace for cert-manager
 
 ```bash
 kubectl create namespace cert-manager
@@ -36,6 +36,6 @@ kubectl create namespace cert-manager
 In case, when you want to use own certificate, you need to:
 
 1. Set `ingress.tls.source="secret"` in `values.yaml`
-1. Set `ingress.tls.secretsDir` variable to directory
+2. Set `ingress.tls.secretsDir` variable to directory
     with your `tls.crt` and `tls.key` files. By default it is set to `tls`
-1. After that, `waldur` release is ready for installation
+3. After that, `waldur` release is ready for installation

@@ -73,6 +73,12 @@ proxy:
   httpProxy: ""
   noProxy: ""
 
+# overrides pod.spec.hostAliases in the Waldur deployment's pods
+hostAliases: []
+  # - ip: "1.2.3.4"
+  #   hostnames:
+  #     - "my.host.com"
+
 waldur:
   imageName: "opennode/waldur-mastermind"
   imageTag: "latest"

@@ -25,6 +25,10 @@ spec:
         - name: {{ $val }}
         {{ end -}}
       {{ end }}
+      {{ if .Values.hostAliases }}
+      hostAliases:
+        {{ toYaml .Values.hostaliases | nindent 8 }}
+      {{ end }}
       containers:
         - name: waldur-mastermind-worker
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}

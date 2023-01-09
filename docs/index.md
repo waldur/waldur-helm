@@ -12,3 +12,4 @@ Outline:
 - [Stress testing](locust.md)
 - [IP whitelisting](ip-whitelisting.md)
 - [Proxy setup](proxy-setup.md)
+- [Host aliasing](host-aliasing.md)

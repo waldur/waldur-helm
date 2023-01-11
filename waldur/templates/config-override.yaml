@@ -419,7 +419,9 @@ data:
     WALDUR_SUPPORT['PROJECT'].update({
         'key': '{{ .Values.waldur.support.projectKey }}',
     })
-
+    {{ if not .Values.waldur.support.useAutomaticRequestMapping }}
+    WALDUR_SUPPORT['USE_AUTOMATIC_REQUEST_MAPPING'] = False
+    {{ end }}
     {{ else }}
     WALDUR_SUPPORT.update({
         'ENABLED': False,

@@ -108,12 +108,6 @@ spec:
             - name: api-celery
               mountPath: /etc/waldur/celery.conf
               subPath: celery.conf
-            - name: logging-override
-              mountPath: /etc/waldur/logging.conf.py
-              subPath: logging.conf.py
-            - name: logging-override
-              mountPath: /etc/waldur/uwsgi.ini
-              subPath: uwsgi.ini
             {{ if has "SAML2" .Values.waldur.authMethods }}
             - name: waldur-saml2-certs
               mountPath: /etc/waldur/saml2/credentials
@@ -142,14 +136,6 @@ spec:
       - name: api-celery
         configMap:
           name: api-celery-config
-      - name: logging-override
-        configMap:
-          name: mastermind-logging-override-config
-          items:
-            - key: uwsgi.ini
-              path: uwsgi.ini
-            - key: logging.conf.py
-              path: logging.conf.py
       {{ if has "SAML2" .Values.waldur.authMethods }}
       - name: waldur-saml2-certs
         secret:

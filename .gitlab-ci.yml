@@ -33,8 +33,6 @@ Run linter:
     - yq e '.data."config.json"' rendered-templates/waldur/templates/config-homeport-json.yml | jq
     - yq e '.data."override.conf.py"' rendered-templates/waldur/templates/config-override.yaml > rendered-templates/waldur/templates/override.conf.py
     - python3 -m py_compile rendered-templates/waldur/templates/override.conf.py
-    - yq e '.data."logging.conf.py"' rendered-templates/waldur/templates/config-mastermind-logging-override.yaml > rendered-templates/waldur/templates/logging.conf.py
-    - python3 -m py_compile rendered-templates/waldur/templates/logging.conf.py
   artifacts:
     expire_in: 1 week
     when: always

@@ -97,13 +97,6 @@ Cleanup previous test deployment:
   rules:
     - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "schedule"'
 
-Cleanup test deployment:
-  extends: .Cleanup template
-  stage: .post
-  rules:
-    - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "schedule"'
-
-
 Upload docs:
   image:
     name: registry.hpc.ut.ee/mirror/alpine/git:v2.30.2

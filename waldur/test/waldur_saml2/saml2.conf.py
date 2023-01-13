@@ -168,7 +168,7 @@ SAML_CONFIG.update({
     'encryption_keypairs': [{"key_file": WALDUR_AUTH_SAML2['KEY_FILE'], "cert_file": WALDUR_AUTH_SAML2['CERT_FILE']}],
 })
 
-if WALDUR_AUTH_SAML2['LOG_LEVEL'] != '':
+if WALDUR_AUTH_SAML2['LOG_FILE'] != '':
     level = WALDUR_AUTH_SAML2['LOG_LEVEL'].upper()
     LOGGING['handlers']['file-saml2'] = {
         'class': 'logging.handlers.WatchedFileHandler',

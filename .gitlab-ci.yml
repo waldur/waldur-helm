@@ -87,7 +87,7 @@ Test release installation and readiness:
   script:
     - helm install postgresql bitnami/postgresql --version 11.9.1 -f postgresql-values.yaml --set image.registry=registry.hpc.ut.ee/mirror
     - helm install rmq bitnami/rabbitmq --version 10.3.5 -f rmq-values.yaml --set replicaCount=1,image.registry=registry.hpc.ut.ee/mirror --wait
-    - helm install waldur waldur/ -f waldur/test/values.yaml --set waldur.uvkEverypay.enabled=false --wait --timeout 60m0s
+    - helm install waldur waldur/ -f waldur/test/values.yaml --set waldur.uvkEverypay.enabled=false --timeout 60m0s
     - helm list
     - kubectl get pods
 

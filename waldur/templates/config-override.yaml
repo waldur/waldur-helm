@@ -562,6 +562,8 @@ data:
     WALDUR_CORE["HOMEPORT_SENTRY_DSN"] = {{ .Values.waldur.sentryDSN | quote }}
     {{ end }}
 
+    WALDUR_CORE["HOMEPORT_SENTRY_ENVIRONMENT"] = os.environ.get("SENTRY_ENVIRONMENT", "production")
+
     {{ if .Values.waldur.whitelabeling.sidebarLogoPath }}
     WALDUR_CORE["SIDEBAR_LOGO"] = "images/sidebar_logo.png"
     {{ end }}

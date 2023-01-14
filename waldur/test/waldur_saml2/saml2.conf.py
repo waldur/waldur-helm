@@ -10,13 +10,10 @@ WALDUR_AUTH_SAML2.update({
     # set to True to output debugging information
     'DEBUG': True,
     # IdPs metadata XML files stored locally
-    'IDP_METADATA_LOCAL': [
-        '/etc/waldur/saml2/metadata/edugain_metadata.xml',
-    ],
+    'IDP_METADATA_LOCAL': [],
     # IdPs metadata XML files stored remotely
     'IDP_METADATA_REMOTE':
-    [
-    ],
+    [],
     # logging
     # empty to disable logging SAML2-related stuff to file
     'LOG_FILE': '',

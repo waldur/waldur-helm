@@ -100,7 +100,7 @@ spec:
             {{ if .Values.hpa.celery.enabled }}
             {{- toYaml .Values.hpa.celery.workerResources | nindent 12 }}
             {{ else }}
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml .Values.workerResources | nindent 12 }}
             {{ end }}
           volumeMounts:
             - name: api-override

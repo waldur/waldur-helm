@@ -123,7 +123,7 @@ spec:
               subPath: "mastermind-tos.html"
             {{ end }}
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml .Values.apiResources | nindent 12 }}
         - name: waldur-mastermind-create-dbcache
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
           args:
@@ -175,7 +175,7 @@ spec:
               mountPath: /etc/waldur/celery.conf
               subPath: celery.conf
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml .Values.apiResources | nindent 12 }}
         - name: set-whitelabeling-settings
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
           args:
@@ -262,7 +262,7 @@ spec:
               subPath: idp_metadata.xml
             {{ end }}
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml .Values.apiResources | nindent 12 }}
 {{ end }}
       volumes:
       - name: api-override

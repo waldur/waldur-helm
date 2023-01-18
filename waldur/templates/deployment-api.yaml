@@ -99,7 +99,7 @@ spec:
             {{ if .Values.hpa.api.enabled }}
             {{- toYaml .Values.hpa.api.resources | nindent 12 }}
             {{ else }}
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml .Values.apiResources | nindent 12 }}
             {{ end }}
           volumeMounts:
             - name: api-override

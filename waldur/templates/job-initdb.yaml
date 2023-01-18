@@ -176,6 +176,14 @@ spec:
               subPath: celery.conf
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+        - name: set-whitelabeling-settings
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
+          args:
+            - whitelabeling-set
+          volumeMounts:
+            - name: waldur-whitelabeling-settings
+              mountPath: /usr/local/bin/whitelabeling-set
+              subPath: whitelabeling-set
 {{ if has "SAML2" .Values.waldur.authMethods }}
         - name: waldur-mastermind-saml2-metadata-sync
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
@@ -276,6 +284,10 @@ spec:
         configMap:
           name: mastermind-user-agreement-config
       {{ end }}
+      - name: waldur-whitelabeling-settings
+        configMap:
+          name: waldur-whitelabeling-settings-set-script
+          defaultMode: 0755
       {{ if has "SAML2" .Values.waldur.authMethods }}
       - name: waldur-saml2-certs
         secret:

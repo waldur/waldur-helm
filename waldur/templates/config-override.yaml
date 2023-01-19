@@ -205,24 +205,6 @@ data:
     # waldur-core
     # https://opennode.atlassian.net/wiki/display/WD/MasterMind+configuration#MasterMindconfiguration-Additionalsettings
 
-    {{ if .Values.waldur.currencyName }}
-    WALDUR_CORE['CURRENCY_NAME'] = '{{ .Values.waldur.currencyName }}'
-    {{ end }}
-
-    WALDUR_CORE['SITE_NAME'] = '{{ .Values.waldur.site.name }}'
-
-    {{ if .Values.waldur.site.logo }}
-    WALDUR_CORE['SITE_LOGO'] = '/etc/waldur/logo.png'
-    {{ end }}
-
-    {{ if .Values.waldur.whitelabeling.modePageTitle }}
-    WALDUR_CORE["FULL_PAGE_TITLE"] = {{ .Values.waldur.whitelabeling.modePageTitle | quote }}
-    {{ end }}
-
-    {{ if .Values.waldur.whitelabeling.shortPageTitle }}
-    WALDUR_CORE["SHORT_PAGE_TITLE"] = {{ .Values.waldur.whitelabeling.shortPageTitle | quote }}
-    {{ end }}
-
     {{ if has "owner_can_manage_customer" .Values.waldur.features }}
     WALDUR_CORE['OWNER_CAN_MANAGE_CUSTOMER'] = True
     {{ end }}
@@ -270,18 +252,6 @@ data:
 
     # Disable geoip location till HomePort releases maps to a stable deployment
     WALDUR_CORE['ENABLE_GEOIP'] = False
-
-    {{ if .Values.waldur.site.address }}
-    WALDUR_CORE['SITE_ADDRESS'] = '{{ .Values.waldur.site.address }}'
-    {{ end }}
-
-    {{ if .Values.waldur.site.email }}
-    WALDUR_CORE['SITE_EMAIL'] = '{{ .Values.waldur.site.email }}'
-    {{ end }}
-
-    {{ if .Values.waldur.site.phone }}
-    WALDUR_CORE['SITE_PHONE'] = '{{ .Values.waldur.site.phone }}'
-    {{ end }}
 
     {{ if has "only_staff_can_invite_users" .Values.waldur.features }}
     WALDUR_CORE['ONLY_STAFF_CAN_INVITE_USERS'] = True
@@ -550,10 +520,6 @@ data:
     LANGUAGE_CODE = {{ .Values.waldur.defaultLanguage | quote }}
     {{ end }}
 
-    {{ if .Values.waldur.homeport.docsLink }}
-    WALDUR_CORE['DOCS_URL'] = {{ .Values.waldur.homeport.docsLink | quote }}
-    {{ end }}
-
     {{ if .Values.waldur.homeport.invitationCivilCodeHelpText }}
     WALDUR_CORE["INVITATION_CIVIL_CODE_HELP_TEXT"] = {{ .Values.waldur.homeport.invitationCivilCodeHelpText | quote }}
     {{ end }}
@@ -564,40 +530,12 @@ data:
 
     WALDUR_CORE["HOMEPORT_SENTRY_ENVIRONMENT"] = os.environ.get("SENTRY_ENVIRONMENT", "production")
 
-    {{ if .Values.waldur.whitelabeling.sidebarLogoPath }}
-    WALDUR_CORE["SIDEBAR_LOGO"] = "images/sidebar_logo.png"
-    {{ end }}
-
-    {{ if .Values.waldur.whitelabeling.poweredByLogoPath }}
-    WALDUR_CORE["POWERED_BY_LOGO"] = "images/poweredby_logo.png"
-    {{ end }}
-
-    {{ if .Values.waldur.whitelabeling.brandColor }}
-    WALDUR_CORE["BRAND_COLOR"] = {{ .Values.waldur.whitelabeling.brandColor | quote }}
-    {{ end }}
-
-    {{ if .Values.waldur.whitelabeling.heroImagePath }}
-    WALDUR_CORE["HERO_IMAGE"] = "images/hero_image.jpg"
-    {{ end }}
-
-    {{ if .Values.waldur.whitelabeling.heroLinkLabel }}
-    WALDUR_CORE["HERO_LINK_LABEL"] = {{ .Values.waldur.whitelabeling.heroLinkLabel | quote }}
-    {{ end }}
-
-    {{ if .Values.waldur.whitelabeling.heroLinkUrl }}
-    WALDUR_CORE["HERO_LINK_URL"] = {{ .Values.waldur.whitelabeling.heroLinkUrl | quote }}
-    {{ end }}
-
     WALDUR_CORE.update({
         'LOCAL_IDP_NAME': '{{ .Values.waldur.localIdp.name }}',
         'LOCAL_IDP_LABEL': '{{ .Values.waldur.localIdp.label }}',
         'LOCAL_IDP_MANAGEMENT_URL': '{{ .Values.waldur.localIdp.managementUrl }}',
         'LOCAL_IDP_PROTECTED_FIELDS': {{ .Values.waldur.localIdp.protectedFields | toJson }},
     })
-
-    {{ if .Values.waldur.whitelabeling.siteDescription }}
-    WALDUR_CORE["SITE_DESCRIPTION"] = {{ .Values.waldur.whitelabeling.siteDescription | quote }}
-    {{ end }}
 
     {{ if .Values.waldur.mastermindUrl }}
     WALDUR_CORE["MASTERMIND_URL"] = {{ .Values.waldur.mastermindUrl | quote }}

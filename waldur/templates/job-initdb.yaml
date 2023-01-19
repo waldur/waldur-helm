@@ -180,6 +180,25 @@ spec:
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
           args:
             - whitelabeling-set
+          env:
+            - name: GLOBAL_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: waldur-secret
+                  key: GLOBAL_SECRET_KEY
+            - name: POSTGRESQL_HOST
+              value: {{ template "waldur.postgresql.host" . }}
+            - name: POSTGRESQL_PORT
+              value: {{ template "waldur.postgresql.port" . }}
+            - name: POSTGRESQL_USER
+              value: {{ template "waldur.postgresql.user" . }}
+            - name: POSTGRESQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "waldur.postgresql.secret" . }}
+                  key: {{ template "waldur.postgresql.secret.passwordKey" . }}
+            - name: POSTGRESQL_NAME
+              value: {{ template "waldur.postgresql.dbname" . }}
           volumeMounts:
             - name: waldur-whitelabeling-settings
               mountPath: /usr/local/bin/whitelabeling-set

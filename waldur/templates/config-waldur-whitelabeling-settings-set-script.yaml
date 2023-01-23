@@ -41,24 +41,9 @@ data:
     echo "[+] FULL_PAGE_TITLE has been set"
     {{ end }}
     
-    {{ if .Values.waldur.whitelabeling.sidebarLogoPath }}
-    waldur constance set SIDEBAR_LOGO '{{ .Values.waldur.whitelabeling.sidebarLogoPath }}'
-    echo "[+] SIDEBAR_LOGO has been set"
-    {{ end }}
-    
-    {{ if .Values.waldur.whitelabeling.poweredByLogoPath }}
-    waldur constance set POWERED_BY_LOGO '{{ .Values.waldur.whitelabeling.poweredByLogoPath }}'
-    echo "[+] POWERED_BY_LOGO has been set"
-    {{ end }}
-    
     {{ if .Values.waldur.whitelabeling.brandColor }}
     waldur constance set BRAND_COLOR '{{ .Values.waldur.whitelabeling.brandColor }}'
     echo "[+] BRAND_COLOR has been set"
-    {{ end }}
-    
-    {{ if .Values.waldur.whitelabeling.heroImagePath }}
-    waldur constance set HERO_IMAGE '{{ .Values.waldur.whitelabeling.heroImagePath }}'
-    echo "[+] HERO_IMAGE has been set"
     {{ end }}
     
     {{ if .Values.waldur.whitelabeling.heroLinkLabel }}

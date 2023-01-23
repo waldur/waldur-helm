@@ -537,6 +537,18 @@ data:
         'LOCAL_IDP_PROTECTED_FIELDS': {{ .Values.waldur.localIdp.protectedFields | toJson }},
     })
 
+    {{ if .Values.waldur.whitelabeling.sidebarLogoPath }}
+    WALDUR_CORE["SIDEBAR_LOGO"] = "images/sidebar_logo.png"
+    {{ end }}
+
+    {{ if .Values.waldur.whitelabeling.poweredByLogoPath }}
+    WALDUR_CORE["POWERED_BY_LOGO"] = "images/poweredby_logo.png"
+    {{ end }}
+
+    {{ if .Values.waldur.whitelabeling.heroImagePath }}
+    WALDUR_CORE["HERO_IMAGE"] = "images/hero_image.jpg"
+    {{ end }}
+
     {{ if .Values.waldur.mastermindUrl }}
     WALDUR_CORE["MASTERMIND_URL"] = {{ .Values.waldur.mastermindUrl | quote }}
     {{ end }}

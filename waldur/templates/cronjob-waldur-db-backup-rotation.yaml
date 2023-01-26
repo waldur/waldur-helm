@@ -21,19 +21,7 @@ spec:
               command: ["/bin/sh"]
               args: ["-c", "backup-rotation"]
               env:
-                - name: PGHOST
-                  value: {{ template "waldur.postgresql.host" . }}
-                - name: PGPORT
-                  value: {{ template "waldur.postgresql.port" . }}
-                - name: PGUSER
-                  value: {{ template "waldur.postgresql.user" . }}
-                - name: PGDATABASE
-                  value: {{ template "waldur.postgresql.dbname" . }}
-                - name: PGPASSWORD
-                  valueFrom:
-                    secretKeyRef:
-                      name: {{ template "waldur.postgresql.secret" . }}
-                      key: {{ template "waldur.postgresql.secret.passwordKey" . }}
+                {{- include "waldur.env.initdb" . | nindent 17 }}
                 - name: MINIO_SERVER
                   value: {{ .Values.minio.endpoint | quote }}
                 - name: MINIO_ACCESS_KEY

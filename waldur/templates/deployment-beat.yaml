@@ -31,47 +31,10 @@ spec:
           args:
             - "beat"
           env:
-          - name: GLOBAL_SECRET_KEY
-            valueFrom:
-              secretKeyRef:
-                name: waldur-secret
-                key: GLOBAL_SECRET_KEY
-          - name: POSTGRESQL_HOST
-            value: {{ template "waldur.postgresql.host" . }}
-          - name: POSTGRESQL_PORT
-            value: {{ template "waldur.postgresql.port" . }}
-          - name: POSTGRESQL_USER
-            value: {{ template "waldur.postgresql.user" . }}
-          - name: POSTGRESQL_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: {{ template "waldur.postgresql.secret" . }}
-                key: {{ template "waldur.postgresql.secret.passwordKey" . }}
-          - name: POSTGRESQL_NAME
-            value: {{ template "waldur.postgresql.dbname" . }}
-          {{ if .Values.waldur.sentryDSN }}
-          - name: SENTRY_DSN
-            value: {{ .Values.waldur.sentryDSN | quote }}
-          - name: SENTRY_ENVIRONMENT
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          {{ end }}
+            {{- include "waldur.credentials" . | nindent 13 }}
           {{ if .Values.waldur.disabledExtensions }}
           - name: WALDUR_DISABLED_EXTENSIONS
             value: {{ .Values.waldur.disabledExtensions | toJson | quote }}
-          {{ end }}
-          {{ if .Values.proxy.httpsProxy }}
-          - name: https_proxy
-            value: {{ .Values.proxy.httpsProxy | quote }}
-          {{ end }}
-          {{ if .Values.proxy.httpProxy }}
-          - name: http_proxy
-            value: {{ .Values.proxy.httpProxy | quote }}
-          {{ end }}
-          {{ if .Values.proxy.noProxy }}
-          - name: no_proxy
-            value: {{ .Values.proxy.noProxy | quote }}
           {{ end }}
           resources:
             {{ if .Values.hpa.celery.enabled }}

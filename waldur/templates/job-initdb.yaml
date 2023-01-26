@@ -24,78 +24,22 @@ spec:
           'until pg_isready;
           do echo waiting for database; sleep 2; done;']
         env:
-          - name: PGHOST
-            value: {{ template "waldur.postgresql.host" . }}
-          - name: PGPORT
-            value: {{ template "waldur.postgresql.port" . }}
-          - name: PGUSER
-            value: {{ template "waldur.postgresql.user" . }}
-          - name: PGDATABASE
-            value: {{ template "waldur.postgresql.dbname" . }}
+          {{- include "waldur.env.initdb" . | nindent 11 }}
       containers:
         - name: create-celery-results-db
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.initdbImageName }}:{{ template "waldur.postgresql.version" . }}
           command: ['sh', '-c', 'createdb celery_results || true']
           env:
-            - name: PGHOST
-              value: {{ template "waldur.postgresql.host" . }}
-            - name: PGPORT
-              value: {{ template "waldur.postgresql.port" . }}
-            - name: PGUSER
-              value: {{ template "waldur.postgresql.user" . }}
-            - name: PGDATABASE
-              value: {{ template "waldur.postgresql.dbname" . }}
-            - name: PGPASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "waldur.postgresql.secret" . }}
-                  key: {{ template "waldur.postgresql.secret.passwordKey" . }}
+            {{- include "waldur.env.initdb" . | nindent 11 }}
         - name: waldur-mastermind-migrate
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
           args:
             - initdb
           env:
-          - name: GLOBAL_SECRET_KEY
-            valueFrom:
-              secretKeyRef:
-                name: waldur-secret
-                key: GLOBAL_SECRET_KEY
-          - name: POSTGRESQL_HOST
-            value: {{ template "waldur.postgresql.host" . }}
-          - name: POSTGRESQL_PORT
-            value: {{ template "waldur.postgresql.port" . }}
-          - name: POSTGRESQL_USER
-            value: {{ template "waldur.postgresql.user" . }}
-          - name: POSTGRESQL_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: {{ template "waldur.postgresql.secret" . }}
-                key: {{ template "waldur.postgresql.secret.passwordKey" . }}
-          - name: POSTGRESQL_NAME
-            value: {{ template "waldur.postgresql.dbname" . }}
-          {{ if .Values.waldur.sentryDSN }}
-          - name: SENTRY_DSN
-            value: {{ .Values.waldur.sentryDSN | quote }}
-          - name: SENTRY_ENVIRONMENT
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          {{ end }}
+            {{- include "waldur.credentials" . | nindent 13 }}
           {{ if .Values.waldur.disabledExtensions }}
           - name: WALDUR_DISABLED_EXTENSIONS
             value: {{ .Values.waldur.disabledExtensions | toJson | quote }}
-          {{ end }}
-          {{ if .Values.proxy.httpsProxy }}
-          - name: https_proxy
-            value: {{ .Values.proxy.httpsProxy | quote }}
-          {{ end }}
-          {{ if .Values.proxy.httpProxy }}
-          - name: http_proxy
-            value: {{ .Values.proxy.httpProxy | quote }}
-          {{ end }}
-          {{ if .Values.proxy.noProxy }}
-          - name: no_proxy
-            value: {{ .Values.proxy.noProxy | quote }}
           {{ end }}
           volumeMounts:
             - name: api-override
@@ -129,44 +73,7 @@ spec:
           args:
             - initdb-cache
           env:
-          - name: GLOBAL_SECRET_KEY
-            valueFrom:
-              secretKeyRef:
-                name: waldur-secret
-                key: GLOBAL_SECRET_KEY
-          - name: POSTGRESQL_HOST
-            value: {{ template "waldur.postgresql.host" . }}
-          - name: POSTGRESQL_PORT
-            value: {{ template "waldur.postgresql.port" . }}
-          - name: POSTGRESQL_USER
-            value: {{ template "waldur.postgresql.user" . }}
-          - name: POSTGRESQL_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: {{ template "waldur.postgresql.secret" . }}
-                key: {{ template "waldur.postgresql.secret.passwordKey" . }}
-          - name: POSTGRESQL_NAME
-            value: {{ template "waldur.postgresql.dbname" . }}
-          {{ if .Values.waldur.sentryDSN }}
-          - name: SENTRY_DSN
-            value: {{ .Values.waldur.sentryDSN | quote }}
-          - name: SENTRY_ENVIRONMENT
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          {{ end }}
-          {{ if .Values.proxy.httpsProxy }}
-          - name: https_proxy
-            value: {{ .Values.proxy.httpsProxy | quote }}
-          {{ end }}
-          {{ if .Values.proxy.httpProxy }}
-          - name: http_proxy
-            value: {{ .Values.proxy.httpProxy | quote }}
-          {{ end }}
-          {{ if .Values.proxy.noProxy }}
-          - name: no_proxy
-            value: {{ .Values.proxy.noProxy | quote }}
-          {{ end }}
+            {{- include "waldur.credentials" . | nindent 13 }}
           volumeMounts:
             - name: api-override
               mountPath: /etc/waldur/override.conf.py
@@ -181,24 +88,7 @@ spec:
           args:
             - whitelabeling-set
           env:
-            - name: GLOBAL_SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: waldur-secret
-                  key: GLOBAL_SECRET_KEY
-            - name: POSTGRESQL_HOST
-              value: {{ template "waldur.postgresql.host" . }}
-            - name: POSTGRESQL_PORT
-              value: {{ template "waldur.postgresql.port" . }}
-            - name: POSTGRESQL_USER
-              value: {{ template "waldur.postgresql.user" . }}
-            - name: POSTGRESQL_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ template "waldur.postgresql.secret" . }}
-                  key: {{ template "waldur.postgresql.secret.passwordKey" . }}
-            - name: POSTGRESQL_NAME
-              value: {{ template "waldur.postgresql.dbname" . }}
+            {{- include "waldur.credentials" . | nindent 13 }}
           volumeMounts:
             - name: waldur-whitelabeling-settings
               mountPath: /usr/local/bin/whitelabeling-set
@@ -209,24 +99,7 @@ spec:
           args:
             - saml2-metadata-sync
           env:
-          - name: GLOBAL_SECRET_KEY
-            valueFrom:
-              secretKeyRef:
-                name: waldur-secret
-                key: GLOBAL_SECRET_KEY
-          - name: POSTGRESQL_HOST
-            value: {{ template "waldur.postgresql.host" . }}
-          - name: POSTGRESQL_PORT
-            value: {{ template "waldur.postgresql.port" . }}
-          - name: POSTGRESQL_USER
-            value: {{ template "waldur.postgresql.user" . }}
-          - name: POSTGRESQL_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: {{ template "waldur.postgresql.secret" . }}
-                key: {{ template "waldur.postgresql.secret.passwordKey" . }}
-          - name: POSTGRESQL_NAME
-            value: {{ template "waldur.postgresql.dbname" . }}
+            {{- include "waldur.credentials" . | nindent 13 }}
           {{ if has "TAAT" .Values.waldur.saml2.federations }}
           - name: TAAT_METADATA_URL
             value: https://taeva.taat.edu.ee/metadata/metadata.taat+hub+prod+idp.xml
@@ -242,26 +115,6 @@ spec:
           {{ if has "HAKA_PROD" .Values.waldur.saml2.federations }}
           - name: HAKA_PROD_METADATA_URL
             value: https://haka.funet.fi/metadata/haka-metadata.xml
-          {{ end }}
-          {{ if .Values.waldur.sentryDSN }}
-          - name: SENTRY_DSN
-            value: {{ .Values.waldur.sentryDSN | quote }}
-          - name: SENTRY_ENVIRONMENT
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
-          {{ end }}
-          {{ if .Values.proxy.httpsProxy }}
-          - name: https_proxy
-            value: {{ .Values.proxy.httpsProxy | quote }}
-          {{ end }}
-          {{ if .Values.proxy.httpProxy }}
-          - name: http_proxy
-            value: {{ .Values.proxy.httpProxy | quote }}
-          {{ end }}
-          {{ if .Values.proxy.noProxy }}
-          - name: no_proxy
-            value: {{ .Values.proxy.noProxy | quote }}
           {{ end }}
           volumeMounts:
             - name: api-override

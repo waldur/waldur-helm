@@ -114,3 +114,81 @@ Set rabbitmq URL
 {{- define "waldur.rabbitmq.rmqUrl" -}}
 {{ printf "amqp://%s:%s@%s:%d" .Values.rabbitmq.user .Values.rabbitmq.password .Values.rabbitmq.host (default 5672 .Values.rabbitmq.customAMQPPort) }}
 {{- end -}}
+
+
+{{/*
+Add environment variables to configure private database
+*/}}
+{{- define "waldur.env.initdb" -}}
+- name: PGHOST
+  value: {{ include "waldur.postgresql.host" . }}
+
+- name: PGPORT
+  value: {{ include "waldur.postgresql.port" . }}
+
+- name: PGUSER
+  value: {{ include "waldur.postgresql.user" . }}
+
+- name: PGDATABASE
+  value: {{ include "waldur.postgresql.dbname" . }}
+
+- name: PGPASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "waldur.postgresql.secret" . }}
+      key: {{ include "waldur.postgresql.secret.passwordKey" . }}
+{{- end -}}
+
+{{/*
+Add environment variables to configure database values and Sentry environment
+*/}}
+{{- define "waldur.credentials" -}}
+- name: GLOBAL_SECRET_KEY
+  valueFrom:
+    secretKeyRef:
+      name: waldur-secret
+      key: GLOBAL_SECRET_KEY
+
+- name: POSTGRESQL_HOST
+  value: {{ include "waldur.postgresql.host" . }}
+
+- name: POSTGRESQL_PORT
+  value: {{ include "waldur.postgresql.port" . }}
+
+- name: POSTGRESQL_USER
+  value: {{ include "waldur.postgresql.user" . }}
+
+- name: POSTGRESQL_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "waldur.postgresql.secret" . }}
+      key: {{ include "waldur.postgresql.secret.passwordKey" . }}
+
+- name: POSTGRESQL_NAME
+  value: {{ include "waldur.postgresql.dbname" . }}
+
+{{- if .Values.waldur.sentryDSN -}}
+- name: SENTRY_DSN
+  value: {{ .Values.waldur.sentryDSN | quote }}
+
+- name: SENTRY_ENVIRONMENT
+  valueFrom:
+    fieldRef:
+      fieldPath: metadata.namespace
+{{- end -}}
+
+{{ if .Values.proxy.httpsProxy }}
+- name: https_proxy
+  value: {{ .Values.proxy.httpsProxy | quote }}
+{{ end }}
+
+{{ if .Values.proxy.httpProxy }}
+- name: http_proxy
+  value: {{ .Values.proxy.httpProxy | quote }}
+{{ end }}
+
+{{ if .Values.proxy.noProxy }}
+- name: no_proxy
+  value: {{ .Values.proxy.noProxy | quote }}
+{{ end }}
+{{- end -}}

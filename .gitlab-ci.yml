@@ -28,7 +28,7 @@ Run linter:
   script:
     - helm lint waldur/
     # lint for correctness of known configuration
-    - mkdir rendered-templates && helm template waldur -f waldur/test/values.yaml --output-dir rendered-templates/
+    - mkdir rendered-templates && helm template waldur -f waldur/test/values.yaml --output-dir rendered-templates/ --debug
     - yq e '.data."features.json"' rendered-templates/waldur/templates/config-features-json.yml | jq
     - yq e '.data."config.json"' rendered-templates/waldur/templates/config-homeport-json.yml | jq
     - yq e '.data."override.conf.py"' rendered-templates/waldur/templates/config-override.yaml > rendered-templates/waldur/templates/override.conf.py

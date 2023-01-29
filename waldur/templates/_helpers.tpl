@@ -167,7 +167,7 @@ Add environment variables to configure database values and Sentry environment
 - name: POSTGRESQL_NAME
   value: {{ include "waldur.postgresql.dbname" . }}
 
-{{- if .Values.waldur.sentryDSN -}}
+{{ if .Values.waldur.sentryDSN }}
 - name: SENTRY_DSN
   value: {{ .Values.waldur.sentryDSN | quote }}
 
@@ -175,7 +175,7 @@ Add environment variables to configure database values and Sentry environment
   valueFrom:
     fieldRef:
       fieldPath: metadata.namespace
-{{- end -}}
+{{ end }}
 
 {{ if .Values.proxy.httpsProxy }}
 - name: https_proxy

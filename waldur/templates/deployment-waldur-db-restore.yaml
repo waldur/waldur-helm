@@ -32,7 +32,7 @@ spec:
           command: ["/bin/sh"]
           args: ["-c", "while true; do sleep 100; done;"]
           env:
-            {{- include "waldur.env.initdb" . | nindent 17 }}
+            {{- include "waldur.env.initdb" . | nindent 12 }}
             - name: MINIO_SERVER
               value: {{ .Values.minio.endpoint | quote }}
             - name: MINIO_ACCESS_KEY

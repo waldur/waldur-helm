@@ -318,7 +318,7 @@ postgresql:
   username: "waldur"
 
 postgresBackup:
-  enabled: false
+  enabled: true
   schedule: "0 5 * * *"
   rotationSchedule: "0 6 * * 6"
   maxNumber: 10
@@ -326,8 +326,8 @@ postgresBackup:
   name: "waldur"
 
 minio:
-  accessKey: ""
-  secretKey: ""
+  accessKey: "accessKey"
+  secretKey: "secret"
   bucketName: data
   ## min.io service endpoint used for communication inside a cluster
   endpoint: "http://minio:9000" ## See docs/service-endpoint.md for details.

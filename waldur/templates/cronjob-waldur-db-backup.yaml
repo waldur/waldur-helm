@@ -21,7 +21,7 @@ spec:
               command: ["/bin/sh"]
               args: ["-c", "backup"]
               env:
-                {{- include "waldur.env.initdb" . | nindent 17 }}
+                {{ include "waldur.env.initdb" . | nindent 16 }}
                 - name: MINIO_SERVER
                   value: {{ .Values.minio.endpoint | quote }}
                 - name: MINIO_ACCESS_KEY

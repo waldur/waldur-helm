@@ -27,6 +27,7 @@ Run linter:
     - apk add yq --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
   script:
     - helm lint waldur/
+    - helm lint waldur/ -f waldur/test/values.yaml
     # lint for correctness of known configuration
     - mkdir rendered-templates && helm template waldur -f waldur/test/values.yaml --output-dir rendered-templates/ --debug
     - yq e '.data."features.json"' rendered-templates/waldur/templates/config-features-json.yml | jq

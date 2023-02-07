@@ -99,7 +99,7 @@ spec:
           args:
             - saml2-metadata-sync
           env:
-            {{- include "waldur.credentials" . | nindent 13 }}
+          {{- include "waldur.credentials" . | nindent 10 }}
           {{ if has "TAAT" .Values.waldur.saml2.federations }}
           - name: TAAT_METADATA_URL
             value: https://taeva.taat.edu.ee/metadata/metadata.taat+hub+prod+idp.xml

@@ -192,3 +192,71 @@ Add environment variables to configure database values and Sentry environment
   value: {{ .Values.proxy.noProxy | quote }}
 {{ end }}
 {{- end -}}
+
+{{- define "waldur.env.whitelabeling" -}}
+
+{{ if .Values.waldur.site.name }}
+- name: SITE_NAME
+  value: '{{ .Values.waldur.site.name }}'
+{{ end }}
+
+{{ if .Values.waldur.site.logo }}
+- name: SITE_LOGO
+  value: '{{ .Files.Get .Values.waldur.site.logo | b64enc | indent 4 }}'
+{{ end }}
+
+{{ if .Values.waldur.site.address }}
+- name: SITE_ADDRESS
+  value: '{{ .Values.waldur.site.address }}'
+{{ end }}
+
+{{ if .Values.waldur.site.email }}
+- name: SITE_EMAIL
+  value: '{{ .Values.waldur.site.email }}'
+{{ end }}
+
+{{ if .Values.waldur.site.phone }}
+- name: SITE_PHONE
+  value: '{{ .Values.waldur.site.phone }}'
+{{ end }}
+
+{{ if .Values.waldur.whitelabeling.shortPageTitle }}
+- name: SHORT_PAGE_TITLE
+  value: '{{ .Values.waldur.whitelabeling.shortPageTitle }}'
+{{ end }}
+
+{{ if .Values.waldur.whitelabeling.modePageTitle }}
+- name: FULL_PAGE_TITLE
+  value: '{{ .Values.waldur.whitelabeling.modePageTitle }}'
+{{ end }}
+
+{{ if .Values.waldur.whitelabeling.brandColor }}
+- name: BRAND_COLOR
+  value: '{{ .Values.waldur.whitelabeling.brandColor }}'
+{{ end }}
+
+{{ if .Values.waldur.whitelabeling.heroLinkLabel }}
+- name: HERO_LINK_LABEL
+  value: '{{ .Values.waldur.whitelabeling.heroLinkLabel }}'
+{{ end }}
+
+{{ if .Values.waldur.whitelabeling.heroLinkUrl }}
+- name: HERO_LINK_URL
+  value: '{{ .Values.waldur.whitelabeling.heroLinkUrl }}'
+{{ end }}
+
+{{ if .Values.waldur.whitelabeling.siteDescription }}
+- name: SITE_DESCRIPTION
+  value: '{{ .Values.waldur.whitelabeling.siteDescription }}'
+{{ end }}
+
+{{ if .Values.waldur.currencyName }}
+- name: CURRENCY_NAME
+  value: '{{ .Values.waldur.currencyName }}'
+{{ end }}
+
+{{ if .Values.waldur.homeport.docsLink }}
+- name: DOCS_URL
+  value: '{{ .Values.waldur.homeport.docsLink }}'
+{{ end }}
+{{- end -}}

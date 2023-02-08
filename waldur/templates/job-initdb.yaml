@@ -37,6 +37,7 @@ spec:
             - initdb
           env:
             {{- include "waldur.credentials" . | nindent 13 }}
+            {{- include "waldur.env.whitelabeling" . | nindent 13 }}
           {{ if .Values.waldur.disabledExtensions }}
           - name: WALDUR_DISABLED_EXTENSIONS
             value: {{ .Values.waldur.disabledExtensions | toJson | quote }}
@@ -83,16 +84,6 @@ spec:
               subPath: celery.conf
           resources:
             {{- toYaml .Values.apiResources | nindent 12 }}
-        - name: set-whitelabeling-settings
-          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
-          args:
-            - whitelabeling-set
-          env:
-            {{- include "waldur.credentials" . | nindent 13 }}
-          volumeMounts:
-            - name: waldur-whitelabeling-settings
-              mountPath: /usr/local/bin/whitelabeling-set
-              subPath: whitelabeling-set
 {{ if has "SAML2" .Values.waldur.authMethods }}
         - name: waldur-mastermind-saml2-metadata-sync
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
@@ -156,10 +147,6 @@ spec:
         configMap:
           name: mastermind-user-agreement-config
       {{ end }}
-      - name: waldur-whitelabeling-settings
-        configMap:
-          name: waldur-whitelabeling-settings-set-script
-          defaultMode: 0755
       {{ if has "SAML2" .Values.waldur.authMethods }}
       - name: waldur-saml2-certs
         secret:

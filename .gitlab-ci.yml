@@ -95,7 +95,7 @@ Test release installation and readiness:
     - |
       for NAME in $(kubectl get pods --field-selector status.phase=Failed -o name); do
         echo "Pod name: $NAME"
-        kubectl logs $NAME
+        kubectl logs $NAME --tail 100 --all-containers
         echo ----
       done
 

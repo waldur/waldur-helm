@@ -200,11 +200,6 @@ Add environment variables to configure database values and Sentry environment
   value: '{{ .Values.waldur.site.name }}'
 {{ end }}
 
-{{ if .Values.waldur.site.logo }}
-- name: SITE_LOGO
-  value: '{{ .Files.Get .Values.waldur.site.logo | b64enc | indent 4 }}'
-{{ end }}
-
 {{ if .Values.waldur.site.address }}
 - name: SITE_ADDRESS
   value: '{{ .Values.waldur.site.address }}'
@@ -258,5 +253,35 @@ Add environment variables to configure database values and Sentry environment
 {{ if .Values.waldur.homeport.docsLink }}
 - name: DOCS_URL
   value: '{{ .Values.waldur.homeport.docsLink }}'
+{{ end }}
+
+{{ if .Values.waldur.site.logo }}
+- name: SITE_LOGO
+  value: '{{ .Values.waldur.site.logo | b64enc | indent 4 }}'
+{{ end }}
+
+{{ if .Values.waldur.whitelabeling.loginLogoPath }}
+- name: LOGIN_LOGO
+  value: '{{ .Values.waldur.whitelabeling.loginLogoPath }}'
+{{ end }}
+
+{{ if .Values.waldur.whitelabeling.sidebarLogoPath }}
+- name: SIDEBAR_LOGO
+  value: '{{ .Values.waldur.whitelabeling.sidebarLogoPath }}'
+{{ end }}
+
+{{ if .Values.waldur.whitelabeling.poweredByLogoPath }}
+- name: POWERED_BY_LOGO
+  value: '{{ .Values.waldur.whitelabeling.poweredByLogoPath }}'
+{{ end }}
+
+{{ if .Values.waldur.whitelabeling.faviconPath }}
+- name: FAVICON
+  value: '{{ .Values.waldur.whitelabeling.faviconPath }}'
+{{ end }}
+
+{{ if .Values.waldur.whitelabeling.heroImagePath }}
+- name: HERO_IMAGE
+  value: '{{ .Values.waldur.whitelabeling.heroImagePath }}'
 {{ end }}
 {{- end -}}

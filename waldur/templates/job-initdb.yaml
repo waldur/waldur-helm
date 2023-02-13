@@ -67,7 +67,7 @@ spec:
               mountPath: /etc/waldur/terms-of-service.html
               subPath: "mastermind-tos.html"
             {{ end }}
-            - name: icons
+            - name: icons-config
               mountPath: /etc/waldur/icons
           resources:
             {{- toYaml .Values.apiResources | nindent 12 }}

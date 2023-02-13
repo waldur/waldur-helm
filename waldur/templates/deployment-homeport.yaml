@@ -51,11 +51,6 @@ spec:
             - name: json
               mountPath: /opnd/config.json
               subPath: config.json
-            - name: nginx
-              mountPath: /etc/nginx/nginx.conf
-              subPath: nginx.conf
-            - name: icons
-              mountPath: /var/www/waldur/icons
           resources:
             {{- toYaml .Values.homeportResources | nindent 12 }}
       volumes:
@@ -65,9 +60,6 @@ spec:
       - name: nginx
         configMap:
           name: homeport-nginx-config
-      - name: icons
-        configMap:
-          name: homeport-icons-config
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

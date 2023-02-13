@@ -67,7 +67,7 @@ spec:
               mountPath: /etc/waldur/terms-of-service.html
               subPath: "mastermind-tos.html"
             {{ end }}
-            - name: icons-config
+            - name: icons
               mountPath: /etc/waldur/icons
           resources:
             {{- toYaml .Values.apiResources | nindent 12 }}
@@ -139,7 +139,10 @@ spec:
       - name: config-features-json
         configMap:
           name: mastermind-config-features-json
-      {{ if .Values.waldur.mastermindTemplating.mastermindTemplatesPath }}
+      - name: icons
+        configMap:
+          name: icons-config
+  {{ if .Values.waldur.mastermindTemplating.mastermindTemplatesPath }}
       - name: waldur-mastermind-template
         configMap:
           name: mastermind-template-config

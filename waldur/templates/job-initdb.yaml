@@ -67,6 +67,8 @@ spec:
               mountPath: /etc/waldur/terms-of-service.html
               subPath: "mastermind-tos.html"
             {{ end }}
+            - name: icons
+              mountPath: /etc/waldur/icons
           resources:
             {{- toYaml .Values.apiResources | nindent 12 }}
         - name: waldur-mastermind-create-dbcache

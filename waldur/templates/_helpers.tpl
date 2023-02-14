@@ -257,7 +257,7 @@ Add environment variables to configure database values and Sentry environment
 
 {{ if .Values.waldur.site.logo }}
 - name: SITE_LOGO
-  value: '{{ .Values.waldur.site.logo | b64enc | indent 4 }}'
+  value: '{{ .Values.waldur.site.logo }}'
 {{ end }}
 
 {{ if .Values.waldur.whitelabeling.loginLogoPath }}

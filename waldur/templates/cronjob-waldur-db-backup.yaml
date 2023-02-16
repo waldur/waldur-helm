@@ -18,8 +18,6 @@ spec:
           containers:
             - name: "postgres-backup-cronjob"
               image: {{ .Values.global.imageRegistry }}/{{ .Values.postgresBackup.image }}
-              command: ["/bin/sh"]
-              args: ["-c", "backup"]
               env:
                 {{ include "waldur.env.initdb" . | nindent 16 }}
                 - name: MINIO_SERVER
@@ -32,6 +30,34 @@ spec:
                   value: {{ .Values.minio.bucketName | quote }}
                 - name: MINIO_API_VERSION
                   value: "S3v4"
+                - name: EXEC_TIMEOUT
+                  value: "30"
+              livenessProbe:
+                exec:
+                  command:
+                    - sh
+                    - -c
+                    - >
+                      start_time="$(cat /start_time)";
+                      now_time="$(date +%s)";
+                      elapsed_time=$(($now_time-$start_time));
+                      [ "$EXEC_TIMEOUT" -gt "$elapsed_time" ] &&
+                      date +%s > /livenessProbe
+                initialDelaySeconds: 3
+                periodSeconds: 2
+                timeoutSeconds: 2
+                successThreshold: 1
+                failureThreshold: 1
+              command:
+                - sh
+                - -c
+                - >
+                  date +%s > /start_time;
+                  doWork() {
+                  /bin/sh -c backup;
+                  };
+                  doWork;
+                  echo >&2 'All Done';
               volumeMounts:
                 - name: postgres-backup-script
                   mountPath: /usr/local/bin/backup

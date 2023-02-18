@@ -71,6 +71,8 @@ spec:
             - name: api-celery
               mountPath: /etc/waldur/celery.conf
               subPath: celery.conf
+            - name: icons
+              mountPath: /etc/waldur/icons
             {{ if has "SAML2" .Values.waldur.authMethods }}
             - name: waldur-saml2-certs
               mountPath: /etc/waldur/saml2/credentials
@@ -105,6 +107,9 @@ spec:
       - name: api-celery
         configMap:
           name: api-celery-config
+      - name: icons
+        configMap:
+          name: icons-config
       {{ if has "SAML2" .Values.waldur.authMethods }}
       - name: waldur-saml2-certs
         secret:

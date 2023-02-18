@@ -262,26 +262,26 @@ Add environment variables to configure database values and Sentry environment
 
 {{ if .Values.waldur.whitelabeling.loginLogoPath }}
 - name: LOGIN_LOGO
-  value: '{{ .Values.waldur.whitelabeling.loginLogoPath }}'
+  value: '/etc/waldur/icons/login_logo.png'
 {{ end }}
 
 {{ if .Values.waldur.whitelabeling.sidebarLogoPath }}
 - name: SIDEBAR_LOGO
-  value: '{{ .Values.waldur.whitelabeling.sidebarLogoPath }}'
+  value: '/etc/waldur/icons/sidebar_logo.png'
 {{ end }}
 
 {{ if .Values.waldur.whitelabeling.poweredByLogoPath }}
 - name: POWERED_BY_LOGO
-  value: '{{ .Values.waldur.whitelabeling.poweredByLogoPath }}'
+  value: '/etc/waldur/icons/poweredby_logo.png'
 {{ end }}
 
 {{ if .Values.waldur.whitelabeling.faviconPath }}
 - name: FAVICON
-  value: '{{ .Values.waldur.whitelabeling.faviconPath }}'
+  value: '/etc/waldur/icons/favicon.ico'
 {{ end }}
 
 {{ if .Values.waldur.whitelabeling.heroImagePath }}
 - name: HERO_IMAGE
-  value: '{{ .Values.waldur.whitelabeling.heroImagePath }}'
+  value: '/etc/waldur/icons/hero_image.jpg'
 {{ end }}
 {{- end -}}

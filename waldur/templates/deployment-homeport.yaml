@@ -47,6 +47,8 @@ spec:
           env:
             - name: TITLE
               value: {{ .Values.waldur.whitelabeling.shortPageTitle }}
+            - name: API_URL
+              value: {{ printf "%s://%s/" .Values.apiScheme .Values.apiHostname | quote }}
           volumeMounts:
             - name: json
               mountPath: /opnd/config.json

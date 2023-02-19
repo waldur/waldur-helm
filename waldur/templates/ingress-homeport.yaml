@@ -14,6 +14,7 @@ metadata:
     {{ if .Values.ingress.tls.source | eq "letsEncrypt" }}
     cert-manager.io/cluster-issuer: letsencrypt-prod-issuer
     {{ end }}
+    nginx.ingress.kubernetes.io/cors-allow-headers: DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,sentry-trace,baggage
     nginx.ingress.kubernetes.io/configuration-snippet: |
       more_set_headers "Content-Security-Policy: base-uri 'self'; object-src 'none'; media-src 'none'; script-src 'self' www.google-analytics.com sentry.opnd.org; style-src 'self' 'unsafe-inline'; img-src 'self' www.google-analytics.com *.gravatar.com *.tile.openstreetmap.org {{ .Values.apiHostname }} blob: data: ; connect-src 'self' {{ .Values.apiHostname }} nominatim.openstreetmap.org:443 sentry.opnd.org:443 sentry.opnd.org:80 www.google-analytics.com; font-src 'self' data: ; frame-src 'none'; frame-ancestors 'none'";
     {{ if .Values.ingress.whitelistSourceRange }}

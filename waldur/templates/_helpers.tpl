@@ -255,6 +255,11 @@ Add environment variables to configure database values and Sentry environment
   value: '{{ .Values.waldur.homeport.docsLink }}'
 {{ end }}
 
+{{ if .Values.waldur.whitelabeling.supportPortalLink }}
+- name: SUPPORT_PORTAL_URL
+  value: '{{ .Values.waldur.whitelabeling.supportPortalLink }}'
+{{ end }}
+
 {{ if .Values.waldur.site.logo }}
 - name: SITE_LOGO
   value: '{{ .Values.waldur.site.logo }}'

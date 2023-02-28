@@ -128,7 +128,7 @@ Upload docs:
 
 Test scheduled pipeline:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
   script:
     - env
     - echo "Hello!"

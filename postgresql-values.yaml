@@ -1,0 +1,21 @@
+nameOverride: "waldur"
+
+auth:
+  username: "waldur"
+  password: "waldur"
+  database: "waldur"
+
+primary:
+  persistence:
+    size: "10Gi"
+  resources:
+    requests:
+      memory: "1024Mi"
+      cpu: "500m"
+    limits:
+      memory: "2048Mi"
+      cpu: "1000m"
+
+image:
+  registry: "docker.io"
+  tag: 12

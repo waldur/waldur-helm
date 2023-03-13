@@ -1,97 +1,170 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: waldur-mastermind-job
+  name: waldur-mastermind-initdb-job
   labels:
 {{ include "waldur.labels" . | indent 4 }}
+  annotations:
+    "helm.sh/hook": post-install, post-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation
 spec:
   template:
     metadata:
-      annotations:
-        "helm.sh/hook": post-install, post-upgrade
-        "helm.sh/hook-weight": "0"
-        "helm.sh/hook-delete-policy": hook-succeeded, hook-failed
+      labels:
+        app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
+        app.kubernetes.io/instance: {{ .Release.Name | quote }}
+        app.kubernetes.io/version: {{ .Chart.AppVersion }}
+        helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     spec:
       initContainers:
       - name: check-db-ready
-        image: postgres:9.6.5
+        image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.initdbImageName }}:{{ template "waldur.postgresql.version" . }}
         command: ['sh', '-c',
-          'until pg_isready -h $POSTGRESQL_HOST -p $POSTGRESQL_PORT; 
+          'until pg_isready;
           do echo waiting for database; sleep 2; done;']
         env:
-          - name: POSTGRESQL_HOST
-            value: {{ template "waldur.postgresql.host" . }}
-          - name: POSTGRESQL_PORT
-            value: {{ template "waldur.postgresql.port" . }}
+          {{- include "waldur.env.initdb" . | nindent 11 }}
       containers:
-        - name: waldur-mastermind-job
-          image: opennode/waldur-mastermind:{{ .Values.waldur.imageTag }}
+        - name: create-celery-results-db
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.initdbImageName }}:{{ template "waldur.postgresql.version" . }}
+          command: ['sh', '-c', 'createdb celery_results || true']
+          env:
+            {{- include "waldur.env.initdb" . | nindent 11 }}
+        - name: waldur-mastermind-migrate
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
           args:
             - initdb
           env:
-          - name: GLOBAL_SECRET_KEY
-            valueFrom:
-              secretKeyRef:
-                name: waldur-secret
-                key: GLOBAL_SECRET_KEY
-          - name: POSTGRESQL_HOST
-            value: {{ template "waldur.postgresql.host" . }}
-          - name: POSTGRESQL_PORT
-            value: {{ template "waldur.postgresql.port" . }}
-          - name: POSTGRESQL_USER
-            value: {{ default "waldur" .Values.postgresql.postgresqlUsername | quote }}
-          - name: POSTGRESQL_PASSWORD
-            valueFrom:
-              secretKeyRef:
-              {{- if .Values.postgresql.existingSecret }}
-                name: {{ .Values.postgresql.existingSecret }}
-              {{- else }}
-                name: {{ template "waldur.postgresql.secret" . }}
-              {{- end }}
-                key: {{ template "waldur.postgresql.secretKey" . }}
-          - name: POSTGRESQL_NAME
-            value: {{ default "waldur" .Values.postgresql.postgresqlDatabase | quote }}
-          - name: REDIS_HOST
-            value: {{ template "waldur.redis.host" . }}
-          - name: REDIS_PORT
-            value: {{ template "waldur.redis.port" . }}
-          - name: REDIS_PASSWORD
-            valueFrom:
-              secretKeyRef:
-              {{- if .Values.redis.existingSecret }}
-                name: {{ .Values.redis.existingSecret }}
-              {{- else }}
-                name: {{ template "waldur.redis.secret" . }}
-              {{- end }}
-                key: {{ template "waldur.redis.secretKey" . }}
+            {{- include "waldur.credentials" . | nindent 13 }}
+            {{- include "waldur.env.whitelabeling" . | nindent 13 }}
+          {{ if .Values.waldur.disabledExtensions }}
+          - name: WALDUR_DISABLED_EXTENSIONS
+            value: {{ .Values.waldur.disabledExtensions | toJson | quote }}
+          {{ end }}
           volumeMounts:
-            - name: api-core
-              mountPath: /etc/waldur/core.ini
-              subPath: core.ini
             - name: api-override
               mountPath: /etc/waldur/override.conf.py
               subPath: override.conf.py
             - name: api-celery
               mountPath: /etc/waldur/celery.conf
               subPath: celery.conf
-            - name: api-uwsgi
-              mountPath: /etc/waldur/uwsgi.ini
-              subPath: uwsgi.ini
+            - name: config-features-json
+              mountPath: /etc/waldur/features.json
+              subPath: features.json
+            {{ if .Values.waldur.mastermindTemplating.mastermindTemplatesPath }}
+            - name: waldur-mastermind-template
+              mountPath: /etc/waldur/notifications-templates.yaml
+              subPath: "mastermind-templates.yaml"
+            {{ end }}
+            {{ if .Values.waldur.whitelabeling.privacyHtmlPath }}
+            - name: waldur-mastermind-user-agreements
+              mountPath: /etc/waldur/privacy-policy.html
+              subPath: "mastermind-pp.html"
+            {{ end }}
+            {{ if .Values.waldur.whitelabeling.tosHtmlPath }}
+            - name: waldur-mastermind-user-agreements
+              mountPath: /etc/waldur/terms-of-service.html
+              subPath: "mastermind-tos.html"
+            {{ end }}
+            - name: icons
+              mountPath: /etc/waldur/icons
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml .Values.apiResources | nindent 12 }}
+        - name: waldur-mastermind-create-dbcache
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
+          args:
+            - initdb-cache
+          env:
+            {{- include "waldur.credentials" . | nindent 13 }}
+          volumeMounts:
+            - name: api-override
+              mountPath: /etc/waldur/override.conf.py
+              subPath: override.conf.py
+            - name: api-celery
+              mountPath: /etc/waldur/celery.conf
+              subPath: celery.conf
+          resources:
+            {{- toYaml .Values.apiResources | nindent 12 }}
+{{ if has "SAML2" .Values.waldur.authMethods }}
+        - name: waldur-mastermind-saml2-metadata-sync
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
+          args:
+            - saml2-metadata-sync
+          env:
+          {{- include "waldur.credentials" . | nindent 10 }}
+          {{ if has "TAAT" .Values.waldur.saml2.federations }}
+          - name: TAAT_METADATA_URL
+            value: https://taeva.taat.edu.ee/metadata/metadata.taat+hub+prod+idp.xml
+          {{ end }}
+          {{ if has "EDUGAIN" .Values.waldur.saml2.federations }}
+          - name: EDUGAIN_METADATA_URL
+            value: http://md.incommon.org/InCommon/InCommon-metadata-idp-only.xml
+          {{ end }}
+          {{ if has "HAKA_TEST" .Values.waldur.saml2.federations }}
+          - name: HAKA_TEST_METADATA_URL
+            value: https://haka.funet.fi/metadata/haka_test_metadata_signed.xml
+          {{ end }}
+          {{ if has "HAKA_PROD" .Values.waldur.saml2.federations }}
+          - name: HAKA_PROD_METADATA_URL
+            value: https://haka.funet.fi/metadata/haka-metadata.xml
+          {{ end }}
+          volumeMounts:
+            - name: api-override
+              mountPath: /etc/waldur/override.conf.py
+              subPath: override.conf.py
+            - name: api-celery
+              mountPath: /etc/waldur/celery.conf
+              subPath: celery.conf
+            - name: waldur-saml2-certs
+              mountPath: /etc/waldur/saml2/credentials
+            - name: waldur-saml2-conf
+              mountPath: /etc/waldur/saml2.conf.py
+              subPath: saml2.conf.py
+            {{ if has "CUSTOM" .Values.waldur.saml2.federations }}
+            - name: waldur-saml2-idp-metadata
+              mountPath: /etc/waldur/saml2/metadata/idp_metadata.xml
+              subPath: idp_metadata.xml
+            {{ end }}
+          resources:
+            {{- toYaml .Values.apiResources | nindent 12 }}
+{{ end }}
       volumes:
-      - name: api-core
-        configMap:
-          name: api-core-config
       - name: api-override
         configMap:
           name: api-override-config
       - name: api-celery
         configMap:
           name: api-celery-config
-      - name: api-uwsgi
+      - name: config-features-json
         configMap:
-          name: api-uwsgi-config
+          name: mastermind-config-features-json
+      - name: icons
+        configMap:
+          name: icons-config
+  {{ if .Values.waldur.mastermindTemplating.mastermindTemplatesPath }}
+      - name: waldur-mastermind-template
+        configMap:
+          name: mastermind-template-config
+      {{ end }}
+      {{ if or (.Values.waldur.whitelabeling.privacyHtmlPath) (.Values.waldur.whitelabeling.tosHtmlPath) }}
+      - name: waldur-mastermind-user-agreements
+        configMap:
+          name: mastermind-user-agreement-config
+      {{ end }}
+      {{ if has "SAML2" .Values.waldur.authMethods }}
+      - name: waldur-saml2-certs
+        secret:
+          secretName: waldur-saml2-secret
+      - name: waldur-saml2-conf
+        configMap:
+          name: waldur-saml2-conf-config
+      {{ end }}
+      {{ if has "CUSTOM" .Values.waldur.saml2.federations }}
+      - name: waldur-saml2-idp-metadata
+        configMap:
+          name: waldur-idp-custom-metadata-config
+      {{ end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

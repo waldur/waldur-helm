@@ -1,0 +1,133 @@
+{{ if .Values.waldur.uvkEverypay.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: waldur-uvk-everypay
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: waldur-uvk-everypay
+  template:
+    metadata:
+      labels:
+        app: waldur-uvk-everypay
+    spec:
+      {{ if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range $i, $val := .Values.imagePullSecrets }}
+        - name: {{ $val }}
+        {{ end -}}
+      {{ end }}
+      {{ if .Values.hostAliases }}
+      hostAliases:
+        {{ toYaml .Values.hostaliases | nindent 8 }}
+      {{ end }}
+      containers:
+      - name: waldur-uvk-everypay
+        image: {{ .Values.global.imageRegistry }}/opennode/waldur-uvk-everypay:latest
+        imagePullPolicy: {{ .Values.waldur.pullPolicy }}
+        env:
+          - name: WALDUR_API_URL
+            value: "http://waldur-mastermind-api:8080/api/"
+          - name: WALDUR_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: waldur-secret
+                key: WALDUR_STAFF_API_TOKEN
+          - name: UVK_SERVER
+            value: "{{ .Values.waldur.uvkEverypay.uvkServer }}"
+          - name: EVERYPAY_GATEWAY
+            value: "{{ .Values.waldur.uvkEverypay.everypayGateway }}"
+          - name: EVERYPAY_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: waldur-secret
+                key: EVERYPAY_USERNAME
+          - name: EVERYPAY_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: waldur-secret
+                key: EVERYPAY_PASSWORD
+          - name: WALDUR_SIDECAR_URL
+            value: {{ printf "%s://%s/uvk-everypay/" .Values.apiScheme .Values.apiHostname | quote }}
+        {{- with .Values.nodeSelector }}
+        nodeSelector:
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.affinity }}
+        affinity:
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.tolerations }}
+        tolerations:
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      - name: waldur-uvk-everypay-sidecar
+        image: {{ .Values.global.imageRegistry }}/opennode/waldur-uvk-everypay-sidecar:latest
+        imagePullPolicy: {{ .Values.waldur.pullPolicy }}
+        ports:
+          - name: http
+            containerPort: 8000
+            protocol: TCP
+        env:
+          - name: WALDUR_API_URL
+            value: "http://waldur-mastermind-api:8080/api/"
+          - name: WALDUR_URL
+            value: "{{ .Values.homeportScheme }}://{{ .Values.homeportHostname }}"
+          - name: WALDUR_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: waldur-secret
+                key: WALDUR_STAFF_API_TOKEN
+          - name: EVERYPAY_GATEWAY
+            value: "{{ .Values.waldur.uvkEverypay.everypayGateway }}"
+          - name: EVERYPAY_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: waldur-secret
+                key: EVERYPAY_USERNAME
+          - name: EVERYPAY_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: waldur-secret
+                key: EVERYPAY_PASSWORD
+          - name: MAIL_SERVER
+            value: {{ .Values.waldur.mail.host | quote }}
+          {{ if .Values.waldur.mail.port }}
+          - name: MAIL_PORT
+            value: {{ .Values.waldur.mail.port | quote }}
+          {{ end }}
+          {{ if .Values.waldur.mail.username }}
+          - name: MAIL_USERNAME
+            value: {{ .Values.waldur.mail.username | quote }}
+          {{ end }}
+          {{ if .Values.waldur.mail.password }}
+          - name: MAIL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: waldur-secret
+                key: MAIL_PASSWORD
+          {{ end }}
+          - name: MAIL_USE_TLS
+            value: {{ .Values.waldur.mail.useTLS | quote }}
+          - name: MAIL_USE_SSL
+            value: {{ .Values.waldur.mail.useSSL | quote }}
+          - name: MAIL_FROM
+            value: {{ .Values.waldur.mail.from | quote }}
+          - name: MAIL_REPLY_TO
+            value: {{ .Values.waldur.mail.replyTo | quote }}
+        {{- with .Values.nodeSelector }}
+        nodeSelector:
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.affinity }}
+        affinity:
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.tolerations }}
+        tolerations:
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+{{ end }}

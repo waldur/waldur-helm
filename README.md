@@ -1,72 +1,132 @@
-# Waldur
+# Waldur Helm
 
-Waldur is a platform for creating hybrid cloud solutions. It allows building enterprise-grade systems and providing self-service environment for the end-users.
+Waldur is a platform for creating hybrid cloud solutions.
+It allows building enterprise-grade systems and
+providing self-service environment for the end-users.
 
 ## Introduction
 
-This chart bootstraps a [Waldur](https://waldur.com/) deployment on a Kubernetes cluster using the [Helm](https://helm.sh) package manager.
+This chart bootstraps a [Waldur](https://waldur.com/) deployment
+on a Kubernetes cluster using the [Helm](https://helm.sh) package manager.
 
 ## Installing prerequisites
 
-1. Install Kubernetes server, for example, using [minikube](/docs/minikube.md)
-2. Install Kubernetes client, ie [kubetcl](/docs/kubectl.md)
-3. Install [Helm](/docs/helm.md)
+1. Install Kubernetes server, for example, using [minikube](docs/minikube.md)
+2. Install Kubernetes client, i.e. [kubectl](docs/kubectl.md)
+3. Install [Helm](docs/helm.md)
 
-## Installing the Chart
+## Installing the chart
+
+1. Clone [waldur-helm repository](https://github.com/waldur/waldur-helm)
+
+```bash
+  git clone https://github.com/waldur/waldur-helm.git
+  cd waldur-helm
+```
 
 1. Add the stable repository
+
+```bash
+  helm repo add stable https://charts.helm.sh/stable
 ```
-  helm repo add stable https://kubernetes-charts.storage.googleapis.com
-```
-2. Install Chart dependencies:
-```
-  # in 'waldur-helm-poc/waldur'
-  helm dep update
-```
-3. Install Helm package:
-```
-  # in 'waldur-helm-poc/'
+
+1. Setup database:
+    3.1 Setup single PostgreSQL DB: [instructions](docs/postgres-db.md), or
+    3.2 Setup PostgreSQL HA DB: [instructions](docs/postgres-db-ha.md)
+
+    **NB** Only one of these two options should be used. Otherwise, DB will be unavailable.
+
+2. Install minio (for database backups): [instructions](docs/minio.md)
+3. Install RabbitMQ for task queue: [instructions](docs/rabbitmq.md)
+4. Install Helm package:
+
+```bash
   helm install waldur waldur
 ```
+
+**NB** After this command, Waldur release will run in `default` namespace.
+Please, pay attention in which namespace which release is running.
+
+For instance, you can install Waldur release
+in `test` namespace in the following way:
+
+1. Create `test` namespace:
+
+```bash
+  kubectl create namespace test
+```
+
+1. Install release:
+
+```bash
+  helm install waldur waldur --namespace test
+```
+
+However, postgresql release and waldur should be installed
+in the same namespace in order to share a common secret with DB credentials.
 
 ## Adding admin user
 
 Open waldur-mastermind-worker shell and execute the following command:
 
 1. Get waldur-mastermind-worker pod name
-```
+
+```bash
   # Example:
-  kubectl get po -A | grep waldur-mastermind-worker # -->
-  # default       waldur-mastermind-worker-6d98cd98bd-wps8n   1/1     Running     0          9m9s
+  kubectl get pods -A | grep waldur-mastermind-worker # -->
+  # default waldur-mastermind-worker-6d98cd98bd-wps8n 1/1 Running 0 9m9s
 ```
-2. Connect to pod via shell
-```
+
+1. Connect to pod via shell
+
+```bash
   # Example:
   kubectl exec -it waldur-mastermind-worker-6d98cd98bd-wps8n -- /bin/bash
 ```
-3. Execute command to add admin user
-```
+
+1. Execute command to add admin user
+
+```bash
   waldur createstaffuser -u user -p password -e admin@example.com
 ```
 
-## White-labeling
-Instructions for while-labeling: [doc](/docs/whitelabeling.md)
+## Waldur Helm chart release upgrading
 
-## Custom mastermind templates
+Delete initdb job (if exists):
 
-Instructions for template configuration: [doc](/docs/mastermind-templates.md)
+```bash
+  kubectl delete job waldur-mastermind-initdb-job || true
+```
 
-## Installation from repository
-For this, you need to run following commands:
-1. Add waldur repository
+Delete load features job (if exists):
+
+```bash
+  kubectl delete job load-features-job || true
 ```
-helm repo add waldur-helm https://opennode.github.io/waldur-helm/
+
+Upgrade Waldur dependencies and release:
+
+```bash
+  helm dep update waldur/
+  helm upgrade waldur waldur/
 ```
-2. Update repo dependencies
+
+Restart deployments to apply configmaps changes:
+
+```bash
+  kubectl rollout restart deployment waldur-mastermind-beat
+  kubectl rollout restart deployment waldur-mastermind-api
+  kubectl rollout restart deployment waldur-mastermind-worker
+  kubectl rollout restart deployment waldur-homeport
 ```
-helm repo update
-```
-3. Install waldur release
-```
-helm install waldur-helm/waldur waldur
-```
+
+## Private registry setup
+
+A user can use private registry for Docker images.
+For this, the corresponding credentials should be registered in a secret,
+name of which should be placed in `.Values.imagePullSecrets`.
+A secret can be created trough [CLI](https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#create-a-secret-by-providing-credentials-on-the-command-line).
+
+## Configuration docs
+
+Configuration documentation: [index](docs/index.md)

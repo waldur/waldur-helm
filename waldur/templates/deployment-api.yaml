@@ -18,100 +18,127 @@ spec:
       labels:
         app: waldur-mastermind-api
     spec:
+      {{ if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range $i, $val := .Values.imagePullSecrets }}
+        - name: {{ $val }}
+        {{ end -}}
+      {{ end }}
+      {{ if .Values.hostAliases }}
+      hostAliases:
+        {{ toYaml .Values.hostaliases | nindent 8 }}
+      {{ end }}
       containers:
         - name: waldur-mastermind-api
-          image: opennode/waldur-mastermind:{{ .Values.waldur.imageTag }}
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
+          imagePullPolicy: {{ .Values.waldur.pullPolicy }}
           args:
             - "mastermind"
+          livenessProbe:
+            httpGet:
+              port: 8080
+              path: /api/configuration/
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            failureThreshold: 100
+          readinessProbe:
+            httpGet:
+              port: 8080
+              path: /api/configuration/
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            failureThreshold: 100
           ports:
             - name: http
               containerPort: 8080
               protocol: TCP
           env:
-          - name: GLOBAL_SECRET_KEY
-            valueFrom:
-              secretKeyRef:
-                name: waldur-secret
-                key: GLOBAL_SECRET_KEY
-          - name: POSTGRESQL_HOST
-            value: {{ template "waldur.postgresql.host" . }}
-          - name: POSTGRESQL_PORT
-            value: {{ template "waldur.postgresql.port" . }}
-          - name: POSTGRESQL_USER
-            value: {{ default "waldur" .Values.postgresql.postgresqlUsername | quote }}
-          - name: POSTGRESQL_PASSWORD
-            valueFrom:
-              secretKeyRef:
-              {{- if .Values.postgresql.existingSecret }}
-                name: {{ .Values.postgresql.existingSecret }}
-              {{- else }}
-                name: {{ template "waldur.postgresql.secret" . }}
-              {{- end }}
-                key: {{ template "waldur.postgresql.secretKey" . }}
-          - name: POSTGRESQL_NAME
-            value: {{ default "waldur" .Values.postgresql.postgresqlDatabase | quote }}
-          - name: REDIS_HOST
-            value: {{ template "waldur.redis.host" . }}
-          - name: REDIS_PORT
-            value: {{ template "waldur.redis.port" . }}
-          - name: REDIS_PASSWORD
-            valueFrom:
-              secretKeyRef:
-              {{- if .Values.redis.existingSecret }}
-                name: {{ .Values.redis.existingSecret }}
-              {{- else }}
-                name: {{ template "waldur.redis.secret" . }}
-              {{- end }}
-                key: {{ template "waldur.redis.secretKey" . }}
+            {{- include "waldur.credentials" . | nindent 13 }}
+          {{ if .Values.waldur.disabledExtensions }}
+          - name: WALDUR_DISABLED_EXTENSIONS
+            value: {{ .Values.waldur.disabledExtensions | toJson | quote }}
+          {{ end }}
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{ if .Values.hpa.api.enabled }}
+            {{- toYaml .Values.hpa.api.resources | nindent 12 }}
+            {{ else }}
+            {{- toYaml .Values.apiResources | nindent 12 }}
+            {{ end }}
           volumeMounts:
-          {{- if .Values.persistence.enabled }}
-            - name: media
-              mountPath: /var/lib/waldur/
-              subPath: {{ .Values.persistence.subPath | default "" }}
-          {{- end }}
-            - name: api-core
-              mountPath: /etc/waldur/core.ini
-              subPath: core.ini
             - name: api-override
               mountPath: /etc/waldur/override.conf.py
               subPath: override.conf.py
             - name: api-celery
               mountPath: /etc/waldur/celery.conf
               subPath: celery.conf
-            - name: api-uwsgi
-              mountPath: /etc/waldur/uwsgi.ini
-              subPath: uwsgi.ini
-            {{ $templatesPath := .Values.waldur.mastermindTemplating.mastermindTemplatesPath }}
-            {{ $templatesRoot := $templatesPath | printf "%s/"}}
-            {{ $templatesPathPattern := $templatesPath | printf "%s/**" }}
-            {{ range $path, $_ :=  .Files.Glob $templatesPathPattern }}
-            - name: waldur-mastermind-template
-              mountPath: {{ $path | replace $templatesRoot "" | printf "/usr/src/waldur/src/%s" }}
-              subPath: {{ $path | base }}
+            - name: icons
+              mountPath: /etc/waldur/icons
+            {{ if has "SAML2" .Values.waldur.authMethods }}
+            - name: waldur-saml2-certs
+              mountPath: /etc/waldur/saml2/credentials
+            - name: waldur-saml2-conf
+              mountPath: /etc/waldur/saml2.conf.py
+              subPath: saml2.conf.py
+            {{ end }}
+            {{ if has "VALIMO" .Values.waldur.authMethods }}
+            - name: waldur-valimo-certs
+              mountPath: /etc/waldur/valimo
+            {{ end }}
+            {{ if .Values.waldur.ssh_public_key_path }}
+            - name: waldur-ssh-pub-key
+              mountPath: /etc/waldur/id_rsa.pub
+              subPath: id_rsa.pub
+            {{ end }}
+            {{ if .Values.waldur.ssh_private_key_path }}
+            - name: waldur-ssh-key
+              mountPath: /etc/waldur/id_rsa
+              subPath: id_rsa
+            {{ end }}
+            {{ if .Values.waldur.marketplace.script.enabled }}
+            - name: waldur-script-kubeconfig
+              mountPath: /etc/waldur/kubeconfig
+              subPath: kubeconfig
+              readOnly: true
             {{ end }}
       volumes:
-      {{- if .Values.persistence.enabled }}
-      - name: media
-        persistentVolumeClaim:
-          claimName: {{ .Values.persistence.existingClaim | default (include "waldur.fullname" .) }}
-      {{- end }}
-      - name: api-core
-        configMap:
-          name: api-core-config
       - name: api-override
         configMap:
           name: api-override-config
       - name: api-celery
         configMap:
           name: api-celery-config
-      - name: api-uwsgi
+      - name: icons
         configMap:
-          name: api-uwsgi-config
-      - name: waldur-mastermind-template
+          name: icons-config
+      {{ if has "SAML2" .Values.waldur.authMethods }}
+      - name: waldur-saml2-certs
+        secret:
+          secretName: waldur-saml2-secret
+      - name: waldur-saml2-conf
         configMap:
-          name: mastermind-template-config
+          name: waldur-saml2-conf-config
+      {{ end }}
+      {{ if has "VALIMO" .Values.waldur.authMethods }}
+      - name: waldur-valimo-certs
+        secret:
+          secretName: waldur-valimo-secret
+      {{ end }}
+      {{ if .Values.waldur.ssh_public_key_path }}
+      - name: waldur-ssh-pub-key
+        configMap:
+          name: waldur-ssh-pub-key-config
+      {{ end }}
+      {{ if .Values.waldur.ssh_private_key_path }}
+      - name: waldur-ssh-key
+        secret:
+          secretName: waldur-ssh-key-config
+          defaultMode: 0600
+      {{ end }}
+      {{ if .Values.waldur.marketplace.script.enabled }}
+      - name: waldur-script-kubeconfig
+        secret:
+          secretName: waldur-script-kubeconfig
+      {{ end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

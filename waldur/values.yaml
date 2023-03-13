@@ -12,22 +12,44 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-apiUrl: api.example.com
-homeportUrl: web.example.com
+apiScheme: "http"
+homeportScheme: "http"
+apiHostname: waldur.local
+homeportHostname: waldur.local
 
 affinity: {}
 
-resources: {}
+apiResources: {}
+workerResources: {}
+homeportResources: {}
+beatResources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # lines, adjust them as necessary, and remove the curly braces after '*resources:'.
   # limits:
   #   cpu: 100m
   #   memory: 128Mi
   # requests:
   #   cpu: 100m
   #   memory: 128Mi
+
+hpa:
+  api:
+    enabled: false
+    resources:
+      requests:
+        cpu: 500m
+    cpuUtilizationBorder: 70
+  celery:
+    enabled: false
+    workerResources:
+      requests:
+        cpu: 2000m
+    beatResources:
+      requests:
+        cpu: 300m
+    cpuUtilizationBorder: 80
 
 nodeSelector: {}
 
@@ -39,35 +61,118 @@ service:
 
 storageClassName: local-storage
 
+ingress:
+  tls:
+    source: "letsEncrypt" # Possible values: `letsEncrypt` and `secret`
+    secretsDir: "tls"  # Enabled only if source == `secret`
+  whitelistSourceRange: '' # E.g. '192.168.22.0/24'
+
+celery:
+  worker:
+    enabled: true
+
+proxy:
+  httpsProxy: ""
+  httpProxy: ""
+  noProxy: ""
+
+# overrides hostAliases in the Waldur deployment's pods
+hostAliases: []
+  # - ip: "1.2.3.4"
+  #   hostnames:
+  #     - "my.host.com"
+
 waldur:
-  imageTag: latest
-  apiUrl: ""
-  homeportUrl: ""
-  emailHost: ""
+  imageName: "opennode/waldur-mastermind"
+  imageTag: "latest"
+  initdbImageName: "bitnami/postgresql"
+  pullPolicy: Always
+  secretKey: "SecretKeyChangeMe"
+  supportToken: ""
+  staffToken: ""
+  disabledExtensions: []
+  mail:
+    host: ""
+    port: ""
+    username: ""
+    password: ""
+    useTLS: "false"
+    useSSL: "false"
+    from: ""
+    replyTo: ""
   notificationSubject: ""
   timeZone: "UTC"
   features: []
   currencyName: "EUR"
+  mastermindUrl: ""
   site:
     name: "Waldur"
     logo: ""
     address: ""
     email: ""
     phone: ""
-  authMethods: 
+  defaultLanguage: "en"
+  languageChoices:
+    - en
+    - et
+    - de
+    - es
+    - ru
+    - lv
+    - it
+  authMethods:
     - LOCAL_SIGNIN
-  facebook:
-    secret: ""
-    clientId: ""
-  google:
-    secret: ""
-    clientId: ""
+  socialAuthMethods: []
+  localIdp:
+    name: ""
+    label: ""
+    managementUrl: ""
+    protectedFields: []
   smartid:
     secret: ""
     clientId: ""
   tara:
     secret: ""
     clientId: ""
+    managementUrl: ""
+    protectedFields:
+      - "full_name"
+  keycloak:
+    auth_url: ""
+    client_id: ""
+    label: "Keycloak"
+    secret: ""
+    token_url: ""
+    userinfo_url: ""
+    managementUrl: ""
+    protectedFields:
+      - "full_name"
+      - "email"
+  keycloak_sync:
+    enabled: false
+    base_url: "http://localhost:8080/auth"
+    realm: "waldur"
+    client_id: "waldur"
+    client_secret: "waldur"
+    username: "admin"
+    password: "secret"
+  eduteams:
+    label: "eduTEAMS"
+    clientId: ""
+    secret: ""
+    authUrl: "https://proxy.acc.eduteams.org/saml2sp/OIDC/authorization"
+    tokenUrl: "https://proxy.acc.eduteams.org/OIDC/token"
+    userinfoUrl: "https://proxy.acc.eduteams.org/OIDC/userinfo"
+    managementUrl: ""
+    protectedFields:
+      - "full_name"
+      - "email"
+    remoteRefreshToken: ""
+    remoteClientID: ""
+    remoteSecret: ""
+    remoteUserinfoUrl: ""
+    remoteTokenUrl: ""
+    enableSync: false
   ldap:
     host: ""
     baseDN: ""
@@ -84,6 +189,7 @@ waldur:
     groupnamePrefix: ""
     usernamePrefix: ""
   valimo:
+    dir: "waldur_valimo"
     apId: ""
     apPwd: ""
     dnsname: ""
@@ -91,13 +197,11 @@ waldur:
     signatureProfile: ""
     label: ""
     mobilePrefix: ""
+    managementUrl: ""
+    protectedFields: []
   paypal:
     secret: ""
     clientId: ""
-  analytics:
-    databaseName: ""
-  ansible:
-    sshPublicKeyUUID: ""
   invoice:
     company: ""
     address: ""
@@ -121,92 +225,105 @@ waldur:
     servicedeskUsername: ""
     servicedeskPassword: ""
     servicedeskUrl: ""
+    skipVerify: false
     organizationField: ""
     projectKey: ""
-    homeportIssueUrl: ""
+    useAutomaticRequestMapping: true
   marketplace:
-    openstack:
-      instanceCategoryUUID: ""
-      volumeCategoryUUID: ""
-      tenantCategoryUUID: ""
-  uwsgi:
-    plugins: python36
-    processes: 16
+    notify_staff: false
+    script:
+      enabled: false
+      dockerImages: {}
+      kubeconfigPath: "k8s/kubeconfig"
+      k8sNamespace: "default"
+      jobTimeout: 1800
+  pid_datacite:
+    repository_id: ""
+    password: ""
+    prefix: ""
+    url: ""
+    publisher: ""
+    collection_doi: ""
   sentryDSN: ""
   whitelabeling:
+    # Icons mount at /etc/waldur/icons, thus the path to logo should contain:
+    # /etc/waldur/icons/ plus the name of the file as specified in icons-config.yaml configmap
+    # see test/values.yaml for working examples
     shortPageTitle: ""
     modePageTitle: ""
-    loginLogoUrl: ""
-    loginLogoBlobPath: ""
-    sidebarLogoUrl: ""
-    sidebarLogoBlobPath: ""
-    poweredByLogoUrl: ""
-    poweredByLogoBlobPath: ""
+    loginLogoPath: ""
+    sidebarLogoPath: ""
+    poweredByLogoPath: ""
     faviconPath: ""
-    faviconBlobPath: ""
-    manifestJsonPath: ""
-    logo96Path: ""
-    logo96BlobPath: ""
-    logo144Path: ""
-    logo144BlobPath: ""
-    logo192Path: ""
-    logo192BlobPath: ""
     tosHtmlPath: ""
+    brandColor: ""
+    heroImagePath: ""
+    heroLinkLabel: ""
+    heroLinkUrl: ""
     privacyHtmlPath: ""
+    siteDescription: ""
+    supportPortalLink: ""
   mastermindTemplating:
-    mastermindTemplatesPath: "mastermind_templates"
+    mastermindTemplatesPath: "mastermind_templates/mastermind-templates.yaml"
+  saml2:
+    dir: "waldur_saml2"
+    federations: []
+  ssh_public_key_path: ""
+  ssh_private_key_path: ""
+  homeport:
+    imageName: "opennode/waldur-homeport"
+    googleAnalyticsID: ""
+    userMandatoryFields: {}
+    userRegistrationHiddenFields: {}
+    docsLink: "https://docs.waldur.com"
+    invitationCivilCodeHelpText: ""
+  metricsExporter:
+    enabled: false
+    includeAnnotations: true
+    imageTag: latest
+  uvkEverypay:
+    enabled: false
+    uvkServer: "https://uvk-test.ut.ee/client/a74/server.php?format=JSON&action=uvk__"
+    everypayGateway: "https://igw-demo.every-pay.com/api/v4"
+    everypayUsername: ""
+    everypayPassword: ""
+
+bootstrap:
+  enabled: false
+  script: "bootstrap.sh"
+  dir: "bootstrap"
 
 postgresql:
-  enabled: true
-  nameOverride: waldur-postgresql
-  postgresqlDatabase: waldur
-  postgresqlUsername: waldur
-  # The following variables are only used when internal PG is disabled
-  # postgresqlHost: postgres
-  postgresqlPassword: waldur
-  # postgresqlPort: 5432
-  # When defined the `postgresqlPassword` field is ignored
-  # existingSecret: secret-name
-  # existingSecretKey: postgresql-password
+  HAEnabled: false
+  database: "waldur"
+  username: "waldur"
 
-redis:
-  enabled: true
-  cluster:
-    enabled: false
-  nameOverride: waldur-redis
-  # The following variables are only used when internal PG is disabled
-  # host: redis
-  # Just omit the password field if your redis cluster doesn't use password
-  # password: redis
-  # port: 6379
-  # When defined the `password` field is ignored
-  # existingSecret: secret-name
-  # existingSecretKey: redis-password
-  master:
-    persistence:
-      enabled: true
-      # If change pvc size redis.master.persistence.size: 20Gi
+postgresBackup:
+  enabled: false
+  schedule: "0 5 * * *"
+  rotationSchedule: "0 6 * * 6"
+  maxNumber: 10
+  image: opennode/postgres-minio:0.1.0
+  name: "waldur"
 
-##
-## Storage configuration for waldur
-persistence:
-  ##
-  ## enable persistance storage
-  enabled: true
-  ##
-  ## Existing claim to use
-  # existingClaim: nil
-  ## Existing claim's subPath to use, e.g. "waldur" (optional)
-  # subPath: ""
-  ##
-  ## Persistent Volume Storage Class
-  ## If defined, storageClassName: <storageClass>
-  ## If set to "-", storageClassName: "", which disables dynamic provisioning
-  ## If undefined (the default) or set to null, no storageClassName spec is
-  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
-  ##   GKE, AWS & OpenStack)
-  # storageClass: default
-  accessMode: ReadWriteOnce
-  ##
-  ## Persistant storage size request
-  size: 1Gi
+minio:
+  accessKey: ""
+  secretKey: ""
+  bucketName: data
+  ## min.io service endpoint used for communication inside a cluster
+  endpoint: "http://minio.default.svc.cluster.local:9000" ## See docs/service-endpoint.md for details.
+
+rabbitmq:
+  user: "waldur"
+  password: "waldur"
+  ## hostname of rabbitmq service
+  host: "rmq-rabbitmq.default.svc.cluster.local" ## See docs/service-endpoint.md for details.
+  customManagementPort:
+  customAMQPPort:
+
+stressTesting:
+  enabled: false
+  locustFilePath: "locust_task/locust_test.py"
+
+global:
+  imageRegistry: "docker.io"

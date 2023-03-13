@@ -1,0 +1,21 @@
+{{ if or (.Values.waldur.whitelabeling.privacyHtmlPath) (.Values.waldur.whitelabeling.tosHtmlPath) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mastermind-user-agreement-config
+data:
+  {{ $fpath := "" }}
+
+  {{ if .Values.waldur.whitelabeling.privacyHtmlPath }}
+    {{ $fpath = .Values.waldur.whitelabeling.privacyHtmlPath }}
+  mastermind-pp.html: |
+{{ .Files.Get $fpath | indent 4 }}
+  {{ end }}
+
+  {{ if .Values.waldur.whitelabeling.tosHtmlPath }}
+    {{ $fpath = .Values.waldur.whitelabeling.tosHtmlPath }}
+  mastermind-tos.html: |
+{{ .Files.Get $fpath | indent 4 }}
+  {{ end }}
+
+{{ end }}

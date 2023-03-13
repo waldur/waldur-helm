@@ -1,0 +1,10 @@
+{{ if .Values.ingress.tls.source | eq "secret"}}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: api-certificate
+type: Opaque
+data:
+{{ $secretsDirTemp := .Values.ingress.tls.secretsDir | printf "%s/*"}}
+{{ (.Files.Glob $secretsDirTemp).AsSecrets | indent 2 }}
+{{ end }}

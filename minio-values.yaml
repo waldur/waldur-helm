@@ -1,0 +1,29 @@
+image:
+  registry: "docker.io"
+  repository: "bitnami/minio"
+  tag: "2022.11.17-debian-11-r0"
+clientImage:
+  registry: "docker.io"
+  repository: "bitnami/minio-client"
+  tag: "2022.11.7-debian-11-r3"
+
+auth:
+  rootUser: "minio-client"
+  rootPassword: "changemedemoonly"
+serviceAccount:
+  name: minio-account
+persistence:
+  enabled: true
+  size: 8Gi
+
+ingress:
+  enabled: true
+  hostname: minio.local
+defaultBuckets: 'data'
+
+## Uncomment if you want to change memory request
+#  resources:
+#    requests:
+#      memory: 1Gi
+#    limits:
+#      memory: 1Gi

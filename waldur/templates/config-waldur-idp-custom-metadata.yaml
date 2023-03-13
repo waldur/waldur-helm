@@ -1,0 +1,10 @@
+{{ if has "CUSTOM" .Values.waldur.saml2.federations }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: waldur-idp-custom-metadata-config
+data:
+{{ $idpFile := .Values.waldur.saml2.dir | printf "%s/idp_metadata.xml" }}
+  idp_metadata.xml: |-
+{{ .Files.Get $idpFile | indent 4 }}
+{{ end }}

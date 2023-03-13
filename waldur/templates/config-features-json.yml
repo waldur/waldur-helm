@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mastermind-config-features-json
+data:
+  features.json: |
+    {
+      {{ if not (has "disabled_offering_comments" .Values.waldur.features) }}
+        "support.offering_comments": true,
+      {{ end }}
+      {{ if not (has "disable_private_marketplace_offerings" .Values.waldur.features) }}
+        "marketplace.private_offerings": true,
+      {{ end }}
+      {{ if has "compliancy" .Values.waldur.features }}
+        "marketplace.checklist": true,
+      {{ end }}
+      {{ if has "conceal_prices" .Values.waldur.features }}
+        "marketplace.conceal_prices": true,
+      {{ end }}
+      {{ if not (has "disable_volume_types" .Values.waldur.features) }}
+        "openstack.volume_types": true,
+      {{ end }}
+      {{ if has "disable_user_ssh_keys" .Values.waldur.features }}
+        "user.ssh_keys": false,
+      {{ end }}
+      {{ if has "marketplace.tos" .Values.waldur.features }}
+        "marketplace.terms_of_service": true,
+      {{ end }}
+      {{ if has "enable_project_member_role" .Values.waldur.features }}
+        "project.member_role": true,
+      {{ end }}
+      {{ if has "show_industry_flag" .Values.waldur.features }}
+        "project.show_industry_flag": true,
+      {{ end }}
+      {{ if has "enable_project_oecd_code" .Values.waldur.features }}
+        "project.oecd_fos_2007_code": true,
+      {{ end }}
+      {{ if has "organization_domain_visible" .Values.waldur.features }}
+        "customer.show_domain": true,
+      {{ end }}
+      {{ if has "invitation_conceal_civil_number" .Values.waldur.features }}
+        "invitations.conceal_civil_number": true,
+      {{ end }}
+      {{ if not (has "billing" .Values.waldur.features) }}
+        "customer.hide_organization_billing_step": true,
+      {{ end }}
+      {{ if has "support_next_branch" .Values.waldur.features }}
+        "support.next_branch": true,
+      {{ end }}
+      {{ if has "marketplace_show_experimental_ui_components" .Values.waldur.features }}
+        "marketplace.show_experimental_ui_components": true,
+      {{ end }}
+      {{ if has "marketplace_review" .Values.waldur.features }}
+        "marketplace.review": true,
+      {{ end }}
+      {{ if has "marketplace_offering_document" .Values.waldur.features }}
+        "marketplace.offering_document": true,
+      {{ end }}
+        "customer.billing": true,
+        "customer.events": true,
+        "project.events": true,
+        "marketplace.import_resources": true,
+        "user.notifications": true,
+        "project.estimated_cost": true,
+        "support.users": true,
+        "support.customers_list": true,
+        "support.resources_treemap": true,
+        "support.shared_providers": true,
+        "customer.team": true,
+        "project.team": true
+    }

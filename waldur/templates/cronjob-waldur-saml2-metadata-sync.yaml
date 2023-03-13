@@ -1,0 +1,78 @@
+{{ if has "SAML2" .Values.waldur.authMethods }}
+{{- if or ( gt .Capabilities.KubeVersion.Major "1" ) ( ge .Capabilities.KubeVersion.Minor "21" ) }}
+apiVersion: batch/v1
+{{- else }}
+apiVersion: batch/v1beta1
+{{- end }}
+kind: CronJob
+metadata:
+  name: waldur-saml2-metadata-sync-cronjob
+spec:
+  schedule: "0 * * * *"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: waldur-saml2-metadata-sync
+            image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
+            imagePullPolicy: {{ .Values.waldur.pullPolicy }}
+            args:
+              - saml2-metadata-sync
+            env:
+              {{- include "waldur.credentials" . | nindent 14 }}
+              {{ if has "TAAT" .Values.waldur.saml2.federations }}
+              - name: TAAT_METADATA_URL
+                value: https://taeva.taat.edu.ee/metadata/metadata.taat+hub+prod+idp.xml
+              {{ end }}
+              {{ if has "EDUGAIN" .Values.waldur.saml2.federations }}
+              - name: EDUGAIN_METADATA_URL
+                value: http://md.incommon.org/InCommon/InCommon-metadata-idp-only.xml
+              {{ end }}
+              {{ if has "HAKA_TEST" .Values.waldur.saml2.federations }}
+              - name: HAKA_TEST_METADATA_URL
+                value: https://haka.funet.fi/metadata/haka_test_metadata_signed.xml
+              {{ end }}
+              {{ if has "HAKA_PROD" .Values.waldur.saml2.federations }}
+              - name: HAKA_PROD_METADATA_URL
+                value: https://haka.funet.fi/metadata/haka-metadata.xml
+              {{ end }}
+            volumeMounts:
+              - name: api-override
+                mountPath: /etc/waldur/override.conf.py
+                subPath: override.conf.py
+              - name: api-celery
+                mountPath: /etc/waldur/celery.conf
+                subPath: celery.conf
+              - name: waldur-saml2-certs
+                mountPath: /etc/waldur/saml2/credentials
+              - name: waldur-saml2-conf
+                mountPath: /etc/waldur/saml2.conf.py
+                subPath: saml2.conf.py
+              {{ if has "CUSTOM" .Values.waldur.saml2.federations }}
+              - name: waldur-saml2-idp-metadata
+                mountPath: /etc/waldur/saml2/metadata/idp_metadata.xml
+                subPath: idp_metadata.xml
+              {{ end }}
+          volumes:
+            - name: api-override
+              configMap:
+                name: api-override-config
+            - name: api-celery
+              configMap:
+                name: api-celery-config
+            - name: waldur-saml2-certs
+              secret:
+                secretName: waldur-saml2-secret
+            - name: waldur-saml2-conf
+              configMap:
+                name: waldur-saml2-conf-config
+            {{ if has "CUSTOM" .Values.waldur.saml2.federations }}
+            - name: waldur-saml2-idp-metadata
+              configMap:
+                name: waldur-idp-custom-metadata-config
+            {{ end }}
+          restartPolicy: Never
+{{ end }}

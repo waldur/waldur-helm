@@ -1,0 +1,71 @@
+{{ if .Values.postgresBackup.enabled }}
+{{- if or ( gt .Capabilities.KubeVersion.Major "1" ) ( ge .Capabilities.KubeVersion.Minor "21" ) }}
+apiVersion: batch/v1
+{{- else }}
+apiVersion: batch/v1beta1
+{{- end }}
+kind: CronJob
+metadata:
+  name: waldur-db-backup-cronjob
+spec:
+  schedule: {{ .Values.postgresBackup.schedule | quote }}
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: "postgres-backup-cronjob"
+              image: {{ .Values.global.imageRegistry }}/{{ .Values.postgresBackup.image }}
+              env:
+                {{ include "waldur.env.initdb" . | nindent 16 }}
+                - name: MINIO_SERVER
+                  value: {{ .Values.minio.endpoint | quote }}
+                - name: MINIO_ACCESS_KEY
+                  value: {{ .Values.minio.accessKey | quote }}
+                - name: MINIO_SECRET_KEY
+                  value: {{ .Values.minio.secretKey | quote }}
+                - name: MINIO_BUCKET
+                  value: {{ .Values.minio.bucketName | quote }}
+                - name: MINIO_API_VERSION
+                  value: "S3v4"
+                - name: EXEC_TIMEOUT
+                  value: "600" # 10 minutes
+              livenessProbe:
+                exec:
+                  command:
+                    - sh
+                    - -c
+                    - >
+                      start_time="$(cat /start_time)";
+                      now_time="$(date +%s)";
+                      elapsed_time=$(($now_time-$start_time));
+                      [ "$EXEC_TIMEOUT" -gt "$elapsed_time" ] &&
+                      date +%s > /livenessProbe
+                initialDelaySeconds: 3
+                periodSeconds: 2
+                timeoutSeconds: 2
+                successThreshold: 1
+                failureThreshold: 1
+              command:
+                - sh
+                - -c
+                - >
+                  date +%s > /start_time;
+                  doWork() {
+                  /bin/sh -c backup;
+                  };
+                  doWork;
+                  echo >&2 'All Done';
+              volumeMounts:
+                - name: postgres-backup-script
+                  mountPath: /usr/local/bin/backup
+                  subPath: backup
+          volumes:
+            - name: postgres-backup-script
+              configMap:
+                name: waldur-db-backup-script
+                defaultMode: 0755
+          restartPolicy: Never
+{{ end }}

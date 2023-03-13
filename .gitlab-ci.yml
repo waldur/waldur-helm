@@ -1,0 +1,126 @@
+include:
+  - project: "waldur/waldur-pipelines"
+    file: "/templates/stages.yml"
+  - project: "waldur/waldur-pipelines"
+    file: "/templates/test/check-merge-compatibility.yml"
+  - project: "waldur/waldur-pipelines"
+    file: "/templates/test/lint-md-files.yml"
+
+Run linter:
+  image:
+    name: "registry.hpc.ut.ee/mirror/alpine/helm:3.3.1"
+    entrypoint: [""]
+  stage: test
+  interruptible: true
+  rules:
+    - if: '$SKIP_TESTS == "true" || $SKIP_TESTS == "yes"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  before_script:
+    - apk update
+    - apk add jq python3
+    - apk add -X http://dl-cdn.alpinelinux.org/alpine/edge/community -u alpine-keys
+    - apk add yq --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
+  script:
+    - helm lint waldur/
+    - helm lint waldur/ -f waldur/test/values.yaml
+    # lint for correctness of known configuration
+    - mkdir rendered-templates && helm template waldur -f waldur/test/values.yaml --output-dir rendered-templates/ --debug
+    - yq e '.data."features.json"' rendered-templates/waldur/templates/config-features-json.yml | jq
+    - yq e '.data."override.conf.py"' rendered-templates/waldur/templates/config-override.yaml > rendered-templates/waldur/templates/override.conf.py
+    - python3 -m py_compile rendered-templates/waldur/templates/override.conf.py
+  artifacts:
+    expire_in: 1 week
+    when: always
+    paths:
+      - rendered-templates
+
+.Test template:
+  image: $HELM_TEST_IMAGE
+  stage: test
+  interruptible: true
+  before_script:
+    - export KUBECONFIG=${K8S_CONFIG_WALDUR_HELM_TEST}
+    - apk update
+    - apk add curl git
+    - kubectl config view
+    - kubectl config current-context
+    - helm repo add stable https://charts.helm.sh/stable
+    - helm repo add bitnami https://charts.bitnami.com/bitnami
+    - helm repo update
+    - helm dependency update waldur/
+
+.Cleanup template:
+  image: $HELM_TEST_IMAGE
+  script:
+    - export KUBECONFIG=${K8S_CONFIG_WALDUR_HELM_TEST}
+    - helm un postgresql || true
+    - helm un rmq || true
+    - helm un waldur || true
+    - kubectl delete job waldur-mastermind-initdb-job || true
+    - kubectl delete job waldur-bootstrap-job || true
+    - kubectl delete pvc data-postgresql-waldur-0 || true
+    - kubectl delete pvc data-rmq-rabbitmq-0 || true
+
+Test release installation:
+  extends: .Test template
+  rules:
+    - if: '$SKIP_TESTS == "true"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - helm install waldur waldur/ -f waldur/test/values.yaml --dry-run --debug
+
+Test release installation and readiness:
+  extends: .Test template
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "schedule"'
+  script:
+    - helm install postgresql bitnami/postgresql --version 11.9.1 -f postgresql-values.yaml --set image.registry=registry.hpc.ut.ee/mirror --set metrics.enabled=True
+    - helm install rmq bitnami/rabbitmq --version 10.3.5 -f rmq-values.yaml --set replicaCount=1,image.registry=registry.hpc.ut.ee/mirror --wait
+    - helm install waldur waldur/ -f waldur/test/values.yaml --set waldur.uvkEverypay.enabled=false --timeout 60m0s
+  after_script:
+    - export KUBECONFIG=${K8S_CONFIG_WALDUR_HELM_TEST}
+    - helm list
+    - kubectl get pods
+    - |
+      for NAME in $(kubectl get pods --field-selector status.phase=Failed -o name); do
+        echo "Pod name: $NAME"
+        kubectl logs $NAME --tail 100 --all-containers
+        echo ----
+      done
+
+Cleanup previous test deployment:
+  extends: .Cleanup template
+  stage: .pre
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "schedule"'
+
+Upload docs:
+  image:
+    name: registry.hpc.ut.ee/mirror/alpine/git:v2.30.2
+    entrypoint: [""]
+  stage: deploy
+  interruptible: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "schedule"'
+  script:
+    - cd /tmp/
+    - git clone "https://gitlab-ci-token:$GITLAB_TOKEN@$CI_SERVER_HOST/waldur/waldur-docs.git"
+    - git config --global user.name "$GITLAB_USER_NAME"
+    - git config --global user.email "$GITLAB_USER_EMAIL"
+    - cd waldur-docs/
+    - cp -v $CI_PROJECT_DIR/README.md docs/admin-guide/deployment/helm/index.md
+    - cp -rv $CI_PROJECT_DIR/docs/ docs/admin-guide/deployment/helm/
+    - git add docs/admin-guide/deployment/helm/
+    - git commit -m 'Update Waldur Helm docs' || exit 0
+    - git branch new-configuration-guide
+    - git push --set-upstream origin new-configuration-guide:master

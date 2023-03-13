@@ -49,16 +49,17 @@ spec:
               value: {{ .Values.waldur.whitelabeling.shortPageTitle }}
             - name: API_URL
               value: {{ printf "%s://%s/" .Values.apiScheme .Values.apiHostname | quote }}
-          volumeMounts:
-            - name: json
-              mountPath: /opnd/config.json
-              subPath: config.json
+            {{ if has "billing" .Values.waldur.features }}
+            - name: ACCOUNTING_MODE
+              value: 'billing'
+            {{ end }}
+            {{ if has "secure_session" .Values.waldur.features }}
+            - name: AUTH_STORAGE
+              value: 'sessionStorage'
+            {{ end }}
           resources:
             {{- toYaml .Values.homeportResources | nindent 12 }}
       volumes:
-      - name: json
-        configMap:
-          name: homeport-json-config
       - name: nginx
         configMap:
           name: homeport-nginx-config

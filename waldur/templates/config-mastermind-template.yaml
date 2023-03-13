@@ -1,9 +1,0 @@
-{{ if .Values.waldur.mastermindTemplating.mastermindTemplatesPath }}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: mastermind-template-config
-data:
-  mastermind-templates.yaml: |
-{{ .Files.Get .Values.waldur.mastermindTemplating.mastermindTemplatesPath | indent 4 }}
-{{ end }}

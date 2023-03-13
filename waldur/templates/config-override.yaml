@@ -203,8 +203,6 @@ data:
 
     #
     # waldur-core
-    # https://opennode.atlassian.net/wiki/display/WD/MasterMind+configuration#MasterMindconfiguration-Additionalsettings
-
     {{ if has "owner_can_manage_customer" .Values.waldur.features }}
     WALDUR_CORE['OWNER_CAN_MANAGE_CUSTOMER'] = True
     {{ end }}
@@ -277,7 +275,6 @@ data:
     WALDUR_CORE['GOOGLE_ANALYTICS_ID'] = {{ .Values.waldur.homeport.googleAnalyticsID | quote }}
     {{ end }}
 
-    {{ if has "marketplace" .Values.waldur.features }}
     #
     # waldur-marketplace
     #
@@ -308,7 +305,6 @@ data:
     WALDUR_MARKETPLACE['NOTIFY_ABOUT_RESOURCE_CHANGE'] = False
     {{ end }}
 
-    {{ end }}
     #
     # waldur-mastermind
     #

@@ -83,6 +83,7 @@ Test release installation and readiness:
   extends: .Test template
   rules:
     - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "schedule"'
+    - if: $TRIGGER_PROJECT_NAME
   script:
     - helm install postgresql bitnami/postgresql --version 11.9.1 -f postgresql-values.yaml --set image.registry=registry.hpc.ut.ee/mirror --set metrics.enabled=True
     - helm install rmq bitnami/rabbitmq --version 10.3.5 -f rmq-values.yaml --set replicaCount=1,image.registry=registry.hpc.ut.ee/mirror --wait

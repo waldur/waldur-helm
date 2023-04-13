@@ -235,16 +235,24 @@ waldur:
     projectPrefix: "test_pr_"
     allocationPrefix: "test_alloc"
   support:
-    customBackend: "waldur_mastermind.support.backend.atlassian:ServiceDeskBackend"
-    servicedeskEmail: "waldur@example.com"
-    servicedeskToken: "support-token"
-    servicedeskUsername: ""
-    servicedeskPassword: ""
-    servicedeskUrl: "https://sd-url/"
-    skipVerify: true
-    organizationField: "Reporter organization"
-    projectKey: "WAL"
-    useAutomaticRequestMapping: False
+    backend: "zammad" # Either "atlassian" or "zammad"
+    atlassian:
+      servicedeskEmail: "waldur@example.com"
+      servicedeskToken: "support-token"
+      servicedeskUsername: ""
+      servicedeskPassword: ""
+      servicedeskUrl: "https://sd-url/"
+      skipVerify: true
+      organizationField: "Reporter organization"
+      projectKey: "WAL"
+      useAutomaticRequestMapping: false
+      legacy: true
+    zammad:
+      apiUrl: "https://zammad.example.com/api/"
+      token: "3423412341234123"
+      group: "default-group"
+      articleType: "fax"
+      commentCooldownDuration: 7
   marketplace:
     notify_staff: false
     script:

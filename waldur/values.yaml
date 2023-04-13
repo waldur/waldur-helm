@@ -219,16 +219,24 @@ waldur:
     projectPrefix: ""
     allocationPrefix: ""
   support:
-    customBackend: ""
-    servicedeskEmail: ""
-    servicedeskToken: ""
-    servicedeskUsername: ""
-    servicedeskPassword: ""
-    servicedeskUrl: ""
-    skipVerify: false
-    organizationField: ""
-    projectKey: ""
-    useAutomaticRequestMapping: true
+    backend: "zammad" # Either "atlassian" or "zammad"
+    atlassian:
+      servicedeskEmail: ""
+      servicedeskToken: ""
+      servicedeskUsername: ""
+      servicedeskPassword: ""
+      servicedeskUrl: ""
+      skipVerify: false
+      organizationField: ""
+      projectKey: ""
+      useAutomaticRequestMapping: true
+      legacy: false
+    zammad:
+      apiUrl: ""
+      token: ""
+      group: ""
+      articleType: "fax"
+      commentCooldownDuration: 5
   marketplace:
     notify_staff: false
     script:

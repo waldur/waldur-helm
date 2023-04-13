@@ -346,54 +346,51 @@ data:
     {{ end }}
     {{ end }}
 
-    {{ if and (has "support_basic" .Values.waldur.features) (not (has "waldur_support" .Values.waldur.disabledExtensions)) }}
-    WALDUR_SUPPORT.update({
-    {{ if .Values.waldur.support.customBackend }}
-        'ACTIVE_BACKEND': '{{ .Values.waldur.support.customBackend }}',
-    {{ else }}
-        'ACTIVE_BACKEND': 'waldur_mastermind.support.backend.basic:BasicBackend',
-        'ENABLED': True,
-    {{ end }}
-    })
-    {{ end }}
-
-    {{ if not (has "waldur_support" .Values.waldur.disabledExtensions) }}
-    {{ if has "support" .Values.waldur.features }}
-    WALDUR_SUPPORT.update({
-        'ACTIVE_BACKEND': 'waldur_mastermind.support.backend.atlassian:ServiceDeskBackend',
-        'ENABLED': True,
-    })
-    {{ if has "support_legacy" .Values.waldur.features }}
+    {{- if has "support" .Values.waldur.features -}}
+    WALDUR_SUPPORT['ENABLED'] = True
+    {{ if eq .Values.waldur.support.backend "atlassian" }}
+    WALDUR_SUPPORT['ACTIVE_BACKEND'] = 'waldur_mastermind.support.backend.atlassian:ServiceDeskBackend'
+    {{ if .Values.waldur.support.atlassian.legacy }}
     WALDUR_SUPPORT['USE_OLD_API'] = True
     {{ end }}
     WALDUR_SUPPORT['CREDENTIALS'].update({
-    {{ if .Values.waldur.support.servicedeskToken }}
-        'email': '{{ .Values.waldur.support.servicedeskEmail }}',
-        'token': '{{ .Values.waldur.support.servicedeskToken }}',
+    {{ if .Values.waldur.support.atlassian.servicedeskToken }}
+        'email': '{{ .Values.waldur.support.atlassian.servicedeskEmail }}',
+        'token': '{{ .Values.waldur.support.atlassian.servicedeskToken }}',
     {{ else }}
-        'username': '{{ .Values.waldur.support.servicedeskUsername}}',
-        'password': '{{ .Values.waldur.support.servicedeskPassword }}',
+        'username': '{{ .Values.waldur.support.atlassian.servicedeskUsername}}',
+        'password': '{{ .Values.waldur.support.atlassian.servicedeskPassword }}',
     {{ end }}
-        'server': '{{ .Values.waldur.support.servicedeskUrl }}',
+        'server': '{{ .Values.waldur.support.atlassian.servicedeskUrl }}',
     })
     WALDUR_SUPPORT['ISSUE'].update({
         'caller_field': 'Request participants',
-    {{ if .Values.waldur.support.organizationField }}
-        'organisation_field': '{{ .Values.waldur.support.organizationField }}',
+    {{ if .Values.waldur.support.atlassian.organizationField }}
+        'organisation_field': '{{ .Values.waldur.support.atlassian.organizationField }}',
     {{ end }}
     })
     WALDUR_SUPPORT['PROJECT'].update({
-        'key': '{{ .Values.waldur.support.projectKey }}',
+        'key': '{{ .Values.waldur.support.atlassian.projectKey }}',
     })
-    {{ if not .Values.waldur.support.useAutomaticRequestMapping }}
+    {{ if not .Values.waldur.support.atlassian.useAutomaticRequestMapping }}
     WALDUR_SUPPORT['USE_AUTOMATIC_REQUEST_MAPPING'] = False
     {{ end }}
-    {{ else }}
+    {{ end }}
+    {{ if eq .Values.waldur.support.backend "zammad" }}
+    WALDUR_SUPPORT['ACTIVE_BACKEND'] = 'waldur_mastermind.support.backend.zammad:ZammadServiceBackend'
+    WALDUR_ZAMMAD.update({
+        'ZAMMAD_API_URL': {{ default "" .Values.waldur.support.zammad.apiUrl | quote }},
+        'ZAMMAD_TOKEN': {{ default "" .Values.waldur.support.zammad.token | quote }},
+        'ZAMMAD_GROUP': {{ default "" .Values.waldur.support.zammad.group | quote }},
+        'ZAMMAD_ARTICLE_TYPE': {{ default "fax" .Values.waldur.support.zammad.articleType | quote }},
+        'COMMENT_COOLDOWN_DURATION': {{ default 5 .Values.waldur.support.zammad.commentCooldownDuration | int }},
+    })
+    {{ end }}
+    {{- else -}}
     WALDUR_SUPPORT.update({
         'ENABLED': False,
     })
-    {{ end }}
-    {{ end }}
+    {{- end -}}
 
     #
     # waldur-openstack
@@ -537,7 +534,7 @@ data:
     WALDUR_CORE["MASTERMIND_URL"] = {{ .Values.waldur.mastermindUrl | quote }}
     {{ end }}
 
-    {{ if .Values.waldur.support.skipVerify }}
+    {{ if .Values.waldur.support.atlassian.skipVerify }}
     WALDUR_JIRA.update(
         {
             'VERIFY_SSL': False

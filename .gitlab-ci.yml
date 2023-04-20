@@ -26,6 +26,7 @@ Run linter:
     - apk add -X http://dl-cdn.alpinelinux.org/alpine/edge/community -u alpine-keys
     - apk add yq --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community
   script:
+    - helm dependency update waldur/
     - helm lint waldur/
     - helm lint waldur/ -f waldur/test/values.yaml
     # lint for correctness of known configuration
@@ -58,15 +59,11 @@ Run linter:
   image: $HELM_TEST_IMAGE
   script:
     - export KUBECONFIG=${K8S_CONFIG_WALDUR_HELM_TEST}
-    - helm un postgresql || true
-    - helm un rmq || true
-    - helm un waldur || true
+    - helm uninstall waldur || true
     - kubectl delete job waldur-mastermind-initdb-job || true
     - kubectl delete job waldur-bootstrap-job || true
-    - kubectl delete pvc data-postgresql-waldur-0 || true
-    - kubectl delete pvc data-rmq-rabbitmq-0 || true
 
-Test release installation:
+Validate release installation (dry-run):
   extends: .Test template
   rules:
     - if: '$SKIP_TESTS == "true"'
@@ -82,12 +79,11 @@ Test release installation:
 Test release installation and readiness:
   extends: .Test template
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "schedule"'
     - if: $TRIGGER_PROJECT_NAME
   script:
-    - helm install postgresql bitnami/postgresql --version 11.9.1 -f postgresql-values.yaml --set image.registry=registry.hpc.ut.ee/mirror --set metrics.enabled=True
-    - helm install rmq bitnami/rabbitmq --version 10.3.5 -f rmq-values.yaml --set replicaCount=1,image.registry=registry.hpc.ut.ee/mirror --wait
-    - helm install waldur waldur/ -f waldur/test/values.yaml --set waldur.uvkEverypay.enabled=false --timeout 60m0s
+    - helm install waldur waldur/ -f waldur/test/values.yaml --timeout 10m0s
   after_script:
     - export KUBECONFIG=${K8S_CONFIG_WALDUR_HELM_TEST}
     - helm list
@@ -103,6 +99,7 @@ Cleanup previous test deployment:
   extends: .Cleanup template
   stage: .pre
   rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "schedule"'
 
 Upload docs:
@@ -149,7 +146,8 @@ Publish new chart version and update docs on github:
     - export VERSION=${CI_COMMIT_TAG#v}
     - |
       sed -i -E -e "s/^version: ('.*'|.*)$/version: $VERSION/" waldur/Chart.yaml
-    # TODO: modify Waldur app version too
+    - |
+      sed -i -E -e "s/^appVersion: ('.*'|.*)$/appVersion: \"$VERSION\"/" waldur/Chart.yaml
     # Package Waldur chart with a new version
     - helm package waldur/
     - ls waldur-*.tgz

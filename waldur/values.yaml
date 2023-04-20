@@ -306,9 +306,26 @@ bootstrap:
   dir: "bootstrap"
 
 postgresql:
+  enabled: false
   HAEnabled: false
-  database: "waldur"
-  username: "waldur"
+  auth:
+    username: "waldur"
+    password: "waldur"
+    database: "waldur"
+  # The values are in use only if postgresql.enabled = true
+  primary:
+    persistence:
+      size: "10Gi"
+    resources:
+      requests:
+        memory: "1024Mi"
+        cpu: "500m"
+      limits:
+        memory: "2048Mi"
+        cpu: "1000m"
+  image:
+    registry: "docker.io"
+    tag: 12
 
 postgresBackup:
   enabled: false
@@ -326,12 +343,24 @@ minio:
   endpoint: "http://minio.default.svc.cluster.local:9000" ## See docs/service-endpoint.md for details.
 
 rabbitmq:
-  user: "waldur"
-  password: "waldur"
-  ## hostname of rabbitmq service
-  host: "rmq-rabbitmq.default.svc.cluster.local" ## See docs/service-endpoint.md for details.
-  customManagementPort:
-  customAMQPPort:
+  enabled: false
+  auth:
+    username: "waldur"
+    password: "waldur"
+  # The values are in use only if rabbitmq.enabled = true
+  image:
+    registry: "docker.io"
+    repository: "bitnami/rabbitmq"
+    tag: 3.8.14
+  replicaCount: 3
+  persistence:
+    enabled: true
+    size: "10Gi"
+    storageClass: ""
+  clustering:
+    forceBoot: true
+  # hostname of rabbitmq service, respected only if rabbitmq.enabled = false and RMQ release is deployed separately
+  host: "rmq-rabbitmq"
 
 stressTesting:
   enabled: false

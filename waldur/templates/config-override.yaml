@@ -11,6 +11,7 @@ data:
     #
 
     import os
+    from datetime import timedelta
 
     SECRET_KEY = os.environ.get('GLOBAL_SECRET_KEY')
 
@@ -533,6 +534,9 @@ data:
     {{ if .Values.waldur.mastermindUrl }}
     WALDUR_CORE["MASTERMIND_URL"] = {{ .Values.waldur.mastermindUrl | quote }}
     {{ end }}
+
+    WALDUR_CORE['INVITATION_LIFETIME'] = timedelta({{ default 1 .Values.waldur.invitationDuration.individual }})
+    WALDUR_CORE['GROUP_INVITATION_LIFETIME'] = timedelta({{ default 1 .Values.waldur.invitationDuration.group }})
 
     {{ if .Values.waldur.support.atlassian.skipVerify }}
     WALDUR_JIRA.update(

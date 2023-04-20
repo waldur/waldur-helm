@@ -12,10 +12,10 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-apiScheme: "http"
-homeportScheme: "http"
-apiHostname: waldur.local
-homeportHostname: waldur.local
+apiScheme: "https"
+homeportScheme: "https"
+apiHostname: "helm-testing.waldur.com"
+homeportHostname: "helm-testing.waldur.com"
 
 affinity: {}
 
@@ -82,8 +82,8 @@ ingress:
   tls:
     source: "secret" # Possible values: `letsEncrypt` and `secret`
     secretsDir: "tls"  # Enabled only if source == `secret`
-  whitelistSourceRange: '127.0.0.0/24' # E.g. '192.168.22.0/24'
-  whitelistSourceRangeAdmin: '127.0.0.1/32'
+  whitelistSourceRange: ''
+  whitelistSourceRangeAdmin: ''
 
 celery:
   worker:
@@ -274,13 +274,13 @@ waldur:
   whitelabeling:
     shortPageTitle: "Waldur Helm Test"
     modePageTitle: "Waldur Helm Test"
-    loginLogoPath: "icons/login_logo.png"
-    sidebarLogoPath: "icons/sidebar_logo.png"
-    poweredByLogoPath: "icons/poweredby_logo.png"
-    faviconPath: "icons/favicon.ico"
+    loginLogoPath: "test/images/waldur-login-logo.png"
+    sidebarLogoPath: "test/images/waldur-sidebar-logo.png"
+    poweredByLogoPath: "test/images/waldur-powered-by-logo.png"
+    faviconPath: "test/images/waldur-favicon.png"
     tosHtmlPath: "test/files/tos.html"
     brandColor: ""
-    heroImagePath: "icons/hero_image.jpg"
+    heroImagePath: "" # keep the default one, because the image is too large (~541 KB)
     heroLinkLabel: ""
     heroLinkUrl: ""
     privacyHtmlPath: "test/files/privacy.html"
@@ -288,8 +288,8 @@ waldur:
     supportPortalLink: "https://docs.waldur.com"
   # Measured in weeks number
   invitationDuration:
-    individual: 1
-    group: 1
+    individual: 3
+    group: 3
   mastermindTemplating:
     mastermindTemplatesPath: "mastermind_templates/mastermind-templates.yaml"
   saml2:
@@ -313,7 +313,7 @@ waldur:
     includeAnnotations: false
     imageTag: latest
   uvkEverypay:
-    enabled: true
+    enabled: false
     uvkServer: "https://uvk-test.ut.ee/client/a74/server.php?format=JSON&action=uvk__"
     everypayGateway: "https://igw-demo.every-pay.com/api/v4"
     everypayUsername: "abc"
@@ -325,8 +325,27 @@ bootstrap:
   dir: "test/bootstrap"
 
 postgresql:
-  database: "waldur"
-  username: "waldur"
+  enabled: true
+  HAEnabled: false
+  auth:
+    username: "waldur"
+    password: "waldur"
+    database: "waldur"
+  # The values are in use only if postgresql.enabled = true
+  primary:
+    persistence:
+      size: "10Gi"
+    resources:
+      requests:
+        memory: "1024Mi"
+        cpu: "500m"
+      limits:
+        memory: "2048Mi"
+        cpu: "1000m"
+  image:
+    tag: 12
+  metrics:
+    enabled: true
 
 postgresBackup:
   enabled: true
@@ -344,12 +363,23 @@ minio:
   endpoint: "http://minio:9000" ## See docs/service-endpoint.md for details.
 
 rabbitmq:
-  user: "waldur"
-  password: "waldur"
-  ## hostname of rabbitmq service
-  host: "rmq-rabbitmq" ## See docs/service-endpoint.md for details.
-  customManagementPort:
-  customAMQPPort:
+  enabled: true
+  auth:
+    username: "waldur"
+    password: "waldur"
+  # The values are in use only if rabbitmq.enabled = true
+  image:
+    repository: "bitnami/rabbitmq"
+    tag: 3.8.14
+  replicaCount: 1
+  persistence:
+    enabled: true
+    size: "10Gi"
+    storageClass: ""
+  clustering:
+    forceBoot: true
+  # hostname of rabbitmq service, respected only if rabbitmq.enabled = false and RMQ release is deployed separately
+  host: "rmq-rabbitmq"
 
 stressTesting:
   enabled: false

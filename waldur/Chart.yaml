@@ -1,6 +1,9 @@
-apiVersion: v1
+apiVersion: v2
 name: waldur
+type: application
 version: 0.1.1
+appVersion: "5.4.4"
+
 description: Waldur - Open-Source Cloud Marketplace
 keywords:
   - marketplace
@@ -14,4 +17,15 @@ maintainers:
   - name: OpenNode team
     email: info@opennodecloud.com
     url: https://opennodecloud.com
-appVersion: "5.4.4"
+
+dependencies:
+  - name: postgresql
+    version: 11.9.1
+    repository: https://charts.bitnami.com/bitnami
+    alias: postgresql
+    condition: postgresql.enabled
+  - name: rabbitmq
+    version: 10.3.5
+    repository: https://charts.bitnami.com/bitnami
+    alias: rabbitmq
+    condition: rabbitmq.enabled

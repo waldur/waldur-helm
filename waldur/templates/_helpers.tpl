@@ -57,6 +57,8 @@ Set postgres host
 {{- define "waldur.postgresql.host" -}}
 {{- if .Values.postgresql.HAEnabled -}}
 "postgresql-ha-waldur-pgpool"
+{{- else if .Values.postgresql.enabled -}}
+"waldur-postgresql"
 {{- else -}}
 "postgresql-waldur"
 {{- end -}}
@@ -75,6 +77,8 @@ Set postgres secret
 {{- define "waldur.postgresql.secret" -}}
 {{- if .Values.postgresql.HAEnabled -}}
 "postgresql-ha-waldur-postgresql"
+{{- else if .Values.postgresql.enabled -}}
+"waldur-postgresql"
 {{- else -}}
 "postgresql-waldur"
 {{- end -}}
@@ -91,28 +95,29 @@ Set postgres secret password key
 Set postgres database name
 */}}
 {{- define "waldur.postgresql.dbname" -}}
-{{ .Values.postgresql.database | quote }}
+{{ .Values.postgresql.auth.database | quote }}
 {{- end -}}
 
 {{/*
 Set postgres user
 */}}
 {{- define "waldur.postgresql.user" -}}
-{{ .Values.postgresql.username | quote }}
-{{- end -}}
-
-{{/*
-Set rabbitmq host
-*/}}
-{{- define "waldur.rabbitmq.host" -}}
-{{ printf "%s-rabbitmq-ha" .Values.rabbitmq.hostPrefix }}
+{{ .Values.postgresql.auth.username | quote }}
 {{- end -}}
 
 {{/*
 Set rabbitmq URL
 */}}
 {{- define "waldur.rabbitmq.rmqUrl" -}}
-{{ printf "amqp://%s:%s@%s:%d" .Values.rabbitmq.user .Values.rabbitmq.password .Values.rabbitmq.host (default 5672 .Values.rabbitmq.customAMQPPort) }}
+{{- $rmqHost := "" -}}
+{{- if .Values.rabbitmq.enabled  -}}
+{{- $rmqHost = list .Release.Name "rabbitmq" | join "-" -}}
+{{- else -}}
+{{- $rmqHost = .Values.rabbitmq.host -}}
+{{- end -}}
+{{- with .Values.rabbitmq -}}
+amqp://{{ .auth.username }}:{{ .auth.password }}@{{ $rmqHost }}:{{ default 5672 .customAMQPPort }}
+{{- end -}}
 {{- end -}}
 
 

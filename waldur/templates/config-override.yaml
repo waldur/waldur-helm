@@ -351,6 +351,7 @@ data:
     WALDUR_SUPPORT['ENABLED'] = True
     {{ if eq .Values.waldur.support.backend "atlassian" }}
     WALDUR_SUPPORT['ACTIVE_BACKEND'] = 'waldur_mastermind.support.backend.atlassian:ServiceDeskBackend'
+    WALDUR_SUPPORT['DISPLAY_REQUEST_TYPE'] = True
     {{ if .Values.waldur.support.atlassian.legacy }}
     WALDUR_SUPPORT['USE_OLD_API'] = True
     {{ end }}
@@ -379,6 +380,7 @@ data:
     {{ end }}
     {{ if eq .Values.waldur.support.backend "zammad" }}
     WALDUR_SUPPORT['ACTIVE_BACKEND'] = 'waldur_mastermind.support.backend.zammad:ZammadServiceBackend'
+    WALDUR_SUPPORT['DISPLAY_REQUEST_TYPE'] = False
     WALDUR_ZAMMAD.update({
         'ZAMMAD_API_URL': {{ default "" .Values.waldur.support.zammad.apiUrl | quote }},
         'ZAMMAD_TOKEN': {{ default "" .Values.waldur.support.zammad.token | quote }},

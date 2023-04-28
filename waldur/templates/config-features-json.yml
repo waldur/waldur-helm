@@ -47,6 +47,9 @@ data:
       {{ if has "support_next_branch" .Values.waldur.features }}
         "support.next_branch": true,
       {{ end }}
+      {{ if has "support_legacy_branch" .Values.waldur.features }}
+        "support.legacy_branch": true,
+      {{ end }}
       {{ if has "marketplace_show_experimental_ui_components" .Values.waldur.features }}
         "marketplace.show_experimental_ui_components": true,
       {{ end }}

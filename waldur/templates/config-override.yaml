@@ -350,36 +350,36 @@ data:
     {{- if has "support" .Values.waldur.features -}}
     WALDUR_SUPPORT['ENABLED'] = True
     {{ if eq .Values.waldur.support.backend "atlassian" }}
-    WALDUR_SUPPORT['ACTIVE_BACKEND'] = 'waldur_mastermind.support.backend.atlassian:ServiceDeskBackend'
+    WALDUR_SUPPORT['ACTIVE_BACKEND_TYPE'] = 'atlassian'
     WALDUR_SUPPORT['DISPLAY_REQUEST_TYPE'] = True
     {{ if .Values.waldur.support.atlassian.legacy }}
-    WALDUR_SUPPORT['USE_OLD_API'] = True
+    WALDUR_ATLASSIAN['USE_OLD_API'] = True
     {{ end }}
-    WALDUR_SUPPORT['CREDENTIALS'].update({
+
     {{ if .Values.waldur.support.atlassian.servicedeskToken }}
-        'email': '{{ .Values.waldur.support.atlassian.servicedeskEmail }}',
-        'token': '{{ .Values.waldur.support.atlassian.servicedeskToken }}',
+    WALDUR_ATLASSIAN['EMAIL'] = '{{ .Values.waldur.support.atlassian.servicedeskEmail }}'
+    WALDUR_ATLASSIAN['TOKEN'] = '{{ .Values.waldur.support.atlassian.servicedeskToken }}'
     {{ else }}
-        'username': '{{ .Values.waldur.support.atlassian.servicedeskUsername}}',
-        'password': '{{ .Values.waldur.support.atlassian.servicedeskPassword }}',
+    WALDUR_ATLASSIAN['USERNAME'] = '{{ .Values.waldur.support.atlassian.servicedeskUsername}}'
+    WALDUR_ATLASSIAN['PASSWORD'] = '{{ .Values.waldur.support.atlassian.servicedeskPassword }}'
     {{ end }}
-        'server': '{{ .Values.waldur.support.atlassian.servicedeskUrl }}',
-    })
-    WALDUR_SUPPORT['ISSUE'].update({
+    WALDUR_ATLASSIAN['SERVER'] = '{{ .Values.waldur.support.atlassian.servicedeskUrl }}'
+
+    WALDUR_ATLASSIAN['ISSUE'].update({
         'caller_field': 'Request participants',
     {{ if .Values.waldur.support.atlassian.organizationField }}
         'organisation_field': '{{ .Values.waldur.support.atlassian.organizationField }}',
     {{ end }}
     })
-    WALDUR_SUPPORT['PROJECT'].update({
+    WALDUR_ATLASSIAN['PROJECT'].update({
         'key': '{{ .Values.waldur.support.atlassian.projectKey }}',
     })
     {{ if not .Values.waldur.support.atlassian.useAutomaticRequestMapping }}
-    WALDUR_SUPPORT['USE_AUTOMATIC_REQUEST_MAPPING'] = False
+    WALDUR_ATLASSIAN['USE_AUTOMATIC_REQUEST_MAPPING'] = False
     {{ end }}
     {{ end }}
     {{ if eq .Values.waldur.support.backend "zammad" }}
-    WALDUR_SUPPORT['ACTIVE_BACKEND'] = 'waldur_mastermind.support.backend.zammad:ZammadServiceBackend'
+    WALDUR_SUPPORT['ACTIVE_BACKEND_TYPE'] = 'zammad'
     WALDUR_SUPPORT['DISPLAY_REQUEST_TYPE'] = False
     WALDUR_ZAMMAD.update({
         'ZAMMAD_API_URL': {{ default "" .Values.waldur.support.zammad.apiUrl | quote }},

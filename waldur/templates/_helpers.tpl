@@ -235,6 +235,11 @@ Add environment variables to configure database values and Sentry environment
   value: '{{ .Values.waldur.whitelabeling.brandColor }}'
 {{ end }}
 
+{{ if .Values.waldur.whitelabeling.brandLabelColor }}
+- name: BRAND_LABEL_COLOR
+  value: '{{ .Values.waldur.whitelabeling.brandLabelColor }}'
+{{ end }}
+
 {{ if .Values.waldur.whitelabeling.heroLinkLabel }}
 - name: HERO_LINK_LABEL
   value: '{{ .Values.waldur.whitelabeling.heroLinkLabel }}'

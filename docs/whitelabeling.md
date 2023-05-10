@@ -14,6 +14,7 @@ To setup white-labeling, you can define next variables in `waldur/values.yaml` f
 * `tosHtmlPath` - path to custom terms of service file (`tos.html`)
 * `privacyHtmlPath` - path to custom privacy statement file (`privacy.html`)
 * `brandColor` - Hex color definition is used in HomePort landing page for login button.
+* `brandLabelColor` - Hex color definition is used in HomePort landing page for font color of login button.
 * `heroImagePath` - Relative path to image rendered at hero section of HomePort landing page.
 * `heroLinkLabel` - Label for link in hero section of HomePort landing page. It can be lead to support site or blog post.
 * `heroLinkUrl` - Link URL in hero section of HomePort landing page.

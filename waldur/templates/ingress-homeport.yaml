@@ -11,7 +11,7 @@ metadata:
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    {{ if .Values.ingress.tls.source | eq "letsEncrypt" }}
+    {{ if and .Values.ingress.tls.enabled (eq .Values.ingress.tls.source "letsEncrypt") }}
     cert-manager.io/cluster-issuer: letsencrypt-prod-issuer
     {{ end }}
     nginx.ingress.kubernetes.io/cors-allow-headers: DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,sentry-trace,baggage
@@ -32,7 +32,9 @@ spec:
             name: waldur-homeport
             port:
               number: 80
+  {{ if and .Values.ingress.tls.enabled }}
   tls:
   - hosts:
     - {{ .Values.homeportHostname }}
     secretName: homeport-certificate
+  {{ end }}

@@ -1,5 +1,7 @@
 # TLS configuration instructions
 
+To enable tls globally please set `ingress.tls.enabled=true` in `values.yaml`
+
 ## Let’s Encrypt setup
 
 It you want co configure [letsencrypt](https://letsencrypt.org/)

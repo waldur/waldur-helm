@@ -26,7 +26,7 @@ spec:
       {{ end }}
       containers:
       - name: waldur-metrics-exporter
-        image: {{ .Values.global.imageRegistry }}/opennode/waldur-prometheus-exporter:{{ .Values.waldur.metricsExporter.imageTag }}
+        image: {{ .Values.global.imageRegistry }}/opennode/waldur-prometheus-exporter:{{ .Values.waldur.imageTag }}
         imagePullPolicy: {{ .Values.waldur.pullPolicy }}
         livenessProbe:
           httpGet:

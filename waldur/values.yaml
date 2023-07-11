@@ -308,7 +308,6 @@ bootstrap:
 
 postgresql:
   enabled: false
-  HAEnabled: false
   auth:
     username: "waldur"
     password: "waldur"
@@ -329,6 +328,21 @@ postgresql:
     tag: 12
   metrics:
     enabled: false
+
+postgresqlha:
+  enabled: false
+  postgresql:
+    database: waldur
+    username: waldur
+    password: waldur
+    postgresPassword: postgres
+    repmgrPassword: repmgr
+    replicaCount: 3
+    image:
+      tag: "12.15.0-debian-11-r12"
+  pgpool:
+    image:
+      tag: "4.4.3-debian-11-r6"
 
 postgresBackup:
   enabled: false

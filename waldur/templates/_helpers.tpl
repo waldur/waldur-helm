@@ -55,8 +55,8 @@ Set postgres version
 Set postgres host
 */}}
 {{- define "waldur.postgresql.host" -}}
-{{- if .Values.postgresql.HAEnabled -}}
-"postgresql-ha-waldur-pgpool"
+{{- if .Values.postgresqlha.enabled -}}
+"waldur-postgresqlha-pgpool"
 {{- else if .Values.postgresql.enabled -}}
 "waldur-postgresql"
 {{- else -}}
@@ -75,8 +75,8 @@ Set postgres port
 Set postgres secret
 */}}
 {{- define "waldur.postgresql.secret" -}}
-{{- if .Values.postgresql.HAEnabled -}}
-"postgresql-ha-waldur-postgresql"
+{{- if .Values.postgresqlha.enabled -}}
+"waldur-postgresqlha-postgresql"
 {{- else if .Values.postgresql.enabled -}}
 "waldur-postgresql"
 {{- else -}}
@@ -95,14 +95,26 @@ Set postgres secret password key
 Set postgres database name
 */}}
 {{- define "waldur.postgresql.dbname" -}}
+{{- if .Values.postgresqlha.enabled -}}
+{{ .Values.postgresqlha.postgresql.database | quote }}
+{{- else if .Values.postgresql.enabled -}}
 {{ .Values.postgresql.auth.database | quote }}
+{{- else -}}
+"waldur"
+{{- end -}}
 {{- end -}}
 
 {{/*
 Set postgres user
 */}}
 {{- define "waldur.postgresql.user" -}}
+{{- if .Values.postgresqlha.enabled -}}
+{{ .Values.postgresqlha.postgresql.username | quote }}
+{{- else if .Values.postgresql.enabled -}}
 {{ .Values.postgresql.auth.username | quote }}
+{{- else -}}
+"waldur"
+{{- end -}}
 {{- end -}}
 
 {{/*
@@ -110,7 +122,7 @@ Set rabbitmq URL
 */}}
 {{- define "waldur.rabbitmq.rmqUrl" -}}
 {{- $rmqHost := "" -}}
-{{- if .Values.rabbitmq.enabled  -}}
+{{- if .Values.rabbitmq.enabled -}}
 {{- $rmqHost = list .Release.Name "rabbitmq" | join "-" -}}
 {{- else -}}
 {{- $rmqHost = .Values.rabbitmq.host -}}

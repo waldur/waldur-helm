@@ -83,6 +83,7 @@ Test release installation and readiness:
     - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "schedule"'
     - if: $TRIGGER_PROJECT_NAME
   script:
+    - helm dep update waldur/
     - helm install waldur waldur/ -f waldur/test/values.yaml --timeout 10m0s
   after_script:
     - export KUBECONFIG=${K8S_CONFIG_WALDUR_HELM_TEST}

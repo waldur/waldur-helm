@@ -80,7 +80,7 @@ storageClassName: local-storage
 
 ingress:
   tls:
-    enabled: true
+    enabled: false
     source: "secret" # Possible values: `letsEncrypt` and `secret`
     secretsDir: "tls"  # Enabled only if source == `secret`
   whitelistSourceRange: ''
@@ -326,6 +326,12 @@ bootstrap:
   enabled: true
   script: "bootstrap.sh"
   dir: "test/bootstrap"
+
+externalDB:
+  enabled: false
+  flavor: "zalando"
+  secretName: "waldur.waldur-testing-postgres.credentials.postgresql.acid.zalan.do"
+  serviceName: "waldur-testing-postgres"
 
 postgresql:
   enabled: false

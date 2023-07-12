@@ -31,8 +31,9 @@ on a Kubernetes cluster using the [Helm](https://helm.sh) package manager.
 ```
 
 1. Setup database:
-    3.1 Setup single PostgreSQL DB: [instructions](docs/postgres-db.md), or
-    3.2 Setup PostgreSQL HA DB: [instructions](docs/postgres-db-ha.md)
+    3.1 Setup single PostgreSQL DB: [instructions](docs/postgres-db.md) or
+    3.2 Setup PostgreSQL HA DB: [instructions](docs/postgres-db-ha.md) or
+    3.3 Integrate with external DB: [instructions](docs/external-db-integration.md)
 
     **NB** Only one of these two options should be used. Otherwise, DB will be unavailable.
 

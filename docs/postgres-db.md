@@ -40,7 +40,7 @@ More information related to possible values [here](https://github.com/bitnami/ch
 Waldur Helm chart supports PostgreSQL installation as a dependency.
 For this, set `postgresql.enabled` to `true` and update related settings in `postgresql` section in `waldur/values.yaml`
 
-**NB**: the value `postgresqlha.enabled` must be `false`.
+**NB**: the value `postgresqlha.enabled` and `externalDB.enabled` must be `false`.
 
 Prior Waldur installation, update chart dependencies:
 

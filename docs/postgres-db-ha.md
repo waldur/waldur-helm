@@ -50,7 +50,7 @@ More information related to possible values
 Waldur Helm chart supports PostgreSQL HA installation as a dependency.
 For this, set `postgresqlha.enabled` to `true` and update related settings in `postgresqlha` section in `waldur/values.yaml`
 
-**NB**: the value `postgresql.enabled` must be `false`.
+**NB**: the value `postgresql.enabled` and `externalDB.enabled` must be `false`.
 
 Prior Waldur installation, update chart dependencies:
 

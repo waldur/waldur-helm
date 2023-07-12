@@ -55,7 +55,9 @@ Set postgres version
 Set postgres host
 */}}
 {{- define "waldur.postgresql.host" -}}
-{{- if .Values.postgresqlha.enabled -}}
+{{- if .Values.externalDB.enabled -}}
+{{ .Values.externalDB.serviceName }}
+{{- else if .Values.postgresqlha.enabled -}}
 "waldur-postgresqlha-pgpool"
 {{- else if .Values.postgresql.enabled -}}
 "waldur-postgresql"
@@ -75,7 +77,9 @@ Set postgres port
 Set postgres secret
 */}}
 {{- define "waldur.postgresql.secret" -}}
-{{- if .Values.postgresqlha.enabled -}}
+{{- if .Values.externalDB.enabled -}}
+{{ .Values.externalDB.secretName }}
+{{- else if .Values.postgresqlha.enabled -}}
 "waldur-postgresqlha-postgresql"
 {{- else if .Values.postgresql.enabled -}}
 "waldur-postgresql"
@@ -173,7 +177,14 @@ Add environment variables to configure database values and Sentry environment
   value: {{ include "waldur.postgresql.port" . }}
 
 - name: POSTGRESQL_USER
+{{ if .Values.externalDB.enabled }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "waldur.postgresql.secret" . }}
+      key: username
+{{ else }}
   value: {{ include "waldur.postgresql.user" . }}
+{{ end }}
 
 - name: POSTGRESQL_PASSWORD
   valueFrom:

@@ -1,4 +1,4 @@
-{{ if .Values.ingress.tls.source | eq "secret"}}
+{{ if and .Values.ingress.tls.enabled (.Values.ingress.tls.source | eq "secret") }}
 apiVersion: v1
 kind: Secret
 metadata:

@@ -3,6 +3,8 @@
 [bitnami/postgresql-ha](https://github.com/bitnami/charts/tree/master/bitnami/postgresql-ha)
 is used as a highly available database for Waldur.
 
+## Standalone installation
+
 Add `bitnami` repo to helm:
 
 ```bash
@@ -13,12 +15,12 @@ Install `postgresql-ha` release:
 
 ```bash
   helm install postgresql-ha bitnami/postgresql-ha \
-    -f postgresql-ha-values.yaml --version 6.7.0
+    -f postgresql-ha-values.yaml --version 11.7.4
 ```
 
 **NB**: the value `postgresql.HAEnabled` for waldur release must be `true`.
 
-## Chart configuration
+### Chart configuration
 
 You can change default PostgreSQL config with
 the following variables in `values.yaml` (`postgresql-ha-values.yaml` file):
@@ -42,3 +44,16 @@ the following variables in `values.yaml` (`postgresql-ha-values.yaml` file):
 
 More information related to possible values
 [here](https://github.com/bitnami/charts/tree/master/bitnami/postgresql-ha#parameters).
+
+## Dependency installation
+
+Waldur Helm chart supports PostgreSQL HA installation as a dependency.
+For this, set `postgresqlha.enabled` to `true` and update related settings in `postgresqlha` section in `waldur/values.yaml`
+
+**NB**: the value `postgresql.enabled` and `externalDB.enabled` must be `false`.
+
+Prior Waldur installation, update chart dependencies:
+
+```bash
+helm dependency update
+```

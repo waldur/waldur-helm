@@ -58,13 +58,6 @@ data:
 
     {{ if and (has "SOCIAL_SIGNUP" .Values.waldur.authMethods) (not (has "waldur_auth_social" .Values.waldur.disabledExtensions)) }}
 
-    {{ if has "SMARTIDEE" .Values.waldur.socialAuthMethods }}
-    WALDUR_AUTH_SOCIAL.update({
-        'SMARTIDEE_SECRET': '{{ .Values.waldur.smartid.secret }}',
-        'SMARTIDEE_CLIENT_ID': '{{ .Values.waldur.smartid.clientId }}',
-    })
-    {{ end }}
-
     {{ if has "TARA" .Values.waldur.socialAuthMethods }}
     WALDUR_AUTH_SOCIAL.update({
         'TARA_SECRET': '{{ .Values.waldur.tara.secret }}',

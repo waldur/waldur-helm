@@ -129,23 +129,6 @@ waldur:
     label: ""
     managementUrl: ""
     protectedFields: []
-  tara:
-    secret: ""
-    clientId: ""
-    managementUrl: ""
-    protectedFields:
-      - "full_name"
-  keycloak:
-    auth_url: ""
-    client_id: ""
-    label: "Keycloak"
-    secret: ""
-    token_url: ""
-    userinfo_url: ""
-    managementUrl: ""
-    protectedFields:
-      - "full_name"
-      - "email"
   keycloak_sync:
     enabled: false
     base_url: "http://localhost:8080/auth"
@@ -154,22 +137,12 @@ waldur:
     client_secret: "waldur"
     username: "admin"
     password: "secret"
-  eduteams:
-    label: "eduTEAMS"
-    clientId: ""
-    secret: ""
-    authUrl: "https://proxy.acc.eduteams.org/saml2sp/OIDC/authorization"
-    tokenUrl: "https://proxy.acc.eduteams.org/OIDC/token"
-    userinfoUrl: "https://proxy.acc.eduteams.org/OIDC/userinfo"
-    managementUrl: ""
-    protectedFields:
-      - "full_name"
-      - "email"
-    remoteRefreshToken: ""
-    remoteClientID: ""
-    remoteSecret: ""
-    remoteUserinfoUrl: ""
-    remoteTokenUrl: ""
+  remoteEduteams:
+    refreshToken: ""
+    clientID: ""
+    clientSecret: ""
+    userinfoUrl: ""
+    tokenUrl: ""
     enableSync: false
   ldap:
     host: ""

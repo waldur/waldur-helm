@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mastermind-config-auth-yaml
+data:
+  auth.yaml: |
+  {{- range .Values.waldur.socialAuthMethods }}
+    - provider: {{ .provider | quote }}
+      label: {{ .label | quote }}
+      client_id: {{ .clientId | quote }}
+      client_secret: {{ .clientSecret | quote }}
+      discovery_url: {{ .discoveryUrl | default "" | quote }}
+      management_url: {{ .managementUrl | quote }}
+      is_active: {{ .isActive | default true }}
+      verify_ssl: {{ .verifySsl | default true  }}
+      protected_fields: {{ .protectedFields | toYaml | nindent 6 }}
+  {{- end }}

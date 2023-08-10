@@ -145,43 +145,40 @@ waldur:
     - LOCAL_SIGNIN
     - LDAP
     - SAML2
-    - SOCIAL_SIGNUP
     - VALIMO
   socialAuthMethods:
-    - TARA
-    - KEYCLOAK
-    - EDUTEAMS
+    - provider: "tara"
+      label: "TARA"
+      clientId: "tara-clientid"
+      clientSecret: "tara-secret"
+      discoveryUrl: "https://tara-test.ria.ee/.well-known/openid-configuration"
+      managementUrl: ""
+      protectedFields:
+        - "full_name"
+
+    - provider: "keycloak"
+      label: "Keycloak"
+      clientId: "waldur"
+      clientSecret: "keycloak-secret"
+      discoveryUrl: "https://keycloak-example.com/realms/test/.well-known/openid-configuration"
+      managementUrl: ""
+      protectedFields:
+        - "full_name"
+
+    - provider: "eduteams"
+      label: "eduTEAMS"
+      clientId: "eduteams-clientid"
+      clientSecret: "eduteams-secret"
+      discoveryUrl: "https://eduteams-url.example.com/.well-known/openid-configuration"
+      managementUrl: "https://eduteams-url.example.com/"
+      protectedFields:
+        - "full_name"
   localIdp:
     name: "Local IDP"
     label: "Local IDP label"
     managementUrl: ""
     protectedFields: []
-  tara:
-    secret: "tara-secret"
-    clientId: "tara-clientid"
-    managementUrl: ""
-    protectedFields:
-      - "full_name"
-  keycloak:
-    auth_url: "/auth/realms/Waldur/protocol/openid-connect/auth"
-    client_id: "waldur"
-    label: "Keycloak"
-    secret: "keycloak-secret"
-    token_url: "http://keycloak-url/token"
-    userinfo_url: "http://keycloak-url/userinfo"
-    managementUrl: ""
-    protectedFields:
-      - "full_name"
   eduteams:
-    label: "eduTEAMS"
-    clientId: "eduteams-clientid"
-    secret: "eduteams-secret"
-    authUrl: "https://eduteams-url/authorization"
-    tokenUrl: "https://eduteams-url/token"
-    userinfoUrl: "https://eduteams-url/userinfo"
-    managementUrl: "https://eduteams-url.example.com/"
-    protectedFields:
-      - "full_name"
     remoteRefreshToken: ""
     remoteClientID: ""
     remoteSecret: ""

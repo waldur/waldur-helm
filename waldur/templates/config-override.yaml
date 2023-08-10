@@ -56,55 +56,20 @@ data:
     WALDUR_CORE['AUTHENTICATION_METHODS'] = {{ .Values.waldur.authMethods | toJson }}
     WALDUR_CORE['HOMEPORT_URL'] = '{{ printf "%s://%s/" .Values.homeportScheme .Values.homeportHostname }}'
 
-    {{ if and (has "SOCIAL_SIGNUP" .Values.waldur.authMethods) (not (has "waldur_auth_social" .Values.waldur.disabledExtensions)) }}
-
-    {{ if has "TARA" .Values.waldur.socialAuthMethods }}
+    {{ if .Values.waldur.remoteEduteams }}
     WALDUR_AUTH_SOCIAL.update({
-        'TARA_SECRET': '{{ .Values.waldur.tara.secret }}',
-        'TARA_CLIENT_ID': '{{ .Values.waldur.tara.clientId }}',
-        'TARA_SANDBOX': False,
-        'TARA_MANAGEMENT_URL': '{{ .Values.waldur.tara.managementUrl }}',
-        'TARA_USER_PROTECTED_FIELDS': {{ .Values.waldur.tara.protectedFields | toJson }},
-    })
-    {{ end }}
-
-    {{ if has "KEYCLOAK" .Values.waldur.socialAuthMethods }}
-    WALDUR_AUTH_SOCIAL.update({
-        'KEYCLOAK_AUTH_URL': '{{ .Values.waldur.keycloak.auth_url }}',
-        'KEYCLOAK_CLIENT_ID': '{{ .Values.waldur.keycloak.client_id }}',
-        'KEYCLOAK_LABEL': '{{ .Values.waldur.keycloak.label }}',
-        'KEYCLOAK_SECRET': '{{ .Values.waldur.keycloak.secret }}',
-        'KEYCLOAK_TOKEN_URL': '{{ .Values.waldur.keycloak.token_url }}',
-        'KEYCLOAK_USERINFO_URL': '{{ .Values.waldur.keycloak.userinfo_url }}',
-        'KEYCLOAK_MANAGEMENT_URL': '{{ .Values.waldur.keycloak.managementUrl }}',
-        'KEYCLOAK_USER_PROTECTED_FIELDS': {{ .Values.waldur.keycloak.protectedFields | toJson }},
-    })
-    {{ end }}
-
-    {{ if has "EDUTEAMS" .Values.waldur.socialAuthMethods }}
-    WALDUR_AUTH_SOCIAL.update({
-        'EDUTEAMS_LABEL': '{{ .Values.waldur.eduteams.label }}',
-        'EDUTEAMS_CLIENT_ID': '{{ .Values.waldur.eduteams.clientId }}',
-        'EDUTEAMS_SECRET': '{{ .Values.waldur.eduteams.secret }}',
-        'EDUTEAMS_AUTH_URL': '{{ .Values.waldur.eduteams.authUrl }}',
-        'EDUTEAMS_TOKEN_URL': '{{ .Values.waldur.eduteams.tokenUrl }}',
-        'EDUTEAMS_USERINFO_URL': '{{ .Values.waldur.eduteams.userinfoUrl }}',
-        'EDUTEAMS_MANAGEMENT_URL': '{{ .Values.waldur.eduteams.managementUrl }}',
-        'EDUTEAMS_USER_PROTECTED_FIELDS': {{ .Values.waldur.eduteams.protectedFields | toJson }},
-        'REMOTE_EDUTEAMS_REFRESH_TOKEN': '{{ .Values.waldur.eduteams.remoteRefreshToken }}',
-        'REMOTE_EDUTEAMS_CLIENT_ID': '{{ .Values.waldur.eduteams.remoteClientID }}',
-        'REMOTE_EDUTEAMS_SECRET': '{{ .Values.waldur.eduteams.remoteSecret }}',
-        'REMOTE_EDUTEAMS_USERINFO_URL': '{{ .Values.waldur.eduteams.remoteUserinfoUrl }}',
-        'REMOTE_EDUTEAMS_TOKEN_URL': '{{ .Values.waldur.eduteams.remoteTokenUrl }}',
-        {{ if .Values.waldur.eduteams.enableSync }}
+        'REMOTE_EDUTEAMS_REFRESH_TOKEN': '{{ .Values.waldur.remoteEduteams.refreshToken }}',
+        'REMOTE_EDUTEAMS_CLIENT_ID': '{{ .Values.waldur.remoteEduteams.clientID }}',
+        'REMOTE_EDUTEAMS_SECRET': '{{ .Values.waldur.remoteEduteams.clientSecret }}',
+        'REMOTE_EDUTEAMS_USERINFO_URL': '{{ .Values.waldur.remoteEduteams.userinfoUrl }}',
+        'REMOTE_EDUTEAMS_TOKEN_URL': '{{ .Values.waldur.remoteEduteams.tokenUrl }}',
+        {{ if .Values.waldur.remoteEduteams.enableSync }}
         'ENABLE_EDUTEAMS_SYNC': True,
         {{ end }}
-        {{ if and (.Values.waldur.eduteams.remoteClientID) (.Values.waldur.eduteams.remoteSecret) }}
+        {{ if and (.Values.waldur.remoteEduteams.clientID) (.Values.waldur.remoteEduteams.clientSecret) }}
         'REMOTE_EDUTEAMS_ENABLED': True,
         {{ end }}
     })
-    {{ end }}
-
     {{ end }}
 
     {{ if has "LDAP" .Values.waldur.authMethods }}

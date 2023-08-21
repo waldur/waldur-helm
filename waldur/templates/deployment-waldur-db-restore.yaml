@@ -6,7 +6,7 @@ metadata:
   labels:
 {{ include "waldur.labels" . | indent 4 }}
 spec:
-  replicas: {{ default 1 .Values.replicaCount | int }}
+  replicas: 1
   selector:
     matchLabels:
       app: waldur-db-restore

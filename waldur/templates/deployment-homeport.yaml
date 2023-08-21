@@ -5,7 +5,7 @@ metadata:
   labels:
 {{ include "waldur.labels" . | indent 4 }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ default 1 .Values.replicaCount.homeport }}
   selector:
     matchLabels:
       app: waldur-homeport

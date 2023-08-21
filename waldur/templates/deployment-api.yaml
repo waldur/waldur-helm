@@ -5,11 +5,7 @@ metadata:
   labels:
 {{ include "waldur.labels" . | indent 4 }}
 spec:
-  {{ if .Values.extraReplicas.api }}
-  replicas: {{ add .Values.replicaCount .Values.extraReplicas.api }}
-  {{ else }}
-  replicas: {{ .Values.replicaCount }}
-  {{ end }}
+  replicas: {{ default 1 .Values.replicaCount.api }}
   selector:
     matchLabels:
       app: waldur-mastermind-api

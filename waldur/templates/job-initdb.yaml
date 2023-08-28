@@ -73,6 +73,9 @@ spec:
             - name: config-auth-yaml
               mountPath: /etc/waldur/auth.yaml
               subPath: auth.yaml
+            - name: config-permissions-yaml
+              mountPath: /etc/waldur/permissions.yaml
+              subPath: permissions.yaml
           resources:
             {{- toYaml .Values.apiResources | nindent 12 }}
         - name: waldur-mastermind-create-dbcache
@@ -146,6 +149,9 @@ spec:
       - name: config-auth-yaml
         configMap:
           name: mastermind-config-auth-yaml
+      - name: config-permissions-yaml
+        configMap:
+          name: mastermind-config-permissions-yaml
       - name: icons
         configMap:
           name: icons-config

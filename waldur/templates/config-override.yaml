@@ -166,10 +166,6 @@ data:
     WALDUR_CORE['OWNER_CAN_MANAGE_CUSTOMER'] = True
     {{ end }}
 
-    {{ if has "owner_can_register_service_provider" .Values.waldur.features }}
-    WALDUR_MARKETPLACE['OWNER_CAN_REGISTER_SERVICE_PROVIDER'] = True
-    {{ end }}
-
     {{ if has "owners_can_manage_owners" .Values.waldur.features }}
     WALDUR_CORE['OWNERS_CAN_MANAGE_OWNERS'] = True
     {{ end }}
@@ -184,23 +180,6 @@ data:
 
     {{ if has "only_staff_manages_services" .Values.waldur.features }}
     WALDUR_CORE['ONLY_STAFF_MANAGES_SERVICES'] = True
-    WALDUR_MARKETPLACE['OWNER_CAN_APPROVE_ORDER'] = False
-    WALDUR_MARKETPLACE['MANAGER_CAN_APPROVE_ORDER'] = False
-    WALDUR_MARKETPLACE['ADMIN_CAN_APPROVE_ORDER'] = False
-    {{ end }}
-
-    {{ if has "manager_can_approve_order" .Values.waldur.features }}
-    WALDUR_MARKETPLACE['MANAGER_CAN_APPROVE_ORDER'] = True
-    {{ if not (has "waldur_openstack.openstack" .Values.waldur.disabledExtensions) }}
-    WALDUR_OPENSTACK['MANAGER_CAN_MANAGE_TENANTS'] = True
-    {{ end }}
-    {{ end }}
-
-    {{ if has "admin_can_approve_order" .Values.waldur.features }}
-    WALDUR_MARKETPLACE['ADMIN_CAN_APPROVE_ORDER'] = True
-    {{ if not (has "waldur_openstack.openstack" .Values.waldur.disabledExtensions) }}
-    WALDUR_OPENSTACK['ADMIN_CAN_MANAGE_TENANTS'] = True
-    {{ end }}
     {{ end }}
 
     {{ if has "create_default_project_on_organization_creation" .Values.waldur.features }}

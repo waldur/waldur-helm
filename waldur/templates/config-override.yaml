@@ -392,9 +392,9 @@ data:
 
     {{ if .Values.waldur.languageChoices }}
     LANGUAGE_CHOICES = (
-        'en',
+        "en",
     {{- range .Values.waldur.languageChoices }}
-    {{ . | quote }},
+    {{ . | quote | indent 4 }},
     {{- end }}
     )
     {{ end }}

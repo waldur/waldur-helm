@@ -385,6 +385,14 @@ data:
     {{ if .Values.waldur.mail.from }}
     DEFAULT_FROM_EMAIL = '{{ .Values.waldur.mail.from }}'
     {{ end }}
+    
+    {{ if .Values.waldur.mail.hookFrom }}
+    EMAIL_HOOK_FROM_EMAIL = '{{ .Values.waldur.mail.hookFrom }}'
+    {{ end }}
+    
+    {{ if .Values.waldur.mail.useHookFrom }}
+    USE_EMAIL_HOOK_FROM_EMAIL = True
+    {{ end }
 
     {{ if .Values.waldur.mail.replyTo }}
     DEFAULT_REPLY_TO_EMAIL = '{{ .Values.waldur.mail.replyTo }}'

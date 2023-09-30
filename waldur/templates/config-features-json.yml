@@ -26,9 +26,6 @@ data:
       {{ if has "marketplace.tos" .Values.waldur.features }}
         "marketplace.terms_of_service": true,
       {{ end }}
-      {{ if has "enable_project_member_role" .Values.waldur.features }}
-        "project.member_role": true,
-      {{ end }}
       {{ if has "show_industry_flag" .Values.waldur.features }}
         "project.show_industry_flag": true,
       {{ end }}

@@ -5,6 +5,12 @@ metadata:
 data:
   permissions.yaml: |
     - role: CUSTOMER.OWNER
+      {{ if has "academic_domain" .Values.waldur.features }}
+      description: PI
+      {{ end }}
+      {{ if has "academic_shared_domain" .Values.waldur.features }}
+      description: resource allocator
+      {{ end }}
       permissions:
         {{ if has "owner_can_register_service_provider" .Values.waldur.features }}
         - SERVICE_PROVIDER.REGISTER
@@ -46,6 +52,17 @@ data:
         - RESOURCE.COMPLETE_DOWNSCALING
         - RESOURCE.TERMINATE
         - RESOURCE.LIST_IMPORTABLE
+        {{ if has "owners_can_manage_owners" .Values.waldur.features }}
+        - CUSTOMER.CREATE_PERMISSION
+        - CUSTOMER.UPDATE_PERMISSION
+        - CUSTOMER.DELETE_PERMISSION
+        {{ end }}
+        - PROJECT.CREATE_PERMISSION
+        - PROJECT.UPDATE_PERMISSION
+        - PROJECT.DELETE_PERMISSION
+        - OFFERING.CREATE_PERMISSION
+        - OFFERING.UPDATE_PERMISSION
+        - OFFERING.DELETE_PERMISSION
 
     - role: CUSTOMER.MANAGER
       permissions:
@@ -74,6 +91,12 @@ data:
         - OFFERING.MANAGE_USER_GROUP
 
     - role: PROJECT.ADMIN
+      {{ if has "academic_domain" .Values.waldur.features }}
+      description: member
+      {{ end }}
+      {{ if has "academic_shared_domain" .Values.waldur.features }}
+      description: co-PI
+      {{ end }}
       permissions:
         {{ if has "admin_can_approve_order" .Values.waldur.features }}
         - ORDER.APPROVE
@@ -87,6 +110,12 @@ data:
         - RESOURCE.SET_LIMITS
 
     - role: PROJECT.MANAGER
+      {{ if has "academic_domain" .Values.waldur.features }}
+      description: co-PI
+      {{ end }}
+      {{ if has "academic_shared_domain" .Values.waldur.features }}
+      description: PI
+      {{ end }}
       permissions:
         {{ if has "manager_can_approve_order" .Values.waldur.features }}
         - ORDER.APPROVE
@@ -98,6 +127,22 @@ data:
         - RESOURCE.LIST_IMPORTABLE
         - RESOURCE.SET_PLAN
         - RESOURCE.SET_LIMITS
+        - PROJECT.CREATE_PERMISSION
+        - PROJECT.UPDATE_PERMISSION
+        - PROJECT.DELETE_PERMISSION
+
+    - role: PROJECT.MEMBER
+      {{ if has "enable_project_member_role" .Values.waldur.features }}
+      is_active: true
+      {{ else }}
+      is_active: false
+      {{ end }}
+      {{ if has "academic_domain" .Values.waldur.features }}
+      description: guest
+      {{ end }}
+      {{ if has "academic_shared_domain" .Values.waldur.features }}
+      description: member
+      {{ end }}
 
     - role: OFFERING.MANAGER
       permissions:

@@ -2,8 +2,46 @@ apiVersion: v1
 entries:
   waldur:
   - apiVersion: v2
+    appVersion: 6.1.6
+    created: "2023-10-06T16:48:54.886773311Z"
+    dependencies:
+    - alias: postgresql
+      condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 11.9.1
+    - alias: rabbitmq
+      condition: rabbitmq.enabled
+      name: rabbitmq
+      repository: https://charts.bitnami.com/bitnami
+      version: 10.3.5
+    - alias: postgresqlha
+      condition: postgresqlha.enabled
+      name: postgresql-ha
+      repository: https://charts.bitnami.com/bitnami
+      version: 11.7.5
+    description: Waldur - Open-Source Cloud Marketplace
+    digest: d94999237251a31ca5a4dfafb101b944ea4b13682f4eaf92e20ab317f3811f31
+    home: https://waldur.com
+    icon: https://waldur.com/assets/img/icon-bot-01-150x240.png
+    keywords:
+    - marketplace
+    - openstack
+    - vmware
+    - slurm
+    - billing
+    maintainers:
+    - email: info@opennodecloud.com
+      name: OpenNode team
+      url: https://opennodecloud.com
+    name: waldur
+    type: application
+    urls:
+    - charts/waldur-6.1.6.tgz
+    version: 6.1.6
+  - apiVersion: v2
     appVersion: 6.1.5
-    created: "2023-10-05T21:05:56.38474773Z"
+    created: "2023-10-06T16:48:54.861442829Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -41,7 +79,7 @@ entries:
     version: 6.1.5
   - apiVersion: v2
     appVersion: 6.1.4
-    created: "2023-10-05T21:05:56.357825528Z"
+    created: "2023-10-06T16:48:54.8379564Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -79,7 +117,7 @@ entries:
     version: 6.1.4
   - apiVersion: v2
     appVersion: 6.1.3
-    created: "2023-10-05T21:05:56.330418509Z"
+    created: "2023-10-06T16:48:54.811696046Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -117,7 +155,7 @@ entries:
     version: 6.1.3
   - apiVersion: v2
     appVersion: 6.1.2
-    created: "2023-10-05T21:05:56.301362461Z"
+    created: "2023-10-06T16:48:54.777186332Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -155,7 +193,7 @@ entries:
     version: 6.1.2
   - apiVersion: v2
     appVersion: 6.1.1
-    created: "2023-10-05T21:05:56.273823971Z"
+    created: "2023-10-06T16:48:54.7543329Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -193,7 +231,7 @@ entries:
     version: 6.1.1
   - apiVersion: v2
     appVersion: 6.1.0
-    created: "2023-10-05T21:05:56.246330303Z"
+    created: "2023-10-06T16:48:54.72987547Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -231,7 +269,7 @@ entries:
     version: 6.1.0
   - apiVersion: v2
     appVersion: 6.0.9
-    created: "2023-10-05T21:05:56.217351344Z"
+    created: "2023-10-06T16:48:54.709624531Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -269,7 +307,7 @@ entries:
     version: 6.0.9
   - apiVersion: v2
     appVersion: 6.0.8
-    created: "2023-10-05T21:05:56.190489004Z"
+    created: "2023-10-06T16:48:54.681899341Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -307,7 +345,7 @@ entries:
     version: 6.0.8
   - apiVersion: v2
     appVersion: 6.0.7
-    created: "2023-10-05T21:05:56.161645538Z"
+    created: "2023-10-06T16:48:54.657569761Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -345,7 +383,7 @@ entries:
     version: 6.0.7
   - apiVersion: v2
     appVersion: 6.0.6
-    created: "2023-10-05T21:05:56.137205206Z"
+    created: "2023-10-06T16:48:54.633415803Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -383,7 +421,7 @@ entries:
     version: 6.0.6
   - apiVersion: v2
     appVersion: 6.0.5
-    created: "2023-10-05T21:05:56.107044944Z"
+    created: "2023-10-06T16:48:54.60551041Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -416,7 +454,7 @@ entries:
     version: 6.0.5
   - apiVersion: v2
     appVersion: 6.0.4
-    created: "2023-10-05T21:05:56.079828168Z"
+    created: "2023-10-06T16:48:54.588432911Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -449,7 +487,7 @@ entries:
     version: 6.0.4
   - apiVersion: v2
     appVersion: 6.0.3
-    created: "2023-10-05T21:05:56.066243875Z"
+    created: "2023-10-06T16:48:54.561723771Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -482,7 +520,7 @@ entries:
     version: 6.0.3
   - apiVersion: v2
     appVersion: 6.0.2
-    created: "2023-10-05T21:05:56.040354095Z"
+    created: "2023-10-06T16:48:54.541860407Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -515,7 +553,7 @@ entries:
     version: 6.0.2
   - apiVersion: v2
     appVersion: 6.0.1
-    created: "2023-10-05T21:05:56.025471217Z"
+    created: "2023-10-06T16:48:54.523998308Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -548,7 +586,7 @@ entries:
     version: 6.0.1
   - apiVersion: v2
     appVersion: 6.0.0
-    created: "2023-10-05T21:05:56.00073178Z"
+    created: "2023-10-06T16:48:54.504611829Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -581,7 +619,7 @@ entries:
     version: 6.0.0
   - apiVersion: v2
     appVersion: 5.9.9
-    created: "2023-10-05T21:05:55.977542843Z"
+    created: "2023-10-06T16:48:54.476320421Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -614,7 +652,7 @@ entries:
     version: 5.9.9
   - apiVersion: v2
     appVersion: 5.9.8
-    created: "2023-10-05T21:05:55.964601458Z"
+    created: "2023-10-06T16:48:54.46398578Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -647,7 +685,7 @@ entries:
     version: 5.9.8
   - apiVersion: v2
     appVersion: 5.9.7
-    created: "2023-10-05T21:05:55.943617576Z"
+    created: "2023-10-06T16:48:54.45026207Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -680,7 +718,7 @@ entries:
     version: 5.9.7
   - apiVersion: v2
     appVersion: 5.9.6
-    created: "2023-10-05T21:05:55.923317603Z"
+    created: "2023-10-06T16:48:54.432754945Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -713,7 +751,7 @@ entries:
     version: 5.9.6
   - apiVersion: v2
     appVersion: 5.9.5
-    created: "2023-10-05T21:05:55.900105145Z"
+    created: "2023-10-06T16:48:54.413123343Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -746,7 +784,7 @@ entries:
     version: 5.9.5
   - apiVersion: v2
     appVersion: 5.9.4
-    created: "2023-10-05T21:05:55.882450094Z"
+    created: "2023-10-06T16:48:54.393099748Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -779,7 +817,7 @@ entries:
     version: 5.9.4
   - apiVersion: v2
     appVersion: 5.9.3
-    created: "2023-10-05T21:05:55.863855212Z"
+    created: "2023-10-06T16:48:54.374507799Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -812,7 +850,7 @@ entries:
     version: 5.9.3
   - apiVersion: v2
     appVersion: 5.9.2
-    created: "2023-10-05T21:05:55.849822373Z"
+    created: "2023-10-06T16:48:54.346698897Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -845,7 +883,7 @@ entries:
     version: 5.9.2
   - apiVersion: v2
     appVersion: 5.9.1
-    created: "2023-10-05T21:05:55.822900311Z"
+    created: "2023-10-06T16:48:54.332814585Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -878,7 +916,7 @@ entries:
     version: 5.9.1
   - apiVersion: v2
     appVersion: 5.9.0
-    created: "2023-10-05T21:05:55.808319006Z"
+    created: "2023-10-06T16:48:54.307001078Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -911,7 +949,7 @@ entries:
     version: 5.9.0
   - apiVersion: v2
     appVersion: 5.8.9
-    created: "2023-10-05T21:05:55.792890801Z"
+    created: "2023-10-06T16:48:54.292565011Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -944,7 +982,7 @@ entries:
     version: 5.8.9
   - apiVersion: v2
     appVersion: 5.8.7
-    created: "2023-10-05T21:05:55.774800685Z"
+    created: "2023-10-06T16:48:54.274864713Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -977,7 +1015,7 @@ entries:
     version: 5.8.7
   - apiVersion: v2
     appVersion: 5.8.6
-    created: "2023-10-05T21:05:55.748730263Z"
+    created: "2023-10-06T16:48:54.261544718Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1010,7 +1048,7 @@ entries:
     version: 5.8.6
   - apiVersion: v2
     appVersion: 5.8.5
-    created: "2023-10-05T21:05:55.732474777Z"
+    created: "2023-10-06T16:48:54.242360753Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1043,7 +1081,7 @@ entries:
     version: 5.8.5
   - apiVersion: v2
     appVersion: 5.8.4
-    created: "2023-10-05T21:05:55.71590269Z"
+    created: "2023-10-06T16:48:54.223462811Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1076,7 +1114,7 @@ entries:
     version: 5.8.4
   - apiVersion: v2
     appVersion: 5.8.3
-    created: "2023-10-05T21:05:55.696350905Z"
+    created: "2023-10-06T16:48:54.203372663Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1109,7 +1147,7 @@ entries:
     version: 5.8.3
   - apiVersion: v1
     appVersion: 5.4.4
-    created: "2023-10-05T21:05:55.668867816Z"
+    created: "2023-10-06T16:48:54.184462341Z"
     description: Waldur - Open-Source Cloud Marketplace
     digest: 86127389cb23ab774ad5283e81c3f18a5a5c1a53901150103708a7761747e3a6
     home: https://waldur.com
@@ -1130,7 +1168,7 @@ entries:
     version: 5.8.0
   - apiVersion: v1
     appVersion: 5.4.4
-    created: "2023-10-05T21:05:55.661862253Z"
+    created: "2023-10-06T16:48:54.179899575Z"
     description: Waldur - Open-Source Cloud Marketplace
     digest: 9be70c919f2d901ddf776de950217489784dc9d0ec2f933014fa15dc618af1a9
     home: https://waldur.com
@@ -1151,7 +1189,7 @@ entries:
     version: 5.7.8
   - apiVersion: v1
     appVersion: 5.4.4
-    created: "2023-10-05T21:05:55.65906536Z"
+    created: "2023-10-06T16:48:54.172831558Z"
     description: Waldur - Open-Source Cloud Marketplace
     digest: cede5cc681839e9f8c6c5d525495575cbf44d42404ba383923ce1cc737148028
     home: https://waldur.com
@@ -1172,7 +1210,7 @@ entries:
     version: 5.7.7
   - apiVersion: v1
     appVersion: 5.4.4
-    created: "2023-10-05T21:05:55.656307266Z"
+    created: "2023-10-06T16:48:54.169409806Z"
     description: Waldur - Open-Source Cloud Marketplace
     digest: 71a82604ac3b242c3cf24f49dae4655b8021d1341f1ffae33a19d31114f7fe74
     home: https://waldur.com
@@ -1193,7 +1231,7 @@ entries:
     version: 5.7.6
   - apiVersion: v1
     appVersion: 5.4.4
-    created: "2023-10-05T21:05:55.651745451Z"
+    created: "2023-10-06T16:48:54.164578406Z"
     description: Waldur - Open-Source Cloud Marketplace
     digest: ef7b0774702142a48a1bd33583a80d275d811ef8052e8b2e460e6e2a263385cf
     home: https://waldur.com
@@ -1214,7 +1252,7 @@ entries:
     version: 5.7.5
   - apiVersion: v1
     appVersion: 5.4.4
-    created: "2023-10-05T21:05:55.644701507Z"
+    created: "2023-10-06T16:48:54.159765507Z"
     description: Waldur - Open-Source Cloud Marketplace
     digest: 37c53f4af09d5dc81d6b7e6fe1e98b9532b4c1f630f8a1c778ac022c59fa0d0c
     home: https://waldur.com
@@ -1235,7 +1273,7 @@ entries:
     version: 5.7.4
   - apiVersion: v1
     appVersion: 5.4.4
-    created: "2023-10-05T21:05:55.641701871Z"
+    created: "2023-10-06T16:48:54.152859072Z"
     description: Waldur - Open-Source Cloud Marketplace
     digest: 8b7adb8b551df1b0ede361544e25d7e40c337067acd7a5be289961bb7f22fdba
     home: https://waldur.com
@@ -1256,7 +1294,7 @@ entries:
     version: 5.7.3
   - apiVersion: v1
     appVersion: 5.4.4
-    created: "2023-10-05T21:05:55.638171239Z"
+    created: "2023-10-06T16:48:54.149999416Z"
     description: Waldur - Open-Source Cloud Marketplace
     digest: e1994b7d69121b0f2742863eca71e35f5ccb79bd41961474ae63af1ab970238e
     home: https://waldur.com
@@ -1277,7 +1315,7 @@ entries:
     version: 0.1.9
   - apiVersion: v1
     appVersion: 4.4.2
-    created: "2023-10-05T21:05:55.634601556Z"
+    created: "2023-10-06T16:48:54.147230983Z"
     dependencies:
     - condition: postgresql.enabled
       name: postgresql
@@ -1305,4 +1343,4 @@ entries:
     urls:
     - charts/waldur-0.1.0.tgz
     version: 0.1.0
-generated: "2023-10-05T21:05:55.623422302Z"
+generated: "2023-10-06T16:48:54.136139627Z"

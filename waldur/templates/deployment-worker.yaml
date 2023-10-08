@@ -68,6 +68,15 @@ spec:
             - name: api-celery
               mountPath: /etc/waldur/celery.conf
               subPath: celery.conf
+            - name: config-features-json
+              mountPath: /etc/waldur/features.json
+              subPath: features.json
+            - name: config-auth-yaml
+              mountPath: /etc/waldur/auth.yaml
+              subPath: auth.yaml
+            - name: config-permissions-yaml
+              mountPath: /etc/waldur/permissions.yaml
+              subPath: permissions.yaml
             {{ if has "VALIMO" .Values.waldur.authMethods }}
             - name: waldur-valimo-certs
               mountPath: /etc/waldur/valimo
@@ -95,6 +104,15 @@ spec:
       - name: api-celery
         configMap:
           name: api-celery-config
+      - name: config-features-json
+        configMap:
+          name: mastermind-config-features-json
+      - name: config-auth-yaml
+        configMap:
+          name: mastermind-config-auth-yaml
+      - name: config-permissions-yaml
+        configMap:
+          name: mastermind-config-permissions-yaml
       {{ if has "VALIMO" .Values.waldur.authMethods }}
       - name: waldur-valimo-certs
         secret:

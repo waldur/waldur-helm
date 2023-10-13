@@ -63,6 +63,9 @@ data:
         'REMOTE_EDUTEAMS_SECRET': '{{ .Values.waldur.remoteEduteams.clientSecret }}',
         'REMOTE_EDUTEAMS_USERINFO_URL': '{{ .Values.waldur.remoteEduteams.userinfoUrl }}',
         'REMOTE_EDUTEAMS_TOKEN_URL': '{{ .Values.waldur.remoteEduteams.tokenUrl }}',
+        'REMOTE_EDUTEAMS_SSH_API_URL': '{{ .Values.waldur.remoteEduteams.sshApiUrl }}',
+        'REMOTE_EDUTEAMS_SSH_API_USERNAME': '{{ .Values.waldur.remoteEduteams.sshApiUsername }}',
+        'REMOTE_EDUTEAMS_SSH_API_PASSWORD': '{{ .Values.waldur.remoteEduteams.sshApiPassword }}',
         {{ if .Values.waldur.remoteEduteams.enableSync }}
         'ENABLE_EDUTEAMS_SYNC': True,
         {{ end }}
@@ -381,7 +384,7 @@ data:
     {{ if .Values.waldur.mail.from }}
     DEFAULT_FROM_EMAIL = '{{ .Values.waldur.mail.from }}'
     {{ end }}
-    
+
     {{ if .Values.waldur.mail.hookFrom }}
     EMAIL_HOOK_FROM_EMAIL = '{{ .Values.waldur.mail.hookFrom }}'
     {{ end }}

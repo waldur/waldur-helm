@@ -28,57 +28,57 @@ spec:
           service:
             name: waldur-mastermind-api
             port:
-              number: 8080
+              number: 80
       - path: /api-auth
         pathType: Prefix
         backend:
           service:
             name: waldur-mastermind-api
             port:
-              number: 8080
+              number: 80
       - path: /docs
         pathType: Prefix
         backend:
           service:
             name: waldur-mastermind-api
             port:
-              number: 8080
+              number: 80
       - path: /admin
         pathType: Prefix
         backend:
           service:
             name: waldur-mastermind-api
             port:
-              number: 8080
+              number: 80
       - path: /static
         pathType: Prefix
         backend:
           service:
             name: waldur-mastermind-api
             port:
-              number: 8080
+              number: 80
       - path: /apidocs
         pathType: Prefix
         backend:
           service:
             name: waldur-mastermind-api
             port:
-              number: 8080
+              number: 80
       - path: /media
         pathType: Prefix
         backend:
           service:
             name: waldur-mastermind-api
             port:
-              number: 8080
+              number: 80
       - path: /health-check
         pathType: Prefix
         backend:
           service:
             name: waldur-mastermind-api
             port:
-              number: 8080
-  {{ if and .Values.ingress.tls.enabled }}
+              number: 80
+  {{ if .Values.ingress.tls.enabled }}
   tls:
   - hosts:
     - {{ .Values.apiHostname }}

@@ -4,14 +4,14 @@ image:
 
 master:
   config:
-    target-host: "http://waldur-mastermind-api.default.svc.cluster.local:8080"
-    locust-host: "http://waldur-mastermind-api.default.svc.cluster.local:8080"
+    target-host: "http://waldur-mastermind-api.default.svc.cluster.local:80"
+    locust-host: "http://waldur-mastermind-api.default.svc.cluster.local:80"
     locust-mode-master: true
     locust-locustfile: "/locust-tasks/tasks.py"
 
 
-worker: 
-  config: 
+worker:
+  config:
     configmapName: "locust-tasks-config"
     locust-mode-worker: true
     locust-locustfile: "/locust-tasks/tasks.py"

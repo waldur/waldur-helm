@@ -30,7 +30,7 @@ spec:
         imagePullPolicy: {{ .Values.waldur.pullPolicy }}
         env:
           - name: WALDUR_API_URL
-            value: "http://waldur-mastermind-api:8080/api/"
+            value: "http://waldur-mastermind-api:80/api/"
           - name: WALDUR_API_TOKEN
             valueFrom:
               secretKeyRef:
@@ -73,7 +73,7 @@ spec:
             protocol: TCP
         env:
           - name: WALDUR_API_URL
-            value: "http://waldur-mastermind-api:8080/api/"
+            value: "http://waldur-mastermind-api:80/api/"
           - name: WALDUR_URL
             value: "{{ .Values.homeportScheme }}://{{ .Values.homeportHostname }}"
           - name: WALDUR_API_TOKEN

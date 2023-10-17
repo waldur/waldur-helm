@@ -11,7 +11,7 @@ metadata:
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /$1
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    {{ if .Values.ingress.tls.source | eq "letsEncrypt" }}
+    {{ if and .Values.ingress.tls.enabled (eq .Values.ingress.tls.source "letsEncrypt") }}
     cert-manager.io/cluster-issuer: letsencrypt-prod-issuer
     {{ end }}
 spec:

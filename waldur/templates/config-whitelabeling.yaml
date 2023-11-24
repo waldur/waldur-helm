@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mastermind-whitelabeling-yaml
+data:
+  whitelabeling.yaml: |
+    site_name: {{ .Values.waldur.site.name | default "" | quote }}
+    site_address: {{ .Values.waldur.site.address | default "" | quote }}
+    site_email: {{ .Values.waldur.site.email | default "" | quote }}
+    site_phone: {{ .Values.waldur.site.phone | default "" | quote }}
+    short_page_title: {{ .Values.waldur.whitelabeling.shortPageTitle | default "" | quote }}
+    full_page_title: {{ .Values.waldur.whitelabeling.modePageTitle | default "" | quote }}
+    brand_color: {{ .Values.waldur.whitelabeling.brandColor | default "" | quote }}
+    brand_label_color: {{ .Values.waldur.whitelabeling.brandLabelColor | default "" | quote }}
+    hero_link_label: {{ .Values.waldur.whitelabeling.heroLinkLabel | default "" | quote }}
+    hero_link_url: {{ .Values.waldur.whitelabeling.heroLinkUrl | default "" | quote }}
+    site_description: {{ .Values.waldur.whitelabeling.siteDescription | default "" | quote }}
+    currency_name: {{ .Values.waldur.currencyName | default "" | quote }}
+    docs_url: {{ .Values.waldur.homeport.docsLink | default "" | quote }}
+    support_portal_url: {{ .Values.waldur.whitelabeling.supportPortalLink | default "" | quote }}
+    site_logo: {{ .Values.waldur.site.logo | default "" | quote }}
+
+    {{ if .Values.waldur.whitelabeling.poweredByLogoPath }}
+    powered_by_logo: "/etc/waldur/icons/poweredby_logo.png"
+    {{ end }}
+
+    {{ if .Values.waldur.whitelabeling.heroImagePath }}
+    hero_image: "/etc/waldur/icons/hero_image.jpg"
+    {{ end }}
+
+    {{ if .Values.waldur.whitelabeling.sidebarLogoPath }}
+    sidebar_logo: "/etc/waldur/icons/sidebar_logo.png"
+    {{ end }}
+
+    {{ if .Values.waldur.whitelabeling.loginLogoPath }}
+    login_logo: "/etc/waldur/icons/login_logo.png"
+    {{ end }}
+
+    {{ if .Values.waldur.whitelabeling.faviconPath }}
+    favicon: "/etc/waldur/icons/favicon.ico"
+    {{ end }}

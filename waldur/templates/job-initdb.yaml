@@ -38,7 +38,6 @@ spec:
             - initdb
           env:
             {{- include "waldur.credentials" . | nindent 13 }}
-            {{- include "waldur.env.whitelabeling" . | nindent 13 }}
           {{ if .Values.waldur.disabledExtensions }}
           - name: WALDUR_DISABLED_EXTENSIONS
             value: {{ .Values.waldur.disabledExtensions | toJson | quote }}
@@ -68,14 +67,29 @@ spec:
               mountPath: /etc/waldur/terms-of-service.html
               subPath: "mastermind-tos.html"
             {{ end }}
-            - name: icons
-              mountPath: /etc/waldur/icons
             - name: config-auth-yaml
               mountPath: /etc/waldur/auth.yaml
               subPath: auth.yaml
             - name: config-permissions-yaml
               mountPath: /etc/waldur/permissions.yaml
               subPath: permissions.yaml
+          resources:
+            {{- toYaml .Values.apiResources | nindent 12 }}
+        - name: waldur-mastermind-whitelabeling-init
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
+          args:
+            - init-whitelabeling
+          env:
+            {{- include "waldur.credentials" . | nindent 13 }}
+          volumeMounts:
+            - name: api-override
+              mountPath: /etc/waldur/override.conf.py
+              subPath: override.conf.py
+            - name: whitelabeling-yaml
+              mountPath: /etc/waldur/whitelabeling.yaml
+              subPath: whitelabeling.yaml
+            - name: icons
+              mountPath: /etc/waldur/icons
           resources:
             {{- toYaml .Values.apiResources | nindent 12 }}
         - name: waldur-mastermind-create-dbcache
@@ -155,6 +169,9 @@ spec:
       - name: icons
         configMap:
           name: icons-config
+      - name: whitelabeling-yaml
+        configMap:
+          name: mastermind-whitelabeling-yaml
   {{ if .Values.waldur.mastermindTemplating.mastermindTemplatesPath }}
       - name: waldur-mastermind-template
         configMap:

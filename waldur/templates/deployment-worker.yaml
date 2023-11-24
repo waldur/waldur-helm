@@ -31,6 +31,7 @@ spec:
           imagePullPolicy: {{ .Values.waldur.pullPolicy }}
           args:
             - "worker"
+          # startup probe: check if there are no pending migrations
           livenessProbe:
             exec:
               command:

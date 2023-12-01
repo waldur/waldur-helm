@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mastermind-support-yaml
+data:
+  support.yaml: |
+    {{ if has "support" .Values.waldur.features }}
+    WALDUR_SUPPORT_ENABLED: true
+    {{ if eq .Values.waldur.support.backend "atlassian" }}
+    WALDUR_SUPPORT_ACTIVE_BACKEND_TYPE: 'atlassian'
+    WALDUR_SUPPORT_DISPLAY_REQUEST_TYPE: true
+    {{ if .Values.waldur.support.atlassian.legacy }}
+    USE_OLD_API: true
+    {{ end }}
+    {{ if .Values.waldur.support.atlassian.servicedeskToken }}
+    EMAIL: '{{ .Values.waldur.support.atlassian.servicedeskEmail }}'
+    TOKEN: '{{ .Values.waldur.support.atlassian.servicedeskToken }}'
+    {{ else }}
+    USERNAME: '{{ .Values.waldur.support.atlassian.servicedeskUsername}}'
+    PASSWORD: '{{ .Values.waldur.support.atlassian.servicedeskPassword }}'
+    {{ end }}
+    SERVER: '{{ .Values.waldur.support.atlassian.servicedeskUrl }}'
+    ISSUE:
+      caller_field: 'Request participants'
+      {{ if .Values.waldur.support.atlassian.organizationField }}
+      organisation_field: '{{ .Values.waldur.support.atlassian.organizationField }}'
+      {{ end }}
+    PROJECT:
+      key: '{{ .Values.waldur.support.atlassian.projectKey }}'
+    {{ if not .Values.waldur.support.atlassian.useAutomaticRequestMapping }}
+    USE_AUTOMATIC_REQUEST_MAPPING: false
+    {{ end }}
+    {{ end }}
+    {{ if eq .Values.waldur.support.backend "zammad" }}
+    ACTIVE_BACKEND_TYPE: 'zammad'
+    DISPLAY_REQUEST_TYPE: false
+    ZAMMAD_API_URL: {{ default "" .Values.waldur.support.zammad.apiUrl | quote }}
+    ZAMMAD_TOKEN: {{ default "" .Values.waldur.support.zammad.token | quote }}
+    ZAMMAD_GROUP: {{ default "" .Values.waldur.support.zammad.group | quote }}
+    ZAMMAD_ARTICLE_TYPE: {{ default "email" .Values.waldur.support.zammad.articleType | quote }}
+    COMMENT_COOLDOWN_DURATION: {{ default 5 .Values.waldur.support.zammad.commentCooldownDuration | int }}
+    {{ end }}
+    {{ else }}
+    WALDUR_SUPPORT_ENABLED: false
+    {{ end }}

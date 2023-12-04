@@ -66,6 +66,9 @@ data:
         - OFFERING.CREATE_PERMISSION
         - OFFERING.UPDATE_PERMISSION
         - OFFERING.DELETE_PERMISSION
+        - PROJECT.CREATE
+        - PROJECT.UPDATE
+        - PROJECT.DELETE
 
     - role: CUSTOMER.MANAGER
       permissions:
@@ -136,6 +139,7 @@ data:
         - PROJECT.CREATE_PERMISSION
         - PROJECT.UPDATE_PERMISSION
         - PROJECT.DELETE_PERMISSION
+        - PROJECT.UPDATE
 
     - role: PROJECT.MEMBER
       {{ if has "enable_project_member_role" .Values.waldur.features }}

@@ -125,7 +125,7 @@ data:
     # waldur-freeipa
     #
 
-    {{ if and (has "freeipa" .Values.waldur.features) (not (has "waldur_freeipa" .Values.waldur.disabledExtensions)) }}
+    {{ if (has "freeipa" .Values.waldur.features) }}
     WALDUR_FREEIPA.update({
         'ENABLED': True,
         'GROUPNAME_PREFIX': '{{ .Values.waldur.freeipa.groupnamePrefix }}',
@@ -137,13 +137,13 @@ data:
     })
     {{ end }}
 
-    {{ if and (has "freeipa_group_synchronization_disabled" .Values.waldur.features) (not (has "waldur_freeipa" .Values.waldur.disabledExtensions)) }}
+    {{ if (has "freeipa_group_synchronization_disabled" .Values.waldur.features) }}
     WALDUR_FREEIPA.update({
         'GROUP_SYNCHRONIZATION_ENABLED': False,
     })
     {{ end }}
 
-    {{ if and (has "VALIMO" .Values.waldur.authMethods) (not (has "waldur_auth_valimo" .Values.waldur.disabledExtensions)) }}
+    {{ if (has "VALIMO" .Values.waldur.authMethods) }}
     WALDUR_AUTH_VALIMO.update({
         'AP_ID': '{{ .Values.waldur.valimo.apId }}',
         'AP_PWD': '{{ .Values.waldur.valimo.apPwd }}',
@@ -285,7 +285,6 @@ data:
     #
     # waldur-openstack
     #
-    {{ if not (has "waldur_openstack.openstack" .Values.waldur.disabledExtensions) }}
     {{ if has "show_openstack_credentials" .Values.waldur.features }}
     WALDUR_OPENSTACK.update({
         'TENANT_CREDENTIALS_VISIBLE': True,  # enable display of OpenStack credentials to users
@@ -295,7 +294,6 @@ data:
         'TENANT_CREDENTIALS_VISIBLE': False,  # disable display of OpenStack credentials to users
     })
     {{ end }}
-    {{ end }}
 
     {{ if has "allow_direct_external_network_connection" .Values.waldur.features }}
     WALDUR_OPENSTACK_TENANT.update({
@@ -303,19 +301,19 @@ data:
     })
     {{ end }}
 
-    {{ if and (has "show_openstack_console" .Values.waldur.features) (not (has "waldur_openstack.openstack_tenant" .Values.waldur.disabledExtensions)) }}
+    {{ if (has "show_openstack_console" .Values.waldur.features) }}
     WALDUR_OPENSTACK_TENANT.update({
         'ALLOW_CUSTOMER_USERS_OPENSTACK_CONSOLE_ACCESS': True,
     })
     {{ end }}
 
-    {{ if and (has "disable_openstack_private_offering_creation" .Values.waldur.features) (not (has "waldur_mastermind.marketplace_openstack" .Values.waldur.disabledExtensions)) }}
+    {{ if (has "disable_openstack_private_offering_creation" .Values.waldur.features) }}
     WALDUR_MARKETPLACE_OPENSTACK.update({
         'AUTOMATICALLY_CREATE_PRIVATE_OFFERING': False,
     })
     {{ end }}
 
-    {{ if and (has "paypal" .Values.waldur.features) (not (has "waldur_paypal" .Values.waldur.disabledExtensions)) }}
+    {{ if (has "paypal" .Values.waldur.features) }}
     #
     # waldur-paypal
     #

@@ -29,10 +29,6 @@ spec:
           - bootstrapper
         env:
           {{- include "waldur.credentials" . | nindent 11 }}
-          {{ if .Values.waldur.disabledExtensions }}
-          - name: WALDUR_DISABLED_EXTENSIONS
-            value: {{ .Values.waldur.disabledExtensions | toJson | quote }}
-          {{ end }}
         volumeMounts:
           - name: api-override
             mountPath: /etc/waldur/override.conf.py

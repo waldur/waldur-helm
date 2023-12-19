@@ -52,10 +52,6 @@ spec:
             timeoutSeconds: 20
           env:
             {{- include "waldur.credentials" . | nindent 13 }}
-          {{ if .Values.waldur.disabledExtensions }}
-          - name: WALDUR_DISABLED_EXTENSIONS
-            value: {{ .Values.waldur.disabledExtensions | toJson | quote }}
-          {{ end }}
           resources:
             {{ if .Values.hpa.celery.enabled }}
             {{- toYaml .Values.hpa.celery.workerResources | nindent 12 }}

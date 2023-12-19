@@ -51,10 +51,6 @@ spec:
               protocol: TCP
           env:
             {{- include "waldur.credentials" . | nindent 13 }}
-          {{ if .Values.waldur.disabledExtensions }}
-          - name: WALDUR_DISABLED_EXTENSIONS
-            value: {{ .Values.waldur.disabledExtensions | toJson | quote }}
-          {{ end }}
           resources:
             {{ if .Values.hpa.api.enabled }}
             {{- toYaml .Values.hpa.api.resources | nindent 12 }}

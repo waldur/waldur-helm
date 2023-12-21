@@ -71,9 +71,9 @@ spec:
             - name: config-auth-yaml
               mountPath: /etc/waldur/auth.yaml
               subPath: auth.yaml
-            - name: config-permissions-yaml
-              mountPath: /etc/waldur/permissions.yaml
-              subPath: permissions.yaml
+            - name: config-permissions-override-yaml
+              mountPath: /etc/waldur/permissions-override.yaml
+              subPath: permissions-override.yaml
             {{ if has "VALIMO" .Values.waldur.authMethods }}
             - name: waldur-valimo-certs
               mountPath: /etc/waldur/valimo
@@ -107,9 +107,9 @@ spec:
       - name: config-auth-yaml
         configMap:
           name: mastermind-config-auth-yaml
-      - name: config-permissions-yaml
+      - name: config-permissions-override-yaml
         configMap:
-          name: mastermind-config-permissions-yaml
+          name: mastermind-config-permissions-override-yaml
       {{ if has "VALIMO" .Values.waldur.authMethods }}
       - name: waldur-valimo-certs
         secret:

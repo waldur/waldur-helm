@@ -66,9 +66,9 @@ spec:
             - name: config-auth-yaml
               mountPath: /etc/waldur/auth.yaml
               subPath: auth.yaml
-            - name: config-permissions-yaml
-              mountPath: /etc/waldur/permissions.yaml
-              subPath: permissions.yaml
+            - name: config-permissions-override-yaml
+              mountPath: /etc/waldur/permissions-override.yaml
+              subPath: permissions-override.yaml
           resources:
             {{- toYaml .Values.apiResources | nindent 12 }}
         - name: waldur-mastermind-whitelabeling-init
@@ -159,9 +159,9 @@ spec:
       - name: config-auth-yaml
         configMap:
           name: mastermind-config-auth-yaml
-      - name: config-permissions-yaml
+      - name: config-permissions-override-yaml
         configMap:
-          name: mastermind-config-permissions-yaml
+          name: mastermind-config-permissions-override-yaml
       - name: icons
         configMap:
           name: icons-config

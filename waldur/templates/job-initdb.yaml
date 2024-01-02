@@ -84,6 +84,9 @@ spec:
             - name: whitelabeling-yaml
               mountPath: /etc/waldur/whitelabeling.yaml
               subPath: whitelabeling.yaml
+            - name: constance-settings-yaml
+              mountPath: /etc/waldur/support.yaml
+              subPath: support.yaml
             - name: icons
               mountPath: /etc/waldur/icons
           resources:
@@ -168,6 +171,9 @@ spec:
       - name: whitelabeling-yaml
         configMap:
           name: mastermind-whitelabeling-yaml
+      - name: constance-settings-yaml
+        configMap:
+          name: mastermind-support-yaml
   {{ if .Values.waldur.mastermindTemplating.mastermindTemplatesPath }}
       - name: waldur-mastermind-template
         configMap:

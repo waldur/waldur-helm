@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mastermind-support-yaml
+data:
+  support.yaml: |
+    {{ if has "support" .Values.waldur.features }}
+    WALDUR_SUPPORT_ENABLED: true
+    {{ if eq .Values.waldur.support.backend "atlassian" }}
+    WALDUR_SUPPORT_ACTIVE_BACKEND_TYPE: 'atlassian'
+    WALDUR_SUPPORT_DISPLAY_REQUEST_TYPE: true
+    {{ if .Values.waldur.support.atlassian.legacy }}
+    ATLASSIAN_USE_OLD_API: true
+    {{ end }}
+    {{ if .Values.waldur.support.atlassian.servicedeskToken }}
+    ATLASSIAN_EMAIL: '{{ .Values.waldur.support.atlassian.servicedeskEmail }}'
+    ATLASSIAN_TOKEN: '{{ .Values.waldur.support.atlassian.servicedeskToken }}'
+    {{ else }}
+    ATLASSIAN_USERNAME: '{{ .Values.waldur.support.atlassian.servicedeskUsername}}'
+    ATLASSIAN_PASSWORD: '{{ .Values.waldur.support.atlassian.servicedeskPassword }}'
+    {{ end }}
+    ATLASSIAN_SERVER: '{{ .Values.waldur.support.atlassian.servicedeskUrl }}'
+    ATLASSIAN_CALLER_FIELD: 'Request participants'
+    {{ if .Values.waldur.support.atlassian.organizationField }}
+    ATLASSIAN_ORGANISATION_FIELD: '{{ .Values.waldur.support.atlassian.organizationField }}'
+    {{ end }}
+    ATLASSIAN_PROJECT_ID: '{{ .Values.waldur.support.atlassian.projectKey }}'
+    {{ if not .Values.waldur.support.atlassian.useAutomaticRequestMapping }}
+    ATLASSIAN_USE_AUTOMATIC_REQUEST_MAPPING: false
+    {{ end }}
+    {{ end }}
+    {{ if eq .Values.waldur.support.backend "zammad" }}
+    WALDUR_SUPPORT_ACTIVE_BACKEND_TYPE: 'zammad'
+    WALDUR_SUPPORT_DISPLAY_REQUEST_TYPE: false
+    ZAMMAD_API_URL: {{ default "" .Values.waldur.support.zammad.apiUrl | quote }}
+    ZAMMAD_TOKEN: {{ default "" .Values.waldur.support.zammad.token | quote }}
+    ZAMMAD_GROUP: {{ default "" .Values.waldur.support.zammad.group | quote }}
+    ZAMMAD_ARTICLE_TYPE: {{ default "email" .Values.waldur.support.zammad.articleType | quote }}
+    ZAMMAD_COMMENT_COOLDOWN_DURATION: {{ default 5 .Values.waldur.support.zammad.commentCooldownDuration | int }}
+    {{ end }}
+    {{ if eq .Values.waldur.support.backend "smax" }}
+    WALDUR_SUPPORT_ACTIVE_BACKEND_TYPE: 'smax'
+    WALDUR_SUPPORT_DISPLAY_REQUEST_TYPE: false
+    SMAX_API_URL: {{ default "" .Values.waldur.support.smax.apiUrl | quote }}
+    SMAX_TENANT_ID: {{ default "" .Values.waldur.support.smax.tenantId | quote }}
+    SMAX_LOGIN: {{ default "" .Values.waldur.support.smax.login | quote }}
+    SMAX_PASSWORD: {{ default "" .Values.waldur.support.smax.password | quote }}
+    {{ end }}
+    {{ else }}
+    WALDUR_SUPPORT_ENABLED: false
+    {{ end }}

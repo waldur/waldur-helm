@@ -282,55 +282,6 @@ data:
     WALDUR_SLURM['PRIVATE_KEY_PATH'] = '/var/lib/waldur/id_rsa'
     {{ end }}
     {{ end }}
-
-    {{- if has "support" .Values.waldur.features -}}
-    WALDUR_SUPPORT['ENABLED'] = True
-    {{ if eq .Values.waldur.support.backend "atlassian" }}
-    WALDUR_SUPPORT['ACTIVE_BACKEND_TYPE'] = 'atlassian'
-    WALDUR_SUPPORT['DISPLAY_REQUEST_TYPE'] = True
-    {{ if .Values.waldur.support.atlassian.legacy }}
-    WALDUR_ATLASSIAN['USE_OLD_API'] = True
-    {{ end }}
-
-    {{ if .Values.waldur.support.atlassian.servicedeskToken }}
-    WALDUR_ATLASSIAN['EMAIL'] = '{{ .Values.waldur.support.atlassian.servicedeskEmail }}'
-    WALDUR_ATLASSIAN['TOKEN'] = '{{ .Values.waldur.support.atlassian.servicedeskToken }}'
-    {{ else }}
-    WALDUR_ATLASSIAN['USERNAME'] = '{{ .Values.waldur.support.atlassian.servicedeskUsername}}'
-    WALDUR_ATLASSIAN['PASSWORD'] = '{{ .Values.waldur.support.atlassian.servicedeskPassword }}'
-    {{ end }}
-    WALDUR_ATLASSIAN['SERVER'] = '{{ .Values.waldur.support.atlassian.servicedeskUrl }}'
-
-    WALDUR_ATLASSIAN['ISSUE'].update({
-        'caller_field': 'Request participants',
-    {{ if .Values.waldur.support.atlassian.organizationField }}
-        'organisation_field': '{{ .Values.waldur.support.atlassian.organizationField }}',
-    {{ end }}
-    })
-    WALDUR_ATLASSIAN['PROJECT'].update({
-        'key': '{{ .Values.waldur.support.atlassian.projectKey }}',
-    })
-    {{ if not .Values.waldur.support.atlassian.useAutomaticRequestMapping }}
-    WALDUR_ATLASSIAN['USE_AUTOMATIC_REQUEST_MAPPING'] = False
-    {{ end }}
-    {{ end }}
-    {{ if eq .Values.waldur.support.backend "zammad" }}
-    WALDUR_SUPPORT['ACTIVE_BACKEND_TYPE'] = 'zammad'
-    WALDUR_SUPPORT['DISPLAY_REQUEST_TYPE'] = False
-    WALDUR_ZAMMAD.update({
-        'ZAMMAD_API_URL': {{ default "" .Values.waldur.support.zammad.apiUrl | quote }},
-        'ZAMMAD_TOKEN': {{ default "" .Values.waldur.support.zammad.token | quote }},
-        'ZAMMAD_GROUP': {{ default "" .Values.waldur.support.zammad.group | quote }},
-        'ZAMMAD_ARTICLE_TYPE': {{ default "email" .Values.waldur.support.zammad.articleType | quote }},
-        'COMMENT_COOLDOWN_DURATION': {{ default 5 .Values.waldur.support.zammad.commentCooldownDuration | int }},
-    })
-    {{ end }}
-    {{- else -}}
-    WALDUR_SUPPORT.update({
-        'ENABLED': False,
-    })
-    {{- end -}}
-
     #
     # waldur-openstack
     #

@@ -205,7 +205,7 @@ waldur:
     projectPrefix: "test_pr_"
     allocationPrefix: "test_alloc"
   support:
-    backend: "zammad" # Either "atlassian" or "zammad"
+    backend: "zammad" # Can be "atlassian", "zammad" or "smax"
     atlassian:
       servicedeskEmail: "waldur@example.com"
       servicedeskToken: "support-token"
@@ -223,6 +223,11 @@ waldur:
       group: "default-group"
       articleType: "email"
       commentCooldownDuration: 7
+    smax:
+      apiUrl: "https://smax.example.com/api/"
+      tenantId: "123456789"
+      login: "user@example.com"
+      password: "password"
   marketplace:
     notify_staff: false
     script:

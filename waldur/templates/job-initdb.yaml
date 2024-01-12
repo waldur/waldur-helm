@@ -48,6 +48,9 @@ spec:
             - name: config-features-json
               mountPath: /etc/waldur/features.json
               subPath: features.json
+            - name: constance-settings-yaml
+              mountPath: /etc/waldur/support.yaml
+              subPath: support.yaml
             {{ if .Values.waldur.mastermindTemplating.mastermindTemplatesPath }}
             - name: waldur-mastermind-template
               mountPath: /etc/waldur/notifications-templates.yaml
@@ -84,9 +87,6 @@ spec:
             - name: whitelabeling-yaml
               mountPath: /etc/waldur/whitelabeling.yaml
               subPath: whitelabeling.yaml
-            - name: constance-settings-yaml
-              mountPath: /etc/waldur/support.yaml
-              subPath: support.yaml
             - name: icons
               mountPath: /etc/waldur/icons
           resources:

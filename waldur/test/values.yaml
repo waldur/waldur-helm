@@ -176,6 +176,8 @@ waldur:
     usernamePrefix: "pref_"
   valimo:
     dir: "test/waldur_valimo"
+    valimoClientKey: "client key"
+    valimoClientCrt: "client cert"
     apId: ""
     apPwd: ""
     dnsname: ""
@@ -236,6 +238,9 @@ waldur:
         python: "opennode/python-script-runner:0.1.1"
         shell: "alpine:3"
       kubeconfigPath: "test/k8s/kubeconfig"
+      kubeconfig: |
+        test content
+        for multiline kubeconfig
       k8sNamespace: "default"
       jobTimeout: 1800
   pid_datacite:
@@ -262,12 +267,35 @@ waldur:
     privacyHtmlPath: "test/files/privacy.html"
     siteDescription: "Waldur Helm Test"
     supportPortalLink: "https://docs.waldur.com"
+    tosHtml: |
+      <html>
+      TOS
+      </html>
+    privacyHtml: |
+      <html>
+      Privacy
+      </html>
   # Measured in weeks number
   invitationDuration:
     individual: 3
     group: 3
   mastermindTemplating:
     mastermindTemplatesPath: "mastermind_templates/mastermind-templates.yaml"
+    mastermindTemplates: |
+      users/invitation_notification_message.txt: |
+          test
+      users/invitation_notification_message.html: |
+          <html>
+          <head lang="en">
+              <meta charset="UTF-8">
+              <title>Invitation has been created</title>
+          </head>
+          <body>
+          <p>
+              Test
+          </p>
+          </body>
+          </html>
   saml2:
     dir: "test/waldur_saml2"
     federations:

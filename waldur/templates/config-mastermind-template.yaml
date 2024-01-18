@@ -1,9 +1,14 @@
-{{ if .Values.waldur.mastermindTemplating.mastermindTemplatesPath }}
+{{ if or .Values.waldur.mastermindTemplating.mastermindTemplatesPath .Values.waldur.mastermindTemplating.mastermindTemplates }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: mastermind-template-config
 data:
   mastermind-templates.yaml: |
+{{ if .Values.waldur.mastermindTemplating.mastermindTemplates }}
+{{ .Files.Get .Values.waldur.mastermindTemplating.mastermindTemplates | indent 4 }}
+{{ else }}
 {{ .Files.Get .Values.waldur.mastermindTemplating.mastermindTemplatesPath | indent 4 }}
+{{ end }}
+
 {{ end }}

@@ -25,3 +25,6 @@ To setup white-labeling, you can define next variables in `waldur/values.yaml` f
 * the `*Path` values take place only if respectful `*Url` values are not specified.
     If both types are defined, the precedence is taken by `URL`(`*Url`) for all cases.
 * all of imported files must be within chart root directory
+
+Alternatively, TOS and PP files content can be provided as multiline values in `tosHtml` and `privacyHtml` options respectfully.
+If defined, they take precedence over the aforementioned ones.

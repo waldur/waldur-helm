@@ -3,6 +3,10 @@ kind: ConfigMap
 apiVersion: v1
 metadata:
   name: waldur-idp-custom-metadata-config
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "1"
 data:
 {{ $idpFile := .Values.waldur.saml2.dir | printf "%s/idp_metadata.xml" }}
   idp_metadata.xml: |-

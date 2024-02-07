@@ -13,7 +13,7 @@ data:
       description: PI
       {{ end }}
       {{ if has "academic_shared_domain" .Values.waldur.features }}
-      description: resource allocator
+      description: Resource allocator
       {{ end }}
       add_permissions:
         {{ if has "owner_can_register_service_provider" .Values.waldur.features }}
@@ -42,10 +42,10 @@ data:
 
     - role: PROJECT.ADMIN
       {{ if has "academic_domain" .Values.waldur.features }}
-      description: member
+      description: Member
       {{ end }}
       {{ if has "academic_shared_domain" .Values.waldur.features }}
-      description: co-PI
+      description: Co-PI
       {{ end }}
       add_permissions:
         {{ if has "admin_can_approve_order" .Values.waldur.features }}
@@ -58,7 +58,7 @@ data:
 
     - role: PROJECT.MANAGER
       {{ if has "academic_domain" .Values.waldur.features }}
-      description: co-PI
+      description: Co-PI
       {{ end }}
       {{ if has "academic_shared_domain" .Values.waldur.features }}
       description: PI
@@ -79,8 +79,8 @@ data:
       is_active: false
       {{ end }}
       {{ if has "academic_domain" .Values.waldur.features }}
-      description: guest
+      description: Guest
       {{ end }}
       {{ if has "academic_shared_domain" .Values.waldur.features }}
-      description: member
+      description: Member
       {{ end }}

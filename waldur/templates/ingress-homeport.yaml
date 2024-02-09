@@ -36,5 +36,9 @@ spec:
   tls:
   - hosts:
     - {{ .Values.homeportHostname }}
+    {{ if .Values.ingress.tls.customHomeportSecretName }}
+    secretName: {{ .Values.ingress.tls.customHomeportSecretName | quote }}
+    {{ else }}
     secretName: homeport-certificate
+    {{ end }}
   {{ end }}

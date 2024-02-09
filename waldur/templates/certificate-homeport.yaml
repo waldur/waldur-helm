@@ -1,4 +1,4 @@
-{{ if and .Values.ingress.tls.enabled (.Values.ingress.tls.source | eq "secret") }}
+{{ if and (and .Values.ingress.tls.enabled (.Values.ingress.tls.source | eq "secret")) (not .Values.ingress.tls.customHomeportSecretName) }}
 apiVersion: v1
 kind: Secret
 metadata:

@@ -64,6 +64,8 @@ ingress:
   tls:
     enabled: true
     source: "letsEncrypt" # Possible values: `letsEncrypt` and `secret`
+    customMastermindSecretName: ""
+    customHomeportSecretName: ""
     secretsDir: "tls"  # Enabled only if source == `secret`
   whitelistSourceRange: '' # E.g. '192.168.22.0/24'
   whitelistSourceRangeAdmin: ''

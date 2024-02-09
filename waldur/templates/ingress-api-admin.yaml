@@ -5,7 +5,7 @@ apiVersion: networking.k8s.io/v1beta1
 {{- end }}
 kind: Ingress
 metadata:
-  name: api-ingress
+  name: api-ingress-admin
   annotations:
     kubernetes.io/ingress.class: "nginx"
     nginx.ingress.kubernetes.io/enable-cors: "true"
@@ -14,7 +14,9 @@ metadata:
     {{ if and .Values.ingress.tls.enabled (eq .Values.ingress.tls.source "letsEncrypt") }}
     cert-manager.io/cluster-issuer: letsencrypt-prod-issuer
     {{ end }}
-    {{ if .Values.ingress.whitelistSourceRange }}
+    {{ if .Values.ingress.whitelistSourceRangeAdmin }}
+    nginx.ingress.kubernetes.io/whitelist-source-range: "{{ .Values.ingress.whitelistSourceRangeAdmin }}"
+    {{ else if .Values.ingress.whitelistSourceRange }}
     nginx.ingress.kubernetes.io/whitelist-source-range: "{{ .Values.ingress.whitelistSourceRange }}"
     {{ end }}
 spec:
@@ -22,42 +24,14 @@ spec:
   - host: {{ .Values.apiHostname }}
     http:
       paths:
-      - path: /api
+      - path: /admin
         pathType: Prefix
         backend:
           service:
             name: waldur-mastermind-api
             port:
               number: 80
-      - path: /api-auth
-        pathType: Prefix
-        backend:
-          service:
-            name: waldur-mastermind-api
-            port:
-              number: 80
-      - path: /docs
-        pathType: Prefix
-        backend:
-          service:
-            name: waldur-mastermind-api
-            port:
-              number: 80
-      - path: /apidocs
-        pathType: Prefix
-        backend:
-          service:
-            name: waldur-mastermind-api
-            port:
-              number: 80
-      - path: /media
-        pathType: Prefix
-        backend:
-          service:
-            name: waldur-mastermind-api
-            port:
-              number: 80
-      - path: /health-check
+      - path: /static
         pathType: Prefix
         backend:
           service:

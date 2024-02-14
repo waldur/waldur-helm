@@ -44,7 +44,7 @@ data:
     {{ end }}
     {{ if eq .Values.waldur.support.backend "smax" }}
     WALDUR_SUPPORT_ACTIVE_BACKEND_TYPE: 'smax'
-    WALDUR_SUPPORT_DISPLAY_REQUEST_TYPE: false
+    WALDUR_SUPPORT_DISPLAY_REQUEST_TYPE: true
     SMAX_API_URL: {{ default "" .Values.waldur.support.smax.apiUrl | quote }}
     SMAX_TENANT_ID: {{ default "" .Values.waldur.support.smax.tenantId | quote }}
     SMAX_LOGIN: {{ default "" .Values.waldur.support.smax.login | quote }}

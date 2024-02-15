@@ -274,6 +274,24 @@ data:
     WALDUR_INVOICES['PAYMENT_INTERVAL'] = {{ .Values.waldur.invoice.paymentInterval }}
     {{ end }}
 
+    # Enable reporting of accounting data
+    {{ if .Values.waldur.invoice_reporting.enabled }}
+    WALDUR_INVOICES['INVOICE_REPORTING'].update({
+        'ENABLE': True,
+        'EMAIL': '{{ .Values.waldur.invoice_reporting.email }}',
+        'USE_SAP': True,
+        'SAP_PARAMS': {
+            'KM_KOOD': '{{ .Values.waldur.invoice_reporting.sap_params.km_kood }}',
+            'ORG_CODE': '{{ .Values.waldur.invoice_reporting.sap_params.org_code }}',
+            'MAKSET': '{{ .Values.waldur.invoice_reporting.sap_params.makset }}',
+            'FUNKA': '{{ .Values.waldur.invoice_reporting.sap_params.funka }}',
+            'FUND': '{{ .Values.waldur.invoice_reporting.sap_params.fund }}',
+            'EELUKS': '{{ .Values.waldur.invoice_reporting.sap_params.eeluks }}',
+            'KULUUKSUS': '{{ .Values.waldur.invoice_reporting.sap_params.kuluuksus }}',
+        },
+    })
+    {{ end }}
+
     {{ if has "slurm" .Values.waldur.features }}
     # See also http://docs.waldur.com/SLURM+plugin+configuration
     WALDUR_SLURM.update({

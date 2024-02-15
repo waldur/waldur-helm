@@ -59,6 +59,11 @@ spec:
               mountPath: /etc/waldur/notifications-templates.yaml
               subPath: "mastermind-templates.yaml"
             {{ end }}
+            {{ if .Values.waldur.notifications }}
+            - name: mastermind-notifications-json
+              mountPath: /etc/waldur/notifications.json
+              subPath: "notifications.json"
+            {{ end }}
             {{ if .Values.waldur.whitelabeling.privacyHtmlPath }}
             - name: waldur-mastermind-user-agreements
               mountPath: /etc/waldur/privacy-policy.html
@@ -177,10 +182,15 @@ spec:
       - name: constance-settings-yaml
         configMap:
           name: mastermind-support-yaml
-  {{ if .Values.waldur.mastermindTemplating.mastermindTemplatesPath }}
+      {{ if or .Values.waldur.mastermindTemplating.mastermindTemplatesPath .Values.waldur.mastermindTemplating.mastermindTemplates }}
       - name: waldur-mastermind-template
         configMap:
           name: mastermind-template-config
+      {{ end }}
+      {{ if .Values.waldur.notifications }}
+      - name: mastermind-notifications-json
+        configMap:
+          name: mastermind-notifications-config
       {{ end }}
       {{ if or (.Values.waldur.whitelabeling.privacyHtmlPath) (.Values.waldur.whitelabeling.tosHtmlPath) }}
       - name: waldur-mastermind-user-agreements

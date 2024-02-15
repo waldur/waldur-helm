@@ -10,7 +10,7 @@ metadata:
 data:
   mastermind-templates.yaml: |
 {{ if .Values.waldur.mastermindTemplating.mastermindTemplates }}
-{{ .Files.Get .Values.waldur.mastermindTemplating.mastermindTemplates | indent 4 }}
+{{ toYaml .Values.waldur.mastermindTemplating.mastermindTemplates | indent 4 }}
 {{ else }}
 {{ .Files.Get .Values.waldur.mastermindTemplating.mastermindTemplatesPath | indent 4 }}
 {{ end }}

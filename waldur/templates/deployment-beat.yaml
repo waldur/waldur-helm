@@ -5,6 +5,7 @@ metadata:
   labels:
 {{ include "waldur.labels" . | indent 4 }}
 spec:
+  progressDeadlineSeconds: 1800
   replicas: 1
   selector:
     matchLabels:
@@ -24,6 +25,81 @@ spec:
       hostAliases:
         {{ toYaml .Values.hostaliases | nindent 8 }}
       {{ end }}
+      initContainers:
+        - name: check-db-ready
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.initdbImageName }}:{{ template "waldur.postgresql.version" . }}
+          command: ['sh', '-c',
+            'until pg_isready;
+            do echo waiting for database; sleep 2; done;']
+          env:
+            {{- include "waldur.env.initdb" . | nindent 11 }}
+        - name: create-celery-results-db
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.initdbImageName }}:{{ template "waldur.postgresql.version" . }}
+          command: ['sh', '-c', 'createdb celery_results || true']
+          env:
+            {{- include "waldur.env.initdb" . | nindent 11 }}
+        - name: waldur-mastermind-create-dbcache
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
+          args:
+            - initdb-cache
+          env:
+            {{- include "waldur.credentials" . | nindent 13 }}
+          volumeMounts:
+            - name: api-override
+              mountPath: /etc/waldur/override.conf.py
+              subPath: override.conf.py
+            - name: api-celery
+              mountPath: /etc/waldur/celery.conf
+              subPath: celery.conf
+          resources:
+            {{- toYaml .Values.apiResources | nindent 12 }}
+        - name: waldur-mastermind-migrate
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
+          args:
+            - initdb
+          env:
+            {{- include "waldur.credentials" . | nindent 13 }}
+          volumeMounts:
+            - name: api-override
+              mountPath: /etc/waldur/override.conf.py
+              subPath: override.conf.py
+            - name: api-celery
+              mountPath: /etc/waldur/celery.conf
+              subPath: celery.conf
+            - name: config-features-json
+              mountPath: /etc/waldur/features.json
+              subPath: features.json
+            - name: constance-settings-yaml
+              mountPath: /etc/waldur/support.yaml
+              subPath: support.yaml
+            {{ if .Values.waldur.mastermindTemplating.mastermindTemplatesPath }}
+            - name: waldur-mastermind-template
+              mountPath: /etc/waldur/notifications-templates.yaml
+              subPath: "mastermind-templates.yaml"
+            {{ end }}
+            {{ if .Values.waldur.notifications }}
+            - name: mastermind-notifications-json
+              mountPath: /etc/waldur/notifications.json
+              subPath: "notifications.json"
+            {{ end }}
+            {{ if .Values.waldur.whitelabeling.privacyHtmlPath }}
+            - name: waldur-mastermind-user-agreements
+              mountPath: /etc/waldur/privacy-policy.html
+              subPath: "mastermind-pp.html"
+            {{ end }}
+            {{ if .Values.waldur.whitelabeling.tosHtmlPath }}
+            - name: waldur-mastermind-user-agreements
+              mountPath: /etc/waldur/terms-of-service.html
+              subPath: "mastermind-tos.html"
+            {{ end }}
+            - name: config-auth-yaml
+              mountPath: /etc/waldur/auth.yaml
+              subPath: auth.yaml
+            - name: config-permissions-override-yaml
+              mountPath: /etc/waldur/permissions-override.yaml
+              subPath: permissions-override.yaml
+          resources:
+            {{- toYaml .Values.apiResources | nindent 12 }}
       containers:
         - name: waldur-mastermind-beat
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
@@ -62,6 +138,33 @@ spec:
       - name: api-celery
         configMap:
           name: api-celery-config
+      - name: config-features-json
+        configMap:
+          name: mastermind-config-features-json
+      - name: config-auth-yaml
+        configMap:
+          name: mastermind-config-auth-yaml
+      - name: config-permissions-override-yaml
+        configMap:
+          name: mastermind-config-permissions-override-yaml
+      - name: constance-settings-yaml
+        configMap:
+          name: mastermind-support-yaml
+      {{ if or .Values.waldur.mastermindTemplating.mastermindTemplatesPath .Values.waldur.mastermindTemplating.mastermindTemplates }}
+      - name: waldur-mastermind-template
+        configMap:
+          name: mastermind-template-config
+      {{ end }}
+      {{ if .Values.waldur.notifications }}
+      - name: mastermind-notifications-json
+        configMap:
+          name: mastermind-notifications-config
+      {{ end }}
+      {{ if or (.Values.waldur.whitelabeling.privacyHtmlPath) (.Values.waldur.whitelabeling.tosHtmlPath) }}
+      - name: waldur-mastermind-user-agreements
+        configMap:
+          name: mastermind-user-agreement-config
+      {{ end }}
       {{ if .Values.waldur.ssh_public_key_path }}
       - name: waldur-ssh-pub-key
         configMap:

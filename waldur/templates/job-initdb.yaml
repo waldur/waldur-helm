@@ -9,9 +9,8 @@ metadata:
     "helm.sh/hook": post-install, post-upgrade
     "helm.sh/hook-weight": "1"
     "helm.sh/hook-delete-policy": before-hook-creation
-    argocd.argoproj.io/hook: PreSync,PostSync
+    argocd.argoproj.io/hook: PostSync
     argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
-    argocd.argoproj.io/sync-wave: "2"
 spec:
   template:
     metadata:
@@ -21,67 +20,7 @@ spec:
         app.kubernetes.io/version: {{ .Chart.AppVersion }}
         helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     spec:
-      initContainers:
-      - name: check-db-ready
-        image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.initdbImageName }}:{{ template "waldur.postgresql.version" . }}
-        command: ['sh', '-c',
-          'until pg_isready;
-          do echo waiting for database; sleep 2; done;']
-        env:
-          {{- include "waldur.env.initdb" . | nindent 11 }}
       containers:
-        - name: create-celery-results-db
-          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.initdbImageName }}:{{ template "waldur.postgresql.version" . }}
-          command: ['sh', '-c', 'createdb celery_results || true']
-          env:
-            {{- include "waldur.env.initdb" . | nindent 11 }}
-        - name: waldur-mastermind-migrate
-          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
-          args:
-            - initdb
-          env:
-            {{- include "waldur.credentials" . | nindent 13 }}
-          volumeMounts:
-            - name: api-override
-              mountPath: /etc/waldur/override.conf.py
-              subPath: override.conf.py
-            - name: api-celery
-              mountPath: /etc/waldur/celery.conf
-              subPath: celery.conf
-            - name: config-features-json
-              mountPath: /etc/waldur/features.json
-              subPath: features.json
-            - name: constance-settings-yaml
-              mountPath: /etc/waldur/support.yaml
-              subPath: support.yaml
-            {{ if .Values.waldur.mastermindTemplating.mastermindTemplatesPath }}
-            - name: waldur-mastermind-template
-              mountPath: /etc/waldur/notifications-templates.yaml
-              subPath: "mastermind-templates.yaml"
-            {{ end }}
-            {{ if .Values.waldur.notifications }}
-            - name: mastermind-notifications-json
-              mountPath: /etc/waldur/notifications.json
-              subPath: "notifications.json"
-            {{ end }}
-            {{ if .Values.waldur.whitelabeling.privacyHtmlPath }}
-            - name: waldur-mastermind-user-agreements
-              mountPath: /etc/waldur/privacy-policy.html
-              subPath: "mastermind-pp.html"
-            {{ end }}
-            {{ if .Values.waldur.whitelabeling.tosHtmlPath }}
-            - name: waldur-mastermind-user-agreements
-              mountPath: /etc/waldur/terms-of-service.html
-              subPath: "mastermind-tos.html"
-            {{ end }}
-            - name: config-auth-yaml
-              mountPath: /etc/waldur/auth.yaml
-              subPath: auth.yaml
-            - name: config-permissions-override-yaml
-              mountPath: /etc/waldur/permissions-override.yaml
-              subPath: permissions-override.yaml
-          resources:
-            {{- toYaml .Values.apiResources | nindent 12 }}
         - name: waldur-mastermind-whitelabeling-init
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
           args:
@@ -97,21 +36,6 @@ spec:
               subPath: whitelabeling.yaml
             - name: icons
               mountPath: /etc/waldur/icons
-          resources:
-            {{- toYaml .Values.apiResources | nindent 12 }}
-        - name: waldur-mastermind-create-dbcache
-          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
-          args:
-            - initdb-cache
-          env:
-            {{- include "waldur.credentials" . | nindent 13 }}
-          volumeMounts:
-            - name: api-override
-              mountPath: /etc/waldur/override.conf.py
-              subPath: override.conf.py
-            - name: api-celery
-              mountPath: /etc/waldur/celery.conf
-              subPath: celery.conf
           resources:
             {{- toYaml .Values.apiResources | nindent 12 }}
 {{ if has "SAML2" .Values.waldur.authMethods }}
@@ -164,39 +88,12 @@ spec:
       - name: api-celery
         configMap:
           name: api-celery-config
-      - name: config-features-json
-        configMap:
-          name: mastermind-config-features-json
-      - name: config-auth-yaml
-        configMap:
-          name: mastermind-config-auth-yaml
-      - name: config-permissions-override-yaml
-        configMap:
-          name: mastermind-config-permissions-override-yaml
       - name: icons
         configMap:
           name: icons-config
       - name: whitelabeling-yaml
         configMap:
           name: mastermind-whitelabeling-yaml
-      - name: constance-settings-yaml
-        configMap:
-          name: mastermind-support-yaml
-      {{ if or .Values.waldur.mastermindTemplating.mastermindTemplatesPath .Values.waldur.mastermindTemplating.mastermindTemplates }}
-      - name: waldur-mastermind-template
-        configMap:
-          name: mastermind-template-config
-      {{ end }}
-      {{ if .Values.waldur.notifications }}
-      - name: mastermind-notifications-json
-        configMap:
-          name: mastermind-notifications-config
-      {{ end }}
-      {{ if or (.Values.waldur.whitelabeling.privacyHtmlPath) (.Values.waldur.whitelabeling.tosHtmlPath) }}
-      - name: waldur-mastermind-user-agreements
-        configMap:
-          name: mastermind-user-agreement-config
-      {{ end }}
       {{ if has "SAML2" .Values.waldur.authMethods }}
       - name: waldur-saml2-certs
         secret:

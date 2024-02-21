@@ -96,6 +96,45 @@ Test release installation and readiness:
         echo ----
       done
 
+.Test ArgoCD template:
+  image: registry.hpc.ut.ee/iljatest/docker:24.0.6
+  variables:
+    APPLICATION_NAME: waldur-helm-$CI_MERGE_REQUEST_IID
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  before_script:
+    - echo 'PasswordAuthentication no' >> /etc/ssh/ssh_config
+    - cat /etc/ssh/ssh_config
+    - SSH_COMMAND="ssh -i .ssh/id_waldur_dev_ssh_pkey -o PasswordAuthentication=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null rocky@172.17.89.30"
+    - SCP_COMMAND="scp -i .ssh/id_waldur_dev_ssh_pkey -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+    - mkdir -p .ssh
+    - cp -vf $WALDUR_DEV_SSH_PKEY .ssh/id_waldur_dev_ssh_pkey
+    - cp -vf $WALDUR_DEV_SSH_PUBKEY .ssh/id_waldur_dev_ssh_pkey.pub
+    - chmod 600 .ssh/id_waldur_dev_ssh_pkey
+  after_script:
+    - rm -fv .ssh/id_waldur_dev_ssh_pkey .ssh/id_waldur_dev_ssh_pkey.pub
+
+Test ArgoCD sync:
+  extends: .Test ArgoCD template
+  stage: test
+  script:
+    - $SSH_COMMAND "argocd login 10.43.40.117:80 --username $ARGOCD_USERNAME --password $ARGOCD_PASSWORD --name default --insecure"
+    - $SSH_COMMAND "argocd account get-user-info"
+    - $SSH_COMMAND "argocd app list"
+    - $SSH_COMMAND "argocd repo add https://code.opennodecloud.com/waldur/waldur-helm.git --username gitlab-ci-token --password $CI_JOB_TOKEN --upsert"
+    - $SSH_COMMAND "argocd app sync $APPLICATION_NAME --timeout 1800"
+    - $SSH_COMMAND "argocd app wait $APPLICATION_NAME"
+    - $SSH_COMMAND "argocd repo rm https://code.opennodecloud.com/waldur/waldur-helm.git"
+
+Stop argocd app:
+  extends: .Test ArgoCD template
+  stage: .pre
+  script:
+    - $SSH_COMMAND "argocd app delete $APPLICATION_NAME"
+    # There is no option to wait until application is deleted
+    # Also, argocd doesn't delete an application record, it changes state to "Missing" instead
+    - sleep 5s
+
 Cleanup previous test deployment:
   extends: .Cleanup template
   stage: .pre

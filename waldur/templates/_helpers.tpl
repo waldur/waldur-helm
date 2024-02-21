@@ -58,9 +58,9 @@ Set postgres host
 {{- if .Values.externalDB.enabled -}}
 {{ .Values.externalDB.serviceName }}
 {{- else if .Values.postgresqlha.enabled -}}
-"waldur-postgresqlha-pgpool"
+"{{ .Release.Name }}-postgresqlha-pgpool"
 {{- else if .Values.postgresql.enabled -}}
-"waldur-postgresql"
+"{{ .Release.Name }}-postgresql"
 {{- else -}}
 "postgresql-waldur"
 {{- end -}}
@@ -80,9 +80,9 @@ Set postgres secret
 {{- if .Values.externalDB.enabled -}}
 {{ .Values.externalDB.secretName }}
 {{- else if .Values.postgresqlha.enabled -}}
-"waldur-postgresqlha-postgresql"
+"{{ .Release.Name }}-postgresqlha-postgresql"
 {{- else if .Values.postgresql.enabled -}}
-"waldur-postgresql"
+"{{ .Release.Name }}-postgresql"
 {{- else -}}
 "postgresql-waldur"
 {{- end -}}

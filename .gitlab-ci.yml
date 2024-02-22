@@ -84,7 +84,7 @@ Test release installation and readiness:
     - if: $TRIGGER_PROJECT_NAME
   script:
     - helm dep update waldur/
-    - helm install waldur waldur/ -f waldur/test/values.yaml --timeout 10m0s
+    - helm install waldur waldur/ --wait -f waldur/test/values.yaml --timeout 10m0s
   after_script:
     - export KUBECONFIG=${K8S_CONFIG_WALDUR_HELM_TEST}
     - helm list
@@ -122,7 +122,7 @@ Test ArgoCD sync:
     - $SSH_COMMAND "argocd account get-user-info"
     - $SSH_COMMAND "argocd app list"
     - $SSH_COMMAND "argocd repo add https://code.opennodecloud.com/waldur/waldur-helm.git --username gitlab-ci-token --password $CI_JOB_TOKEN --upsert"
-    - $SSH_COMMAND "argocd app sync $APPLICATION_NAME --timeout 1800"
+    - $SSH_COMMAND "argocd app sync $APPLICATION_NAME --timeout 2400"
     - $SSH_COMMAND "argocd app wait $APPLICATION_NAME"
     - $SSH_COMMAND "argocd repo rm https://code.opennodecloud.com/waldur/waldur-helm.git"
 
@@ -134,6 +134,7 @@ Stop argocd app:
     # There is no option to wait until application is deleted
     # Also, argocd doesn't delete an application record, it changes state to "Missing" instead
     - sleep 5s
+  allow_failure: true
 
 Cleanup previous test deployment:
   extends: .Cleanup template

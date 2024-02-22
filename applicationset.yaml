@@ -16,7 +16,7 @@ spec:
           key: token
         pullRequestState: opened
         insecure: true
-      requeueAfterSeconds: 1800
+      requeueAfterSeconds: 60
   template:
     metadata:
       name: 'waldur-helm-{{.number}}'
@@ -28,7 +28,8 @@ spec:
         helm:
           valueFiles:
           - test/values.yaml
+          - test/argocd-values.yaml
       project: default
       destination:
         server: https://kubernetes.default.svc
-        namespace: waldur
+        namespace: waldur-helm-testing

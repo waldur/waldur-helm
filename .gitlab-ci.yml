@@ -80,8 +80,14 @@ Test release installation and readiness:
   extends: .Test template
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - waldur/
     - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "schedule"'
+      changes:
+        - waldur/
     - if: $TRIGGER_PROJECT_NAME
+      changes:
+        - waldur/
   script:
     - helm dep update waldur/
     - helm install waldur waldur/ --wait -f waldur/test/values.yaml --timeout 10m0s
@@ -102,6 +108,8 @@ Test release installation and readiness:
     APPLICATION_NAME: waldur-helm-$CI_MERGE_REQUEST_IID
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - waldur/
   before_script:
     - echo 'PasswordAuthentication no' >> /etc/ssh/ssh_config
     - cat /etc/ssh/ssh_config
@@ -214,3 +222,34 @@ Publish new chart version and update docs on github:
     - git status
     - git commit -m "Release $CI_COMMIT_TAG"
     - git push github-origin gh-pages
+
+Check for deprecated Kubernetes resources:
+  stage: test
+  image:
+    name: "registry.hpc.ut.ee/mirror/alpine/helm:3.14.2"
+    entrypoint: [""]
+  rules:
+    - if: '$SKIP_TESTS == "true"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: $CI_COMMIT_TAG
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - wget https://github.com/FairwindsOps/pluto/releases/download/v5.19.0/pluto_5.19.0_linux_amd64.tar.gz
+    - tar -xf pluto_5.19.0_linux_amd64.tar.gz
+    - mv pluto /usr/bin/
+    - helm dependency update waldur/
+    - helm template waldur | pluto detect --target-versions k8s=v1.18.0 -v 5 -
+    - helm template waldur | pluto detect --target-versions k8s=v1.19.0 -v 5 -
+    - helm template waldur | pluto detect --target-versions k8s=v1.20.0 -v 5 -
+    - helm template waldur | pluto detect --target-versions k8s=v1.21.0 -v 5 -
+    - helm template waldur | pluto detect --target-versions k8s=v1.22.0 -v 5 -
+    - helm template waldur | pluto detect --target-versions k8s=v1.23.0 -v 5 -
+    - helm template waldur | pluto detect --target-versions k8s=v1.24.0 -v 5 -
+    - helm template waldur | pluto detect --target-versions k8s=v1.25.0 -v 5 -
+    - helm template waldur | pluto detect --target-versions k8s=v1.26.0 -v 5 -
+    - helm template waldur | pluto detect --target-versions k8s=v1.27.0 -v 5 -
+    - helm template waldur | pluto detect --target-versions k8s=v1.28.0 -v 5 -
+    - helm template waldur | pluto detect --target-versions k8s=v1.29.0 -v 5 -

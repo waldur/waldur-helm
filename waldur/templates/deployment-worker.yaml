@@ -6,6 +6,7 @@ metadata:
   labels:
 {{ include "waldur.labels" . | indent 4 }}
 spec:
+  progressDeadlineSeconds: 2400
   replicas: {{ default 1 .Values.replicaCount.worker }}
   selector:
     matchLabels:

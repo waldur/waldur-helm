@@ -81,13 +81,13 @@ Test release installation and readiness:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
-        - waldur/
+        - waldur/**/*
     - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "schedule"'
       changes:
-        - waldur/
+        - waldur/**/*
     - if: $TRIGGER_PROJECT_NAME
       changes:
-        - waldur/
+        - waldur/**/*
   script:
     - helm dep update waldur/
     - helm install waldur waldur/ --wait -f waldur/test/values.yaml --timeout 10m0s
@@ -109,7 +109,7 @@ Test release installation and readiness:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
-        - waldur/
+        - waldur/**/*
   before_script:
     - echo 'PasswordAuthentication no' >> /etc/ssh/ssh_config
     - cat /etc/ssh/ssh_config

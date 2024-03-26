@@ -45,14 +45,14 @@ data:
     SMAX_TENANT_ID: {{ default "" .Values.waldur.support.smax.tenantId | quote }}
     SMAX_LOGIN: {{ default "" .Values.waldur.support.smax.login | quote }}
     SMAX_PASSWORD: {{ default "" .Values.waldur.support.smax.password | quote }}
-    SMAX_ORGANISATION_FIELD: {{ default "" .Values.support.smax.organisationField | quote }}
-    SMAX_PROJECT_FIELD: {{ default "" .Values.support.smax.projectField | quote }}
-    SMAX_AFFECTED_RESOURCE_FIELD: {{ default "" .Values.support.smax.affectedResourceField | quote }}
-    SMAX_TIMES_TO_PULL: {{ default 10 .Values.support.smax.timesToPull }}
-    SMAX_SECONDS_TO_WAIT: {{ default 1 .Values.support.smax.secondsToWait }}
-    SMAX_CREATION_SOURCE_NAME: {{ default "" .Values.support.smax.creationSourceName | quote }}
-    SMAX_REQUESTS_OFFERING: {{ default "" .Values.support.smax.requestsOffering | quote }}
-    SMAX_VERIFY_SSL: {{ default true .Values.support.smax.verifySSL }}
+    SMAX_ORGANISATION_FIELD: {{ default "" .Values.waldur.support.smax.organisationField | quote }}
+    SMAX_PROJECT_FIELD: {{ default "" .Values.waldur.support.smax.projectField | quote }}
+    SMAX_AFFECTED_RESOURCE_FIELD: {{ default "" .Values.waldur.support.smax.affectedResourceField | quote }}
+    SMAX_TIMES_TO_PULL: {{ default 10 .Values.waldur.support.smax.timesToPull }}
+    SMAX_SECONDS_TO_WAIT: {{ default 1 .Values.waldur.support.smax.secondsToWait }}
+    SMAX_CREATION_SOURCE_NAME: {{ default "" .Values.waldur.support.smax.creationSourceName | quote }}
+    SMAX_REQUESTS_OFFERING: {{ default "" .Values.waldur.support.smax.requestsOffering | quote }}
+    SMAX_VERIFY_SSL: {{ default true .Values.waldur.support.smax.verifySSL }}
     {{ end }}
     {{ else }}
     WALDUR_SUPPORT_ENABLED: false

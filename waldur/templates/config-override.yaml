@@ -165,10 +165,6 @@ data:
 
     #
     # waldur-core
-    {{ if has "owner_can_manage_customer" .Values.waldur.features }}
-    WALDUR_CORE['OWNER_CAN_MANAGE_CUSTOMER'] = True
-    {{ end }}
-
     {{ if .Values.waldur.homeport.userMandatoryFields }}
     WALDUR_CORE["USER_MANDATORY_FIELDS"] = {{ .Values.waldur.homeport.userMandatoryFields | toJson }}
     {{ end }}

@@ -23,6 +23,11 @@ data:
         - CUSTOMER.UPDATE_PERMISSION
         - CUSTOMER.DELETE_PERMISSION
         {{ end }}
+        {{ if has "owner_can_manage_customers" .Values.waldur.features }}
+        - CUSTOMER.CREATE
+        - CUSTOMER.UPDATE
+        - CUSTOMER.DELETE
+        {{ end }}
       drop_permissions:
         {{ if not (has "owner_can_register_service_provider" .Values.waldur.features) }}
         - SERVICE_PROVIDER.REGISTER
@@ -34,6 +39,11 @@ data:
         - CUSTOMER.CREATE_PERMISSION
         - CUSTOMER.UPDATE_PERMISSION
         - CUSTOMER.DELETE_PERMISSION
+        {{ end }}
+        {{ if not (has "owner_can_manage_customers" .Values.waldur.features) }}
+        - CUSTOMER.CREATE
+        - CUSTOMER.UPDATE
+        - CUSTOMER.DELETE
         {{ end }}
 
     - role: PROJECT.ADMIN

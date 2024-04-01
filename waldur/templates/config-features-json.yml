@@ -20,6 +20,9 @@ data:
       {{ if not (has "disable_volume_types" .Values.waldur.features) }}
         "openstack.volume_types": true,
       {{ end }}
+      {{ if has "hide_volume_type_selector" .Values.waldur.features }}
+        "openstack.hide_volume_type_selector": true,
+      {{ end }}
       {{ if has "disable_user_ssh_keys" .Values.waldur.features }}
         "user.ssh_keys": false,
       {{ end }}

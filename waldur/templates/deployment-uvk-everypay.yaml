@@ -52,6 +52,14 @@ spec:
                 key: EVERYPAY_PASSWORD
           - name: WALDUR_SIDECAR_URL
             value: {{ printf "%s://%s/uvk-everypay/" .Values.apiScheme .Values.apiHostname | quote }}
+          - name: AZURE_TENANT_ID
+            value: {{ .Values.waldur.uvkEverypay.azureTenantID | quote }}
+          - name: AZURE_CLIENT_ID
+            value: {{ .Values.waldur.uvkEverypay.azureClientID | quote }}
+          - name: AZURE_CLIENT_SECRET
+            value: {{ .Values.waldur.uvkEverypay.azureClientSecret | quote }}
+          - name: AZURE_SCOPE
+            value: {{ .Values.waldur.uvkEverypay.azureScope | quote }}
         {{- with .Values.nodeSelector }}
         nodeSelector:
           {{- toYaml . | nindent 8 }}
@@ -118,14 +126,6 @@ spec:
             value: {{ .Values.waldur.mail.from | quote }}
           - name: MAIL_REPLY_TO
             value: {{ .Values.waldur.mail.replyTo | quote }}
-          - name: AZURE_TENANT_ID
-            value: {{ .Values.waldur.uvkEverypay.azureTenantID | quote }}
-          - name: AZURE_CLIENT_ID
-            value: {{ .Values.waldur.uvkEverypay.azureClientID | quote }}
-          - name: AZURE_CLIENT_SECRET
-            value: {{ .Values.waldur.uvkEverypay.azureClientSecret | quote }}
-          - name: AZURE_SCOPE
-            value: {{ .Values.waldur.uvkEverypay.azureScope | quote }}
         {{- with .Values.nodeSelector }}
         nodeSelector:
           {{- toYaml . | nindent 8 }}

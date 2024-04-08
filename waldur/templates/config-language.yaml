@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mastermind-language-yaml
+data:
+  languages.yaml: |
+    {{ if .Values.waldur.languageChoices }}
+    LANGUAGE_CHOICES: '{{ .Values.waldur.languageChoices | join(",") }}'
+    {{ end }}
+

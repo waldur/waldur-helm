@@ -36,6 +36,9 @@ spec:
               subPath: whitelabeling.yaml
             - name: icons
               mountPath: /etc/waldur/icons
+            - name: languages-yaml
+              mountPath: /etc/waldur/languages.yaml
+              subPath: languages.yaml
           resources:
             {{- toYaml .Values.apiResources | nindent 12 }}
 {{ if has "SAML2" .Values.waldur.authMethods }}
@@ -94,6 +97,9 @@ spec:
       - name: whitelabeling-yaml
         configMap:
           name: mastermind-whitelabeling-yaml
+      - name: languages-yaml
+        configMap:
+          name: mastermind-languages-yaml
       {{ if has "SAML2" .Values.waldur.authMethods }}
       - name: waldur-saml2-certs
         secret:

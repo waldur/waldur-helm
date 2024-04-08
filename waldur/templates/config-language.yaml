@@ -5,6 +5,6 @@ metadata:
 data:
   languages.yaml: |
     {{ if .Values.waldur.languageChoices }}
-    LANGUAGE_CHOICES: '{{ .Values.waldur.languageChoices | join(",") }}'
+    LANGUAGE_CHOICES: '{{ .Values.waldur.languageChoices | join "," }}'
     {{ end }}
 

@@ -43,6 +43,10 @@ data:
     CELERY_RESULT_BACKEND = f'db+postgresql://{postgresql_user}:{postgresql_password}@{postgresql_host}:{postgresql_port}/{postgresql_name}'
 
     EMAIL_HOST = '{{ .Values.waldur.mail.host }}'
+    EMAIL_PORT = {{ .Values.waldur.mail.port | default 25 | int }}
+    EMAIL_HOST_USER = '{{ .Values.waldur.mail.username | default "" }}'
+    EMAIL_HOST_PASSWORD = '{{ .Values.waldur.mail.password | default "" }}'
+    EMAIL_USE_TLS = {{ .Values.waldur.mail.useTSL | default "False" | camelcase }}
 
     {{ if .Values.waldur.notificationSubject }}
     WALDUR_CORE['NOTIFICATION_SUBJECT'] = '{{ .Values.waldur.notificationSubject }}'

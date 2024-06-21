@@ -414,6 +414,10 @@ data:
         'LOCAL_IDP_PROTECTED_FIELDS': {{ .Values.waldur.localIdp.protectedFields | toJson }},
     })
 
+    {{ if .Values.waldur.defaultIdp }}
+    WALDUR_CORE["DEFAULT_IDP"] = {{ .Values.waldur.defaultIdp | quote }}
+    {{ end }}
+
     {{ if .Values.waldur.mastermindUrl }}
     WALDUR_CORE["MASTERMIND_URL"] = {{ .Values.waldur.mastermindUrl | quote }}
     {{ end }}

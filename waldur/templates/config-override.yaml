@@ -200,6 +200,11 @@ data:
     WALDUR_CORE['INVITATION_DISABLE_MULTIPLE_ROLES'] = True
     {{ end }}
 
+    {{ if has "invitation_use_webhooks" .Values.waldur.features }}
+    WALDUR_CORE["INVITATION_USE_WEBHOOKS"] = True
+    WALDUR_CORE["INVITATION_WEBHOOK_URL"] = {{ default "" .Values.waldur.invitationWebhookUrl | quote }}
+    {{ end }}
+
     {{ if has "protect_freeipa_user_details" .Values.waldur.features }}
     WALDUR_CORE['PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS'] = ['FREEIPA']
     {{ end }}

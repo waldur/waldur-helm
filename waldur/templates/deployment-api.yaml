@@ -51,7 +51,11 @@ spec:
               containerPort: 80
               protocol: TCP
           env:
-            {{- include "waldur.credentials" . | nindent 13 }}
+            {{- include "waldur.credentials" . | nindent 12 }}
+            {{ if .Values.waldur.debug }}
+            - name: GLOBAL_DEBUG
+              value: "true"
+            {{ end }}
           resources:
             {{ if .Values.hpa.api.enabled }}
             {{- toYaml .Values.hpa.api.resources | nindent 12 }}

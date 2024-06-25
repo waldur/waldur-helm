@@ -52,7 +52,11 @@ spec:
             periodSeconds: 25
             timeoutSeconds: 20
           env:
-            {{- include "waldur.credentials" . | nindent 13 }}
+            {{- include "waldur.credentials" . | nindent 12 }}
+            {{ if .Values.waldur.debug }}
+            - name: GLOBAL_DEBUG
+              value: "true"
+            {{ end }}
           resources:
             {{ if .Values.hpa.celery.enabled }}
             {{- toYaml .Values.hpa.celery.workerResources | nindent 12 }}

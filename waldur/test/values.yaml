@@ -125,8 +125,7 @@ waldur:
   timeZone: "UTC"
   features:
     - support
-    - support_next_branch
-    - support_legacy_branch
+    - invitation_use_webhooks
   currencyName: "EUR"
   mastermindUrl: "http://waldur.example.com/"
   site:
@@ -305,7 +304,11 @@ waldur:
       <html>
       Privacy
       </html>
-  invitationWebhookUrl: ""
+  customInvitations:
+    webhookUrl: "https://test-webhook.example.com"
+    tokenUrl: "https://test-token.example.com"
+    tokenClientId: "abcdef"
+    tokenSecret: "asdfgh"
   enableStrictCheckAcceptingInvitation: false
   # Measured in weeks number
   invitationDuration:

@@ -202,7 +202,10 @@ data:
 
     {{ if has "invitation_use_webhooks" .Values.waldur.features }}
     WALDUR_CORE["INVITATION_USE_WEBHOOKS"] = True
-    WALDUR_CORE["INVITATION_WEBHOOK_URL"] = {{ default "" .Values.waldur.invitationWebhookUrl | quote }}
+    WALDUR_CORE["INVITATION_WEBHOOK_URL"] = {{ default "" .Values.waldur.customInvitations.webhookUrl | quote }}
+    WALDUR_CORE["INVITATION_WEBHOOK_TOKEN_URL"] = {{ default "" .Values.waldur.customInvitations.tokenUrl | quote }}
+    WALDUR_CORE["INVITATION_WEBHOOK_TOKEN_CLIENT_ID"] = {{ default "" .Values.waldur.customInvitations.tokenClientId | quote }}
+    WALDUR_CORE["INVITATION_WEBHOOK_TOKEN_SECRET"] = {{ default "" .Values.waldur.customInvitations.tokenSecret | quote }}
     {{ end }}
 
     {{ if .Values.waldur.enableStrictCheckAcceptingInvitation }}

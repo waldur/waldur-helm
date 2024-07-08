@@ -2,6 +2,8 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: icons-config
+  annotations:
+    argocd.argoproj.io/sync-options: "Replace=true"
 binaryData:
   {{ $fpath := "" }}
 
@@ -14,6 +16,12 @@ binaryData:
   {{ if .Values.waldur.whitelabeling.sidebarLogoPath }}
     {{ $fpath = .Values.waldur.whitelabeling.sidebarLogoPath }}
   sidebar_logo.png: |
+{{ .Files.Get $fpath | b64enc | indent 4 }}
+  {{ end }}
+
+  {{ if .Values.waldur.whitelabeling.sidebarLogoDarkPath }}
+    {{ $fpath = .Values.waldur.whitelabeling.sidebarLogoDarkPath }}
+  sidebar_logo_dark.png: |
 {{ .Files.Get $fpath | b64enc | indent 4 }}
   {{ end }}
 

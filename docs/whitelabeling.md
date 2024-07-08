@@ -8,6 +8,8 @@ To setup white-labeling, you can define next variables in `waldur/values.yaml` f
     for login page (should be in `waldur/` chart directory)
 * `sidebarLogoPath` - path to custom `.png` image file
     for sidebar header (should be in `waldur/` chart directory)
+* `sidebarLogoDarkPath` - path to custom `.png` image file
+    for sidebar header in dark mode (should be in `waldur/` chart directory)
 * `poweredByLogoPath` - path to custom `.png` image file
     for "powered by" part of login page (should be in `waldur/` chart directory)
 * `faviconPath` - path to custom favicon `.png` image file

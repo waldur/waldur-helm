@@ -216,6 +216,10 @@ data:
     WALDUR_CORE['PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS'] = ['FREEIPA']
     {{ end }}
 
+    {{ if has "protect_keycloak_user_details" .Values.waldur.features }}
+    WALDUR_CORE['PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS'].append('keycloak')
+    {{ end }}
+
     {{ if has "enable_accounting_start_date" .Values.waldur.features }}
     WALDUR_CORE['ENABLE_ACCOUNTING_START_DATE'] = True
     {{ end }}

@@ -32,10 +32,29 @@ spec:
             name: waldur-homeport
             port:
               number: 80
+  {{ if .Values.homeportExtraHosts }}
+  {{- range .Values.homeportExtraHosts }}
+  - host: {{ . }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: waldur-homeport
+            port:
+              number: 80
+  {{- end }}
+  {{ end }}
   {{ if and .Values.ingress.tls.enabled }}
   tls:
   - hosts:
     - {{ .Values.homeportHostname }}
+    {{ if .Values.homeportExtraHosts }}
+    {{- range .Values.homeportExtraHosts }}
+    - {{ . }}
+    {{- end }}
+    {{ end }}
     {{ if .Values.ingress.tls.customHomeportSecretName }}
     secretName: {{ .Values.ingress.tls.customHomeportSecretName | quote }}
     {{ else }}

@@ -38,10 +38,36 @@ spec:
             name: waldur-mastermind-api
             port:
               number: 80
+  {{ if .Values.apiExtraHosts }}
+  {{- range .Values.apiExtraHosts }}
+  - host: {{ . }}
+    http:
+      paths:
+      - path: /admin
+        pathType: Prefix
+        backend:
+          service:
+            name: waldur-mastermind-api
+            port:
+              number: 80
+      - path: /static
+        pathType: Prefix
+        backend:
+          service:
+            name: waldur-mastermind-api
+            port:
+              number: 80
+  {{- end }}
+  {{ end }}
   {{ if .Values.ingress.tls.enabled }}
   tls:
   - hosts:
     - {{ .Values.apiHostname }}
+    {{ if .Values.apiExtraHosts }}
+    {{- range .Values.apiExtraHosts }}
+    - {{ . }}
+    {{- end }}
+    {{ end }}
     {{ if .Values.ingress.tls.customMastermindSecretName }}
     secretName: {{ .Values.ingress.tls.customMastermindSecretName | quote }}
     {{ else }}

@@ -14,7 +14,11 @@ fullnameOverride: ""
 apiScheme: "https"
 homeportScheme: "https"
 apiHostname: "helm-testing.waldur.com"
+apiExtraHosts:
+  - helm-testing-02.waldur.com
 homeportHostname: "helm-testing.waldur.com"
+homeportExtraHosts:
+  - helm-testing-02.waldur.com
 
 affinity: {}
 
@@ -79,10 +83,10 @@ storageClassName: local-storage
 
 ingress:
   tls:
-    enabled: false
+    enabled: true
     source: "secret" # Possible values: `letsEncrypt` and `secret`
     customMastermindSecretName: ""
-    customHomeportSecretName: "test-tls-certificate"
+    customHomeportSecretName: ""
     secretsDir: "tls"  # Enabled only if source == `secret`
   whitelistSourceRange: '172.17.36.95/32,172.17.152.13/32,172.18.4.16/32,172.18.130.4/32,172.17.36.92/32,172.18.4.31/32,217.159.213.82/32,172.18.128.78/32,172.17.36.8/32,172.17.152.11/32,172.18.128.77/32'
   whitelistSourceRangeAdmin: '172.17.36.95/32,172.17.152.13/32,172.18.4.16/32,172.18.130.4/32,172.17.36.92/32,172.18.4.31/32,217.159.213.82/32,172.18.128.78/32'

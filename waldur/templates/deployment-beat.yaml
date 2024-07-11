@@ -26,6 +26,7 @@ spec:
         {{ toYaml .Values.hostaliases | nindent 8 }}
       {{ end }}
       initContainers:
+      {{ if .Values.waldur.initdbEnabled }}
         - name: check-db-ready
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.initdbImageName }}:{{ template "waldur.postgresql.version" . }}
           command: ['sh', '-c',
@@ -69,9 +70,6 @@ spec:
             - name: config-features-json
               mountPath: /etc/waldur/features.json
               subPath: features.json
-            - name: constance-settings-yaml
-              mountPath: /etc/waldur/support.yaml
-              subPath: support.yaml
             {{ if .Values.waldur.mastermindTemplating.mastermindTemplatesPath }}
             - name: waldur-mastermind-template
               mountPath: /etc/waldur/notifications-templates.yaml
@@ -100,6 +98,7 @@ spec:
               subPath: permissions-override.yaml
           resources:
             {{- toYaml .Values.apiResources | nindent 12 }}
+      {{ end }}
       containers:
         - name: waldur-mastermind-beat
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
@@ -147,9 +146,6 @@ spec:
       - name: config-permissions-override-yaml
         configMap:
           name: mastermind-config-permissions-override-yaml
-      - name: constance-settings-yaml
-        configMap:
-          name: mastermind-support-yaml
       {{ if or .Values.waldur.mastermindTemplating.mastermindTemplatesPath .Values.waldur.mastermindTemplating.mastermindTemplates }}
       - name: waldur-mastermind-template
         configMap:

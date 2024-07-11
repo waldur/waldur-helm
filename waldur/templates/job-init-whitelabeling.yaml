@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: waldur-mastermind-initdb-job
+  name: waldur-mastermind-init-whitelabeling-job
   labels:
 {{ include "waldur.labels" . | indent 4 }}
   annotations:
@@ -39,6 +39,9 @@ spec:
             - name: languages-yaml
               mountPath: /etc/waldur/languages.yaml
               subPath: languages.yaml
+            - name: constance-settings-yaml
+              mountPath: /etc/waldur/support.yaml
+              subPath: support.yaml
           resources:
             {{- toYaml .Values.apiResources | nindent 12 }}
 {{ if has "SAML2" .Values.waldur.authMethods }}
@@ -100,6 +103,9 @@ spec:
       - name: languages-yaml
         configMap:
           name: mastermind-languages-yaml
+      - name: constance-settings-yaml
+        configMap:
+          name: mastermind-support-yaml
       {{ if has "SAML2" .Values.waldur.authMethods }}
       - name: waldur-saml2-certs
         secret:

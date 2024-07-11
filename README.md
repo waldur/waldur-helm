@@ -93,10 +93,10 @@ Open waldur-mastermind-worker shell and execute the following command:
 
 ## Waldur Helm chart release upgrading
 
-Delete initdb job (if exists):
+Delete init-whitelabeling job (if exists):
 
 ```bash
-  kubectl delete job waldur-mastermind-initdb-job || true
+  kubectl delete job waldur-mastermind-init-whitelabeling-job || true
 ```
 
 Delete load features job (if exists):

@@ -86,7 +86,6 @@ data:
       {{ end }}
       {{ if has "academic_domain" .Values.waldur.features }}
       description: Guest
-      {{ end }}
-      {{ if has "academic_shared_domain" .Values.waldur.features }}
+      {{ else }}
       description: Member
       {{ end }}

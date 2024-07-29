@@ -5,20 +5,11 @@ metadata:
 data:
   features.json: |
     {
-      {{ if not (has "disabled_offering_comments" .Values.waldur.features) }}
-        "support.offering_comments": true,
-      {{ end }}
-      {{ if not (has "disable_private_marketplace_offerings" .Values.waldur.features) }}
-        "marketplace.private_offerings": true,
-      {{ end }}
       {{ if has "compliancy" .Values.waldur.features }}
         "marketplace.checklist": true,
       {{ end }}
       {{ if has "conceal_prices" .Values.waldur.features }}
         "marketplace.conceal_prices": true,
-      {{ end }}
-      {{ if not (has "disable_volume_types" .Values.waldur.features) }}
-        "openstack.volume_types": true,
       {{ end }}
       {{ if has "hide_volume_type_selector" .Values.waldur.features }}
         "openstack.hide_volume_type_selector": true,
@@ -53,18 +44,9 @@ data:
       {{ if has "marketplace_offering_document" .Values.waldur.features }}
         "marketplace.offering_document": true,
       {{ end }}
-        "customer.billing": true,
-        "customer.events": true,
-        "project.events": true,
         "marketplace.import_resources": true,
         "user.notifications": true,
         "project.estimated_cost": true,
         "support.users": true,
-        "support.customers_list": true,
-        "support.resources_treemap": true,
-        "support.shared_providers": true,
-        "support.legacy_branch": true,
-        "support.next_branch": true,
-        "customer.team": true,
-        "project.team": true
+        "support.shared_providers": true
     }

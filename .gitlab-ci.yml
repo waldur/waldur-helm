@@ -89,9 +89,11 @@ Test release installation and readiness:
       changes:
         - waldur/**/*
   script:
+    - set -xv
     - helm dep update waldur/
     - helm install waldur waldur/ --wait -f waldur/test/values.yaml --timeout 10m0s
   after_script:
+    - set -xv
     - export KUBECONFIG=${K8S_CONFIG_WALDUR_HELM_TEST}
     - helm list
     - kubectl get pods

@@ -26,6 +26,18 @@ data:
       {{ if has "enable_project_oecd_code" .Values.waldur.features }}
         "project.oecd_fos_2007_code": true,
       {{ end }}
+      {{ if has "project.show_description_in_create_dialog" .Values.waldur.features }}
+        "project.show_description_in_create_dialog": true,
+      {{ end }}
+      {{ if has "project.show_type_in_create_dialog" .Values.waldur.features }}
+        "project.show_type_in_create_dialog": true,
+      {{ end }}
+      {{ if has "project.show_end_date_in_create_dialog" .Values.waldur.features }}
+        "project.show_end_date_in_create_dialog": true,
+      {{ end }}
+      {{ if has "project.show_image_in_create_dialog" .Values.waldur.features }}
+        "project.show_image_in_create_dialog": true,
+      {{ end }}
       {{ if has "organization_domain_visible" .Values.waldur.features }}
         "customer.show_domain": true,
       {{ end }}

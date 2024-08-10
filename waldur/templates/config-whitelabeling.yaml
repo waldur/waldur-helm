@@ -21,6 +21,7 @@ data:
     site_logo: {{ .Values.waldur.site.logo | default "" | quote }}
     sidebar_style: {{ .Values.waldur.whitelabeling.sidebarStyle | default "dark" | quote }}
     disable_dark_theme: {{ .Values.waldur.whitelabeling.disableDarkTheme | default false }}
+    auto_approve_user_tos: {{ .Values.waldur.whitelabeling.autoApproveUserTOS | default false }}
 
     {{ if .Values.waldur.whitelabeling.poweredByLogoPath }}
     powered_by_logo: "/etc/waldur/icons/poweredby_logo.png"

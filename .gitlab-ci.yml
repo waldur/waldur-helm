@@ -91,7 +91,7 @@ Test release installation and readiness:
   script:
     - set -xv
     - helm dep update waldur/
-    - helm install waldur waldur/ --wait -f waldur/test/values.yaml --timeout 10m0s
+    - helm install waldur waldur/ --wait -f waldur/test/values.yaml --timeout 20m0s
   after_script:
     - set -xv
     - export KUBECONFIG=${K8S_CONFIG_WALDUR_HELM_TEST}

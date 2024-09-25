@@ -334,13 +334,13 @@ data:
     {{ end }}
 
     {{ if has "allow_direct_external_network_connection" .Values.waldur.features }}
-    WALDUR_OPENSTACK_TENANT.update({
+    WALDUR_OPENSTACK.update({
         'ALLOW_DIRECT_EXTERNAL_NETWORK_CONNECTION': True,
     })
     {{ end }}
 
     {{ if (has "show_openstack_console" .Values.waldur.features) }}
-    WALDUR_OPENSTACK_TENANT.update({
+    WALDUR_OPENSTACK.update({
         'ALLOW_CUSTOMER_USERS_OPENSTACK_CONSOLE_ACCESS': True,
     })
     {{ end }}

@@ -448,13 +448,3 @@ data:
         }
     )
     {{ end }}
-
-    {{ if .Values.waldur.keycloak_sync.enabled }}
-    WALDUR_KEYCLOAK['ENABLED'] = True
-    WALDUR_KEYCLOAK['BASE_URL'] = {{ .Values.waldur.keycloak_sync.base_url | quote }}
-    WALDUR_KEYCLOAK['REALM'] = {{ .Values.waldur.keycloak_sync.realm | quote }}
-    WALDUR_KEYCLOAK['CLIENT_ID'] = {{ .Values.waldur.keycloak_sync.client_id | quote }}
-    WALDUR_KEYCLOAK['CLIENT_SECRET'] = {{ .Values.waldur.keycloak_sync.client_secret | quote }}
-    WALDUR_KEYCLOAK['USERNAME'] = {{ .Values.waldur.keycloak_sync.username | quote }}
-    WALDUR_KEYCLOAK['PASSWORD'] = {{ .Values.waldur.keycloak_sync.password | quote }}
-    {{ end }}

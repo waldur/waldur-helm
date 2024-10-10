@@ -15,7 +15,7 @@ data:
         {{ if has "owner_can_register_service_provider" .Values.waldur.features }}
         - SERVICE_PROVIDER.REGISTER
         {{ end }}
-        {{ if not (has "only_staff_manages_services" .Values.waldur.features) }}
+        {{ if not (has "owner_can_approve_order" .Values.waldur.features) }}
         - ORDER.APPROVE
         {{ end }}
         {{ if has "owners_can_manage_owners" .Values.waldur.features }}
@@ -32,7 +32,7 @@ data:
         {{ if not (has "owner_can_register_service_provider" .Values.waldur.features) }}
         - SERVICE_PROVIDER.REGISTER
         {{ end }}
-        {{ if has "only_staff_manages_services" .Values.waldur.features }}
+        {{ if has "owner_can_approve_order" .Values.waldur.features }}
         - ORDER.APPROVE
         {{ end }}
         {{ if not (has "owners_can_manage_owners" .Values.waldur.features) }}

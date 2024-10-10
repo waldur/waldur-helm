@@ -177,10 +177,6 @@ data:
     WALDUR_CORE["USER_REGISTRATION_HIDDEN_FIELDS"] = {{ .Values.waldur.homeport.userRegistrationHiddenFields | toJson }}
     {{ end }}
 
-    {{ if has "only_staff_manages_services" .Values.waldur.features }}
-    WALDUR_CORE['ONLY_STAFF_MANAGES_SERVICES'] = True
-    {{ end }}
-
     {{ if has "create_default_project_on_organization_creation" .Values.waldur.features }}
     WALDUR_CORE['CREATE_DEFAULT_PROJECT_ON_ORGANIZATION_CREATION'] = True
     {{ end }}

@@ -17,33 +17,28 @@ on a Kubernetes cluster using the [Helm](https://helm.sh) package manager.
 
 ## Installing the chart
 
-1. Clone [waldur-helm repository](https://github.com/waldur/waldur-helm)
+1. Add the Waldur Helm repository
 
-```bash
-  git clone https://github.com/waldur/waldur-helm.git
-  cd waldur-helm
-```
+    ```bash
+      helm repo add waldur-charts https://waldur.github.io/waldur-helm/
+    ```
 
-1. Add the stable repository
+2. Install dependencies or enable them in Helm values
 
-```bash
-  helm repo add stable https://charts.helm.sh/stable
-```
+    Setup database using one of:
+    - Simple PostgreSQL DB: [instructions](docs/postgres-db.md) or
+    - PostgreSQL HA DB: [instructions](docs/postgres-db-ha.md) or
+    - Integrate with external DB: [instructions](docs/external-db-integration.md)
 
-1. Setup database:
-    3.1 Setup single PostgreSQL DB: [instructions](docs/postgres-db.md) or
-    3.2 Setup PostgreSQL HA DB: [instructions](docs/postgres-db-ha.md) or
-    3.3 Integrate with external DB: [instructions](docs/external-db-integration.md)
+    Install MinIO (for database backups): [instructions](docs/minio.md)
 
-    **NB** Only one of these two options should be used. Otherwise, DB will be unavailable.
+    Install RabbitMQ for task queue: [instructions](docs/rabbitmq.md)
 
-2. Install minio (for database backups): [instructions](docs/minio.md)
-3. Install RabbitMQ for task queue: [instructions](docs/rabbitmq.md)
-4. Install Helm package:
+3. Install the Helm chart
 
-```bash
-  helm install waldur waldur
-```
+    ```bash
+      helm install my-waldur waldur-charts/waldur -f path/to/values.yml
+    ```
 
 **NB** After this command, Waldur release will run in `default` namespace.
 Please, pay attention in which namespace which release is running.
@@ -53,15 +48,15 @@ in `test` namespace in the following way:
 
 1. Create `test` namespace:
 
-```bash
-  kubectl create namespace test
-```
+    ```bash
+      kubectl create namespace test
+    ```
 
-1. Install release:
+2. Install release:
 
-```bash
-  helm install waldur waldur --namespace test
-```
+    ```bash
+      helm install waldur waldur --namespace test
+    ```
 
 However, postgresql release and waldur should be installed
 in the same namespace in order to share a common secret with DB credentials.
@@ -72,24 +67,24 @@ Open waldur-mastermind-worker shell and execute the following command:
 
 1. Get waldur-mastermind-worker pod name
 
-```bash
-  # Example:
-  kubectl get pods -A | grep waldur-mastermind-worker # -->
-  # default waldur-mastermind-worker-6d98cd98bd-wps8n 1/1 Running 0 9m9s
-```
+    ```bash
+      # Example:
+      kubectl get pods -A | grep waldur-mastermind-worker # -->
+      # default waldur-mastermind-worker-6d98cd98bd-wps8n 1/1 Running 0 9m9s
+    ```
 
-1. Connect to pod via shell
+2. Connect to pod via shell
 
-```bash
-  # Example:
-  kubectl exec -it deployment/waldur-mastermind-worker -- /bin/bash
-```
+    ```bash
+      # Example:
+      kubectl exec -it deployment/waldur-mastermind-worker -- /bin/bash
+    ```
 
-1. Execute command to add admin user
+3. Execute command to add admin user
 
-```bash
-  waldur createstaffuser -u user -p password -e admin@example.com
-```
+    ```bash
+      waldur createstaffuser -u user -p password -e admin@example.com
+    ```
 
 ## Waldur Helm chart release upgrading
 

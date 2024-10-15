@@ -28,6 +28,7 @@ data:
     {{ if not .Values.waldur.support.atlassian.useAutomaticRequestMapping }}
     ATLASSIAN_USE_AUTOMATIC_REQUEST_MAPPING: false
     {{ end }}
+    ATLASSIAN_VERIFY_SSL: {{ default true .Values.waldur.support.atlassian.skipVerify }}
     {{ end }}
     {{ if eq .Values.waldur.support.backend "zammad" }}
     WALDUR_SUPPORT_ACTIVE_BACKEND_TYPE: 'zammad'

@@ -436,11 +436,3 @@ data:
 
     WALDUR_CORE['INVITATION_LIFETIME'] = timedelta(weeks={{ default 1 .Values.waldur.invitationDuration.individual }})
     WALDUR_CORE['GROUP_INVITATION_LIFETIME'] = timedelta(weeks={{ default 1 .Values.waldur.invitationDuration.group }})
-
-    {{ if .Values.waldur.support.atlassian.skipVerify }}
-    WALDUR_JIRA.update(
-        {
-            'VERIFY_SSL': False
-        }
-    )
-    {{ end }}

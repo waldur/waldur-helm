@@ -1,7 +1,7 @@
 image:
   registry: "docker.io"
   repository: "bitnami/rabbitmq"
-  tag: 3.8.14
+  tag: "4.0.2-debian-12-r0"
 
 replicaCount: 3
 persistence:
@@ -11,6 +11,14 @@ persistence:
 auth:
   username: "waldur"
   password: "waldur"
+
+resources:
+  requests:
+    cpu: 1
+    memory: 512Mi
+  limits:
+    cpu: 2
+    memory: 1024Mi
 
 clustering:
   forceBoot: true

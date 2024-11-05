@@ -13,6 +13,7 @@ spec:
     metadata:
       labels:
         app: waldur-homeport
+        {{ include "waldur.labels" . | nindent 8 }}
     spec:
       {{ if .Values.imagePullSecrets }}
       imagePullSecrets:

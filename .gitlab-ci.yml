@@ -98,8 +98,9 @@ Test release installation and readiness:
     - helm list
     - kubectl get pods
     - |
-      for NAME in $(kubectl get pods --field-selector status.phase=Failed -o name); do
+      for NAME in $(kubectl get pods -l app.kubernetes.io/instance=waldur --field-selector status.phase!=Running -o name); do
         echo "Pod name: $NAME"
+        echo "Status: $(kubectl get pod $NAME -o jsonpath={.status.phase})"
         kubectl logs $NAME --tail 100 --all-containers
         echo ----
       done
@@ -128,6 +129,7 @@ Test ArgoCD sync:
   extends: .Test ArgoCD template
   stage: test
   script:
+    - echo ${APPLICATION_NAME}
     - $SSH_COMMAND "argocd login 10.43.40.117:80 --username $ARGOCD_USERNAME --password $ARGOCD_PASSWORD --name default --insecure"
     - $SSH_COMMAND "argocd account get-user-info"
     - $SSH_COMMAND "argocd app list"

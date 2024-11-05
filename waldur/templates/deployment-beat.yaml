@@ -14,6 +14,7 @@ spec:
     metadata:
       labels:
         app: waldur-mastermind-beat
+        {{ include "waldur.labels" . | nindent 8 }}
     spec:
       {{ if .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -56,6 +57,7 @@ spec:
             {{- toYaml .Values.apiResources | nindent 12 }}
         - name: waldur-mastermind-migrate
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
+          imagePullPolicy: {{ .Values.waldur.pullPolicy }}
           args:
             - initdb
           env:

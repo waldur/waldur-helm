@@ -75,12 +75,6 @@ nodeSelector: {}
 
 tolerations: []
 
-service:
-  type: ClusterIP
-  port: 80
-
-storageClassName: local-storage
-
 ingress:
   tls:
     enabled: true
@@ -434,7 +428,7 @@ postgresql:
         memory: "2048Mi"
         cpu: "1000m"
   image:
-    tag: 12
+    tag: "16.4.0-debian-12-r19"
   metrics:
     enabled: true
 
@@ -448,11 +442,11 @@ postgresqlha:
     repmgrPassword: repmgr
     replicaCount: 1
     image:
-      tag: "12.15.0-debian-11-r12"
+      tag: "16.4.0-debian-12-r26"
   pgpool:
     adminPassword: "2ILwp6GBDKNRMymXoDU="
     image:
-      tag: "4.4.3-debian-11-r6"
+      tag: "4.5.4-debian-12-r2"
 
 postgresBackup:
   enabled: true
@@ -478,8 +472,15 @@ rabbitmq:
   # The values are in use only if rabbitmq.enabled = true
   image:
     repository: "bitnami/rabbitmq"
-    tag: 3.8.14
+    tag: "4.0.2-debian-12-r0"
   replicaCount: 1
+  resources:
+    requests:
+      cpu: 1
+      memory: 512Mi
+    limits:
+      cpu: 2
+      memory: 1024Mi
   persistence:
     enabled: true
     size: "10Gi"

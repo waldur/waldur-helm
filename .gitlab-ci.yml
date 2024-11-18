@@ -142,6 +142,10 @@ Stop argocd app:
   extends: .Test ArgoCD template
   stage: .pre
   script:
+    - echo ${APPLICATION_NAME}
+    - $SSH_COMMAND "argocd login 10.43.40.117:80 --username $ARGOCD_USERNAME --password $ARGOCD_PASSWORD --name default --insecure"
+    - $SSH_COMMAND "argocd account get-user-info"
+    - $SSH_COMMAND "argocd app list"
     - $SSH_COMMAND "argocd app delete $APPLICATION_NAME"
     # There is no option to wait until application is deleted
     # Also, argocd doesn't delete an application record, it changes state to "Missing" instead

@@ -40,21 +40,6 @@ spec:
           command: ['sh', '-c', 'createdb celery_results || true']
           env:
             {{- include "waldur.env.initdb" . | nindent 11 }}
-        - name: waldur-mastermind-create-dbcache
-          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
-          args:
-            - initdb-cache
-          env:
-            {{- include "waldur.credentials" . | nindent 13 }}
-          volumeMounts:
-            - name: api-override
-              mountPath: /etc/waldur/override.conf.py
-              subPath: override.conf.py
-            - name: api-celery
-              mountPath: /etc/waldur/celery.conf
-              subPath: celery.conf
-          resources:
-            {{- toYaml .Values.apiResources | nindent 12 }}
         - name: waldur-mastermind-migrate
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
           imagePullPolicy: {{ .Values.waldur.pullPolicy }}

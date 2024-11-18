@@ -128,6 +128,11 @@ waldur:
     - nb
     - ar
     - cs
+  disabledRoles:
+    - customer_manager
+    - customer_support
+    - call_manager
+    - proposal_manager
   authMethods:
     - LOCAL_SIGNIN
   socialAuthMethods: []
@@ -398,6 +403,7 @@ rabbitmq:
     repository: "bitnami/rabbitmq"
     tag: "4.0.2-debian-12-r0"
   replicaCount: 3
+  extraPlugins: "rabbitmq_auth_backend_ldap rabbitmq_mqtt rabbitmq_web_mqtt"
   resources:
     requests:
       cpu: 1

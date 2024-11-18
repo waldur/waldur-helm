@@ -96,6 +96,8 @@ Test release installation and readiness:
     - set -xv
     - export KUBECONFIG=${K8S_CONFIG_WALDUR_HELM_TEST}
     - helm list
+    - kubectl apply -f waldur/test/k8s/networkpolicy-override.yaml
+    - kubectl delete networkpolicy namespace-isolation --ignore-not-found
     - kubectl get pods
     - |
       for NAME in $(kubectl get pods -l app.kubernetes.io/instance=waldur --field-selector status.phase!=Running -o name); do

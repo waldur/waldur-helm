@@ -29,11 +29,12 @@ data:
     {{- if .Values.readonlyDBReplica.enabled }}
     DATABASES['read_db'] = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': "{{ .Values.postgresql.name }}",
+        'NAME': os.environ.get('POSTGRESQL_NAME'),
         'HOST': "{{ .Values.externalDB.replicaHost }}",
-        'PORT': "{{ .Values.postgresql.port }}",
-        'USER': "{{ .Values.postgresql.user }}",
-        'PASSWORD': "{{ .Values.postgresql.password }}",
+        'PORT': os.environ.get('POSTGRESQL_PORT'),
+        'USER': os.environ.get('POSTGRESQL_USER'),
+        'PASSWORD': os.environ.get('POSTGRESQL_PASSWORD'),
+        },
     }
     DATABASE_ROUTERS = [
     'waldur_core.core.database_routers.ReadOnlyReplicaRouter',

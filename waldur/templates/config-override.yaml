@@ -26,7 +26,7 @@ data:
         },
     }
 
-    {{- if .Values.externalDB.enabled }}
+    {{- if .Values.readonlyDBReplica.enabled }}
     DATABASES['read_db'] = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': "{{ .Values.postgresql.name }}",

@@ -412,12 +412,13 @@ networkPolicy:
 
 readonlyDBReplica:
   enabled: false
-  
+
 externalDB:
   enabled: false
   flavor: "zalando"
   secretName: "waldur.waldur-testing-postgres.credentials.postgresql.acid.zalan.do"
   serviceName: "waldur-testing-postgres"
+  replicaHost: "waldur-postgres-repl"
 
 postgresql:
   enabled: false

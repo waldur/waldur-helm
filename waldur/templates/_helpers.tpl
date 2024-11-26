@@ -136,6 +136,19 @@ amqp://{{ .auth.username }}:{{ .auth.password }}@{{ $rmqHost }}:{{ default 5672 
 {{- end -}}
 {{- end -}}
 
+{{/*
+Set rabbitmq host
+*/}}
+{{- define "waldur.rabbitmq.rmqHost" -}}
+{{- $rmqHost := "" -}}
+{{- if .Values.rabbitmq.enabled -}}
+{{- $rmqHost = list .Release.Name "rabbitmq" | join "-" -}}
+{{- else -}}
+{{- $rmqHost = .Values.rabbitmq.host -}}
+{{- end -}}
+{{ $rmqHost }}
+{{- end -}}
+
 
 {{/*
 Add environment variables to configure private database

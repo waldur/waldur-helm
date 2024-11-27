@@ -26,6 +26,21 @@ data:
         },
     }
 
+    {{- if .Values.readonlyDBReplica.enabled }}
+    DATABASES['read_db'] = {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': os.environ.get('POSTGRESQL_NAME'),
+        'HOST': "{{ .Values.readonlyDBReplica.replicaHost }}",
+        'PORT': os.environ.get('POSTGRESQL_PORT'),
+        'USER': os.environ.get('POSTGRESQL_USER'),
+        'PASSWORD': os.environ.get('POSTGRESQL_PASSWORD'),
+        },
+    }
+    DATABASE_ROUTERS = [
+    'waldur_core.core.database_routers.ReadOnlyReplicaRouter',
+    ]
+    {{- end }}
+
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.db.DatabaseCache',

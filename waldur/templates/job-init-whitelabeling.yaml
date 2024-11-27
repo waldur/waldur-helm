@@ -39,9 +39,15 @@ spec:
             - name: languages-yaml
               mountPath: /etc/waldur/languages.yaml
               subPath: languages.yaml
+            {{ if .Values.waldur.support.existingSecret.name }}
+            - name: existing-support-secret
+              mountPath: /etc/secret-volume
+              readOnly: true
+            {{ else }}
             - name: constance-settings-yaml
               mountPath: /etc/waldur/support.yaml
               subPath: support.yaml
+            {{ end }}
           resources:
             {{- toYaml .Values.apiResources | nindent 12 }}
 {{ if has "SAML2" .Values.waldur.authMethods }}
@@ -103,9 +109,15 @@ spec:
       - name: languages-yaml
         configMap:
           name: mastermind-languages-yaml
+      {{ if .Values.waldur.support.existingSecret.name }}
+      - name: existing-support-secret
+        secret:
+          secretName: {{ .Values.waldur.support.existingSecret.name }}
+      {{ else }}
       - name: constance-settings-yaml
         configMap:
           name: mastermind-support-yaml
+      {{ end }}
       {{ if has "SAML2" .Values.waldur.authMethods }}
       - name: waldur-saml2-certs
         secret:

@@ -21,7 +21,7 @@ spec:
               args:
                 - waldur-cleanup
               env:
-                {{- include "waldur.credentials" . | nindent 17 }}
+                {{- include "waldur.credentials" . | nindent 16 }}
               volumeMounts:
                 - name: waldur-cleanup-script
                   mountPath: /usr/local/bin/waldur-cleanup

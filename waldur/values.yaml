@@ -89,7 +89,13 @@ waldur:
   pullPolicy: Always
   secretKey: "SecretKeyChangeMe"
   supportToken: ""
+  supportTokenExistingSecret:
+    name: ""
+    key: ""
   staffToken: ""
+  staffTokenExistingSecret:
+    name: ""
+    key: ""
   debug: false
   rabbitmqMqtt:
     enabled: false
@@ -145,6 +151,16 @@ waldur:
     protectedFields: []
   defaultIdp: ""
   remoteEduteams:
+    existingSecret:
+      name: ""
+      refreshTokenKey: ""
+      clientIDKey: ""
+      clientSecretKey: ""
+      userinfoUrlKey: ""
+      tokenUrlKey: ""
+      sshApiUrlKey: ""
+      sshApiUsernameKey: ""
+      sshApiPasswordKey: ""
     refreshToken: ""
     clientID: ""
     clientSecret: ""
@@ -160,11 +176,17 @@ waldur:
     userDN: ""
     user: ""
     password: ""
+    passwordExistingSecret:
+      name: ""
+      key: ""
     admins: ""
     support: ""
   freeipa:
     hostname: ""
     password: ""
+    passwordExistingSecret:
+      name: ""
+      key: ""
     username: ""
     verifySSL: ""
     groupnamePrefix: ""
@@ -183,6 +205,9 @@ waldur:
     managementUrl: ""
     protectedFields: []
   paypal:
+    existingSecret:
+      name:
+      secretKey: ""
     secret: ""
     clientId: ""
   invoice:
@@ -214,6 +239,8 @@ waldur:
     allocationPrefix: ""
   support:
     backend: "zammad" # Can be "atlassian", "zammad" or "smax"
+    existingSecret:
+      name: ""
     atlassian:
       servicedeskEmail: ""
       servicedeskToken: ""
@@ -319,6 +346,12 @@ waldur:
     enabled: false
     includeAnnotations: true
   uvkEverypay:
+    existingSecret:
+      name:
+      everypayUsernameKey: ""
+      everypayPasswordKey: ""
+      azureClientIDKey: ""
+      azureClientSecretKey: ""
     enabled: false
     imageTag: latest
     uvkServer: "https://uvk-test.ut.ee/client/a74/server.php?format=JSON&action=uvk__"

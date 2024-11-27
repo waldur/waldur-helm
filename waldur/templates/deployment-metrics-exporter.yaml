@@ -48,11 +48,19 @@ spec:
         env:
           - name: WALDUR_API_URL
             value: "http://waldur-mastermind-api:80/api/"
+          {{ if .Values.waldur.supportTokenExistingSecret.name }}
+          - name: WALDUR_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.waldur.supportTokenExistingSecret.name }}
+                key: {{ .Values.waldur.supportTokenExistingSecret.key }}
+          {{ else if .Values.waldur.supportToken }}
           - name: WALDUR_API_TOKEN
             valueFrom:
               secretKeyRef:
                 name: waldur-secret
                 key: WALDUR_SUPPORT_API_TOKEN
+          {{ end }}
         {{- with .Values.nodeSelector }}
         nodeSelector:
           {{- toYaml . | nindent 8 }}

@@ -87,14 +87,14 @@ data:
 
     {{ if .Values.waldur.remoteEduteams }}
     WALDUR_AUTH_SOCIAL.update({
-        'REMOTE_EDUTEAMS_REFRESH_TOKEN': '{{ .Values.waldur.remoteEduteams.refreshToken }}',
-        'REMOTE_EDUTEAMS_CLIENT_ID': '{{ .Values.waldur.remoteEduteams.clientID }}',
-        'REMOTE_EDUTEAMS_SECRET': '{{ .Values.waldur.remoteEduteams.clientSecret }}',
-        'REMOTE_EDUTEAMS_USERINFO_URL': '{{ .Values.waldur.remoteEduteams.userinfoUrl }}',
-        'REMOTE_EDUTEAMS_TOKEN_URL': '{{ .Values.waldur.remoteEduteams.tokenUrl }}',
-        'REMOTE_EDUTEAMS_SSH_API_URL': '{{ .Values.waldur.remoteEduteams.sshApiUrl }}',
-        'REMOTE_EDUTEAMS_SSH_API_USERNAME': '{{ .Values.waldur.remoteEduteams.sshApiUsername }}',
-        'REMOTE_EDUTEAMS_SSH_API_PASSWORD': '{{ .Values.waldur.remoteEduteams.sshApiPassword }}',
+        'REMOTE_EDUTEAMS_REFRESH_TOKEN': os.environ.get("REMOTE_EDUTEAMS_REFRESH_TOKEN", '{{ .Values.waldur.remoteEduteams.refreshToken | default "" }}'),
+        'REMOTE_EDUTEAMS_CLIENT_ID': os.environ.get("REMOTE_EDUTEAMS_CLIENT_ID", '{{ .Values.waldur.remoteEduteams.clientID | default "" }}'),
+        'REMOTE_EDUTEAMS_SECRET': os.environ.get("REMOTE_EDUTEAMS_SECRET", '{{ .Values.waldur.remoteEduteams.clientSecret | default "" }}'),
+        'REMOTE_EDUTEAMS_USERINFO_URL': os.environ.get("REMOTE_EDUTEAMS_USERINFO_URL", '{{ .Values.waldur.remoteEduteams.userinfoUrl | default "" }}'),
+        'REMOTE_EDUTEAMS_TOKEN_URL': os.environ.get("REMOTE_EDUTEAMS_TOKEN_URL", '{{ .Values.waldur.remoteEduteams.tokenUrl | default "" }}'),
+        'REMOTE_EDUTEAMS_SSH_API_URL': os.environ.get("REMOTE_EDUTEAMS_SSH_API_URL", '{{ .Values.waldur.remoteEduteams.sshApiUrl | default "" }}'),
+        'REMOTE_EDUTEAMS_SSH_API_USERNAME': os.environ.get("REMOTE_EDUTEAMS_SSH_API_USERNAME", '{{ .Values.waldur.remoteEduteams.sshApiUsername | default "" }}'),
+        'REMOTE_EDUTEAMS_SSH_API_PASSWORD': os.environ.get("REMOTE_EDUTEAMS_SSH_API_PASSWORD", '{{ .Values.waldur.remoteEduteams.sshApiPassword | default "" }}'),
         {{ if .Values.waldur.remoteEduteams.enableSync }}
         'ENABLE_EDUTEAMS_SYNC': True,
         {{ end }}
@@ -129,7 +129,7 @@ data:
 
     # Credentials for admin user
     AUTH_LDAP_BIND_DN = 'uid={{ .Values.waldur.ldap.user }},' + AUTH_LDAP_USER_BASE
-    AUTH_LDAP_BIND_PASSWORD = '{{ .Values.waldur.ldap.password }}'
+    AUTH_LDAP_BIND_PASSWORD = os.environ.get("AUTH_LDAP_BIND_PASSWORD", '{{ .Values.waldur.ldap.password | default "" }}')
 
     # Populate the Django user from the LDAP directory.
     AUTH_LDAP_USER_ATTR_MAP = {
@@ -159,7 +159,7 @@ data:
         'ENABLED': True,
         'GROUPNAME_PREFIX': '{{ .Values.waldur.freeipa.groupnamePrefix }}',
         'HOSTNAME': '{{ .Values.waldur.freeipa.hostname }}',
-        'PASSWORD': '{{ .Values.waldur.freeipa.password }}',
+        'PASSWORD': os.environ("FREEIPA_PASSWORD", '{{ .Values.waldur.freeipa.password | default "" }}'),
         'USERNAME': '{{ .Values.waldur.freeipa.username }}',
         'USERNAME_PREFIX': '{{ .Values.waldur.freeipa.usernamePrefix }}',
         'VERIFY_SSL': {{ .Values.waldur.freeipa.verifySSL }},
@@ -383,7 +383,7 @@ data:
         'BACKEND': {
             'mode': 'live',
             'client_id': '{{ .Values.waldur.paypal.clientId }}',
-            'client_secret': '{{ .Values.waldur.paypal.secret }}',
+            'client_secret': os.environ.get("PAYPAL_SECRET", '{{ .Values.waldur.paypal.secret | default "" }})',
             'currency_name': 'EUR',
         }
     })

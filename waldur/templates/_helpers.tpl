@@ -218,6 +218,73 @@ Add environment variables to configure database values and Sentry environment
       fieldPath: metadata.namespace
 {{ end }}
 
+{{- if .Values.waldur.remoteEduteams.existingSecret.name -}}
+- name: REMOTE_EDUTEAMS_REFRESH_TOKEN
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.waldur.remoteEduteams.existingSecret.name }}
+      key: {{ .Values.waldur.remoteEduteams.existingSecret.refreshTokenKey }}
+- name: REMOTE_EDUTEAMS_CLIENT_ID
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.waldur.remoteEduteams.existingSecret.name }}
+      key: {{ .Values.waldur.remoteEduteams.existingSecret.clientIDKey }}
+- name: REMOTE_EDUTEAMS_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.waldur.remoteEduteams.existingSecret.name }}
+      key: {{ .Values.waldur.remoteEduteams.existingSecret.clientSecretKey }}
+- name: REMOTE_EDUTEAMS_USERINFO_URL
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.waldur.remoteEduteams.existingSecret.name }}
+      key: {{ .Values.waldur.remoteEduteams.existingSecret.userinfoUrlKey }}
+- name: REMOTE_EDUTEAMS_TOKEN_URL
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.waldur.remoteEduteams.existingSecret.name }}
+      key: {{ .Values.waldur.remoteEduteams.existingSecret.tokenUrlKey }}
+- name: REMOTE_EDUTEAMS_SSH_API_URL
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.waldur.remoteEduteams.existingSecret.name }}
+      key: {{ .Values.waldur.remoteEduteams.existingSecret.sshApiUrlKey }}
+- name: REMOTE_EDUTEAMS_SSH_API_USERNAME
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.waldur.remoteEduteams.existingSecret.name }}
+      key: {{ .Values.waldur.remoteEduteams.existingSecret.sshApiUsernameKey }}
+- name: REMOTE_EDUTEAMS_SSH_API_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.waldur.remoteEduteams.existingSecret.name }}
+      key: {{ .Values.waldur.remoteEduteams.existingSecret.sshApiPasswordKey }}
+{{- end -}}
+
+{{- if .Values.waldur.ldap.passwordExistingSecret.name -}}
+- name: AUTH_LDAP_BIND_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.waldur.ldap.passwordExistingSecret.name }}
+      key: {{ .Values.waldur.ldap.passwordExistingSecret.key }}
+{{- end -}}
+
+{{- if .Values.waldur.freeipa.passwordExistingSecret.name -}}
+- name: FREEIPA_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.waldur.freeipa.passwordExistingSecret.name }}
+      key: {{ .Values.waldur.freeipa.passwordExistingSecret.key }}
+{{- end -}}
+
+{{- if .Values.waldur.paypal.existingSecret.name -}}
+- name: PAYPAL_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.waldur.paypal.existingSecret.name }}
+      key: {{ .Values.waldur.paypal.existingSecret.secretKey }}
+{{- end -}}
+
 {{ if .Values.proxy.httpsProxy }}
 - name: https_proxy
   value: {{ .Values.proxy.httpsProxy | quote }}

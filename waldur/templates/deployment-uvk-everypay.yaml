@@ -32,15 +32,35 @@ spec:
         env:
           - name: WALDUR_API_URL
             value: "http://waldur-mastermind-api:80/api/"
+          {{ if .Values.waldur.staffTokenExistingSecret.name }}
+          - name: WALDUR_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.waldur.staffTokenExistingSecret.name }}
+                key: {{ .Values.waldur.staffTokenExistingSecret.key }}
+          {{ else if .Values.waldur.staffToken }}
           - name: WALDUR_API_TOKEN
             valueFrom:
               secretKeyRef:
                 name: waldur-secret
                 key: WALDUR_STAFF_API_TOKEN
+          {{ end }}
           - name: UVK_SERVER
             value: "{{ .Values.waldur.uvkEverypay.uvkServer }}"
           - name: EVERYPAY_GATEWAY
             value: "{{ .Values.waldur.uvkEverypay.everypayGateway }}"
+          {{ if .Values.waldur.uvkEverypay.existingSecret.name }}
+          - name: EVERYPAY_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.waldur.uvkEverypay.existingSecret.name }}
+                key: {{ .Values.waldur.uvkEverypay.existingSecret.everypayUsernameKey }}
+          - name: EVERYPAY_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.waldur.uvkEverypay.existingSecret.name }}
+                key: {{ .Values.waldur.uvkEverypay.existingSecret.everypayPasswordKey }}
+          {{ else }}
           - name: EVERYPAY_USERNAME
             valueFrom:
               secretKeyRef:
@@ -51,14 +71,28 @@ spec:
               secretKeyRef:
                 name: waldur-secret
                 key: EVERYPAY_PASSWORD
+          {{ end }}
           - name: WALDUR_SIDECAR_URL
             value: {{ printf "%s://%s/uvk-everypay/" .Values.apiScheme .Values.apiHostname | quote }}
           - name: AZURE_TENANT_ID
             value: {{ .Values.waldur.uvkEverypay.azureTenantID | quote }}
+          {{ if .Values.waldur.uvkEverypay.existingSecret.name }}
+          - name: AZURE_CLIENT_ID
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.waldur.uvkEverypay.existingSecret.name }}
+                key: {{ .Values.waldur.uvkEverypay.existingSecret.azureClientIDKey }}
+          - name: AZURE_CLIENT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.waldur.uvkEverypay.existingSecret.name }}
+                key: {{ .Values.waldur.uvkEverypay.existingSecret.azureClientSecretKey }}
+          {{ else }}
           - name: AZURE_CLIENT_ID
             value: {{ .Values.waldur.uvkEverypay.azureClientID | quote }}
           - name: AZURE_CLIENT_SECRET
             value: {{ .Values.waldur.uvkEverypay.azureClientSecret | quote }}
+          {{ end }}
           - name: AZURE_SCOPE
             value: {{ .Values.waldur.uvkEverypay.azureScope | quote }}
         {{- with .Values.nodeSelector }}
@@ -85,11 +119,19 @@ spec:
             value: "http://waldur-mastermind-api:80/api/"
           - name: WALDUR_URL
             value: "{{ .Values.homeportScheme }}://{{ .Values.homeportHostname }}"
+          {{ if .Values.waldur.staffTokenExistingSecret.name }}
+          - name: WALDUR_API_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.waldur.staffTokenExistingSecret.name }}
+                key: {{ .Values.waldur.staffTokenExistingSecret.key }}
+          {{ else if .Values.waldur.staffToken }}
           - name: WALDUR_API_TOKEN
             valueFrom:
               secretKeyRef:
                 name: waldur-secret
                 key: WALDUR_STAFF_API_TOKEN
+          {{ end }}
           - name: EVERYPAY_GATEWAY
             value: "{{ .Values.waldur.uvkEverypay.everypayGateway }}"
           - name: EVERYPAY_USERNAME

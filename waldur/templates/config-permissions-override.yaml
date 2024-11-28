@@ -56,38 +56,6 @@ data:
       is_active: false
       {{ else }}
       is_active: true
-      {{ end }}
-      description: Organization manager
-      permissions:
-        - RESOURCE.SET_END_DATE
-        - RESOURCE.SET_BACKEND_ID
-        - RESOURCE.SET_BACKEND_METADATA
-        - RESOURCE.SET_STATE
-        - RESOURCE.ACCEPT_BOOKING_REQUEST
-        - RESOURCE.REJECT_BOOKING_REQUEST
-        - RESOURCE.SUBMIT_REPORT
-        - RESOURCE.LIST_USERS
-        - RESOURCE.COMPLETE_DOWNSCALING
-        - RESOURCE.CREATE_ROBOT_ACCOUNT
-        - RESOURCE.UPDATE_ROBOT_ACCOUNT
-        - RESOURCE.DELETE_ROBOT_ACCOUNT
-        - OFFERING.UPDATE_THUMBNAIL
-        - OFFERING.UPDATE_ATTRIBUTES
-        - OFFERING.UPDATE_LOCATION
-        - OFFERING.UPDATE_DESCRIPTION
-        - OFFERING.UPDATE
-        - OFFERING.UPDATE_OPTIONS
-        - OFFERING.UPDATE_INTEGRATION
-        - OFFERING.ADD_ENDPOINT
-        - OFFERING.DELETE_ENDPOINT
-        - OFFERING.UPDATE_COMPONENTS
-        - OFFERING.PAUSE
-        - OFFERING.UNPAUSE
-        - OFFERING.ARCHIVE
-        - OFFERING.DRY_RUN_SCRIPT
-        - OFFERING.MANAGE_CAMPAIGN
-        - OFFERING.MANAGE_USER_GROUP
-        - OFFERINGUSER.UPDATE_RESTRICTION
 
     - role: CUSTOMER.SUPPORT
       {{ if has "customer_support" .Values.waldur.disabledRoles }}
@@ -95,19 +63,18 @@ data:
       {{ else }}
       is_active: true
       {{ end }}
-      description: Organization support
 
     - role: PROJECT.ADMIN
       {{ if has "academic_domain" .Values.waldur.features }}
       description: Member
       {{ end }}
+      {{ if has "academic_shared_domain" .Values.waldur.features }}
+      description: Co-PI
+      {{ end }}
       {{ if has "project_admin" .Values.waldur.disabledRoles }}
       is_active: false
       {{ else }}
       is_active: true
-      {{ end }}
-      {{ if has "academic_shared_domain" .Values.waldur.features }}
-      description: Co-PI
       {{ end }}
       add_permissions:
         {{ if has "admin_can_approve_order" .Values.waldur.features }}
@@ -152,36 +119,13 @@ data:
       {{ end }}
 
     - role: OFFERING.MANAGER
-      description: Offering manager
       {{ if has "offering_manger" .Values.waldur.disabledRoles }}
       is_active: false
       {{ else }}
       is_active: true
       {{ end }}
-      permissions:
-        - OFFERING.UPDATE
-        - OFFERING.UPDATE_ATTRIBUTES
-        - OFFERING.UPDATE_LOCATION
-        - OFFERING.UPDATE_DESCRIPTION
-        - OFFERING.UPDATE_OPTIONS
-        - OFFERING.UPDATE_INTEGRATION
-        - OFFERING.ADD_ENDPOINT
-        - OFFERING.DELETE_ENDPOINT
-        - OFFERING.UPDATE_COMPONENTS
-        - OFFERING.PAUSE
-        - OFFERING.UNPAUSE
-        - OFFERING.ARCHIVE
-        - OFFERING.DRY_RUN_SCRIPT
-        - RESOURCE.SET_USAGE
-        - RESOURCE.SET_BACKEND_ID
-        - RESOURCE.SET_BACKEND_METADATA
-        - RESOURCE.SET_STATE
-        - RESOURCE.ACCEPT_BOOKING_REQUEST
-        - RESOURCE.REJECT_BOOKING_REQUEST
-        - OFFERING.ACCEPT_CALL_REQUEST
 
     - role: CALL.REVIEWER
-      description: Call reviewer
       {{ if has "call_reviewer" .Values.waldur.disabledRoles }}
       is_active: false
       {{ else }}
@@ -189,10 +133,6 @@ data:
       {{ end }}
 
     - role: CALL.MANAGER
-      description: Call manager
-      permissions:
-        - CALL.APPROVE_AND_REJECT_PROPOSALS
-        - CALL.CLOSE_ROUNDS
       {{ if has "call_manager" .Values.waldur.disabledRoles }}
       is_active: false
       {{ else }}
@@ -200,9 +140,6 @@ data:
       {{ end }}
 
     - role: PROPOSAL.MANAGER
-      description: Proposal manager
-      permissions:
-        - PROPOSAL.MANAGE
       {{ if has "proposal_manager" .Values.waldur.disabledRoles }}
       is_active: false
       {{ else }}

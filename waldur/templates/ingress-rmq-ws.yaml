@@ -1,0 +1,34 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rabbitmq-ws
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /ws
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    {{ if and .Values.ingress.tls.enabled (eq .Values.ingress.tls.source "letsEncrypt") }}
+    cert-manager.io/cluster-issuer: letsencrypt-prod-issuer
+    {{ end }}
+spec:
+  rules:
+  - host: {{ .Values.apiHostname }}
+    http:
+      paths:
+      - path: /rmqws
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "waldur.rabbitmq.rmqHost" . | quote }}
+            port:
+              number: 15675
+  {{ if .Values.ingress.tls.enabled }}
+  tls:
+  - hosts:
+    - {{ .Values.apiHostname }}
+    {{ if .Values.ingress.tls.customMastermindSecretName }}
+    secretName: {{ .Values.ingress.tls.customMastermindSecretName | quote }}
+    {{ else }}
+    secretName: api-certificate
+    {{ end }}
+  {{ end }}

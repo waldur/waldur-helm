@@ -374,7 +374,7 @@ networkPolicy:
 readonlyDBReplica:
   enabled: false
   replicaHost: "waldur-postgres-repl"
-  
+
 externalDB:
   enabled: false
   flavor: "zalando"
@@ -445,7 +445,7 @@ rabbitmq:
     repository: "bitnami/rabbitmq"
     tag: "4.0.2-debian-12-r0"
   replicaCount: 3
-  extraPlugins: "rabbitmq_auth_backend_ldap rabbitmq_mqtt rabbitmq_web_mqtt"
+  extraPlugins: "rabbitmq_auth_backend_ldap rabbitmq_mqtt rabbitmq_web_mqtt rabbitmq_management"
   resources:
     requests:
       cpu: 1

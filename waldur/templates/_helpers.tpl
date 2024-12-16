@@ -208,6 +208,14 @@ Add environment variables to configure database values and Sentry environment
 - name: POSTGRESQL_NAME
   value: {{ include "waldur.postgresql.dbname" . }}
 
+{{ if .Values.readonlyDB.enabled }}
+- name: POSTGRESQL_READONLY_USER
+  value: {{ include "waldur.readonlyDB.username" . }}
+
+- name: POSTGRESQL_READONLY_PASSWORD
+  value: {{ include "waldur.readonlyDB.password" . }}
+{{ end }}
+
 {{ if .Values.waldur.sentryDSN }}
 - name: SENTRY_DSN
   value: {{ .Values.waldur.sentryDSN | quote }}

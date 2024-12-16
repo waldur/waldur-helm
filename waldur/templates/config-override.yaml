@@ -220,9 +220,6 @@ data:
     WALDUR_CORE['CREATE_DEFAULT_PROJECT_ON_ORGANIZATION_CREATION'] = True
     {{ end }}
 
-    # Disable geoip location till HomePort releases maps to a stable deployment
-    WALDUR_CORE['ENABLE_GEOIP'] = False
-
     {{ if has "only_staff_can_invite_users" .Values.waldur.features }}
     WALDUR_CORE['ONLY_STAFF_CAN_INVITE_USERS'] = True
     {{ end }}

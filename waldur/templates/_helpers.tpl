@@ -180,8 +180,8 @@ Add environment variables to configure database values and Sentry environment
 - name: GLOBAL_SECRET_KEY
   valueFrom:
     secretKeyRef:
-      name: waldur-secret
-      key: GLOBAL_SECRET_KEY
+      name: {{ .Values.waldur.secretKeyExistingSecret.name | default "waldur-secret" }}
+      key: {{ .Values.waldur.secretKeyExistingSecret.key | default "GLOBAL_SECRET_KEY" }}
 
 - name: POSTGRESQL_HOST
   value: {{ include "waldur.postgresql.host" . }}

@@ -24,7 +24,7 @@ spec:
   - host: {{ .Values.apiHostname }}
     http:
       paths:
-      - path: /admin
+      - path: /admin/
         pathType: Prefix
         backend:
           service:
@@ -43,7 +43,7 @@ spec:
   - host: {{ . }}
     http:
       paths:
-      - path: /admin
+      - path: /admin/
         pathType: Prefix
         backend:
           service:

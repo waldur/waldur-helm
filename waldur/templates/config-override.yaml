@@ -71,15 +71,13 @@ data:
     postgresql_name = 'celery_results'
     CELERY_RESULT_BACKEND = f'db+postgresql://{postgresql_user}:{postgresql_password}@{postgresql_host}:{postgresql_port}/{postgresql_name}'
 
-    {{ if .Values.waldur.rabbitmqMqtt.enabled }}
     RABBITMQ_MQTT = {
-        "ENABLED": True,
         "HOST": {{ include "waldur.rabbitmq.rmqHost" . | quote }},
         "PORT": 1883,
         "USER": {{ .Values.rabbitmq.auth.username | quote }},
         "PASSWORD": {{ .Values.rabbitmq.auth.password | quote }},
+        "MANAGEMENT_PORT": 15672,
     }
-    {{ end }}
 
     EMAIL_HOST = '{{ .Values.waldur.mail.host }}'
     EMAIL_PORT = {{ .Values.waldur.mail.port | default 25 | int }}

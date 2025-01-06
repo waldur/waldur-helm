@@ -1,0 +1,30 @@
+# ConfigMap for marketplace script configuration
+# Used for running scripts in Kubernetes environment
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mastermind-marketplace-script-yaml
+data:
+  marketplace-script.yaml: |
+    {{ if .Values.waldur.marketplace.script.enabled }}
+
+    # Mode for script execution
+    SCRIPT_RUN_MODE: k8s
+
+    # Path to Kubernetes configuration file
+    K8S_CONFIG_PATH: /etc/waldur/kubeconfig
+
+    # Namespace where jobs will be created
+    K8S_NAMESPACE: "{{ .Values.waldur.marketplace.script.k8sNamespace }}"
+
+    {{ if .Values.waldur.marketplace.script.dockerImages }}
+    # Available Docker images for script execution
+    DOCKER_IMAGES: {{ .Values.waldur.marketplace.script.dockerImages | toJson }}
+    {{ end }}
+
+    {{ if .Values.waldur.marketplace.script.jobTimeout }}
+    # Timeout for Kubernetes jobs in seconds
+    K8S_JOB_TIMEOUT: {{ .Values.waldur.marketplace.script.jobTimeout }}
+    {{ end }}
+    
+    {{ end }}

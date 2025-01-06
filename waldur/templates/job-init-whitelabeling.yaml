@@ -34,6 +34,12 @@ spec:
             - name: whitelabeling-yaml
               mountPath: /etc/waldur/whitelabeling.yaml
               subPath: whitelabeling.yaml
+            - name: marketplace-script-yaml
+              mountPath: /etc/waldur/marketplace-script.yaml
+              subPath: marketplace-script.yaml
+            - name: marketplace-yaml
+              mountPath: /etc/waldur/marketplace.yaml
+              subPath: marketplace.yaml
             - name: icons
               mountPath: /etc/waldur/icons
             - name: languages-yaml
@@ -106,6 +112,12 @@ spec:
       - name: whitelabeling-yaml
         configMap:
           name: mastermind-whitelabeling-yaml
+      - name: marketplace-script-yaml
+        configMap:
+          name: mastermind-marketplace-script-yaml
+      - name: marketplace-yaml
+        configMap:
+          name: mastermind-marketplace-yaml
       - name: languages-yaml
         configMap:
           name: mastermind-languages-yaml

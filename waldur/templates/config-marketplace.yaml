@@ -1,0 +1,21 @@
+# ConfigMap for marketplace configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mastermind-marketplace-yaml
+data:
+  marketplace.yaml: |
+    {{ if .Values.waldur.marketplace.notify_staff }}
+    # Staff notification settings
+    NOTIFY_STAFF_ABOUT_APPROVALS: true
+    {{ end }}
+
+    {{ if has "waldur_marketplace_notify_about_resource_change_disabled" .Values.waldur.features }}
+    # Resource change notification settings
+    NOTIFY_ABOUT_RESOURCE_CHANGE: False
+    {{ end }}
+
+    {{ if has "disable_resource_end_date" .Values.waldur.features }}
+    # Resource end date settings
+    ENABLE_RESOURCE_END_DATE: false
+    {{ end }}

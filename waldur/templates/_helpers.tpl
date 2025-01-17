@@ -210,10 +210,27 @@ Add environment variables to configure database values and Sentry environment
 
 {{ if .Values.readonlyDB.enabled }}
 - name: POSTGRESQL_READONLY_USER
-  value: {{ include "waldur.readonlyDB.username" . }}
+  {{ if .Values.readonlyDB.username }}
+  valueFrom:
+    secretKeyRef:
+      name: waldur-secret
+      key: READONLY_DB_USERNAME
+  {{ else }}
+  value: {{ include "waldur.postgresql.user" . }}
+  {{ end }}
 
 - name: POSTGRESQL_READONLY_PASSWORD
-  value: {{ include "waldur.readonlyDB.password" . }}
+  {{ if .Values.readonlyDB.password }}
+  valueFrom:
+    secretKeyRef:
+      name: waldur-secret
+      key: READONLY_DB_PASSWORD
+  {{ else }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "waldur.postgresql.secret" . }}
+      key: {{ include "waldur.postgresql.secret.passwordKey" . }}
+  {{ end }}
 {{ end }}
 
 {{ if .Values.waldur.sentryDSN }}

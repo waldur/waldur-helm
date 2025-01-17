@@ -53,6 +53,9 @@ data:
       {{ if has "marketplace_review" .Values.waldur.features }}
         "marketplace.review": true,
       {{ end }}
+      {{ if has "marketplace_catalogue_only" .Values.waldur.features }}
+        "marketplace.catalogue_only": true,
+      {{ end }}
       {{ if has "marketplace_offering_document" .Values.waldur.features }}
         "marketplace.offering_document": true,
       {{ end }}

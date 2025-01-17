@@ -238,9 +238,6 @@ data:
     WALDUR_CORE["INVITATION_WEBHOOK_TOKEN_SECRET"] = {{ default "" .Values.waldur.customInvitations.tokenSecret | quote }}
     {{ end }}
 
-    {{ if .Values.waldur.enableStrictCheckAcceptingInvitation }}
-    WALDUR_CORE["ENABLE_STRICT_CHECK_ACCEPTING_INVITATION"] = True
-    {{ end }}
 
     {{ if has "protect_freeipa_user_details" .Values.waldur.features }}
     WALDUR_CORE['PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS'] = ['FREEIPA']

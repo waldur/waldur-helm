@@ -15,12 +15,19 @@ auth:
 extraPlugins: "rabbitmq_auth_backend_ldap rabbitmq_mqtt rabbitmq_web_mqtt rabbitmq_management"
 
 extraContainerPorts:
-  - name: mqtt-websocket
-    containerPort: 15675
-    protocol: TCP
+- name: mqtt
+  containerPort: 1883
+  protocol: TCP
+- name: mqtt-websocket
+  containerPort: 15675
+  protocol: TCP
 
 service:
   extraPorts:
+  - name: mqtt
+    protocol: TCP
+    port: 1883
+    targetPort: mqtt
   - name: mqtt-websocket
     protocol: TCP
     port: 15675
@@ -29,6 +36,9 @@ service:
 networkPolicy:
   extraIngress:
   - ports:
+    - protocol: TCP
+      containerPort: 1883
+      port: 1883
     - protocol: TCP
       containerPort: 15675
       port: 15675

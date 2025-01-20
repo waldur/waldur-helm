@@ -500,11 +500,18 @@ rabbitmq:
       cpu: 2
       memory: 1024Mi
   extraContainerPorts:
+  - name: mqtt
+    containerPort: 1883
+    protocol: TCP
   - name: mqtt-websocket
     containerPort: 15675
     protocol: TCP
   service:
     extraPorts:
+    - name: mqtt
+      protocol: TCP
+      port: 1883
+      targetPort: mqtt
     - name: mqtt-websocket
       protocol: TCP
       port: 15675
@@ -512,6 +519,9 @@ rabbitmq:
   networkPolicy:
     extraIngress:
     - ports:
+      - protocol: TCP
+        containerPort: 1883
+        port: 1883
       - protocol: TCP
         containerPort: 15675
         port: 15675

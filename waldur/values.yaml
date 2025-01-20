@@ -459,6 +459,22 @@ rabbitmq:
     limits:
       cpu: 2
       memory: 1024Mi
+  extraContainerPorts:
+  - name: mqtt-websocket
+    containerPort: 15675
+    protocol: TCP
+  service:
+    extraPorts:
+    - name: mqtt-websocket
+      protocol: TCP
+      port: 15675
+      targetPort: mqtt-websocket
+  networkPolicy:
+    extraIngress:
+    - ports:
+      - protocol: TCP
+        containerPort: 15675
+        port: 15675
   persistence:
     enabled: true
     size: "10Gi"

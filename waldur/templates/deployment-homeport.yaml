@@ -31,19 +31,19 @@ spec:
           imagePullPolicy: {{ .Values.waldur.pullPolicy }}
           livenessProbe:
             httpGet:
-              port: 80
+              port: 8080
               path: /
             initialDelaySeconds: 3
             periodSeconds: 3
           readinessProbe:
             httpGet:
-              port: 80
+              port: 8080
               path: /
             initialDelaySeconds: 3
             periodSeconds: 3
           ports:
             - name: http
-              containerPort: 80
+              containerPort: 8080
               protocol: TCP
           env:
             - name: TITLE

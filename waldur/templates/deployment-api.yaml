@@ -42,14 +42,14 @@ spec:
             failureThreshold: 5
           readinessProbe:
             httpGet:
-              port: 80
+              port: 8080
               path: /api/configuration/
             initialDelaySeconds: 50 # it takes around a minute to completely start UWSGI server
             periodSeconds: 10
             failureThreshold: 100 # Mastermind can wait long for DB migrations
           ports:
             - name: http
-              containerPort: 80
+              containerPort: 8080
               protocol: TCP
           env:
             {{- include "waldur.credentials" . | nindent 12 }}

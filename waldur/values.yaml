@@ -20,10 +20,37 @@ homeportExtraHosts: []
 
 affinity: {}
 
-apiResources: {}
-workerResources: {}
-homeportResources: {}
-beatResources: {}
+apiResources:
+  requests:
+    memory: 2000Mi
+    cpu: 1000m
+  limits:
+    memory: 4000Mi
+    cpu: 2000m
+
+workerResources:
+  requests:
+    memory: 2000Mi
+    cpu: 1000m
+  limits:
+    memory: 4000Mi
+    cpu: 2000m
+
+homeportResources:
+  requests:
+    memory: 1000Mi
+    cpu: 500m
+  limits:
+    memory: 2000Mi
+    cpu: 1000m
+
+beatResources:
+  requests:
+    memory: 500Mi
+    cpu: 250m
+  limits:
+    memory: 1000Mi
+    cpu: 500m
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following

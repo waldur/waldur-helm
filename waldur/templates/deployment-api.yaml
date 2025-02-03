@@ -149,7 +149,7 @@ spec:
       - name: waldur-ssh-key
         secret:
           secretName: waldur-ssh-key-config
-          defaultMode: 0600
+          defaultMode: 0660
       {{ end }}
       {{ if .Values.waldur.marketplace.script.enabled }}
       - name: waldur-script-kubeconfig

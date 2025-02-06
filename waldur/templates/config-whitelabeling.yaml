@@ -23,6 +23,11 @@ data:
     disable_dark_theme: {{ .Values.waldur.whitelabeling.disableDarkTheme | default false }}
     auto_approve_user_tos: {{ .Values.waldur.whitelabeling.autoApproveUserTOS | default false }}
     enable_strict_check_accepting_invitation: {{ .Values.waldur.enableStrictCheckAcceptingInvitation | default false }}
+    
+    {{ if .Values.waldur.defaultIdp }}
+    default_idp: {{ .Values.waldur.defaultIdp | quote }}
+    {{ end }}
+
     {{ if .Values.waldur.whitelabeling.poweredByLogoPath }}
     powered_by_logo: "/etc/waldur/icons/poweredby_logo.png"
     {{ end }}

@@ -22,35 +22,35 @@ affinity: {}
 
 apiResources:
   requests:
+    cpu: 500m
     memory: 2000Mi
-    cpu: 1000m
   limits:
+    cpu: 1000m
     memory: 4000Mi
-    cpu: 2000m
 
 workerResources:
   requests:
-    memory: 2000Mi
     cpu: 1000m
+    memory: 2000Mi
   limits:
-    memory: 4000Mi
     cpu: 2000m
+    memory: 4000Mi
 
 homeportResources:
   requests:
-    memory: 1000Mi
-    cpu: 500m
+    cpu: 250m
+    memory: 500Mi
   limits:
-    memory: 2000Mi
-    cpu: 1000m
+    cpu: 500m
+    memory: 1000Mi
 
 beatResources:
   requests:
-    memory: 500Mi
     cpu: 250m
+    memory: 500Mi
   limits:
-    memory: 1000Mi
     cpu: 500m
+    memory: 1000Mi
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
@@ -391,11 +391,6 @@ waldur:
     azureClientSecret: ""
     azureScope: ""
 
-bootstrap:
-  enabled: false
-  script: "bootstrap.sh"
-  dir: "bootstrap"
-
 networkPolicy:
   enabled: false
 
@@ -415,7 +410,7 @@ externalDB:
   serviceName: "waldur-postgres"
 
 postgresql:
-  enabled: false
+  enabled: true
   auth:
     username: "waldur"
     password: "waldur"
@@ -468,7 +463,7 @@ minio:
   endpoint: "http://minio.default.svc.cluster.local:9000" ## See docs/service-endpoint.md for details.
 
 rabbitmq:
-  enabled: false
+  enabled: true
   auth:
     username: "waldur"
     password: "waldur"
@@ -477,7 +472,7 @@ rabbitmq:
     registry: "docker.io"
     repository: "bitnami/rabbitmq"
     tag: "4.0.2-debian-12-r0"
-  replicaCount: 3
+  replicaCount: 1
   extraPlugins: "rabbitmq_auth_backend_ldap rabbitmq_mqtt rabbitmq_web_mqtt rabbitmq_management"
   resources:
     requests:

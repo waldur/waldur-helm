@@ -61,7 +61,6 @@ Run linter:
     - export KUBECONFIG=${K8S_CONFIG_WALDUR_HELM_TEST}
     - helm uninstall waldur || true
     - kubectl delete job waldur-mastermind-init-whitelabeling-job || true
-    - kubectl delete job waldur-bootstrap-job || true
 
 Validate release installation (dry-run):
   extends: .Test template

@@ -9,9 +9,9 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: "nginx"
     nginx.ingress.kubernetes.io/enable-cors: "true"
-    # This sets the file upload size limit for ingress. 
+    # This sets the file upload size limit for ingress.
     # Additional settings for file upload sizes for different endpoints are in mastermind.conf, in mastermind nginx.
-    nginx.ingress.kubernetes.io/proxy-body-size: 10m 
+    nginx.ingress.kubernetes.io/proxy-body-size: 10m
     nginx.ingress.kubernetes.io/cors-allow-headers: DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,sentry-trace,baggage,X-Impersonated-User-Uuid
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     {{ if and .Values.ingress.tls.enabled (eq .Values.ingress.tls.source "letsEncrypt") }}
@@ -53,13 +53,6 @@ spec:
             name: waldur-mastermind-api
             port:
               number: 80
-      - path: /media
-        pathType: Prefix
-        backend:
-          service:
-            name: waldur-mastermind-api
-            port:
-              number: 80
       - path: /health-check
         pathType: Prefix
         backend:
@@ -94,13 +87,6 @@ spec:
             port:
               number: 80
       - path: /apidocs
-        pathType: Prefix
-        backend:
-          service:
-            name: waldur-mastermind-api
-            port:
-              number: 80
-      - path: /media
         pathType: Prefix
         backend:
           service:

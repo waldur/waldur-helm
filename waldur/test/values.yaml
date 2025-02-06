@@ -41,10 +41,10 @@ workerResources:
 homeportResources:
   requests:
     memory: 1000Mi
-    cpu: 500m
+    cpu: 250m
   limits:
     memory: 2000Mi
-    cpu: 1000m
+    cpu: 500m
 
 beatResources:
   requests:
@@ -132,7 +132,7 @@ waldur:
   mastermindUrl: "http://waldur.example.com/"
   site:
     name: "Waldur"
-    logo: "icons/login_logo.png"
+    logo: "/etc/waldur/icons/login_logo.png"
     address: "Example address"
     email: "waldur@example.com"
     phone: "test phone"
@@ -404,11 +404,6 @@ waldur:
     azureClientID: ""
     azureClientSecret: ""
     azureScope: ""
-
-bootstrap:
-  enabled: true
-  script: "bootstrap.sh"
-  dir: "test/bootstrap"
 
 networkPolicy:
   enabled: true

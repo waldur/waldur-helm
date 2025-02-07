@@ -162,27 +162,6 @@ data:
     }
     {{ end }}
 
-    #
-    # waldur-freeipa
-    #
-
-    {{ if (has "freeipa" .Values.waldur.features) }}
-    WALDUR_FREEIPA.update({
-        'ENABLED': True,
-        'GROUPNAME_PREFIX': '{{ .Values.waldur.freeipa.groupnamePrefix }}',
-        'HOSTNAME': '{{ .Values.waldur.freeipa.hostname }}',
-        'PASSWORD': os.environ.get("FREEIPA_PASSWORD", '{{ .Values.waldur.freeipa.password | default "" }}'),
-        'USERNAME': '{{ .Values.waldur.freeipa.username }}',
-        'USERNAME_PREFIX': '{{ .Values.waldur.freeipa.usernamePrefix }}',
-        'VERIFY_SSL': {{ .Values.waldur.freeipa.verifySSL }},
-    })
-    {{ end }}
-
-    {{ if (has "freeipa_group_synchronization_disabled" .Values.waldur.features) }}
-    WALDUR_FREEIPA.update({
-        'GROUP_SYNCHRONIZATION_ENABLED': False,
-    })
-    {{ end }}
 
     {{ if (has "VALIMO" .Values.waldur.authMethods) }}
     WALDUR_AUTH_VALIMO.update({

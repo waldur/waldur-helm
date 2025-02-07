@@ -24,6 +24,7 @@ on a Kubernetes cluster using the [Helm](https://helm.sh) package manager.
     ```
 
 2. Install dependencies or enable them in Helm values
+
    2.1. Quick setup:
 
     In `values.yaml` set:

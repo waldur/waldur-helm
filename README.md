@@ -24,15 +24,27 @@ on a Kubernetes cluster using the [Helm](https://helm.sh) package manager.
     ```
 
 2. Install dependencies or enable them in Helm values
+   2.1. Quick setup:
 
-    Setup database using one of:
-    - Simple PostgreSQL DB: [instructions](docs/postgres-db.md) or
-    - PostgreSQL HA DB: [instructions](docs/postgres-db-ha.md) or
-    - Integrate with external DB: [instructions](docs/external-db-integration.md)
+    In `values.yaml` set:
+      - `postgresql.enabled` to `true`
+      - `rabbitmq.enabled` to `true`
 
-    Install MinIO (for database backups): [instructions](docs/minio.md)
+    One-liner:
 
-    Install RabbitMQ for task queue: [instructions](docs/rabbitmq.md)
+    ```bash
+    helm install my-waldur --set postgresql.enabled=true --set rabbitmq.enabled=true waldur-charts/waldur
+    ```
+
+   2.2. Advanced setup of dependencies
+      Setup databaseusing one of:
+      - Simple PostgreSQL DB: [instructions](docs/postgres-db.md) or
+      - PostgreSQL HA DB: [instructions](docs/postgres-db-ha.md) or
+      - Integrate with external DB: [instructions](docs/external-db-integration.md)
+
+      Install MinIO (for database backups): [instructions](docs/minio.md)
+
+      Install RabbitMQ for task queue: [instructions](docs/rabbitmq.md)
 
 3. Install the Helm chart
 

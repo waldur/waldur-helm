@@ -7,19 +7,32 @@ kind: Ingress
 metadata:
   name: api-ingress-admin
   annotations:
-    kubernetes.io/ingress.class: "nginx"
+    {{ if eq .Values.ingress.className "nginx" }}
     nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-headers: DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,sentry-trace,baggage,X-Impersonated-User-Uuid
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,sentry-trace,baggage,X-Impersonated-User-Uuid"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    {{ if and .Values.ingress.tls.enabled (eq .Values.ingress.tls.source "letsEncrypt") }}
-    cert-manager.io/cluster-issuer: letsencrypt-prod-issuer
-    {{ end }}
     {{ if .Values.ingress.whitelistSourceRangeAdmin }}
     nginx.ingress.kubernetes.io/whitelist-source-range: "{{ .Values.ingress.whitelistSourceRangeAdmin }}"
     {{ else if .Values.ingress.whitelistSourceRange }}
     nginx.ingress.kubernetes.io/whitelist-source-range: "{{ .Values.ingress.whitelistSourceRange }}"
     {{ end }}
+    {{ else if or (eq .Values.ingress.className "openshift-default") (eq .Values.ingress.className "haproxy") }}
+    haproxy.org/cors-enable: "true"
+    haproxy.org/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,sentry-trace,baggage,X-Impersonated-User-Uuid"
+    haproxy.org/ssl-redirect: "true"
+    {{ if .Values.ingress.whitelistSourceRangeAdmin }}
+    haproxy.org/whitelist: "{{ .Values.ingress.whitelistSourceRangeAdmin }}"
+    {{ else if .Values.ingress.whitelistSourceRange }}
+    haproxy.org/whitelist: "{{ .Values.ingress.whitelistSourceRange }}"
+    {{ end }}
+    {{ end }}
+    {{ if and .Values.ingress.tls.enabled (eq .Values.ingress.tls.source "letsEncrypt") }}
+    cert-manager.io/cluster-issuer: letsencrypt-prod-issuer
+    {{ end }}
 spec:
+  {{ if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className | quote }}
+  {{ end }}
   rules:
   - host: {{ .Values.apiHostname }}
     http:

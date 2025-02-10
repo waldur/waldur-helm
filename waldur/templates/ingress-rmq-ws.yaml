@@ -3,14 +3,22 @@ kind: Ingress
 metadata:
   name: rabbitmq-ws
   annotations:
-    kubernetes.io/ingress.class: "nginx"
+    {{ if eq .Values.ingress.className "nginx" }}
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /ws
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    {{ else if or (eq .Values.ingress.className "openshift-default") (eq .Values.ingress.className "haproxy") }}
+    haproxy.org/cors-enable: "true"
+    haproxy.org/path-rewrite: "/ws"
+    haproxy.org/ssl-redirect: "true"
+    {{ end }}
     {{ if and .Values.ingress.tls.enabled (eq .Values.ingress.tls.source "letsEncrypt") }}
     cert-manager.io/cluster-issuer: letsencrypt-prod-issuer
     {{ end }}
 spec:
+  {{ if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className | quote }}
+  {{ end }}
   rules:
   - host: {{ .Values.apiHostname }}
     http:

@@ -84,6 +84,8 @@ nodeSelector: {}
 tolerations: []
 
 ingress:
+  # Supported values: nginx, haproxy and openshift-default
+  className: "nginx"
   tls:
     enabled: false
     source: "secret" # Possible values: `letsEncrypt` and `secret`

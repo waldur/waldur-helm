@@ -76,6 +76,7 @@ nodeSelector: {}
 tolerations: []
 
 ingress:
+  className: "nginx"
   tls:
     enabled: true
     source: "secret" # Possible values: `letsEncrypt` and `secret`
@@ -424,7 +425,7 @@ externalDB:
   serviceName: "waldur-testing-postgres"
 
 postgresql:
-  enabled: false
+  enabled: true
   auth:
     username: "waldur"
     password: "waldur"
@@ -446,7 +447,7 @@ postgresql:
     enabled: true
 
 postgresqlha:
-  enabled: true
+  enabled: false
   postgresql:
     database: waldur
     username: waldur

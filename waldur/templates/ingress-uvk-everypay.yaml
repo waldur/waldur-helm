@@ -8,13 +8,20 @@ kind: Ingress
 metadata:
   name: uvk-everypay-ingress
   annotations:
-    nginx.ingress.kubernetes.io/enable-cors: "true"
+    {{ if eq .Values.ingress.className "nginx" }}
     nginx.ingress.kubernetes.io/rewrite-target: /$1
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    {{ else if or (eq .Values.ingress.className "openshift-default") (eq .Values.ingress.className "haproxy") }}
+    haproxy.org/path-rewrite: /uvk-everypay/(.*) /\1
+    haproxy.org/ssl-redirect: "true"
+    {{ end }}
     {{ if and .Values.ingress.tls.enabled (eq .Values.ingress.tls.source "letsEncrypt") }}
     cert-manager.io/cluster-issuer: letsencrypt-prod-issuer
     {{ end }}
 spec:
+  {{ if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className | quote }}
+  {{ end }}
   rules:
   - host: {{ .Values.apiHostname }}
     http:

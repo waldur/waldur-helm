@@ -33,7 +33,7 @@ data:
     freeipa_enabled: True
     freeipa_groupname_prefix: '{{ .Values.waldur.freeipa.groupnamePrefix }}'
     freeipa_hostname: '{{ .Values.waldur.freeipa.hostname }}'
-    freeipa_password: os.environ.get("FREEIPA_PASSWORD", '{{ .Values.waldur.freeipa.password | default "" }}')
+    freeipa_password: '{{ .Values.waldur.freeipa.password | default "" }}'
     freeipa_username: '{{ .Values.waldur.freeipa.username }}'
     freeipa_username_prefix: '{{ .Values.waldur.freeipa.usernamePrefix }}'
     freeipa_verify_ssl: {{ .Values.waldur.freeipa.verifySSL }}

@@ -6,7 +6,6 @@ Outline:
 - [TLS](tls-config.md)
 - [White-labeling](whitelabeling.md)
 - [Custom Mastermind templates](mastermind-templates.md)
-- [Bootstrapping](bootstrap.md)
 - [SAML2](saml2.md)
 - [HPA](hpa.md)
 - [Stress testing](locust.md)

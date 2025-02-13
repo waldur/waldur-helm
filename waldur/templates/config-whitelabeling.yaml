@@ -10,6 +10,7 @@ data:
     site_phone: {{ .Values.waldur.site.phone | default "" | quote }}
     short_page_title: {{ .Values.waldur.whitelabeling.shortPageTitle | default "" | quote }}
     full_page_title: {{ .Values.waldur.whitelabeling.modePageTitle | default "" | quote }}
+    homeport_url: {{ printf "%s://%s/" .Values.homeportScheme .Values.homeportHostname }}
     brand_color: {{ .Values.waldur.whitelabeling.brandColor | default "" | quote }}
     brand_label_color: {{ .Values.waldur.whitelabeling.brandLabelColor | default "" | quote }}
     hero_link_label: {{ .Values.waldur.whitelabeling.heroLinkLabel | default "" | quote }}

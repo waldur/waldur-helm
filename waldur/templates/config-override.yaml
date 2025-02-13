@@ -95,7 +95,6 @@ data:
     {{ end }}
 
     WALDUR_CORE['AUTHENTICATION_METHODS'] = {{ .Values.waldur.authMethods | toJson }}
-    WALDUR_CORE['HOMEPORT_URL'] = '{{ printf "%s://%s/" .Values.homeportScheme .Values.homeportHostname }}'
 
     {{ if .Values.waldur.remoteEduteams }}
     WALDUR_AUTH_SOCIAL.update({

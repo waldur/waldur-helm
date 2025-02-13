@@ -291,9 +291,6 @@ data:
         'PROJECT_PREFIX': '{{ .Values.waldur.slurm.projectPrefix }}',
         'ALLOCATION_PREFIX': '{{ .Values.waldur.slurm.allocationPrefix }}',
     })
-    {{ if .Values.waldur.ssh_private_key_path }}
-    WALDUR_SLURM['PRIVATE_KEY_PATH'] = '/var/lib/waldur/id_rsa'
-    {{ end }}
     {{ end }}
     #
     # waldur-openstack

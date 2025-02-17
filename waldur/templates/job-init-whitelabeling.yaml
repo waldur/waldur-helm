@@ -37,6 +37,9 @@ spec:
             - name: marketplace-script-yaml
               mountPath: /etc/waldur/marketplace-script.yaml
               subPath: marketplace-script.yaml
+            - name: freeipa-yaml
+              mountPath: /etc/waldur/freeipa.yaml
+              subPath: freeipa.yaml
             - name: marketplace-yaml
               mountPath: /etc/waldur/marketplace.yaml
               subPath: marketplace.yaml
@@ -115,6 +118,9 @@ spec:
       - name: marketplace-script-yaml
         configMap:
           name: mastermind-marketplace-script-yaml
+      - name: freeipa-yaml
+        configMap:
+          name: mastermind-freeipa-yaml
       - name: marketplace-yaml
         configMap:
           name: mastermind-marketplace-yaml

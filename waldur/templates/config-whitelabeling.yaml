@@ -29,20 +29,6 @@ data:
     default_idp: {{ .Values.waldur.defaultIdp | quote }}
     {{ end }}
 
-    {{ if (has "freeipa" .Values.waldur.features) }}
-    freeipa_enabled: True
-    freeipa_groupname_prefix: '{{ .Values.waldur.freeipa.groupnamePrefix }}'
-    freeipa_hostname: '{{ .Values.waldur.freeipa.hostname }}'
-    freeipa_password: '{{ .Values.waldur.freeipa.password | default "" }}'
-    freeipa_username: '{{ .Values.waldur.freeipa.username }}'
-    freeipa_username_prefix: '{{ .Values.waldur.freeipa.usernamePrefix }}'
-    freeipa_verify_ssl: {{ .Values.waldur.freeipa.verifySSL }}
-    {{ end }}
-
-    {{ if (has "freeipa_group_synchronization_disabled" .Values.waldur.features) }}
-    freeipa_group_synchronization_enabled: False
-    {{ end }}
-
     {{ if .Values.waldur.whitelabeling.poweredByLogoPath }}
     powered_by_logo: "/etc/waldur/icons/poweredby_logo.png"
     {{ end }}

@@ -1,0 +1,21 @@
+# ConfigMap for freeipa configuration
+# Used for running freeipa in Kubernetes environment
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mastermind-freeipa-yaml
+data:
+  freeipa.yaml: |
+    {{ if (has "freeipa" .Values.waldur.features) }}
+    freeipa_enabled: True
+    freeipa_groupname_prefix: '{{ .Values.waldur.freeipa.groupnamePrefix }}'
+    freeipa_hostname: '{{ .Values.waldur.freeipa.hostname }}'
+    freeipa_password: '{{ .Values.waldur.freeipa.password | default "" }}'
+    freeipa_username: '{{ .Values.waldur.freeipa.username }}'
+    freeipa_username_prefix: '{{ .Values.waldur.freeipa.usernamePrefix }}'
+    freeipa_verify_ssl: {{ .Values.waldur.freeipa.verifySSL }}
+    {{ end }}
+
+    {{ if (has "freeipa_group_synchronization_disabled" .Values.waldur.features) }}
+    freeipa_group_synchronization_enabled: False
+    {{ end }}

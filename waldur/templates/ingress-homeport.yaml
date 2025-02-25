@@ -70,6 +70,11 @@ spec:
   {{ end }}
   {{ if and .Values.ingress.tls.enabled }}
   tls:
+  {{- if eq .Values.ingress.className "openshift-default" }}
+  # In OpenShift, the backend will create secure Route with default TLS parameters
+  # Docs link: https://docs.openshift.com/container-platform/4.17/networking/routes/route-configuration.html#nw-ingress-edge-route-default-certificate_route-configuration
+  - {}
+  {{- else }}
   - hosts:
     - {{ .Values.homeportHostname }}
     {{ if .Values.homeportExtraHosts }}
@@ -82,4 +87,5 @@ spec:
     {{ else }}
     secretName: homeport-certificate
     {{ end }}
+  {{- end -}}
   {{ end }}

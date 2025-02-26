@@ -5,12 +5,16 @@ metadata:
 data:
   permissions-override.yaml: |
     - role: CUSTOMER.OWNER
+      {{- if hasKey .Values.waldur.customRoleDescriptions "CUSTOMER.OWNER" }}
+      description: {{ index .Values.waldur.customRoleDescriptions "CUSTOMER.OWNER" }}
+      {{- else }}
       {{ if has "academic_domain" .Values.waldur.features }}
       description: PI
       {{ end }}
       {{ if has "academic_shared_domain" .Values.waldur.features }}
       description: Resource allocator
       {{ end }}
+      {{- end }}
       {{ if has "customer_owner" .Values.waldur.disabledRoles }}
       is_active: false
       {{ else }}
@@ -57,6 +61,9 @@ data:
       {{ else }}
       is_active: true
       {{ end }}
+      {{- if hasKey .Values.waldur.customRoleDescriptions "CUSTOMER.MANAGER" }}
+      description: {{ index .Values.waldur.customRoleDescriptions "CUSTOMER.MANAGER" }}
+      {{- end }}
 
     - role: CUSTOMER.SUPPORT
       {{ if has "customer_support" .Values.waldur.disabledRoles }}
@@ -64,14 +71,21 @@ data:
       {{ else }}
       is_active: true
       {{ end }}
+      {{- if hasKey .Values.waldur.customRoleDescriptions "CUSTOMER.SUPPORT" }}
+      description: {{ index .Values.waldur.customRoleDescriptions "CUSTOMER.SUPPORT" }}
+      {{- end }}
 
     - role: PROJECT.ADMIN
+      {{- if hasKey .Values.waldur.customRoleDescriptions "PROJECT.ADMIN" }}
+      description: {{ index .Values.waldur.customRoleDescriptions "PROJECT.ADMIN" }}
+      {{- else }}
       {{ if has "academic_domain" .Values.waldur.features }}
       description: Member
       {{ end }}
       {{ if has "academic_shared_domain" .Values.waldur.features }}
       description: Co-PI
       {{ end }}
+      {{- end }}
       {{ if has "project_admin" .Values.waldur.disabledRoles }}
       is_active: false
       {{ else }}
@@ -87,12 +101,16 @@ data:
         {{ end }}
 
     - role: PROJECT.MANAGER
+      {{- if hasKey .Values.waldur.customRoleDescriptions "PROJECT.MANAGER" }}
+      description: {{ index .Values.waldur.customRoleDescriptions "PROJECT.MANAGER" }}
+      {{- else }}
       {{ if has "academic_domain" .Values.waldur.features }}
       description: Co-PI
       {{ end }}
       {{ if has "academic_shared_domain" .Values.waldur.features }}
       description: PI
       {{ end }}
+      {{- end }}
       {{ if has "project_manager" .Values.waldur.disabledRoles }}
       is_active: false
       {{ else }}
@@ -108,18 +126,25 @@ data:
         {{ end }}
 
     - role: PROJECT.MEMBER
-      {{ if has "project_member" .Values.waldur.disabledRoles }}
-      is_active: false
-      {{ else }}
-      is_active: true
-      {{ end }}
+      {{- if hasKey .Values.waldur.customRoleDescriptions "PROJECT.MEMBER" }}
+      description: {{ index .Values.waldur.customRoleDescriptions "PROJECT.MEMBER" }}
+      {{- else }}
       {{ if has "academic_domain" .Values.waldur.features }}
       description: Guest
       {{ else }}
       description: Project member
       {{ end }}
+      {{- end }}
+      {{ if has "project_member" .Values.waldur.disabledRoles }}
+      is_active: false
+      {{ else }}
+      is_active: true
+      {{ end }}
 
     - role: OFFERING.MANAGER
+      {{- if hasKey .Values.waldur.customRoleDescriptions "OFFERING.MANAGER" }}
+      description: {{ index .Values.waldur.customRoleDescriptions "OFFERING.MANAGER" }}
+      {{- end }}
       {{ if has "offering_manger" .Values.waldur.disabledRoles }}
       is_active: false
       {{ else }}
@@ -127,6 +152,9 @@ data:
       {{ end }}
 
     - role: CALL.REVIEWER
+      {{- if hasKey .Values.waldur.customRoleDescriptions "CALL.REVIEWER" }}
+      description: {{ index .Values.waldur.customRoleDescriptions "CALL.REVIEWER" }}
+      {{- end }}
       {{ if has "call_reviewer" .Values.waldur.disabledRoles }}
       is_active: false
       {{ else }}
@@ -134,6 +162,9 @@ data:
       {{ end }}
 
     - role: CALL.MANAGER
+      {{- if hasKey .Values.waldur.customRoleDescriptions "CALL.MANAGER" }}
+      description: {{ index .Values.waldur.customRoleDescriptions "CALL.MANAGER" }}
+      {{- end }}
       {{ if has "call_manager" .Values.waldur.disabledRoles }}
       is_active: false
       {{ else }}
@@ -141,6 +172,9 @@ data:
       {{ end }}
 
     - role: PROPOSAL.MANAGER
+      {{- if hasKey .Values.waldur.customRoleDescriptions "PROPOSAL.MANAGER" }}
+      description: {{ index .Values.waldur.customRoleDescriptions "PROPOSAL.MANAGER" }}
+      {{- end }}
       {{ if has "proposal_manager" .Values.waldur.disabledRoles }}
       is_active: false
       {{ else }}

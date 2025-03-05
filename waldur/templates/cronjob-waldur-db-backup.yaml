@@ -32,6 +32,8 @@ spec:
                   value: "S3v4"
                 - name: EXEC_TIMEOUT
                   value: "600" # 10 minutes
+              resources:
+                {{- toYaml .Values.cronjobResources.postgres | nindent 16 }}
               livenessProbe:
                 exec:
                   command:

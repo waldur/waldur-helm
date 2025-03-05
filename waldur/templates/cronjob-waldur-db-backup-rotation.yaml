@@ -32,6 +32,8 @@ spec:
                   value: {{ .Values.minio.bucketName | quote }}
                 - name: MINIO_API_VERSION
                   value: "S3v4"
+              resources:
+                {{- toYaml .Values.cronjobResources.postgres | nindent 16 }}
               volumeMounts:
                 - name: postgres-backup-rotation-script
                   mountPath: /usr/local/bin/backup-rotation

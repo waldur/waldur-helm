@@ -62,6 +62,22 @@ beatResources:
   #   cpu: 100m
   #   memory: 128Mi
 
+cronjobResources:
+  waldur:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  postgres:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
 hpa:
   api:
     enabled: false

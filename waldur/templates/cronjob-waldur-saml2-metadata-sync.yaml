@@ -39,6 +39,8 @@ spec:
               - name: HAKA_PROD_METADATA_URL
                 value: https://haka.funet.fi/metadata/haka-metadata.xml
               {{ end }}
+            resources:
+              {{- toYaml .Values.cronjobResources.waldur | nindent 14 }}
             volumeMounts:
               - name: api-override
                 mountPath: /etc/waldur/override.conf.py

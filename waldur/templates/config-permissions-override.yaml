@@ -180,3 +180,16 @@ data:
       {{ else }}
       is_active: true
       {{ end }}
+
+    - role: CUSTOMER.CALL_ORGANIZER
+      scope: call_organizer
+      {{- if hasKey .Values.waldur.customRoleDescriptions "CALL.MANAGER" }}
+      description: {{ index .Values.waldur.customRoleDescriptions "CALL.MANAGER" }}
+      {{- else }}
+      description: Organization call organizer
+      {{- end }}
+      {{ if has "call_organizer" .Values.waldur.disabledRoles }}
+      is_active: false
+      {{ else }}
+      is_active: true
+      {{ end }}

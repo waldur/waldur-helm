@@ -17,7 +17,7 @@ data:
 
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'ENGINE': 'django.db.backends.postgresql',
             'NAME': os.environ.get('POSTGRESQL_NAME'),
             'HOST': os.environ.get('POSTGRESQL_HOST'),
             'PORT': os.environ.get('POSTGRESQL_PORT'),
@@ -27,22 +27,23 @@ data:
     }
 
     {{- if .Values.readonlyDB.enabled }}
+    # connection intended for /api/query/ requests
     DATABASES['readonly'] = {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('POSTGRESQL_NAME'),
         'HOST': os.environ.get('POSTGRESQL_HOST'),
         'PORT': os.environ.get('POSTGRESQL_PORT'),
         'USER': os.environ.get('POSTGRESQL_READONLY_USER'),
         'PASSWORD': os.environ.get('POSTGRESQL_READONLY_PASSWORD'),
         'OPTIONS': {
-            'target_session_attrs': 'read-only',
-        },
+            'options': '-c default_transaction_read_only=on'
+        }
     }
     {{- end }}
 
     {{- if .Values.readonlyDBReplica.enabled }}
     DATABASES['read_db'] = {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('POSTGRESQL_NAME'),
         'HOST': "{{ .Values.readonlyDBReplica.replicaHost }}",
         'PORT': os.environ.get('POSTGRESQL_PORT'),

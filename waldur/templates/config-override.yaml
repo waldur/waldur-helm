@@ -70,7 +70,7 @@ data:
     postgresql_user = os.environ.get('POSTGRESQL_USER')
     postgresql_password = os.environ.get('POSTGRESQL_PASSWORD')
     postgresql_name = 'celery_results'
-    CELERY_RESULT_BACKEND = f'db+postgresql://{postgresql_user}:{postgresql_password}@{postgresql_host}:{postgresql_port}/{postgresql_name}'
+    CELERY_RESULT_BACKEND = f'db+postgresql++psycopg://{postgresql_user}:{postgresql_password}@{postgresql_host}:{postgresql_port}/{postgresql_name}'
 
     RABBITMQ_MQTT = {
         "HOST": {{ include "waldur.rabbitmq.rmqHost" . | quote }},

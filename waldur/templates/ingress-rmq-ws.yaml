@@ -30,6 +30,16 @@ spec:
             name: {{ include "waldur.rabbitmq.rmqHost" . | quote }}
             port:
               number: 15675
+  - host: {{ .Values.apiHostname }}
+    http:
+      paths:
+      - path: /rmqws-stomp
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "waldur.rabbitmq.rmqHost" . | quote }}
+            port:
+              number: 15674
   {{ if .Values.ingress.tls.enabled }}
   tls:
   - hosts:

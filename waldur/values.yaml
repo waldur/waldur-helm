@@ -503,8 +503,14 @@ rabbitmq:
   - name: mqtt
     containerPort: 1883
     protocol: TCP
+  - name: stomp
+    containerPort: 61613
+    protocol: TCP
   - name: mqtt-websocket
     containerPort: 15675
+    protocol: TCP
+  - name: stomp-websocket
+    containerPort: 15674
     protocol: TCP
   service:
     extraPorts:
@@ -512,10 +518,18 @@ rabbitmq:
       protocol: TCP
       port: 1883
       targetPort: mqtt
+    - name: stomp
+      protocol: TCP
+      port: 61613
+      targetPort: stomp
     - name: mqtt-websocket
       protocol: TCP
       port: 15675
       targetPort: mqtt-websocket
+    - name: stomp-websocket
+      protocol: TCP
+      port: 15674
+      targetPort: stomp-websocket
   networkPolicy:
     extraIngress:
     - ports:

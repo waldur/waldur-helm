@@ -75,7 +75,7 @@ data:
     RABBITMQ = {
         "HOST": {{ include "waldur.rabbitmq.rmqHost" . | quote }},
         "MQTT_PORT": 1883,
-        "STOMP_PORT": 61613,
+        "STOMP_PORT": None,
         "USER": {{ .Values.rabbitmq.auth.username | quote }},
         "PASSWORD": {{ .Values.rabbitmq.auth.password | quote }},
         "MANAGEMENT_PORT": 15672,

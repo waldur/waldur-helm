@@ -117,13 +117,17 @@ data:
       is_active: true
       {{ end }}
       add_permissions:
-        {{ if has "manager_can_approve_order" .Values.waldur.features }}
+        {{ if and (hasKey .Values.waldur.customRolePermissions "PROJECT.MANAGER") (hasKey (index .Values.waldur.customRolePermissions "PROJECT.MANAGER") "addPermissions") }}
+        {{- toYaml (index .Values.waldur.customRolePermissions "PROJECT.MANAGER").addPermissions | nindent 8 }}
+        {{ else if has "manager_can_approve_order" .Values.waldur.features }}
         - ORDER.APPROVE
-        {{ end }}
+        {{- end }}
       drop_permissions:
-        {{ if not (has "manager_can_approve_order" .Values.waldur.features) }}
+        {{ if and (hasKey .Values.waldur.customRolePermissions "PROJECT.MANAGER") (hasKey (index .Values.waldur.customRolePermissions "PROJECT.MANAGER") "dropPermissions") }}
+        {{- toYaml (index .Values.waldur.customRolePermissions "PROJECT.MANAGER").dropPermissions | nindent 8 }}
+        {{ else if not (has "manager_can_approve_order" .Values.waldur.features) }}
         - ORDER.APPROVE
-        {{ end }}
+        {{- end }}
 
     - role: PROJECT.MEMBER
       {{- if hasKey .Values.waldur.customRoleDescriptions "PROJECT.MEMBER" }}

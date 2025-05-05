@@ -167,6 +167,25 @@ waldur:
     CALL.REVIEWER: Call reviewer
     CALL.MANAGER: Call manager
     PROPOSAL.MANAGER: Proposal manager
+  customRolePermissions:
+    "PROJECT.MANAGER":
+      addPermissions:
+        - "PROJECT.LIST"
+        - "RESOURCE.LIST"
+      dropPermissions:
+        - "INVITATION.LIST"
+        - "ORDER.APPROVE_PRIVATE"
+        - "ORDER.CANCEL"
+        - "ORDER.DESTROY"
+        - "ORDER.LIST"
+        - "PROJECT.CREATE_PERMISSION"
+        - "PROJECT.DELETE_PERMISSION"
+        - "PROJECT.UPDATE"
+        - "PROJECT.UPDATE_PERMISSION"
+        - "RESOURCE.LIST_IMPORTABLE"
+        - "RESOURCE.SET_LIMITS"
+        - "RESOURCE.SET_PLAN"
+        - "RESOURCE.TERMINATE"
   authMethods:
     - LOCAL_SIGNIN
     - LDAP

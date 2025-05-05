@@ -135,7 +135,7 @@ Test ArgoCD sync:
     - $SSH_COMMAND "argocd account get-user-info"
     - $SSH_COMMAND "argocd app list"
     - $SSH_COMMAND "argocd repo add https://code.opennodecloud.com/waldur/waldur-helm.git --username gitlab-ci-token --password $CI_JOB_TOKEN --upsert"
-    - $SSH_COMMAND "argocd app sync $APPLICATION_NAME --timeout 2400"
+    - $SSH_COMMAND "argocd app sync $APPLICATION_NAME --timeout 1800"
     - $SSH_COMMAND "argocd app wait $APPLICATION_NAME"
     - $SSH_COMMAND "argocd repo rm https://code.opennodecloud.com/waldur/waldur-helm.git"
 

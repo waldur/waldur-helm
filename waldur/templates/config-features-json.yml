@@ -59,6 +59,12 @@ data:
       {{ if has "marketplace_offering_document" .Values.waldur.features }}
         "marketplace.offering_document": true,
       {{ end }}
+      {{ if has "user_show_username" .Values.waldur.features }}
+        "user.show_username": true,
+      {{ end }}
+      {{ if has "marketplace_show_resource_end_date" .Values.waldur.features }}
+        "marketplace.show_resource_end_date": true,
+      {{ end }}
         "marketplace.import_resources": true,
         "user.notifications": true,
         "project.estimated_cost": true,

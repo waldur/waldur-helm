@@ -218,6 +218,13 @@ data:
     WALDUR_CORE["INVITATION_WEBHOOK_TOKEN_SECRET"] = {{ default "" .Values.waldur.customInvitations.tokenSecret | quote }}
     {{ end }}
 
+    {{ if and (hasKey .Values.waldur "serviceAccountApiIntegration") (.Values.waldur.serviceAccountApiIntegration.enabled) }}
+    WALDUR_CORE["SERVICE_ACCOUNT_USE_API"] = True
+    WALDUR_CORE["SERVICE_ACCOUNT_TOKEN_URL"] = {{ .Values.waldur.serviceAccountApiIntegration.tokenUrl | quote }}
+    WALDUR_CORE["SERVICE_ACCOUNT_URL"] = {{ .Values.waldur.serviceAccountApiIntegration.managementUrl | quote }}
+    WALDUR_CORE["SERVICE_ACCOUNT_TOKEN_CLIENT_ID"] = {{ .Values.waldur.serviceAccountApiIntegration.tokenClientId | quote }}
+    WALDUR_CORE["SERVICE_ACCOUNT_TOKEN_SECRET"] = {{ .Values.waldur.serviceAccountApiIntegration.tokenSecret | quote }}
+    {{ end }}
 
     {{ if has "protect_freeipa_user_details" .Values.waldur.features }}
     WALDUR_CORE['PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS'] = ['FREEIPA']

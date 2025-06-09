@@ -411,6 +411,9 @@ data:
         'LOCAL_IDP_PROTECTED_FIELDS': {{ .Values.waldur.localIdp.protectedFields | toJson }},
     })
 
+    {{ if .Values.waldur.overrideSubnetBlacklist }}
+    WALDUR_CORE['SUBNET_BLACKLIST'] = {{ .Values.waldur.overrideSubnetBlacklist | toJson }}
+    {{ end }}
 
     {{ if .Values.waldur.mastermindUrl }}
     WALDUR_CORE["MASTERMIND_URL"] = {{ .Values.waldur.mastermindUrl | quote }}

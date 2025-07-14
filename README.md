@@ -38,7 +38,7 @@ on a Kubernetes cluster using the [Helm](https://helm.sh) package manager.
     ```
 
    2.2. Advanced setup of dependencies
-      Setup databaseusing one of:
+      Setup database using one of:
       - Simple PostgreSQL DB: [instructions](docs/postgres-db.md) or
       - PostgreSQL HA DB: [instructions](docs/postgres-db-ha.md) or
       - Integrate with external DB: [instructions](docs/external-db-integration.md)
@@ -68,7 +68,7 @@ in `test` namespace in the following way:
 2. Install release:
 
     ```bash
-      helm install waldur waldur --namespace test
+      helm install waldur waldur-charts/waldur --namespace test
     ```
 
 However, postgresql release and waldur should be installed

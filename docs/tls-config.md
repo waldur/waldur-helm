@@ -4,7 +4,7 @@ To enable tls globally please set `ingress.tls.enabled=true` in `values.yaml`
 
 ## Let’s Encrypt setup
 
-It you want co configure [letsencrypt](https://letsencrypt.org/)
+If you want to configure [letsencrypt](https://letsencrypt.org/)
 certification, you need to:
 
 1. Set `ingress.tls.source="letsEncrypt"` in `values.yaml`
@@ -27,8 +27,8 @@ kubectl create namespace cert-manager
   helm install \
     cert-manager jetstack/cert-manager \
     --namespace cert-manager \
-    --version v1.7.1 \
-    --set installCRDs=true
+    --version v1.15.3 \
+    --set crds.enabled=true
 ```
 
 1. After that, `waldur` release is ready for installation.

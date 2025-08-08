@@ -104,7 +104,7 @@ waldur:
   imageName: "opennode/waldur-mastermind"
   imageTag: "latest"
   initdbEnabled: true
-  initdbImageName: "bitnami/postgresql"
+  initdbImageName: "library/postgres"
   pullPolicy: Always
   secretKey: "SecretKeyChangeMe"
   secretKeyExistingSecret:
@@ -536,7 +536,7 @@ rabbitmq:
     password: "waldur"
   # The values are in use only if rabbitmq.enabled = true
   image:
-    repository: "bitnami/rabbitmq"
+    repository: "bitnamilegacy/rabbitmq"
     tag: "4.0.2-debian-12-r0"
   replicaCount: 1
   resources:

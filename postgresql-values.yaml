@@ -18,7 +18,17 @@ primary:
 
 image:
   registry: "docker.io"
+  repository: bitnamilegacy/postgresql
   tag: "16.4.0-debian-12-r19"
 
 metrics:
   enabled: false
+  image:
+    registry: "docker.io"
+    repository: bitnamilegacy/postgres-exporter
+    tag: 0.17.1-debian-12-r14
+
+# TODO: remove after migration to a stable RabbitMQ and PostgreSQL images from bitnamilegacy repo
+global:
+  security:
+    allowInsecureImages: true

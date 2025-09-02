@@ -63,12 +63,7 @@ data:
         }
     }
 
-    rabbitmq_host = os.environ.get('RABBITMQ_HOSTNAME')
-    rabbitmq_port = 5672
-    rabbitmq_username = os.environ.get('RABBITMQ_USERNAME')
-    rabbitmq_password = os.environ.get('RABBITMQ_PASSWORD')
-
-    CELERY_BROKER_URL = f"amqp://{rabbitmq_username}:{rabbitmq_password}@{rabbitmq_host}:{rabbitmq_port}"
+    CELERY_BROKER_URL = {{ include "waldur.rabbitmq.rmqUrl" . | quote }}
 
     postgresql_host = os.environ.get('POSTGRESQL_HOST')
     postgresql_port = os.environ.get('POSTGRESQL_PORT')

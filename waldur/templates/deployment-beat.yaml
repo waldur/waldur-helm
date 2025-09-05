@@ -35,11 +35,25 @@ spec:
             do echo waiting for database; sleep 2; done;']
           env:
             {{- include "waldur.env.initdb" . | nindent 11 }}
+          resources:
+            requests:
+              cpu: 100m
+              memory: 200Mi
+            limits:
+              cpu: 100m
+              memory: 200Mi
         - name: create-celery-results-db
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.initdbImageName }}:{{ template "waldur.postgresql.version" . }}
           command: ['sh', '-c', 'createdb celery_results || true']
           env:
             {{- include "waldur.env.initdb" . | nindent 11 }}
+          resources:
+            requests:
+              cpu: 100m
+              memory: 200Mi
+            limits:
+              cpu: 100m
+              memory: 200Mi
         - name: waldur-mastermind-migrate
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
           imagePullPolicy: {{ .Values.waldur.pullPolicy }}

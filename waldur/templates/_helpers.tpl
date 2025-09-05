@@ -122,21 +122,6 @@ Set postgres user
 {{- end -}}
 
 {{/*
-Set rabbitmq URL
-*/}}
-{{- define "waldur.rabbitmq.rmqUrl" -}}
-{{- $rmqHost := "" -}}
-{{- if .Values.rabbitmq.enabled -}}
-{{- $rmqHost = list .Release.Name "rabbitmq" | join "-" -}}
-{{- else -}}
-{{- $rmqHost = .Values.rabbitmq.host -}}
-{{- end -}}
-{{- with .Values.rabbitmq -}}
-amqp://{{ .auth.username }}:{{ .auth.password }}@{{ $rmqHost }}:{{ default 5672 .customAMQPPort }}
-{{- end -}}
-{{- end -}}
-
-{{/*
 Set rabbitmq host
 */}}
 {{- define "waldur.rabbitmq.rmqHost" -}}

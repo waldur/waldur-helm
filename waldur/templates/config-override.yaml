@@ -239,6 +239,14 @@ data:
     WALDUR_CORE["SERVICE_ACCOUNT_TOKEN_SECRET"] = {{ .Values.waldur.serviceAccountApiIntegration.tokenSecret | quote }}
     {{ end }}
 
+    {{ if and (hasKey .Values.waldur "courseAccountApiIntegration") (.Values.waldur.courseAccountApiIntegration.enabled) }}
+    WALDUR_CORE["COURSE_ACCOUNT_USE_API"] = True
+    WALDUR_CORE["COURSE_ACCOUNT_TOKEN_URL"] = {{ .Values.waldur.courseAccountApiIntegration.tokenUrl | quote }}
+    WALDUR_CORE["COURSE_ACCOUNT_URL"] = {{ .Values.waldur.courseAccountApiIntegration.managementUrl | quote }}
+    WALDUR_CORE["COURSE_ACCOUNT_TOKEN_CLIENT_ID"] = {{ .Values.waldur.courseAccountApiIntegration.tokenClientId | quote }}
+    WALDUR_CORE["COURSE_ACCOUNT_TOKEN_SECRET"] = {{ .Values.waldur.courseAccountApiIntegration.tokenSecret | quote }}
+    {{ end }}
+
     {{ if has "protect_freeipa_user_details" .Values.waldur.features }}
     WALDUR_CORE['PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS'] = ['FREEIPA']
     {{ end }}

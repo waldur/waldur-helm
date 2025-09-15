@@ -240,6 +240,7 @@ data:
     {{ end }}
 
     {{ if and (hasKey .Values.waldur "courseAccountApiIntegration") (.Values.waldur.courseAccountApiIntegration.enabled) }}
+    WALDUR_CORE["ENABLE_PROJECT_KIND_COURSE"] = True
     WALDUR_CORE["COURSE_ACCOUNT_USE_API"] = True
     WALDUR_CORE["COURSE_ACCOUNT_TOKEN_URL"] = {{ .Values.waldur.courseAccountApiIntegration.tokenUrl | quote }}
     WALDUR_CORE["COURSE_ACCOUNT_URL"] = {{ .Values.waldur.courseAccountApiIntegration.managementUrl | quote }}

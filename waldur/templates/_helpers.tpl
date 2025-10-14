@@ -91,8 +91,23 @@ Set postgres secret
 {{/*
 Set postgres secret password key
 */}}
+{{- define "waldur.postgresql.secret.usernameKey" -}}
+{{- if .Values.externalDB.enabled -}}
+{{ .Values.externalDB.usernameKey }}
+{{- else -}}
+"username"
+{{- end -}}
+{{- end -}}
+
+{{/*
+Set postgres secret password key
+*/}}
 {{- define "waldur.postgresql.secret.passwordKey" -}}
+{{- if .Values.externalDB.enabled -}}
+{{ .Values.externalDB.passwordKey }}
+{{- else -}}
 "password"
+{{- end -}}
 {{- end -}}
 
 {{/*
@@ -179,7 +194,7 @@ Add environment variables to configure database values and Sentry environment
   valueFrom:
     secretKeyRef:
       name: {{ include "waldur.postgresql.secret" . }}
-      key: username
+      key: {{ include "waldur.postgresql.secret.usernameKey" . }}
 {{ else }}
   value: {{ include "waldur.postgresql.user" . }}
 {{ end }}

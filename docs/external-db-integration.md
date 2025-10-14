@@ -8,8 +8,7 @@ For this, you need to set the following variables in `values.yaml`:
 2. `externalDB.flavor` - a type of the DB management system; currently only `zalando` ([Zalando operator](https://postgres-operator.readthedocs.io/en/latest/)) is supported
 3. `externalDB.secretName` - name of the secret with PostgreSQL credentials for Waldur user; should include `username` and `password` keys
 4. `externalDB.serviceName` - name of the service linked to PostgreSQL master
-5. `externalDB.usernameKey` - name of the key defining the PostgreSQL user's name; default: `username`
-6. `externalDB.passwordKey` - name of the key defining the PostgreSQL user's password; default: `password`
+5. `externalDB.passwordKey` - name of the key defining the PostgreSQL user's password; default: `password`
 
 Zalando-managed PostgreSQL cluster example:
 

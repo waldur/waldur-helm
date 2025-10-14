@@ -23,7 +23,7 @@ spec:
       {{ end }}
       {{ if .Values.hostAliases }}
       hostAliases:
-        {{ toYaml .Values.hostaliases | nindent 8 }}
+        {{ toYaml .Values.hostAliases | nindent 8 }}
       {{ end }}
       containers:
         - name: waldur-homeport

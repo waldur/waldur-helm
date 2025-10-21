@@ -4,25 +4,61 @@ metadata:
   name: mastermind-whitelabeling-yaml
 data:
   whitelabeling.yaml: |
-    site_name: {{ .Values.waldur.site.name | default "" | quote }}
-    site_address: {{ .Values.waldur.site.address | default "" | quote }}
-    site_email: {{ .Values.waldur.site.email | default "" | quote }}
-    site_phone: {{ .Values.waldur.site.phone | default "" | quote }}
-    short_page_title: {{ .Values.waldur.whitelabeling.shortPageTitle | default "" | quote }}
-    full_page_title: {{ .Values.waldur.whitelabeling.modePageTitle | default "" | quote }}
+    {{ if .Values.waldur.site.name }}
+    site_name: {{ .Values.waldur.site.name | quote }}
+    {{ end }}
+    {{ if .Values.waldur.site.address }}
+    site_address: {{ .Values.waldur.site.address | quote }}
+    {{ end }}
+    {{ if .Values.waldur.site.email }}
+    site_email: {{ .Values.waldur.site.email | quote }}
+    {{ end }}
+    {{ if .Values.waldur.site.phone }}
+    site_phone: {{ .Values.waldur.site.phone | quote }}
+    {{ end }}
+    {{ if .Values.waldur.whitelabeling.shortPageTitle }}
+    short_page_title: {{ .Values.waldur.whitelabeling.shortPageTitle | quote }}
+    {{ end }}
+    {{ if .Values.waldur.whitelabeling.modePageTitle }}
+    full_page_title: {{ .Values.waldur.whitelabeling.modePageTitle | quote }}
+    {{ end }}
     homeport_url: {{ printf "%s://%s/" .Values.homeportScheme .Values.homeportHostname }}
-    brand_color: {{ .Values.waldur.whitelabeling.brandColor | default "" | quote }}
-    hero_link_label: {{ .Values.waldur.whitelabeling.heroLinkLabel | default "" | quote }}
-    hero_link_url: {{ .Values.waldur.whitelabeling.heroLinkUrl | default "" | quote }}
-    site_description: {{ .Values.waldur.whitelabeling.siteDescription | default "" | quote }}
-    currency_name: {{ .Values.waldur.currencyName | default "" | quote }}
-    docs_url: {{ .Values.waldur.homeport.docsLink | default "" | quote }}
-    support_portal_url: {{ .Values.waldur.whitelabeling.supportPortalLink | default "" | quote }}
-    site_logo: {{ .Values.waldur.site.logo | default "" | quote }}
-    sidebar_style: {{ .Values.waldur.whitelabeling.sidebarStyle | default "dark" | quote }}
-    disable_dark_theme: {{ .Values.waldur.whitelabeling.disableDarkTheme | default false }}
-    auto_approve_user_tos: {{ .Values.waldur.whitelabeling.autoApproveUserTOS | default false }}
-    enable_strict_check_accepting_invitation: {{ .Values.waldur.enableStrictCheckAcceptingInvitation | default false }}
+    {{ if .Values.waldur.whitelabeling.brandColor }}
+    brand_color: {{ .Values.waldur.whitelabeling.brandColor | quote }}
+    {{ end }}
+    {{ if .Values.waldur.whitelabeling.heroLinkLabel }}
+    hero_link_label: {{ .Values.waldur.whitelabeling.heroLinkLabel | quote }}
+    {{ end }}
+    {{ if .Values.waldur.whitelabeling.heroLinkUrl }}
+    hero_link_url: {{ .Values.waldur.whitelabeling.heroLinkUrl | quote }}
+    {{ end }}
+    {{ if .Values.waldur.whitelabeling.siteDescription }}
+    site_description: {{ .Values.waldur.whitelabeling.siteDescription | quote }}
+    {{ end }}
+    {{ if .Values.waldur.currencyName }}
+    currency_name: {{ .Values.waldur.currencyName | quote }}
+    {{ end }}
+    {{ if .Values.waldur.homeport.docsLink }}
+    docs_url: {{ .Values.waldur.homeport.docsLink | quote }}
+    {{ end }}
+    {{ if .Values.waldur.whitelabeling.supportPortalLink }}
+    support_portal_url: {{ .Values.waldur.whitelabeling.supportPortalLink | quote }}
+    {{ end }}
+    {{ if .Values.waldur.site.logo }}
+    site_logo: {{ .Values.waldur.site.logo | quote }}
+    {{ end }}
+    {{ if .Values.waldur.whitelabeling.sidebarStyle }}
+    sidebar_style: {{ .Values.waldur.whitelabeling.sidebarStyle | quote }}
+    {{ end }}
+    {{ if hasKey .Values.waldur.whitelabeling "disableDarkTheme" }}
+    disable_dark_theme: {{ .Values.waldur.whitelabeling.disableDarkTheme }}
+    {{ end }}
+    {{ if hasKey .Values.waldur.whitelabeling "autoApproveUserTOS" }}
+    auto_approve_user_tos: {{ .Values.waldur.whitelabeling.autoApproveUserTOS }}
+    {{ end }}
+    {{ if hasKey .Values.waldur "enableStrictCheckAcceptingInvitation" }}
+    enable_strict_check_accepting_invitation: {{ .Values.waldur.enableStrictCheckAcceptingInvitation }}
+    {{ end }}
     
     {{ if .Values.waldur.defaultIdp }}
     default_idp: {{ .Values.waldur.defaultIdp | quote }}

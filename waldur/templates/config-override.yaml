@@ -89,8 +89,8 @@ data:
         {{ else }}
         "STOMP_PORT": None,
         {{ end }}
-        "USER": {{ .Values.rabbitmq.auth.username | quote }},
-        "PASSWORD": {{ .Values.rabbitmq.auth.password | quote }},
+        "USER": rabbitmq_username,
+        "PASSWORD": rabbitmq_password,
         "MANAGEMENT_PORT": 15672,
     }
 

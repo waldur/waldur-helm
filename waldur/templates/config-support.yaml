@@ -29,6 +29,16 @@ data:
     ATLASSIAN_USE_AUTOMATIC_REQUEST_MAPPING: false
     {{ end }}
     ATLASSIAN_VERIFY_SSL: {{ default true .Values.waldur.support.atlassian.skipVerify }}
+    {{ if .Values.waldur.support.atlassian.customFieldMapping.enabled }}
+    ATLASSIAN_CUSTOM_ISSUE_FIELD_MAPPING_ENABLED: true
+    ATLASSIAN_WALDUR_BACKEND_ID_FIELD: '{{ .Values.waldur.support.atlassian.customFieldMapping.waldurBackendIdField }}'
+    ATLASSIAN_IMPACT_FIELD: '{{ .Values.waldur.support.atlassian.customFieldMapping.impactField }}'
+    ATLASSIAN_ORGANISATION_FIELD: '{{ .Values.waldur.support.atlassian.customFieldMapping.organisationField }}'
+    ATLASSIAN_PROJECT_FIELD: '{{ .Values.waldur.support.atlassian.customFieldMapping.projectField }}'
+    ATLASSIAN_AFFECTED_RESOURCE_FIELD: '{{ .Values.waldur.support.atlassian.customFieldMapping.affectedResourceField }}'
+    ATLASSIAN_REPORTER_FIELD: '{{ .Values.waldur.support.atlassian.customFieldMapping.reporterField }}'
+    ATLASSIAN_TEMPLATE_FIELD: '{{ .Values.waldur.support.atlassian.customFieldMapping.templateField }}'
+    {{ end }}
     {{ end }}
     {{ if eq .Values.waldur.support.backend "zammad" }}
     WALDUR_SUPPORT_ACTIVE_BACKEND_TYPE: 'zammad'

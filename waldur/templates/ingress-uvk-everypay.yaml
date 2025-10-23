@@ -36,5 +36,9 @@ spec:
   tls:
   - hosts:
     - {{ .Values.apiHostname }}
+    {{ if .Values.ingress.tls.customMastermindSecretName }}
+    secretName: {{ .Values.ingress.tls.customMastermindSecretName | quote }}
+    {{ else if or (eq .Values.ingress.tls.source "secret") (eq .Values.ingress.tls.source "letsEncrypt") }}
     secretName: api-certificate
+    {{ end }}
 {{ end }}

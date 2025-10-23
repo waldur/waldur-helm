@@ -8,37 +8,55 @@ binaryData:
   {{ $fpath := "" }}
 
   {{ if .Values.waldur.whitelabeling.loginLogoPath }}
-    {{ $fpath = .Values.waldur.whitelabeling.loginLogoPath }}
+  {{ $fpath = .Values.waldur.whitelabeling.loginLogoPath }}
   login_logo.png: |
 {{ .Files.Get $fpath | b64enc | indent 4 }}
+  {{ else if .Values.waldur.whitelabeling.loginLogo }}
+  login_logo.png: |
+{{ .Values.waldur.whitelabeling.loginLogo | indent 4 }}
   {{ end }}
 
   {{ if .Values.waldur.whitelabeling.sidebarLogoPath }}
-    {{ $fpath = .Values.waldur.whitelabeling.sidebarLogoPath }}
+  {{ $fpath = .Values.waldur.whitelabeling.sidebarLogoPath }}
   sidebar_logo.png: |
 {{ .Files.Get $fpath | b64enc | indent 4 }}
+  {{ else if .Values.waldur.whitelabeling.sidebarLogo }}
+  sidebar_logo.png: |
+{{ .Values.waldur.whitelabeling.sidebarLogo | indent 4 }}
   {{ end }}
 
   {{ if .Values.waldur.whitelabeling.sidebarLogoDarkPath }}
-    {{ $fpath = .Values.waldur.whitelabeling.sidebarLogoDarkPath }}
+  {{ $fpath = .Values.waldur.whitelabeling.sidebarLogoDarkPath }}
   sidebar_logo_dark.png: |
 {{ .Files.Get $fpath | b64enc | indent 4 }}
+  {{ else if .Values.waldur.whitelabeling.sidebarLogoDark }}
+  sidebar_logo_dark.png: |
+{{ .Values.waldur.whitelabeling.sidebarLogoDark | indent 4 }}
   {{ end }}
 
   {{ if .Values.waldur.whitelabeling.poweredByLogoPath }}
-    {{ $fpath = .Values.waldur.whitelabeling.poweredByLogoPath }}
+  {{ $fpath = .Values.waldur.whitelabeling.poweredByLogoPath }}
   poweredby_logo.png: |
 {{ .Files.Get $fpath | b64enc | indent 4 }}
+  {{ else if .Values.waldur.whitelabeling.poweredByLogo }}
+  poweredby_logo.png: |
+{{ .Values.waldur.whitelabeling.poweredByLogo | indent 4 }}
   {{ end }}
 
   {{ if .Values.waldur.whitelabeling.faviconPath }}
-    {{ $fpath = .Values.waldur.whitelabeling.faviconPath }}
+  {{ $fpath = .Values.waldur.whitelabeling.faviconPath }}
   favicon.ico: |
 {{ .Files.Get $fpath | b64enc | indent 4 }}
+  {{ else if .Values.waldur.whitelabeling.favicon }}
+  favicon.ico: |
+{{ .Values.waldur.whitelabeling.favicon | indent 4 }}
   {{ end }}
 
   {{ if .Values.waldur.whitelabeling.heroImagePath }}
-    {{ $fpath = .Values.waldur.whitelabeling.heroImagePath }}
+  {{ $fpath = .Values.waldur.whitelabeling.heroImagePath }}
   hero_image.jpg: |
 {{ .Files.Get $fpath | b64enc | indent 4 }}
+  {{ else if .Values.waldur.whitelabeling.heroImage }}
+  hero_image.jpg: |
+{{ .Values.waldur.whitelabeling.heroImage | indent 4 }}
   {{ end }}

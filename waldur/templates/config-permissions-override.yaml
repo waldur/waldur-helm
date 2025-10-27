@@ -27,15 +27,10 @@ data:
         {{ if not (has "owner_can_approve_order" .Values.waldur.features) }}
         - ORDER.APPROVE
         {{ end }}
-        {{ if has "owners_can_manage_owners" .Values.waldur.features }}
+        {{ if or (has "owners_can_manage_owners" .Values.waldur.features) (has "owner_can_manage_customers" .Values.waldur.features) }}
         - CUSTOMER.CREATE_PERMISSION
         - CUSTOMER.UPDATE_PERMISSION
         - CUSTOMER.DELETE_PERMISSION
-        {{ end }}
-        {{ if has "owner_can_manage_customers" .Values.waldur.features }}
-        - CUSTOMER.CREATE
-        - CUSTOMER.UPDATE
-        - CUSTOMER.DELETE
         {{ end }}
       drop_permissions:
         {{ if not (has "owner_can_register_service_provider" .Values.waldur.features) }}
@@ -44,15 +39,10 @@ data:
         {{ if has "owner_can_approve_order" .Values.waldur.features }}
         - ORDER.APPROVE
         {{ end }}
-        {{ if not (has "owners_can_manage_owners" .Values.waldur.features) }}
+        {{ if not (or (has "owners_can_manage_owners" .Values.waldur.features) (has "owner_can_manage_customers" .Values.waldur.features)) }}
         - CUSTOMER.CREATE_PERMISSION
         - CUSTOMER.UPDATE_PERMISSION
         - CUSTOMER.DELETE_PERMISSION
-        {{ end }}
-        {{ if not (has "owner_can_manage_customers" .Values.waldur.features) }}
-        - CUSTOMER.CREATE
-        - CUSTOMER.UPDATE
-        - CUSTOMER.DELETE
         {{ end }}
 
     - role: CUSTOMER.MANAGER

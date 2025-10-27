@@ -79,7 +79,7 @@ spec:
     {{ end }}
     {{ if .Values.ingress.tls.customHomeportSecretName }}
     secretName: {{ .Values.ingress.tls.customHomeportSecretName | quote }}
-    {{ else }}
+    {{ else if or (eq .Values.ingress.tls.source "secret") (eq .Values.ingress.tls.source "letsEncrypt") }}
     secretName: homeport-certificate
     {{ end }}
   {{ end }}

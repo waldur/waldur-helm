@@ -14,6 +14,9 @@ metadata:
     {{ else if or (eq .Values.ingress.className "openshift-default") (eq .Values.ingress.className "haproxy") }}
     haproxy.org/path-rewrite: /uvk-everypay/(.*) /\1
     haproxy.org/ssl-redirect: "true"
+    {{ if and .Values.ingress.tls.enabled (.Values.ingress.tls.source | eq "cluster") }}
+    route.openshift.io/termination: "edge"
+    {{ end }}
     {{ end }}
     {{ if and .Values.ingress.tls.enabled (eq .Values.ingress.tls.source "letsEncrypt") }}
     cert-manager.io/cluster-issuer: letsencrypt-prod-issuer
@@ -33,8 +36,10 @@ spec:
             name: waldur-uvk-everypay
             port:
               number: 8000
+  {{ if and .Values.ingress.tls.enabled (.Values.ingress.tls.source | ne "cluster") }}
   tls:
   - hosts:
     - {{ .Values.apiHostname }}
     secretName: api-certificate
+  {{ end }}
 {{ end }}

@@ -23,6 +23,9 @@ metadata:
     haproxy.org/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,sentry-trace,baggage,X-Impersonated-User-Uuid"
     haproxy.org/cors-expose-headers: "Link, X-Result-Count"
     haproxy.org/ssl-redirect: "true"
+    {{ if and .Values.ingress.tls.enabled (.Values.ingress.tls.source | eq "cluster") }}
+    route.openshift.io/termination: "edge"
+    {{ end }}
     {{ if .Values.ingress.whitelistSourceRange }}
     haproxy.org/whitelist: "{{ .Values.ingress.whitelistSourceRange }}"
     {{ end }}
@@ -87,7 +90,7 @@ spec:
               number: 80
   {{- end }}
   {{ end }}
-  {{ if .Values.ingress.tls.enabled }}
+  {{ if and .Values.ingress.tls.enabled (.Values.ingress.tls.source | ne "cluster") }}
   tls:
   - hosts:
     - {{ .Values.apiHostname }}

@@ -104,7 +104,7 @@ ingress:
   className: "nginx"
   tls:
     enabled: false
-    source: "secret" # Possible values: `letsEncrypt` and `secret`
+    source: "secret" # Possible values: `letsEncrypt`, `secret` and `cluster` (works for OpenShift only)
     customMastermindSecretName: ""
     customHomeportSecretName: ""
     secretsDir: "tls"  # Enabled only if source == `secret`

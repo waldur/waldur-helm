@@ -11,6 +11,9 @@ metadata:
     haproxy.org/cors-enable: "true"
     haproxy.org/path-rewrite: "/ws"
     haproxy.org/ssl-redirect: "true"
+    {{ if and .Values.ingress.tls.enabled (.Values.ingress.tls.source | eq "cluster") }}
+    route.openshift.io/termination: "edge"
+    {{ end }}
     {{ end }}
     {{ if and .Values.ingress.tls.enabled (eq .Values.ingress.tls.source "letsEncrypt") }}
     cert-manager.io/cluster-issuer: letsencrypt-prod-issuer
@@ -37,7 +40,7 @@ spec:
             name: {{ include "waldur.rabbitmq.rmqHost" . | quote }}
             port:
               number: 15674
-  {{ if .Values.ingress.tls.enabled }}
+  {{ if and .Values.ingress.tls.enabled (.Values.ingress.tls.source | ne "cluster") }}
   tls:
   - hosts:
     - {{ .Values.apiHostname }}

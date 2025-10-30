@@ -59,7 +59,7 @@ data:
     {{ if hasKey .Values.waldur "enableStrictCheckAcceptingInvitation" }}
     enable_strict_check_accepting_invitation: {{ .Values.waldur.enableStrictCheckAcceptingInvitation }}
     {{ end }}
-    
+
     {{ if .Values.waldur.defaultIdp }}
     default_idp: {{ .Values.waldur.defaultIdp | quote }}
     {{ end }}
@@ -86,4 +86,8 @@ data:
 
     {{ if .Values.waldur.whitelabeling.faviconPath }}
     favicon: "/etc/waldur/icons/favicon.ico"
+    {{ end }}
+
+    {{ if and (hasKey .Values.waldur "projectEndDateRequired") .Values.waldur.projectEndDateRequired }}
+    project_end_date_mandatory: true
     {{ end }}

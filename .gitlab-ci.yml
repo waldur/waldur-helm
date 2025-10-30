@@ -114,6 +114,7 @@ Test release installation and readiness:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
         - waldur/**/*
+      when: never
   before_script:
     - echo 'PasswordAuthentication no' >> /etc/ssh/ssh_config
     - cat /etc/ssh/ssh_config

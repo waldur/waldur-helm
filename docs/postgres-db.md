@@ -1,9 +1,24 @@
-# PostgreSQL chart configuration (without HA support)
+# PostgreSQL Configuration
 
+## Production vs Demo Deployments
+
+⚠️ **Important:** This document describes PostgreSQL setup for **demo/development environments only**.
+
+**For production deployments**, use the [CloudNativePG Operator](postgres-operator.md) instead of the Bitnami Helm chart. The operator provides:
+- Kubernetes-native PostgreSQL cluster management
+- Automated failover and high availability
+- Built-in backup and Point-in-Time Recovery (PITR)
+- Zero-downtime maintenance operations
+- Enhanced monitoring and observability
+- Production-grade security features
+
+## Demo/Development Installation
+
+For development and demo environments,
 [bitnami/postgresql chart](https://github.com/bitnami/charts/tree/master/bitnami/postgresql)
-is used as a database for Waldur.
+can be used for quick setup.
 
-## Standalone installation
+## Demo Standalone Installation
 
 Add `bitnami` repo to helm:
 
@@ -11,11 +26,15 @@ Add `bitnami` repo to helm:
   helm repo add bitnami https://charts.bitnami.com/bitnami
 ```
 
-Install `postgresql` release:
+Install PostgreSQL release for demo/development:
 
 ```bash
   helm install postgresql bitnami/postgresql --version 16.0.1 -f postgresql-values.yaml
 ```
+
+**Note:** 
+- The default configuration in `postgresql-values.yaml` uses `bitnamilegacy` Docker images for compatibility
+- This setup is **not recommended for production use**
 
 **NB**: the values `postgresql.enabled` and `postgresqlha.enabled` must be `false`.
 
@@ -30,12 +49,17 @@ You can change default PostgreSQL config with the following variables in `postgr
 3. `auth.password` - password of a database user
 4. `primary.persistence.size` - size of a database
 5. `image.tag` - tag of `PostgreSQL` image.
-    Possible tags for default image can be found [here](https://hub.docker.com/r/bitnami/postgresql/tags)
+    Possible tags for default image can be found [here](https://hub.docker.com/r/bitnamilegacy/postgresql/tags)
 6. `image.registry` - registry of `PostgreSQL` image.
 
 More information related to possible values [here](https://github.com/bitnami/charts/tree/master/bitnami/postgresql#parameters).
 
-## Dependency installation
+**Important:** 
+- The PostgreSQL configuration uses legacy Bitnami images (`bitnamilegacy/postgresql` and `bitnamilegacy/postgres-exporter`) for demo/development compatibility
+- These images are configured in the `postgresql-values.yaml` file
+- For production deployments, migrate to the [CloudNativePG Operator](postgres-operator.md)
+
+## Demo Dependency Installation
 
 Waldur Helm chart supports PostgreSQL installation as a dependency.
 For this, set `postgresql.enabled` to `true` and update related settings in `postgresql` section in `waldur/values.yaml`

@@ -1,13 +1,49 @@
-# External DB integration
+# External DB Integration
 
-Waldur Helm can use an external PostgreSQL deployed within the same Kubernetes cluster.
+Waldur Helm can use an external PostgreSQL deployed within the same Kubernetes cluster using PostgreSQL operators.
 
-For this, you need to set the following variables in `values.yaml`:
+## Supported PostgreSQL Operators
+
+For **production deployments**, see the comprehensive [PostgreSQL Operators documentation](postgres-operator.md) which covers:
+
+1. **CloudNativePG** ⭐ *Recommended for new deployments*
+2. **Zalando PostgreSQL Operator** *For existing deployments or specific use cases*
+
+## Configuration Variables
+
+To use external PostgreSQL, set the following variables in `values.yaml`:
 
 1. `externalDB.enabled` - toggler for integration; requires `postgresql.enabled` and `postgresqlha.enabled` to be `false`
-2. `externalDB.flavor` - a type of the DB management system; currently only `zalando` ([Zalando operator](https://postgres-operator.readthedocs.io/en/latest/)) is supported
-3. `externalDB.secretName` - name of the secret with PostgreSQL credentials for Waldur user; should include `username` and `password` keys
-4. `externalDB.serviceName` - name of the service linked to PostgreSQL master
+2. `externalDB.flavor` - type of DB management system; supported values:
+   - `zalando` - for [Zalando operator](https://postgres-operator.readthedocs.io/en/latest/)
+   - `cloudnativepg` - for [CloudNativePG operator](https://cloudnative-pg.io/) (recommended)
+3. `externalDB.secretName` - name of the secret with PostgreSQL credentials for Waldur user
+4. `externalDB.serviceName` - name of the service linked to PostgreSQL primary/master
+5. `externalDB.host` - database host (alternative to serviceName)
+6. `externalDB.port` - database port (default: 5432)
+7. `externalDB.database` - database name (default: waldur)
+
+## CloudNativePG Integration Example
+
+For CloudNativePG clusters, use this configuration:
+
+```yaml
+externalDB:
+  enabled: true
+  flavor: "cloudnativepg"
+  host: "waldur-postgres-rw.default.svc.cluster.local"  # Primary service
+  port: 5432
+  database: "waldur"
+  username: "waldur"
+  password: "your-secure-password"
+  
+  # Optional: Read-only connection for reports
+  readonlyHost: "waldur-postgres-ro.default.svc.cluster.local"
+```
+
+**Note:** Replace connection details with your actual CloudNativePG cluster configuration. See the [PostgreSQL Operators guide](postgres-operator.md) for complete setup instructions.
+
+## Zalando Integration Example
 
 Zalando-managed PostgreSQL cluster example:
 
@@ -28,7 +64,7 @@ spec:
   databases:
     waldur: waldur
   postgresql:
-    version: "14"
+    version: "16"  # Updated to latest supported version
   resources:
     requests:
       cpu: '500m'
@@ -36,6 +72,17 @@ spec:
     limits:
       cpu: '1'
       memory: 2Gi
+```
+
+Then configure Waldur to use this cluster:
+
+```yaml
+externalDB:
+  enabled: true
+  flavor: "zalando"
+  serviceName: "waldur-postgresql-<UNIQUE_SUFFIX_EG_CURRENT_DATE>"
+  secretName: "waldur.waldur-postgresql-<UNIQUE_SUFFIX_EG_CURRENT_DATE>.credentials.postgresql.acid.zalan.do"
+  database: "waldur"
 ```
 
 ## Backup setup
@@ -151,3 +198,30 @@ spec:
 ```
 
 Then, apply the manifest to the cluster, change `externalDB.{secretName, serviceName}` after DB bootstrap and upgrade Waldur release.
+
+## Migration Recommendations
+
+### For New Deployments
+- Use **CloudNativePG** for modern Kubernetes-native PostgreSQL management
+- Follow the [PostgreSQL Operators guide](postgres-operator.md) for complete setup
+
+### For Existing Zalando Deployments
+- Continue using Zalando if stable and meeting requirements
+- Consider migration to CloudNativePG for long-term benefits:
+  - Active development and community support
+  - Modern Kubernetes-native architecture
+  - Enhanced monitoring and backup capabilities
+  - Better integration with cloud-native ecosystem
+
+### Migration Process
+1. **Backup existing data** using `pg_dump`
+2. **Deploy new operator cluster** (CloudNativePG or updated Zalando)
+3. **Restore data** using `pg_restore`
+4. **Update Waldur configuration** to use new cluster
+5. **Test thoroughly** before decommissioning old cluster
+
+## Support and Documentation
+
+- **CloudNativePG:** [PostgreSQL Operators documentation](postgres-operator.md)
+- **Zalando Operator:** [Official Zalando docs](https://postgres-operator.readthedocs.io/)
+- **General guidance:** Both operators are covered in the [PostgreSQL Operators guide](postgres-operator.md)

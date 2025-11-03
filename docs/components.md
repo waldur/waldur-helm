@@ -115,11 +115,16 @@ graph TB
 
 **Chart:** Bitnami PostgreSQL v16.7.26
 **Enabled by:** `postgresql.enabled`
+**Images:** Uses `bitnamilegacy` Docker images for compatibility
+**Environment:** Demo/Development only
+
+⚠️ **Production Recommendation:** Use [CloudNativePG Operator](postgres-operator.md) for production deployments
 
 - **Options:**
   - Simple PostgreSQL deployment
   - PostgreSQL HA deployment (using `postgresqlha.enabled`)
   - External database configuration
+  - **Production:** CloudNativePG operator with automated failover
 
 - **Purpose:**
   - Primary data storage
@@ -132,6 +137,10 @@ graph TB
 
 **Chart:** Bitnami RabbitMQ v16.0.13
 **Enabled by:** `rabbitmq.enabled`
+**Images:** Uses `bitnamilegacy` Docker images for compatibility
+**Environment:** Demo/Development only
+
+⚠️ **Production Recommendation:** Use [RabbitMQ Cluster Operator](rabbitmq-operator.md) for production deployments
 
 - **Purpose:**
   - Message queue for Celery

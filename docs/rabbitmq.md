@@ -1,10 +1,22 @@
-# RabbitMQ configuration
+# RabbitMQ Configuration
 
-For rabbitmq installation,
+## Production vs Demo Deployments
+
+⚠️ **Important:** This document describes RabbitMQ setup for **demo/development environments only**.
+
+**For production deployments**, use the [RabbitMQ Cluster Operator](rabbitmq-operator.md) instead of the Bitnami Helm chart. The operator provides:
+- Better lifecycle management and high availability
+- Production-grade monitoring and backup capabilities
+- Automatic scaling and rolling upgrades
+- Enhanced security and networking features
+
+## Demo/Development Installation
+
+For development and demo environments,
 [bitnami/rabbitmq](https://github.com/bitnami/charts/tree/master/bitnami/rabbitmq)
-is used.
+can be used for quick setup.
 
-## Installation
+## Demo Installation
 
 Add `bitnami` repo to helm:
 
@@ -12,13 +24,17 @@ Add `bitnami` repo to helm:
   helm repo add bitnami https://charts.bitnami.com/bitnami
 ```
 
-Install rabbitmq-ha release:
+Install RabbitMQ release for demo/development:
 
 ```bash
   helm install rmq bitnami/rabbitmq --version 15.0.2 -f rmq-values.yaml
 ```
 
-## Configuration
+**Note:** 
+- The default configuration in `rmq-values.yaml` uses `bitnamilegacy` Docker images for compatibility
+- This setup is **not recommended for production use**
+
+## Demo Configuration
 
 You can change rabbitmq config with the following variables in `rmq-values.yaml`:
 
@@ -30,6 +46,11 @@ You can change rabbitmq config with the following variables in `rmq-values.yaml`
 6. `auth.password` - password for RMQ user
 
 For more config values, see [this section](https://github.com/bitnami/charts/tree/master/bitnami/rabbitmq#parameters)
+
+**Important:** 
+- The RabbitMQ configuration uses legacy Bitnami images (`bitnamilegacy/rabbitmq`) for demo/development compatibility
+- This image is configured in the `rmq-values.yaml` file
+- For production deployments, migrate to the [RabbitMQ Cluster Operator](rabbitmq-operator.md)
 
 In `values.yaml` file, you need to setup the following vars (`rabbitmq` prefix):
 

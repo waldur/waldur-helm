@@ -1,9 +1,24 @@
-# PostgreSQL HA chart configuration
+# PostgreSQL HA Configuration
 
+## Production vs Demo Deployments
+
+⚠️ **Important:** This document describes PostgreSQL HA setup for **demo/development environments only**.
+
+**For production deployments**, use the [CloudNativePG Operator](postgres-operator.md) instead of the Bitnami HA chart. The operator provides:
+- True Kubernetes-native high availability
+- Automated failover with zero data loss
+- Built-in streaming replication
+- Comprehensive backup and recovery
+- Superior monitoring and observability
+- Production-grade security and networking
+
+## Demo/Development HA Installation
+
+For development and demo environments requiring basic HA,
 [bitnami/postgresql-ha](https://github.com/bitnami/charts/tree/master/bitnami/postgresql-ha)
-is used as a highly available database for Waldur.
+can be used for quick setup.
 
-## Standalone installation
+## Demo HA Installation
 
 Add `bitnami` repo to helm:
 
@@ -11,12 +26,16 @@ Add `bitnami` repo to helm:
   helm repo add bitnami https://charts.bitnami.com/bitnami
 ```
 
-Install `postgresql-ha` release:
+Install PostgreSQL HA release for demo/development:
 
 ```bash
   helm install postgresql-ha bitnami/postgresql-ha \
     -f postgresql-ha-values.yaml --version 14.2.34
 ```
+
+**Note:** 
+- The default configuration in `postgresql-ha-values.yaml` uses `bitnamilegacy` Docker images for compatibility
+- This setup provides basic HA but is **not recommended for production use**
 
 **NB**: the value `postgresqlha.enabled` for waldur release must be `true`.
 
@@ -34,14 +53,19 @@ the following variables in `values.yaml` (`postgresql-ha-values.yaml` file):
 5. `postgresql.repmgrPassword` - password of `repmgr` user
 6. `persistence.size` - size of a database (for each replica)
 7. `pgpool.image.tag` - tag of `Pgpool` image.
-    Possible tags for default image can be found [here](https://hub.docker.com/r/bitnami/pgpool/tags)
+    Possible tags for default image can be found [here](https://hub.docker.com/r/bitnamilegacy/pgpool/tags)
 8. `postgresql.image.tag` - tag of `PostgreSQL` image.
-     Possible tags for default image can be found [here](https://hub.docker.com/r/bitnami/postgresql-repmgr/tags/)
+     Possible tags for default image can be found [here](https://hub.docker.com/r/bitnamilegacy/postgresql-repmgr/tags/)
 
 More information related to possible values
 [here](https://github.com/bitnami/charts/tree/master/bitnami/postgresql-ha#parameters).
 
-## Dependency installation
+**Important:** 
+- The PostgreSQL HA configuration uses legacy Bitnami images (`bitnamilegacy/postgresql-repmgr` and `bitnamilegacy/pgpool`) for demo/development compatibility
+- These images are configured in the `postgresql-ha-values.yaml` file
+- For production deployments, migrate to the [CloudNativePG Operator](postgres-operator.md) which provides superior HA capabilities
+
+## Demo HA Dependency Installation
 
 Waldur Helm chart supports PostgreSQL HA installation as a dependency.
 For this, set `postgresqlha.enabled` to `true` and update related settings in `postgresqlha` section in `waldur/values.yaml`

@@ -103,6 +103,8 @@ Set postgres database name
 {{ .Values.postgresqlha.postgresql.database | quote }}
 {{- else if .Values.postgresql.enabled -}}
 {{ .Values.postgresql.auth.database | quote }}
+{{- else if and .Values.externalDB.enabled .Values.externalDB.database -}}
+{{ .Values.externalDB.database | quote }}
 {{- else -}}
 "waldur"
 {{- end -}}
@@ -116,6 +118,8 @@ Set postgres user
 {{ .Values.postgresqlha.postgresql.username | quote }}
 {{- else if .Values.postgresql.enabled -}}
 {{ .Values.postgresql.auth.username | quote }}
+{{- else if and .Values.externalDB.enabled .Values.externalDB.username -}}
+{{ .Values.externalDB.username | quote }}
 {{- else -}}
 "waldur"
 {{- end -}}

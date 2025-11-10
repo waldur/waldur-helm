@@ -64,27 +64,27 @@ data:
     default_idp: {{ .Values.waldur.defaultIdp | quote }}
     {{ end }}
 
-    {{ if .Values.waldur.whitelabeling.poweredByLogoPath }}
+    {{ if or .Values.waldur.whitelabeling.poweredByLogo .Values.waldur.whitelabeling.poweredByLogoPath }}
     powered_by_logo: "/etc/waldur/icons/poweredby_logo.png"
     {{ end }}
 
-    {{ if .Values.waldur.whitelabeling.heroImagePath }}
+    {{ if or .Values.waldur.whitelabeling.heroImage .Values.waldur.whitelabeling.heroImagePath }}
     hero_image: "/etc/waldur/icons/hero_image.jpg"
     {{ end }}
 
-    {{ if .Values.waldur.whitelabeling.sidebarLogoPath }}
+    {{ if or .Values.waldur.whitelabeling.sidebarLogo .Values.waldur.whitelabeling.sidebarLogoPath }}
     sidebar_logo: "/etc/waldur/icons/sidebar_logo.png"
     {{ end }}
 
-    {{ if .Values.waldur.whitelabeling.sidebarLogoDarkPath }}
+    {{ if or .Values.waldur.whitelabeling.sidebarLogoDark .Values.waldur.whitelabeling.sidebarLogoDarkPath }}
     sidebar_logo_dark: "/etc/waldur/icons/sidebar_logo_dark.png"
     {{ end }}
 
-    {{ if .Values.waldur.whitelabeling.loginLogoPath }}
+    {{ if or .Values.waldur.whitelabeling.loginLogo .Values.waldur.whitelabeling.loginLogoPath }}
     login_logo: "/etc/waldur/icons/login_logo.png"
     {{ end }}
 
-    {{ if .Values.waldur.whitelabeling.faviconPath }}
+    {{ if or .Values.waldur.whitelabeling.favicon .Values.waldur.whitelabeling.faviconPath }}
     favicon: "/etc/waldur/icons/favicon.ico"
     {{ end }}
 

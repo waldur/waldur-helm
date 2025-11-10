@@ -4,18 +4,24 @@ To setup white-labeling, you can define next variables in `waldur/values.yaml` f
 
 * `shortPageTitle` - custom prefix for page title
 * `modePageTitle` - custom page title
+* `loginLogo` - base64 encoded custom `.png` image string
 * `loginLogoPath` - path to custom `.png` image file
     for login page (should be in `waldur/` chart directory)
+* `sidebarLogo` - base64 encoded custom `.png` image string
 * `sidebarLogoPath` - path to custom `.png` image file
     for sidebar header (should be in `waldur/` chart directory)
+* `sidebarLogoDark` - base64 encoded custom `.png` image string
 * `sidebarLogoDarkPath` - path to custom `.png` image file
     for sidebar header in dark mode (should be in `waldur/` chart directory)
+* `poweredByLogo` - base64 encoded custom `.png` image string
 * `poweredByLogoPath` - path to custom `.png` image file
     for "powered by" part of login page (should be in `waldur/` chart directory)
-* `faviconPath` - path to custom favicon `.png` image file
+* `favicon` - base64 encoded custom `.ico` image string
+* `faviconPath` - path to custom favicon `.ico` image file
 * `tosHtmlPath` - path to custom terms of service file (`tos.html`)
 * `privacyHtmlPath` - path to custom privacy statement file (`privacy.html`)
 * `brandColor` - Hex color definition is used in HomePort landing page for login button.
+* `heroImage` - base64 encoded custom `.jpg` image string
 * `heroImagePath` - Relative path to image rendered at hero section of HomePort landing page.
 * `heroLinkLabel` - Label for link in hero section of HomePort landing page. It can be lead to support site or blog post.
 * `heroLinkUrl` - Link URL in hero section of HomePort landing page.

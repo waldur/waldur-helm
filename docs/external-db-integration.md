@@ -7,6 +7,7 @@ Waldur Helm can use an external PostgreSQL deployed within the same Kubernetes c
 For **production deployments**, see the comprehensive [PostgreSQL Operators documentation](postgres-operator.md) which covers:
 
 1. **CloudNativePG** ⭐ *Recommended for new deployments*
+
 2. **Zalando PostgreSQL Operator** *For existing deployments or specific use cases*
 
 ## Configuration Variables
@@ -14,14 +15,14 @@ For **production deployments**, see the comprehensive [PostgreSQL Operators docu
 To use external PostgreSQL, set the following variables in `values.yaml`:
 
 1. `externalDB.enabled` - toggler for integration; requires `postgresql.enabled` and `postgresqlha.enabled` to be `false`
-2. `externalDB.flavor` - type of DB management system; supported values:
-   - `zalando` - for [Zalando operator](https://postgres-operator.readthedocs.io/en/latest/)
-   - `cloudnativepg` - for [CloudNativePG operator](https://cloudnative-pg.io/) (recommended)
-3. `externalDB.secretName` - name of the secret with PostgreSQL credentials for Waldur user
-4. `externalDB.serviceName` - name of the service linked to PostgreSQL primary/master
-5. `externalDB.host` - database host (alternative to serviceName)
-6. `externalDB.port` - database port (default: 5432)
-7. `externalDB.database` - database name (default: waldur)
+
+2. `externalDB.secretName` - name of the secret with PostgreSQL credentials for Waldur user
+
+3. `externalDB.serviceName` - name of the service linked to PostgreSQL primary/master
+
+4. `externalDB.database` - custom database name (optional, defaults to "waldur")
+
+5. `externalDB.username` - custom username (optional, defaults to "waldur")
 
 ## CloudNativePG Integration Example
 
@@ -30,18 +31,22 @@ For CloudNativePG clusters, use this configuration:
 ```yaml
 externalDB:
   enabled: true
-  flavor: "cloudnativepg"
-  host: "waldur-postgres-rw.default.svc.cluster.local"  # Primary service
-  port: 5432
-  database: "waldur"
-  username: "waldur"
-  password: "your-secure-password"
-  
-  # Optional: Read-only connection for reports
-  readonlyHost: "waldur-postgres-ro.default.svc.cluster.local"
+  secretName: "waldur-postgres-app"  # CloudNativePG auto-generated secret
+  serviceName: "waldur-postgres-rw"  # Primary service
+  database: "waldur"                 # Optional: custom database name
+  username: "waldur"                 # Optional: custom username
 ```
 
-**Note:** Replace connection details with your actual CloudNativePG cluster configuration. See the [PostgreSQL Operators guide](postgres-operator.md) for complete setup instructions.
+**CloudNativePG Secret Management:**
+CloudNativePG automatically creates secrets with predictable naming:
+
+- `[cluster-name]-app` - Application credentials (recommended for Waldur)
+
+- `[cluster-name]-superuser` - Administrative credentials (disabled by default)
+
+Each secret contains username, password, database name, host, port, and connection URIs.
+
+**Note:** Replace `waldur-postgres` with your actual CloudNativePG cluster name. See the [PostgreSQL Operators guide](postgres-operator.md) for complete setup instructions.
 
 ## Zalando Integration Example
 
@@ -59,8 +64,11 @@ spec:
   numberOfInstances: 2
   users:
     waldur:
+
     - superuser
+
     - createdb
+
   databases:
     waldur: waldur
   postgresql:
@@ -79,10 +87,10 @@ Then configure Waldur to use this cluster:
 ```yaml
 externalDB:
   enabled: true
-  flavor: "zalando"
   serviceName: "waldur-postgresql-<UNIQUE_SUFFIX_EG_CURRENT_DATE>"
   secretName: "waldur.waldur-postgresql-<UNIQUE_SUFFIX_EG_CURRENT_DATE>.credentials.postgresql.acid.zalan.do"
-  database: "waldur"
+  database: "waldur"                 # Optional: custom database name
+  username: "waldur"                 # Optional: custom username
 ```
 
 ## Backup setup
@@ -97,38 +105,54 @@ metadata:
 spec:
   # ...
   env:
+
     - name: AWS_ENDPOINT # S3-like storage endpoint
+
       valueFrom:
         secretKeyRef:
           key: URL
           name: postgres-cluster-backups-minio
+
     - name: AWS_ACCESS_KEY_ID # Username for S3-like storage
+
       valueFrom:
         secretKeyRef:
           key: username
           name: postgres-cluster-backups-minio
+
     - name: AWS_SECRET_ACCESS_KEY # Password for the storage
+
       valueFrom:
         secretKeyRef:
           key: password
           name: postgres-cluster-backups-minio
+
     - name: WAL_S3_BUCKET # Bucket name for the storage
+
       valueFrom:
         secretKeyRef:
           key: bucket
           name: postgres-cluster-backups-minio
+
     - name: USE_WALG_BACKUP # Enable backups to the storage
+
       value: 'true'
+
     - name: USE_WALG_RESTORE # Enable restore for replicas using the storage
+
       value: 'true'
+
     - name: BACKUP_SCHEDULE # Base backups schedule
+
       value: "0 2 * * *"
 ```
 
 You also need to create a secret file with the credentials for the storage:
 
 ```yaml
+
 # puhuri-core-dev
+
 apiVersion: v1
 kind: Secret
 metadata:
@@ -149,14 +173,18 @@ Connect to the leader PSQL pod and execute the following commands:
 ```bash
 su postgres
 envdir "/run/etc/wal-e.d/env" /scripts/postgres_backup.sh "/home/postgres/pgdata/pgroot/data"
+
 # Output:
 # ...
 # INFO: 2023/08/24 10:27:05.159175 Wrote backup with name base_00000009000000010000009C
+
 envdir "/run/etc/wal-e.d/env" wal-g backup-list
+
 # Output:
 # name                          modified             wal_segment_backup_start
 # ...
 # base_00000009000000010000009C 2023-08-24T10:27:05Z 00000009000000010000009C
+
 ```
 
 ## Restore DB from backup
@@ -178,19 +206,27 @@ spec:
     s3_force_path_style: true # Use the path above
     env:
     # ...
+
     - name: CLONE_METHOD # Enable clone
+
       value: "CLONE_WITH_WALE"
+
     - name: CLONE_AWS_ENDPOINT # S3-like storage endpoint
+
       valueFrom:
         secretKeyRef:
           key: URL
           name: postgres-cluster-backups-minio
+
     - name: CLONE_AWS_ACCESS_KEY_ID # Username for S3-like storage
+
       valueFrom:
         secretKeyRef:
           key: username
           name: postgres-cluster-backups-minio
+
     - name: CLONE_AWS_SECRET_ACCESS_KEY # Password for the storage
+
       valueFrom:
         secretKeyRef:
           key: password
@@ -202,26 +238,41 @@ Then, apply the manifest to the cluster, change `externalDB.{secretName, service
 ## Migration Recommendations
 
 ### For New Deployments
+
 - Use **CloudNativePG** for modern Kubernetes-native PostgreSQL management
+
 - Follow the [PostgreSQL Operators guide](postgres-operator.md) for complete setup
 
 ### For Existing Zalando Deployments
+
 - Continue using Zalando if stable and meeting requirements
+
 - Consider migration to CloudNativePG for long-term benefits:
+
   - Active development and community support
+
   - Modern Kubernetes-native architecture
+
   - Enhanced monitoring and backup capabilities
+
   - Better integration with cloud-native ecosystem
 
 ### Migration Process
+
 1. **Backup existing data** using `pg_dump`
+
 2. **Deploy new operator cluster** (CloudNativePG or updated Zalando)
+
 3. **Restore data** using `pg_restore`
+
 4. **Update Waldur configuration** to use new cluster
+
 5. **Test thoroughly** before decommissioning old cluster
 
 ## Support and Documentation
 
 - **CloudNativePG:** [PostgreSQL Operators documentation](postgres-operator.md)
+
 - **Zalando Operator:** [Official Zalando docs](https://postgres-operator.readthedocs.io/)
+
 - **General guidance:** Both operators are covered in the [PostgreSQL Operators guide](postgres-operator.md)

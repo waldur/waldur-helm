@@ -7,8 +7,8 @@ Example:
 
 ```yaml
 proxy:
-  httpsProxy: "https://proxy.example.com/"
-  httpProxy: "http://proxy.example.com/"
+  httpsProxy: "<https://proxy.example.com/">
+  httpProxy: "<http://proxy.example.com/">
   noProxy: ".test"
 ```
 
@@ -17,7 +17,7 @@ proxy:
 ```bash
 proxy:
   httpsProxy: ""
-  httpProxy: "http://proxy.example.com/"
+  httpProxy: "<http://proxy.example.com/">
   noProxy: ".test"
 ```
 

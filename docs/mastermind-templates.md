@@ -3,6 +3,7 @@
 If you want to configure custom mastermind templates, you should:
 
 1. Setup `waldur.mastermindTemplating.mastermindTemplatesPath`
+
     in values.yaml (by default, it is equal to `mastermind_templates/mastermind-templates.yaml`).
     Alternatively, you can use `waldur.mastermindTemplating.mastermindTemplates` containing `.yaml`
     file strings to get rid of file usage.

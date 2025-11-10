@@ -17,6 +17,7 @@ Backup configuration values (`postgresBackup` prefix):
 - `maxNumber` - maximum number of backups to store
 
 - `image` - Docker image containing `potgres` and `minio` (client) binaries
+
   ([opennode/postgres-minio](https://hub.docker.com/r/opennode/postgres-minio)
   by default)
 
@@ -27,11 +28,17 @@ Waldur backend pods to avoid errors. **NB: During restoration process, the site 
 please execute the following lines in the Kubernetes node:
 
 ```bash
+
 # Stop all the API pods
+
 kubectl scale --replicas=0 deployment/waldur-mastermind-api
+
 # Stop all the Celery worker pods
+
 kubectl scale --replicas=0 deployment/waldur-mastermind-worker
+
 # Connect to the restoration pod
+
 kubectl exec -it deployment/waldur-db-restore -- bash
 ```
 
@@ -47,7 +54,7 @@ This will print the recent 5 backups available for restoration. Example:
 root@waldur-db-restore-ff7f586bb-nb8jt:/# db-backup-minio-auth
 [+] LOCAL_PG_BACKUPS_DIR :
 [+] MINIO_PG_BACKUPS_DIR : pg/data/backups/postgres
-[+] Setting up the postgres alias for minio server (http://minio.default.svc.cluster.local:9000)
+[+] Setting up the postgres alias for minio server (<http://minio.default.svc.cluster.local:9000)>
 [+] Last 5 backups
 [2022-12-01 05:00:02 UTC]  91KiB backup-2022-12-01-05-00.sql.gz
 [2022-11-30 05:00:02 UTC]  91KiB backup-2022-11-30-05-00.sql.gz
@@ -77,6 +84,7 @@ As you can see, the backup name contains the date and time when it was created i
 If you want to use a pre-created backup from an external system, copy the backup file:
 
 1. Copy the backup file to your local machine
+
 2. Copy the file to pod
 
     ```bash

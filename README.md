@@ -43,8 +43,6 @@ on a Kubernetes cluster using the [Helm](https://helm.sh) package manager.
       - PostgreSQL HA DB: [instructions](docs/postgres-db-ha.md) or
       - Integrate with external DB: [instructions](docs/external-db-integration.md)
 
-      Install MinIO (for database backups): [instructions](docs/minio.md)
-
       Install RabbitMQ for task queue: [instructions](docs/rabbitmq.md)
 
 3. Install the Helm chart

@@ -4,9 +4,13 @@ You can specify additional hosts for Waldur containers in the same manner as the
 
 ```yaml
 hostAliases:
+
   - ip: "1.2.3.4"
+
     hostnames:
+
       - "my.host.example.com"
+
 ```
 
 This will add a record for `my.host.example.com` to the `/etc/hosts` file of all the Waldur containers

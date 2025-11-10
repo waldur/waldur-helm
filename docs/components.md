@@ -85,12 +85,17 @@ graph TB
 **Enabled by:** `waldur.metricsExporter.enabled`
 
 - **Responsibilities:**
+
   - Exposes Waldur metrics in Prometheus format
+
   - Provides monitoring data
+
   - Integrates with monitoring stack
 
 - **Configuration:**
+
   - Requires API token for authentication
+
   - Exposes metrics on port 8080
 
 ### 6. UVK Everypay Integration
@@ -100,13 +105,19 @@ graph TB
 **Enabled by:** `waldur.uvkEverypay.enabled`
 
 - **Components:**
+
   - Main container: UVK payment processor
+
   - Sidecar container: HTTP API bridge
 
 - **Responsibilities:**
+
   - Processes payments through Everypay
+
   - Integrates with Azure AD
+
   - Handles payment notifications
+
   - Email notifications for transactions
 
 ## Dependencies
@@ -121,16 +132,25 @@ graph TB
 ⚠️ **Production Recommendation:** Use [CloudNativePG Operator](postgres-operator.md) for production deployments
 
 - **Options:**
+
   - Simple PostgreSQL deployment
+
   - PostgreSQL HA deployment (using `postgresqlha.enabled`)
+
   - External database configuration
+
   - **Production:** CloudNativePG operator with automated failover
 
 - **Purpose:**
+
   - Primary data storage
+
   - User accounts and permissions
+
   - Resource state management
+
   - Billing and accounting data
+
   - Audit logs
 
 ### RabbitMQ Message Broker
@@ -143,9 +163,13 @@ graph TB
 ⚠️ **Production Recommendation:** Use [RabbitMQ Cluster Operator](rabbitmq-operator.md) for production deployments
 
 - **Purpose:**
+
   - Message queue for Celery
+
   - Task distribution to workers
+
   - Asynchronous communication
+
   - Event-driven architecture support
 
 ## Scheduled Tasks (CronJobs)
@@ -183,7 +207,9 @@ graph LR
 **Schedule:** Daily (configurable)
 
 - Creates PostgreSQL dumps
+
 - Uploads to object storage
+
 - Configurable retention
 
 ### Backup Rotation
@@ -192,7 +218,9 @@ graph LR
 **Schedule:** Weekly (configurable)
 
 - Manages backup retention
+
 - Removes old backups
+
 - Maintains backup history
 
 ### Session Cleanup
@@ -201,7 +229,9 @@ graph LR
 **Schedule:** Daily
 
 - Cleans expired sessions
+
 - Removes old audit logs
+
 - Database maintenance tasks
 
 ### SAML2 Metadata Sync
@@ -210,7 +240,9 @@ graph LR
 **Schedule:** Configurable
 
 - Synchronizes SAML2 metadata
+
 - Updates identity provider configurations
+
 - Maintains SSO configurations
 
 ## Data Flow
@@ -244,14 +276,19 @@ sequenceDiagram
 ### Internal Services
 
 - **waldur-mastermind-api:** ClusterIP service on port 80
+
 - **waldur-homeport:** ClusterIP service on port 80
+
 - **waldur-metrics-exporter:** ClusterIP service on port 8080
+
 - **waldur-uvk-everypay:** ClusterIP service on port 8000
 
 ### External Access
 
 - Ingress controller routes traffic to services
+
 - TLS termination at ingress level
+
 - Support for multiple hostnames per service
 
 ## Configuration Management
@@ -259,42 +296,55 @@ sequenceDiagram
 ### ConfigMaps
 
 - **api-override-config:** Django settings overrides
+
 - **api-celery-config:** Celery configuration
+
 - **mastermind-config-features-json:** Feature flags
+
 - **mastermind-config-auth-yaml:** Authentication settings
+
 - **mastermind-config-permissions-override-yaml:** Permission overrides
+
 - **icons-config:** Custom icons and branding
 
 ### Secrets
 
 - **waldur-secret:** Database credentials, API tokens
+
 - **waldur-saml2-secret:** SAML2 certificates
+
 - **waldur-valimo-secret:** Valimo authentication certificates
+
 - **waldur-ssh-key-config:** SSH private keys
+
 - **waldur-script-kubeconfig:** Kubernetes config for script execution
 
 ## High Availability Considerations
 
 1. **API Layer:**
-  - Supports multiple replicas
-  - Horizontal Pod Autoscaling available
-  - Load balanced through service
 
-2. **Worker Layer:**
-  - Horizontally scalable
-  - Multiple workers can process tasks in parallel
-  - HPA support for automatic scaling
+- Supports multiple replicas
+- Horizontal Pod Autoscaling available
+- Load balanced through service
 
-3. **Beat Scheduler:**
-  - Single instance only (by design)
-  - Handles scheduling, not processing
+1. **Worker Layer:**
 
-4. **Database:**
-  - PostgreSQL HA option available
-  - Supports external managed databases
-  - Regular backup strategy
+- Horizontally scalable
+- Multiple workers can process tasks in parallel
+- HPA support for automatic scaling
 
-5. **Message Queue:**
-  - RabbitMQ clustering supported
-  - External message broker option
+1. **Beat Scheduler:**
 
+- Single instance only (by design)
+- Handles scheduling, not processing
+
+1. **Database:**
+
+- PostgreSQL HA option available
+- Supports external managed databases
+- Regular backup strategy
+
+1. **Message Queue:**
+
+- RabbitMQ clustering supported
+- External message broker option

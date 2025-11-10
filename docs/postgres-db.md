@@ -5,17 +5,23 @@
 ⚠️ **Important:** This document describes PostgreSQL setup for **demo/development environments only**.
 
 **For production deployments**, use the [CloudNativePG Operator](postgres-operator.md) instead of the Bitnami Helm chart. The operator provides:
+
 - Kubernetes-native PostgreSQL cluster management
+
 - Automated failover and high availability
+
 - Built-in backup and Point-in-Time Recovery (PITR)
+
 - Zero-downtime maintenance operations
+
 - Enhanced monitoring and observability
+
 - Production-grade security features
 
 ## Demo/Development Installation
 
 For development and demo environments,
-[bitnami/postgresql chart](https://github.com/bitnami/charts/tree/master/bitnami/postgresql)
+[bitnami/postgresql chart](https://github.com/bitnami/charts/tree/main/bitnami/postgresql)
 can be used for quick setup.
 
 ## Demo Standalone Installation
@@ -23,7 +29,7 @@ can be used for quick setup.
 Add `bitnami` repo to helm:
 
 ```bash
-  helm repo add bitnami https://charts.bitnami.com/bitnami
+  helm repo add bitnami <https://charts.bitnami.com/bitnami>
 ```
 
 Install PostgreSQL release for demo/development:
@@ -32,8 +38,10 @@ Install PostgreSQL release for demo/development:
   helm install postgresql bitnami/postgresql --version 16.0.1 -f postgresql-values.yaml
 ```
 
-**Note:** 
+**Note:**
+
 - The default configuration in `postgresql-values.yaml` uses `bitnamilegacy` Docker images for compatibility
+
 - This setup is **not recommended for production use**
 
 **NB**: the values `postgresql.enabled` and `postgresqlha.enabled` must be `false`.
@@ -43,20 +51,31 @@ Install PostgreSQL release for demo/development:
 You can change default PostgreSQL config with the following variables in `postgresql-values.yaml`:
 
 1. `auth.database` - name of a database.
+
     **NB**: must match `postgresql.database` value in `waldur/values.yaml`
+
 2. `auth.username` - name of a database user.
+
     **NB**: must match `postgresql.username` value in `waldur/values.yaml`
+
 3. `auth.password` - password of a database user
+
 4. `primary.persistence.size` - size of a database
+
 5. `image.tag` - tag of `PostgreSQL` image.
-    Possible tags for default image can be found [here](https://hub.docker.com/r/bitnamilegacy/postgresql/tags)
+
+    Possible tags for default image can be found [here](https://hub.docker.com/r/bitnami/postgresql/tags)
+
 6. `image.registry` - registry of `PostgreSQL` image.
 
-More information related to possible values [here](https://github.com/bitnami/charts/tree/master/bitnami/postgresql#parameters).
+More information related to possible values [here](https://github.com/bitnami/charts/tree/main/bitnami/postgresql#parameters).
 
-**Important:** 
+**Important:**
+
 - The PostgreSQL configuration uses legacy Bitnami images (`bitnamilegacy/postgresql` and `bitnamilegacy/postgres-exporter`) for demo/development compatibility
+
 - These images are configured in the `postgresql-values.yaml` file
+
 - For production deployments, migrate to the [CloudNativePG Operator](postgres-operator.md)
 
 ## Demo Dependency Installation

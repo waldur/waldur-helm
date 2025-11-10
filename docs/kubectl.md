@@ -1,13 +1,13 @@
 # Official documentation
 
-Documentation of installation link: [doc](https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-kubectl-on-linux)
+Documentation of installation link: [doc](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)
 
 ## Installing kubectl
 
 1. Download and install latest kubectl
 
 ```bash
-  curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
+  curl -LO <https://storage.googleapis.com/kubernetes-release/release/`curl> -s <https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl>
 ```
 
 1. Add executable mode for kubectl

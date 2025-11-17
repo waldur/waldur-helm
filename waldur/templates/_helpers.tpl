@@ -179,7 +179,7 @@ Add environment variables to configure database values and Sentry environment
   value: {{ include "waldur.postgresql.port" . }}
 
 - name: POSTGRESQL_USER
-{{ if .Values.externalDB.enabled }}
+{{ if and .Values.externalDB.enabled (not .Values.externalDB.username) }}
   valueFrom:
     secretKeyRef:
       name: {{ include "waldur.postgresql.secret" . }}

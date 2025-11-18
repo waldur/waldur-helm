@@ -12,6 +12,7 @@ data:
 
     import os
     from datetime import timedelta
+    from urllib.parse import quote_plus
 
     SECRET_KEY = os.environ.get('GLOBAL_SECRET_KEY')
 
@@ -68,14 +69,14 @@ data:
     rabbitmq_username = os.environ.get('RABBITMQ_USERNAME')
     rabbitmq_password = os.environ.get('RABBITMQ_PASSWORD')
 
-    CELERY_BROKER_URL = f"amqp://{rabbitmq_username}:{rabbitmq_password}@{rabbitmq_host}:{rabbitmq_port}"
+    CELERY_BROKER_URL = f"amqp://{quote_plus(rabbitmq_username)}:{quote_plus(rabbitmq_password)}@{rabbitmq_host}:{rabbitmq_port}"
 
     postgresql_host = os.environ.get('POSTGRESQL_HOST')
     postgresql_port = os.environ.get('POSTGRESQL_PORT')
     postgresql_user = os.environ.get('POSTGRESQL_USER')
     postgresql_password = os.environ.get('POSTGRESQL_PASSWORD')
     postgresql_name = 'celery_results'
-    CELERY_RESULT_BACKEND = f'db+postgresql+psycopg://{postgresql_user}:{postgresql_password}@{postgresql_host}:{postgresql_port}/{postgresql_name}'
+    CELERY_RESULT_BACKEND = f'db+postgresql+psycopg://{quote_plus(postgresql_user)}:{quote_plus(postgresql_password)}@{postgresql_host}:{postgresql_port}/{postgresql_name}'
 
     RABBITMQ = {
         "HOST": {{ include "waldur.rabbitmq.rmqHost" . | quote }},

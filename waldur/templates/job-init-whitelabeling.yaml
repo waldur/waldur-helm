@@ -15,10 +15,7 @@ spec:
   template:
     metadata:
       labels:
-        app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
-        app.kubernetes.io/instance: {{ .Release.Name | quote }}
-        app.kubernetes.io/version: {{ .Chart.AppVersion }}
-        helm.sh/chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        {{ include "waldur.labels" . | nindent 8 }}
     spec:
       containers:
         - name: waldur-mastermind-whitelabeling-init

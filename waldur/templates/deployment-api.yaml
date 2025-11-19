@@ -24,7 +24,7 @@ spec:
       {{ end }}
       {{ if .Values.hostAliases }}
       hostAliases:
-        {{ toYaml .Values.hostaliases | nindent 8 }}
+        {{ toYaml .Values.hostAliases | nindent 8 }}
       {{ end }}
       containers:
         - name: waldur-mastermind-api
@@ -57,6 +57,10 @@ spec:
             - name: GLOBAL_DEBUG
               value: "true"
             {{ end }}
+            {{ if and (hasKey .Values.waldur "openportal") .Values.waldur.openportal.existingSecret.name }}
+            - name: OPENPORTAL_CONFIG
+              value: "/etc/waldur/openportal/config.toml"
+            {{ end }}
           resources:
             {{ if .Values.hpa.api.enabled }}
             {{- toYaml .Values.hpa.api.resources | nindent 12 }}
@@ -87,6 +91,11 @@ spec:
             - name: waldur-saml2-conf
               mountPath: /etc/waldur/saml2.conf.py
               subPath: saml2.conf.py
+            {{ end }}
+            {{ if and (hasKey .Values.waldur "openportal") .Values.waldur.openportal.existingSecret.name }}
+            - name: openportal-config
+              mountPath: /etc/waldur/openportal
+              readOnly: true
             {{ end }}
             {{ if has "VALIMO" .Values.waldur.authMethods }}
             - name: waldur-valimo-certs
@@ -134,6 +143,11 @@ spec:
       - name: waldur-saml2-conf
         configMap:
           name: waldur-saml2-conf-config
+      {{ end }}
+      {{ if and (hasKey .Values.waldur "openportal") .Values.waldur.openportal.existingSecret.name }}
+      - name: openportal-config
+        secret:
+          secretName: {{ .Values.waldur.openportal.existingSecret.name }}
       {{ end }}
       {{ if has "VALIMO" .Values.waldur.authMethods }}
       - name: waldur-valimo-certs

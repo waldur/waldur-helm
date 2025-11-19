@@ -45,7 +45,11 @@ spec:
   ingressClassName: {{ .Values.ingress.className | quote }}
   {{ end }}
   rules:
+  {{ if .Values.localHomeportHostname }}
+  - host: {{ .Values.localHomeportHostname }}
+  {{ else }}
   - host: {{ .Values.homeportHostname }}
+  {{ end }}
     http:
       paths:
       - path: /

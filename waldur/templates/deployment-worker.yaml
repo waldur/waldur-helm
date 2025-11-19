@@ -25,7 +25,7 @@ spec:
       {{ end }}
       {{ if .Values.hostAliases }}
       hostAliases:
-        {{ toYaml .Values.hostaliases | nindent 8 }}
+        {{ toYaml .Values.hostAliases | nindent 8 }}
       {{ end }}
       containers:
         - name: waldur-mastermind-worker
@@ -58,6 +58,10 @@ spec:
             - name: GLOBAL_DEBUG
               value: "true"
             {{ end }}
+            {{ if and (hasKey .Values.waldur "openportal") .Values.waldur.openportal.existingSecret.name }}
+            - name: OPENPORTAL_CONFIG
+              value: "/etc/waldur/openportal/config.toml"
+            {{ end }}
           resources:
             {{ if .Values.hpa.celery.enabled }}
             {{- toYaml .Values.hpa.celery.workerResources | nindent 12 }}
@@ -80,6 +84,11 @@ spec:
             - name: config-permissions-override-yaml
               mountPath: /etc/waldur/permissions-override.yaml
               subPath: permissions-override.yaml
+            {{ if and (hasKey .Values.waldur "openportal") .Values.waldur.openportal.existingSecret.name }}
+            - name: openportal-config
+              mountPath: /etc/waldur/openportal
+              readOnly: true
+            {{ end }}
             {{ if has "VALIMO" .Values.waldur.authMethods }}
             - name: waldur-valimo-certs
               mountPath: /etc/waldur/valimo
@@ -116,6 +125,11 @@ spec:
       - name: config-permissions-override-yaml
         configMap:
           name: mastermind-config-permissions-override-yaml
+      {{ if and (hasKey .Values.waldur "openportal") .Values.waldur.openportal.existingSecret.name }}
+      - name: openportal-config
+        secret:
+          secretName: {{ .Values.waldur.openportal.existingSecret.name }}
+      {{ end }}
       {{ if has "VALIMO" .Values.waldur.authMethods }}
       - name: waldur-valimo-certs
         secret:

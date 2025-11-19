@@ -13,10 +13,14 @@ fullnameOverride: ""
 
 apiScheme: "https"
 homeportScheme: "https"
+
 apiHostname: "helm-testing.waldur.com"
+localApiHostname: ""
 apiExtraHosts:
   - helm-testing-02.waldur.com
+
 homeportHostname: "helm-testing.waldur.com"
+localHomeportHostname: ""
 homeportExtraHosts:
   - helm-testing-02.waldur.com
 
@@ -114,6 +118,10 @@ waldur:
   staffToken: "staff-token"
   debug: true
   mail:
+    existingSecret:
+      name: ""
+      userKey: "MAIL_USER"
+      passwordKey: "MAIL_PASSWORD"
     host: "test.email.waldur.example.com"
     port: "1055"
     username: "email-username"
@@ -275,6 +283,9 @@ waldur:
     customerPrefix: "test_cst_"
     projectPrefix: "test_pr_"
     allocationPrefix: "test_alloc"
+  openportal:
+    existingSecret:
+      name: ""
   support:
     backend: "zammad" # Can be "atlassian", "zammad" or "smax"
     atlassian:
@@ -447,6 +458,7 @@ waldur:
   ssh_private_key_path: ""
   homeport:
     imageName: "opennode/waldur-homeport"
+    imageTag: "latest"
     matomoUrlBase: ""
     matomoSiteId: ""
     customSentryURL: ""
@@ -459,7 +471,7 @@ waldur:
     includeAnnotations: false
   uvkEverypay:
     enabled: false
-    imageTag: latest
+    imageTag: "latest"
     uvkServer: "https://uvk-test.ut.ee/client/a74/server.php?format=JSON&action=uvk__"
     everypayGateway: "https://igw-demo.every-pay.com/api/v4"
     everypayUsername: "abc"

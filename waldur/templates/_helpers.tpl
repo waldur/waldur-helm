@@ -48,7 +48,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 Set postgres version
 */}}
 {{- define "waldur.postgresql.version" -}}
-12
+17
 {{- end -}}
 
 {{/*
@@ -222,25 +222,53 @@ Add environment variables to configure database values and Sentry environment
   {{ end }}
 {{ end }}
 
+- name: EMAIL_USER
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.waldur.mail.existingSecret.name | default "waldur-secret" }}
+      key: {{ .Values.waldur.mail.existingSecret.userKey | default "MAIL_USER" }}
+
+- name: EMAIL_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.waldur.mail.existingSecret.name | default "waldur-secret"}}
+      key: {{ .Values.waldur.mail.existingSecret.passwordKey | default "MAIL_PASSWORD"}}
+
 - name: RABBITMQ_HOSTNAME
   value: {{ include "waldur.rabbitmq.rmqHost" . | quote }}
 - name: RABBITMQ_USERNAME
-  {{ if and .Values.rabbitmq.secret.name .Values.rabbitmq.secret.usernameKey  }}
+  {{ if and .Values.rabbitmq.secret.name .Values.rabbitmq.secret.usernameKey }}
   valueFrom:
     secretKeyRef:
       name: {{ .Values.rabbitmq.secret.name }}
       key: {{ .Values.rabbitmq.secret.usernameKey }}
+  {{ else if and (hasKey .Values.rabbitmq.auth "existingSecret") .Values.rabbitmq.auth.existingSecret.name }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.rabbitmq.auth.existingSecret.name }}
+      key: {{ .Values.rabbitmq.auth.existingSecret.usernameKey }}
   {{ else }}
-  value: {{ .Values.rabbitmq.auth.username }}
+  valueFrom:
+    secretKeyRef:
+      name: "waldur-secret"
+      key: "RABBITMQ_USER"
   {{ end }}
 - name: RABBITMQ_PASSWORD
-  {{ if and .Values.rabbitmq.secret.name .Values.rabbitmq.secret.passwordKey  }}
+  {{ if and .Values.rabbitmq.secret.name .Values.rabbitmq.secret.passwordKey }}
   valueFrom:
     secretKeyRef:
       name: {{ .Values.rabbitmq.secret.name }}
       key: {{ .Values.rabbitmq.secret.passwordKey }}
+  {{ else if and (hasKey .Values.rabbitmq.auth "existingSecret") .Values.rabbitmq.auth.existingSecret.name }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.rabbitmq.auth.existingSecret.name }}
+      key: {{ .Values.rabbitmq.auth.existingSecret.passwordKey }}
   {{ else }}
-  value: {{ .Values.rabbitmq.auth.password }}
+  valueFrom:
+    secretKeyRef:
+      name: "waldur-secret"
+      key: "RABBITMQ_PASSWORD"
   {{ end }}
 
 {{ if .Values.waldur.sentryDSN }}

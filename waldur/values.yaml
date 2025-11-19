@@ -13,9 +13,13 @@ fullnameOverride: ""
 
 apiScheme: "http"
 homeportScheme: "http"
+
 apiHostname: waldur.local
+localApiHostname: ""
 apiExtraHosts: []
+
 homeportHostname: waldur.local
+localHomeportHostname: ""
 homeportExtraHosts: []
 
 affinity: {}
@@ -146,6 +150,10 @@ waldur:
     key: ""
   debug: false
   mail:
+    existingSecret:
+      name: ""
+      userKey: "MAIL_USER"
+      passwordKey: "MAIL_PASSWORD"
     host: ""
     port: ""
     username: ""
@@ -286,6 +294,9 @@ waldur:
     customerPrefix: ""
     projectPrefix: ""
     allocationPrefix: ""
+  openportal:
+    existingSecret:
+      name: ""
   support:
     backend: "zammad" # Can be "atlassian", "zammad" or "smax"
     existingSecret:
@@ -405,6 +416,7 @@ waldur:
   ssh_private_key: ""
   homeport:
     imageName: "opennode/waldur-homeport"
+    imageTag: "7.8.7"
     matomoUrlBase: ""
     matomoSiteId: ""
     customSentryURL: ""
@@ -423,7 +435,7 @@ waldur:
       azureClientIDKey: ""
       azureClientSecretKey: ""
     enabled: false
-    imageTag: latest
+    imageTag: "latest"
     uvkServer: "https://uvk-test.ut.ee/client/a74/server.php?format=JSON&action=uvk__"
     everypayGateway: "https://igw-demo.every-pay.com/api/v4"
     everypayUsername: ""

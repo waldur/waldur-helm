@@ -38,7 +38,11 @@ spec:
   ingressClassName: {{ .Values.ingress.className | quote }}
   {{ end }}
   rules:
+  {{ if .Values.localApiHostname }}
+  - host: {{ .Values.localApiHostname }}
+  {{ else }}
   - host: {{ .Values.apiHostname }}
+  {{ end }}
     http:
       paths:
       - path: /api

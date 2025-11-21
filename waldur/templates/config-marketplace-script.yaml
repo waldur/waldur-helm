@@ -15,7 +15,7 @@ data:
     K8S_CONFIG_PATH: /etc/waldur/kubeconfig
 
     # Namespace where jobs will be created
-    K8S_NAMESPACE: "{{ .Values.waldur.marketplace.script.k8sNamespace }}"
+    K8S_NAMESPACE: "{{ .Values.waldur.marketplace.script.k8sNamespace | default .Release.Namespace }}"
 
     {{ if .Values.waldur.marketplace.script.dockerImages }}
     # Available Docker images for script execution

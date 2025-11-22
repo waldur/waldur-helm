@@ -222,7 +222,7 @@ Add environment variables to configure database values and Sentry environment
   {{ end }}
 {{ end }}
 
-{{ if or .Values.waldur.mail.username .Values.waldur.mail.existingSecret.name }}
+{{ if or (and .Values.waldur.mail.username (ne .Values.waldur.mail.username "")) (and .Values.waldur.mail.existingSecret.name (ne .Values.waldur.mail.existingSecret.name "")) }}
 - name: EMAIL_USER
   valueFrom:
     secretKeyRef:

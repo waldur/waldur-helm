@@ -18,6 +18,7 @@ spec:
           containers:
             - name: "postgres-backup-cronjob"
               image: {{ .Values.global.imageRegistry }}/{{ .Values.postgresBackup.image }}
+              imagePullPolicy: {{ include "waldur.imagePullPolicyFromImage" (dict "image" .Values.postgresBackup.image "Values" .Values) }}
               env:
                 {{ include "waldur.env.initdb" . | nindent 16 }}
                 - name: MINIO_SERVER

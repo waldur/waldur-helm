@@ -28,7 +28,7 @@ spec:
       containers:
       - name: waldur-uvk-everypay
         image: {{ .Values.global.imageRegistry }}/opennode/waldur-uvk-everypay:{{ .Values.waldur.uvkEverypay.imageTag }}
-        imagePullPolicy: {{ .Values.waldur.pullPolicy }}
+        imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" .Values.waldur.uvkEverypay.imageTag "Values" .Values) }}
         env:
           - name: WALDUR_API_URL
             value: "http://waldur-mastermind-api:80/api/"
@@ -109,7 +109,7 @@ spec:
         {{- end }}
       - name: waldur-uvk-everypay-sidecar
         image: {{ .Values.global.imageRegistry }}/opennode/waldur-uvk-everypay-sidecar:latest
-        imagePullPolicy: {{ .Values.waldur.pullPolicy }}
+        imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" "latest" "Values" .Values) }}
         ports:
           - name: http
             containerPort: 8000

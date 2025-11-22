@@ -17,7 +17,7 @@ spec:
           containers:
             - name: waldur-cleanup
               image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
-              imagePullPolicy: {{ .Values.waldur.pullPolicy }}
+              imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" .Values.waldur.imageTag "Values" .Values) }}
               args:
                 - waldur-cleanup
               env:

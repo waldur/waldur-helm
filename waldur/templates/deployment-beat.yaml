@@ -56,7 +56,7 @@ spec:
               memory: 200Mi
         - name: waldur-mastermind-migrate
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
-          imagePullPolicy: {{ .Values.waldur.pullPolicy }}
+          imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" .Values.waldur.imageTag "Values" .Values) }}
           args:
             - initdb
           env:
@@ -103,7 +103,7 @@ spec:
       containers:
         - name: waldur-mastermind-beat
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
-          imagePullPolicy: {{ .Values.waldur.pullPolicy }}
+          imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" .Values.waldur.imageTag "Values" .Values) }}
           args:
             - "beat"
           env:

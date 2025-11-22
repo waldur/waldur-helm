@@ -28,7 +28,7 @@ spec:
       containers:
         - name: waldur-homeport
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.homeport.imageName }}:{{ .Values.waldur.homeport.imageTag }}
-          imagePullPolicy: {{ .Values.waldur.pullPolicy }}
+          imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" .Values.waldur.homeport.imageTag "Values" .Values) }}
           livenessProbe:
             httpGet:
               port: 8080

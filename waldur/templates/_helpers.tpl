@@ -365,3 +365,34 @@ Add environment variables to configure database values and Sentry environment
   value: {{ .Values.proxy.noProxy | quote }}
 {{ end }}
 {{- end -}}
+
+{{/*
+Determine imagePullPolicy based on image tag.
+If tag is "latest", use "Always", otherwise use configured pullPolicy.
+*/}}
+{{- define "waldur.imagePullPolicy" -}}
+{{- $tag := .tag -}}
+{{- if eq $tag "latest" -}}
+Always
+{{- else -}}
+{{ .Values.waldur.pullPolicy }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Determine imagePullPolicy based on full image string (image:tag).
+If tag is "latest", use "Always", otherwise use configured pullPolicy.
+*/}}
+{{- define "waldur.imagePullPolicyFromImage" -}}
+{{- $image := .image -}}
+{{- $parts := splitList ":" $image -}}
+{{- $tag := "latest" -}}
+{{- if gt (len $parts) 1 -}}
+{{- $tag = last $parts -}}
+{{- end -}}
+{{- if eq $tag "latest" -}}
+Always
+{{- else -}}
+{{ .Values.waldur.pullPolicy }}
+{{- end -}}
+{{- end -}}

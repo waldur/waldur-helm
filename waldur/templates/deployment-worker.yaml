@@ -30,7 +30,7 @@ spec:
       containers:
         - name: waldur-mastermind-worker
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
-          imagePullPolicy: {{ .Values.waldur.pullPolicy }}
+          imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" .Values.waldur.imageTag "Values" .Values) }}
           args:
             - "worker"
           # startup probe: check if there are no pending migrations

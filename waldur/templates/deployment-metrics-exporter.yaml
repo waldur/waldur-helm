@@ -28,7 +28,7 @@ spec:
       containers:
       - name: waldur-metrics-exporter
         image: {{ .Values.global.imageRegistry }}/opennode/waldur-prometheus-exporter:{{ .Values.waldur.imageTag }}
-        imagePullPolicy: {{ .Values.waldur.pullPolicy }}
+        imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" .Values.waldur.imageTag "Values" .Values) }}
         livenessProbe:
           httpGet:
             port: 8080

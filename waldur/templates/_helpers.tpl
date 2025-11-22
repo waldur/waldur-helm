@@ -222,6 +222,7 @@ Add environment variables to configure database values and Sentry environment
   {{ end }}
 {{ end }}
 
+{{ if or .Values.waldur.mail.username .Values.waldur.mail.existingSecret.name }}
 - name: EMAIL_USER
   valueFrom:
     secretKeyRef:
@@ -233,6 +234,7 @@ Add environment variables to configure database values and Sentry environment
     secretKeyRef:
       name: {{ .Values.waldur.mail.existingSecret.name | default "waldur-secret"}}
       key: {{ .Values.waldur.mail.existingSecret.passwordKey | default "MAIL_PASSWORD"}}
+{{ end }}
 
 - name: RABBITMQ_HOSTNAME
   value: {{ include "waldur.rabbitmq.rmqHost" . | quote }}

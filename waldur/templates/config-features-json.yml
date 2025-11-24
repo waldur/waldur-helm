@@ -44,9 +44,6 @@ data:
       {{ if has "invitation_conceal_civil_number" .Values.waldur.features }}
         "invitations.conceal_civil_number": true,
       {{ end }}
-      {{ if not (has "billing" .Values.waldur.features) }}
-        "customer.hide_organization_billing_step": true,
-      {{ end }}
       {{ if has "marketplace_show_experimental_ui_components" .Values.waldur.features }}
         "marketplace.show_experimental_ui_components": true,
       {{ end }}
@@ -67,6 +64,5 @@ data:
       {{ end }}
         "marketplace.import_resources": true,
         "user.notifications": true,
-        "project.estimated_cost": true,
-        "support.shared_providers": true
+        "project.estimated_cost": true
     }

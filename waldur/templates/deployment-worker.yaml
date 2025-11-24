@@ -27,6 +27,39 @@ spec:
       hostAliases:
         {{ toYaml .Values.hostAliases | nindent 8 }}
       {{ end }}
+      initContainers:
+        - name: wait-for-rabbitmq-migration
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
+          imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" .Values.waldur.imageTag "Values" .Values) }}
+          command: ['sh', '-c']
+          args:
+            - |
+              echo "INFO: Waiting for RabbitMQ queues to be properly configured..."
+              for i in {1..60}; do
+                if waldur migrate_rabbitmq_queues --check-only; then
+                  echo "INFO: RabbitMQ queues are properly configured"
+                  exit 0
+                fi
+                echo "Waiting for RabbitMQ migration to complete... ($i/60)"
+                sleep 5
+              done
+              echo "WARNING: Timeout waiting for RabbitMQ migration - proceeding anyway"
+          env:
+            {{- include "waldur.credentials" . | nindent 13 }}
+          volumeMounts:
+            - name: api-override
+              mountPath: /etc/waldur/override.conf.py
+              subPath: override.conf.py
+            - name: api-celery
+              mountPath: /etc/waldur/celery.conf
+              subPath: celery.conf
+          resources:
+            requests:
+              cpu: 100m
+              memory: 200Mi
+            limits:
+              cpu: 100m
+              memory: 500Mi
       containers:
         - name: waldur-mastermind-worker
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}

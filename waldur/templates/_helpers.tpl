@@ -222,6 +222,8 @@ Add environment variables to configure database values and Sentry environment
   {{ end }}
 {{ end }}
 
+{{/* 
+Temporarily disabled as it crashes deployments with ansible installer
 {{ if or (and .Values.waldur.mail.username (ne .Values.waldur.mail.username "")) (and .Values.waldur.mail.existingSecret.name (ne .Values.waldur.mail.existingSecret.name "")) }}
 - name: EMAIL_USER
   valueFrom:
@@ -235,6 +237,7 @@ Add environment variables to configure database values and Sentry environment
       name: {{ .Values.waldur.mail.existingSecret.name | default "waldur-secret"}}
       key: {{ .Values.waldur.mail.existingSecret.passwordKey | default "MAIL_PASSWORD"}}
 {{ end }}
+*/}}
 
 - name: RABBITMQ_HOSTNAME
   value: {{ include "waldur.rabbitmq.rmqHost" . | quote }}

@@ -16,6 +16,7 @@ metadata:
     {{ end }}
     {{ if eq .Values.ingress.className "nginx" }}
     nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,sentry-trace,baggage,X-Impersonated-User-Uuid"
     nginx.ingress.kubernetes.io/cors-expose-headers: "Link, X-Result-Count"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
@@ -26,6 +27,7 @@ metadata:
     {{ end }}
     {{ else if or (eq .Values.ingress.className "openshift-default") (eq .Values.ingress.className "haproxy") }}
     haproxy.org/cors-enable: "true"
+    haproxy.org/path-rewrite: "/"
     haproxy.org/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,sentry-trace,baggage,X-Impersonated-User-Uuid"
     haproxy.org/cors-expose-headers: "Link, X-Result-Count"
     haproxy.org/ssl-redirect: "true"

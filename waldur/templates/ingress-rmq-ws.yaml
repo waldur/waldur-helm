@@ -1,4 +1,4 @@
-{{- if and .Values.ingress.enabled .Values.rabbitmq.enabled (or (.Values.waldur.rabbitmqEvents.mqttEnabled | default false) (.Values.waldur.rabbitmqEvents.stompEnabled | default false)) }}
+{{- if and .Values.ingress.enabled (or (.Values.waldur.rabbitmqEvents.mqttEnabled | default false) (.Values.waldur.rabbitmqEvents.stompEnabled | default false)) }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:

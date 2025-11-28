@@ -31,7 +31,7 @@ metadata:
     {{ end }}
     {{ end }}
     {{ if and .Values.ingress.tls.enabled (eq .Values.ingress.tls.source "letsEncrypt") }}
-    cert-manager.io/cluster-issuer: letsencrypt-prod-issuer
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.tls.clusterIssuerName | default "letsencrypt-prod-issuer" }}
     {{ end }}
 spec:
   {{ if .Values.ingress.className }}

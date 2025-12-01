@@ -44,7 +44,7 @@ spec:
               memory: 200Mi
         - name: create-celery-results-db
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.initdbImageName }}:{{ template "waldur.postgresql.version" . }}
-          command: ['sh', '-c', 'createdb celery_results || true']
+          command: ['sh', '-c', 'createdb {{ .Values.celery.resultDatabase | default "celery_results" }} || true']
           env:
             {{- include "waldur.env.initdb" . | nindent 11 }}
           resources:

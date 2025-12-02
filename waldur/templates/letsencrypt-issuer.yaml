@@ -1,14 +1,14 @@
-{{ if and .Values.ingress.tls.enabled (.Values.ingress.tls.source | eq "letsEncrypt") }}
+{{ if and (and .Values.ingress.tls.enabled (.Values.ingress.tls.source | eq "letsEncrypt")) (.Values.ingress.tls.createClusterIssuer | default false) }}
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
-  name: letsencrypt-prod-issuer
+  name: {{ .Values.ingress.tls.clusterIssuerName | default "letsencrypt-prod-issuer" }}
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
     email: {{ .Values.waldur.site.email }}
     privateKeySecretRef:
-      name: letsencrypt-prod-issuer-key
+      name: {{ .Values.ingress.tls.clusterIssuerName | default "letsencrypt-prod-issuer" }}-key
     solvers:
     - http01:
         ingress:

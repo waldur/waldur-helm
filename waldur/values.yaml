@@ -111,6 +111,7 @@ ingress:
     enabled: false
     source: "secret" # Possible values: `letsEncrypt`, `secret` and `cluster` (works for OpenShift only)
     clusterIssuerName: "letsencrypt-prod-issuer"  # ClusterIssuer name for cert-manager (used when source == `letsEncrypt`), default: "letsencrypt-prod-issuer"
+    createClusterIssuer: false  # Set to true only if you have cluster-admin permissions to create ClusterIssuer resources
     customMastermindSecretName: ""
     customHomeportSecretName: ""
     secretsDir: "tls"  # Enabled only if source == `secret`

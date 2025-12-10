@@ -35,7 +35,7 @@ metadata:
     haproxy.org/backend-config-snippet: |
       http-response set-header Content-Security-Policy "base-uri 'self'; object-src 'none'; media-src 'none'; script-src 'self' sentry.opnd.org {{ .Values.waldur.homeport.customSentryURL }} {{ .Values.waldur.homeport.matomoUrlBase }}; style-src 'self' 'unsafe-inline'; img-src 'self' *.tile.openstreetmap.org {{ .Values.apiHostname }} blob: data: ; connect-src 'self' {{ .Values.apiHostname }} {{ .Values.waldur.homeport.matomoUrlBase }} nominatim.openstreetmap.org:443 sentry.opnd.org:443 sentry.opnd.org:80 {{ $customSentryUrl80 }} {{ $customSentryUrl443 }}; font-src 'self' data: ; frame-src 'none'; frame-ancestors 'none'";
     {{ if .Values.ingress.whitelistSourceRange }}
-    haproxy.org/whitelist: "{{ .Values.ingress.whitelistSourceRange }}"
+    haproxy.org/allow-list: "{{ .Values.ingress.whitelistSourceRange }}"
     {{ end }}
     {{ end }}
     {{ if and .Values.ingress.tls.enabled (eq .Values.ingress.tls.source "letsEncrypt") }}

@@ -25,9 +25,9 @@ metadata:
     route.openshift.io/termination: "edge"
     {{ end }}
     {{ if .Values.ingress.whitelistSourceRangeAdmin }}
-    haproxy.org/whitelist: "{{ .Values.ingress.whitelistSourceRangeAdmin }}"
+    haproxy.org/allow-list: "{{ .Values.ingress.whitelistSourceRangeAdmin }}"
     {{ else if .Values.ingress.whitelistSourceRange }}
-    haproxy.org/whitelist: "{{ .Values.ingress.whitelistSourceRange }}"
+    haproxy.org/allow-list: "{{ .Values.ingress.whitelistSourceRange }}"
     {{ end }}
     {{ end }}
     {{ if and .Values.ingress.tls.enabled (eq .Values.ingress.tls.source "letsEncrypt") }}

@@ -77,7 +77,12 @@ data:
     postgresql_password = os.environ.get('POSTGRESQL_PASSWORD')
     postgresql_name = '{{ .Values.celery.resultDatabase | default "celery_results" }}'
 
+    {{- if .Values.readonlyDBReplica.enabled }}
+    # Force Celery to use primary database when read replica is enabled
+    CELERY_RESULT_BACKEND = f'db+postgresql+psycopg://{quote_plus(postgresql_user)}:{quote_plus(postgresql_password)}@{postgresql_host}:{postgresql_port}/{postgresql_name}?target_session_attrs=read-write'
+    {{- else }}
     CELERY_RESULT_BACKEND = f'db+postgresql+psycopg://{quote_plus(postgresql_user)}:{quote_plus(postgresql_password)}@{postgresql_host}:{postgresql_port}/{postgresql_name}'
+    {{- end }}
     CELERY_RESULT_ENGINE_OPTIONS = {'pool_recycle': 60, 'pool_pre_ping': True, 'pool_use_lifo': True}
 
     RABBITMQ = {

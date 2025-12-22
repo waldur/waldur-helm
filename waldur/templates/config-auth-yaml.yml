@@ -1,3 +1,4 @@
+{{ if not (and (hasKey .Values.waldur "socialAuthMethodsExistingSecret" ) .Values.waldur.socialAuthMethodsExistingSecret.name) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -15,3 +16,4 @@ data:
       verify_ssl: {{ .verifySsl | default true  }}
       protected_fields: {{ .protectedFields | toYaml | nindent 6 }}
   {{- end }}
+{{ end }}

@@ -91,9 +91,15 @@ spec:
               mountPath: /etc/waldur/terms-of-service.html
               subPath: "mastermind-tos.html"
             {{ end }}
+            {{ if and (hasKey .Values.waldur "socialAuthMethodsExistingSecret" ) .Values.waldur.socialAuthMethodsExistingSecret.name }}
+            - name: config-auth-yaml
+              mountPath: /etc/waldur/auth.yaml
+              subPath: .Values.waldur.socialAuthMethodsExistingSecret.key
+            {{ else }}
             - name: config-auth-yaml
               mountPath: /etc/waldur/auth.yaml
               subPath: auth.yaml
+            {{ end }}
             - name: config-permissions-override-yaml
               mountPath: /etc/waldur/permissions-override.yaml
               subPath: permissions-override.yaml
@@ -141,9 +147,15 @@ spec:
       - name: config-features-json
         configMap:
           name: mastermind-config-features-json
+      {{ if and (hasKey .Values.waldur "socialAuthMethodsExistingSecret" ) .Values.waldur.socialAuthMethodsExistingSecret.name }}
+      - name: config-auth-yaml
+        secret:
+          secretName: .Values.waldur.socialAuthMethodsExistingSecret.name
+      {{ else }}
       - name: config-auth-yaml
         configMap:
           name: mastermind-config-auth-yaml
+      {{ end }}
       - name: config-permissions-override-yaml
         configMap:
           name: mastermind-config-permissions-override-yaml

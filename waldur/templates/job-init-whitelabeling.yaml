@@ -48,8 +48,9 @@ spec:
               subPath: languages.yaml
             {{ if .Values.waldur.support.existingSecret.name }}
             - name: existing-support-secret
-              mountPath: /etc/secret-volume
+              mountPath: /etc/waldur/support.yaml
               readOnly: true
+              subPath: support.yaml
             {{ else }}
             - name: constance-settings-yaml
               mountPath: /etc/waldur/support.yaml

@@ -10,4 +10,6 @@ data:
     waldur clearsessions
     echo "[+] Running delete revisions command"
     waldur deleterevisions --keep 5 --days=90
+    echo "[+] Running clean Celery task results command"
+    waldur clean_celery_results --hours=24
     echo "[+] Finished"

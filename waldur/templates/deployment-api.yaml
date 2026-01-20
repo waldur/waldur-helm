@@ -80,7 +80,7 @@ spec:
             {{ if and (hasKey .Values.waldur "socialAuthMethodsExistingSecret" ) .Values.waldur.socialAuthMethodsExistingSecret.name }}
             - name: config-auth-yaml
               mountPath: /etc/waldur/auth.yaml
-              subPath: .Values.waldur.socialAuthMethodsExistingSecret.key
+              subPath: {{ .Values.waldur.socialAuthMethodsExistingSecret.key }}
             {{ else }}
             - name: config-auth-yaml
               mountPath: /etc/waldur/auth.yaml

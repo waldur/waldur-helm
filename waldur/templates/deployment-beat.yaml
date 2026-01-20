@@ -150,7 +150,7 @@ spec:
       {{ if and (hasKey .Values.waldur "socialAuthMethodsExistingSecret" ) .Values.waldur.socialAuthMethodsExistingSecret.name }}
       - name: config-auth-yaml
         secret:
-          secretName: .Values.waldur.socialAuthMethodsExistingSecret.name
+          secretName: {{ .Values.waldur.socialAuthMethodsExistingSecret.name }}
       {{ else }}
       - name: config-auth-yaml
         configMap:

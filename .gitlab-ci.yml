@@ -176,7 +176,7 @@ Publish new chart version and update docs on github:
       sed -i -E -e "s/^  imageTag: \".*\"$/  imageTag: \"$CI_COMMIT_TAG\"/" waldur/values.yaml
     # Update Homeport image tag
     - |
-      sed -i -E -e "/^  homeport:$/,/^  [a-zA-Z]/ s/^    imageTag: \".*\"$/    imageTag: \"$CI_COMMIT_TAG\"/" waldur/values.yaml
+      sed -i -E -e "/^  homeport:$/{n;n;s/^    imageTag: \".*\"$/    imageTag: \"$CI_COMMIT_TAG\"/}" waldur/values.yaml
     # Package Waldur chart with a new version
     - helm dependency update waldur/
     - helm package waldur/
@@ -212,7 +212,7 @@ Check for deprecated Kubernetes resources:
       when: never
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
       when: never
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
     - if: $CI_COMMIT_TAG
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
   script:

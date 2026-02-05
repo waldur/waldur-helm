@@ -2,8 +2,46 @@ apiVersion: v1
 entries:
   waldur:
   - apiVersion: v2
+    appVersion: 8.0.2
+    created: "2026-02-05T22:14:22.033611937Z"
+    dependencies:
+    - alias: postgresql
+      condition: postgresql.enabled
+      name: postgresql
+      repository: https://charts.bitnami.com/bitnami
+      version: 16.7.26
+    - alias: rabbitmq
+      condition: rabbitmq.enabled
+      name: rabbitmq
+      repository: https://charts.bitnami.com/bitnami
+      version: 16.0.13
+    - alias: postgresqlha
+      condition: postgresqlha.enabled
+      name: postgresql-ha
+      repository: https://charts.bitnami.com/bitnami
+      version: 16.2.2
+    description: Waldur - Open-Source Cloud Marketplace
+    digest: ed680ec504b71770e8fa93e855a46ce6a07d99676a73b303ea420e533d098c02
+    home: https://waldur.com
+    icon: https://waldur.com/assets/img/icon-bot-01-150x240.png
+    keywords:
+    - marketplace
+    - openstack
+    - vmware
+    - slurm
+    - billing
+    maintainers:
+    - email: info@opennodecloud.com
+      name: OpenNode team
+      url: https://opennodecloud.com
+    name: waldur
+    type: application
+    urls:
+    - charts/waldur-8.0.2.tgz
+    version: 8.0.2
+  - apiVersion: v2
     appVersion: 8.0.1
-    created: "2026-02-03T14:00:21.203110916Z"
+    created: "2026-02-05T22:14:21.983243045Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -41,7 +79,7 @@ entries:
     version: 8.0.1
   - apiVersion: v2
     appVersion: 8.0.0
-    created: "2026-02-03T14:00:21.165755093Z"
+    created: "2026-02-05T22:14:21.932777784Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -79,7 +117,7 @@ entries:
     version: 8.0.0
   - apiVersion: v2
     appVersion: 7.9.8
-    created: "2026-02-03T14:00:21.14026873Z"
+    created: "2026-02-05T22:14:21.88148797Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -117,7 +155,7 @@ entries:
     version: 7.9.8
   - apiVersion: v2
     appVersion: 7.9.7
-    created: "2026-02-03T14:00:21.116907237Z"
+    created: "2026-02-05T22:14:21.830054546Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -155,7 +193,7 @@ entries:
     version: 7.9.7
   - apiVersion: v2
     appVersion: 7.9.6
-    created: "2026-02-03T14:00:21.09537722Z"
+    created: "2026-02-05T22:14:21.783056075Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -193,7 +231,7 @@ entries:
     version: 7.9.6
   - apiVersion: v2
     appVersion: 7.9.5
-    created: "2026-02-03T14:00:21.057449979Z"
+    created: "2026-02-05T22:14:21.736074228Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -231,7 +269,7 @@ entries:
     version: 7.9.5
   - apiVersion: v2
     appVersion: 7.9.4
-    created: "2026-02-03T14:00:21.009190551Z"
+    created: "2026-02-05T22:14:21.681678705Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -269,7 +307,7 @@ entries:
     version: 7.9.4
   - apiVersion: v2
     appVersion: 7.9.3
-    created: "2026-02-03T14:00:20.972810002Z"
+    created: "2026-02-05T22:14:21.643323291Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -307,7 +345,7 @@ entries:
     version: 7.9.3
   - apiVersion: v2
     appVersion: 7.9.2
-    created: "2026-02-03T14:00:20.922728888Z"
+    created: "2026-02-05T22:14:21.591780321Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -345,7 +383,7 @@ entries:
     version: 7.9.2
   - apiVersion: v2
     appVersion: 7.9.1
-    created: "2026-02-03T14:00:20.871252005Z"
+    created: "2026-02-05T22:14:21.541877297Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -383,7 +421,7 @@ entries:
     version: 7.9.1
   - apiVersion: v2
     appVersion: 7.9.1-rc0
-    created: "2026-02-03T14:00:20.822946995Z"
+    created: "2026-02-05T22:14:21.495729581Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -421,7 +459,7 @@ entries:
     version: 7.9.1-rc0
   - apiVersion: v2
     appVersion: 7.9.0
-    created: "2026-02-03T14:00:20.783038307Z"
+    created: "2026-02-05T22:14:21.44617732Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -459,7 +497,7 @@ entries:
     version: 7.9.0
   - apiVersion: v2
     appVersion: 7.9.0-rc0
-    created: "2026-02-03T14:00:20.739414435Z"
+    created: "2026-02-05T22:14:21.400916034Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -497,7 +535,7 @@ entries:
     version: 7.9.0-rc0
   - apiVersion: v2
     appVersion: 7.8.9
-    created: "2026-02-03T14:00:20.695139043Z"
+    created: "2026-02-05T22:14:21.369201751Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -535,7 +573,7 @@ entries:
     version: 7.8.9
   - apiVersion: v2
     appVersion: 7.8.8
-    created: "2026-02-03T14:00:20.642547493Z"
+    created: "2026-02-05T22:14:21.337278731Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -573,7 +611,7 @@ entries:
     version: 7.8.8
   - apiVersion: v2
     appVersion: 7.8.7
-    created: "2026-02-03T14:00:20.593086189Z"
+    created: "2026-02-05T22:14:21.316170195Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -611,7 +649,7 @@ entries:
     version: 7.8.7
   - apiVersion: v2
     appVersion: v7.8.7-rc4
-    created: "2026-02-03T14:00:21.358516261Z"
+    created: "2026-02-05T22:14:22.281319935Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -649,7 +687,7 @@ entries:
     version: v7.8.7-rc4
   - apiVersion: v2
     appVersion: v7.8.7-rc3
-    created: "2026-02-03T14:00:21.333072769Z"
+    created: "2026-02-05T22:14:22.229339359Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -687,7 +725,7 @@ entries:
     version: v7.8.7-rc3
   - apiVersion: v2
     appVersion: v7.8.7-rc2
-    created: "2026-02-03T14:00:21.30936415Z"
+    created: "2026-02-05T22:14:22.178510064Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -725,7 +763,7 @@ entries:
     version: v7.8.7-rc2
   - apiVersion: v2
     appVersion: v7.8.7-rc1
-    created: "2026-02-03T14:00:21.276193127Z"
+    created: "2026-02-05T22:14:22.131675392Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -763,7 +801,7 @@ entries:
     version: v7.8.7-rc1
   - apiVersion: v2
     appVersion: 7.8.6
-    created: "2026-02-03T14:00:20.554243215Z"
+    created: "2026-02-05T22:14:21.275527018Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -801,7 +839,7 @@ entries:
     version: 7.8.6
   - apiVersion: v2
     appVersion: v7.8.6-rc1
-    created: "2026-02-03T14:00:21.240003911Z"
+    created: "2026-02-05T22:14:22.081947175Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -839,7 +877,7 @@ entries:
     version: v7.8.6-rc1
   - apiVersion: v2
     appVersion: 7.8.6-rc0
-    created: "2026-02-03T14:00:20.514943774Z"
+    created: "2026-02-05T22:14:21.225444892Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -877,7 +915,7 @@ entries:
     version: 7.8.6-rc0
   - apiVersion: v2
     appVersion: 7.8.5
-    created: "2026-02-03T14:00:20.46620649Z"
+    created: "2026-02-05T22:14:21.175439662Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -915,7 +953,7 @@ entries:
     version: 7.8.5
   - apiVersion: v2
     appVersion: 7.8.5-rc0
-    created: "2026-02-03T14:00:20.415240713Z"
+    created: "2026-02-05T22:14:21.124614845Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -953,7 +991,7 @@ entries:
     version: 7.8.5-rc0
   - apiVersion: v2
     appVersion: 7.8.4
-    created: "2026-02-03T14:00:20.36668068Z"
+    created: "2026-02-05T22:14:21.076611293Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -991,7 +1029,7 @@ entries:
     version: 7.8.4
   - apiVersion: v2
     appVersion: 7.8.3
-    created: "2026-02-03T14:00:20.327661624Z"
+    created: "2026-02-05T22:14:21.024244238Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1029,7 +1067,7 @@ entries:
     version: 7.8.3
   - apiVersion: v2
     appVersion: 7.8.2
-    created: "2026-02-03T14:00:20.287816867Z"
+    created: "2026-02-05T22:14:20.972660155Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1067,7 +1105,7 @@ entries:
     version: 7.8.2
   - apiVersion: v2
     appVersion: 7.8.1
-    created: "2026-02-03T14:00:20.240096546Z"
+    created: "2026-02-05T22:14:20.920607749Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1105,7 +1143,7 @@ entries:
     version: 7.8.1
   - apiVersion: v2
     appVersion: 7.8.0
-    created: "2026-02-03T14:00:20.201373734Z"
+    created: "2026-02-05T22:14:20.869364284Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1143,7 +1181,7 @@ entries:
     version: 7.8.0
   - apiVersion: v2
     appVersion: 7.8.0-rc1
-    created: "2026-02-03T14:00:20.161562576Z"
+    created: "2026-02-05T22:14:20.824151651Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1181,7 +1219,7 @@ entries:
     version: 7.8.0-rc1
   - apiVersion: v2
     appVersion: 7.7.9
-    created: "2026-02-03T14:00:20.114046149Z"
+    created: "2026-02-05T22:14:20.771397857Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1219,7 +1257,7 @@ entries:
     version: 7.7.9
   - apiVersion: v2
     appVersion: 7.7.8
-    created: "2026-02-03T14:00:20.076366422Z"
+    created: "2026-02-05T22:14:20.721324124Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1257,7 +1295,7 @@ entries:
     version: 7.7.8
   - apiVersion: v2
     appVersion: 7.7.8-rc2
-    created: "2026-02-03T14:00:20.030548438Z"
+    created: "2026-02-05T22:14:20.664729663Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1295,7 +1333,7 @@ entries:
     version: 7.7.8-rc2
   - apiVersion: v2
     appVersion: 7.7.8-rc1
-    created: "2026-02-03T14:00:19.981078643Z"
+    created: "2026-02-05T22:14:20.612558837Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1333,7 +1371,7 @@ entries:
     version: 7.7.8-rc1
   - apiVersion: v2
     appVersion: 7.7.7
-    created: "2026-02-03T14:00:19.933589576Z"
+    created: "2026-02-05T22:14:20.563810771Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1371,7 +1409,7 @@ entries:
     version: 7.7.7
   - apiVersion: v2
     appVersion: 7.7.6
-    created: "2026-02-03T14:00:19.888053657Z"
+    created: "2026-02-05T22:14:20.516339039Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1409,7 +1447,7 @@ entries:
     version: 7.7.6
   - apiVersion: v2
     appVersion: 7.7.5
-    created: "2026-02-03T14:00:19.843456712Z"
+    created: "2026-02-05T22:14:20.467652968Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1447,7 +1485,7 @@ entries:
     version: 7.7.5
   - apiVersion: v2
     appVersion: 7.7.4
-    created: "2026-02-03T14:00:19.804658368Z"
+    created: "2026-02-05T22:14:20.422069871Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1485,7 +1523,7 @@ entries:
     version: 7.7.4
   - apiVersion: v2
     appVersion: 7.7.3
-    created: "2026-02-03T14:00:19.758040244Z"
+    created: "2026-02-05T22:14:20.391547803Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1523,7 +1561,7 @@ entries:
     version: 7.7.3
   - apiVersion: v2
     appVersion: 7.7.2
-    created: "2026-02-03T14:00:19.735731576Z"
+    created: "2026-02-05T22:14:20.364431841Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1561,7 +1599,7 @@ entries:
     version: 7.7.2
   - apiVersion: v2
     appVersion: 7.7.1
-    created: "2026-02-03T14:00:19.706709162Z"
+    created: "2026-02-05T22:14:20.33005205Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1599,7 +1637,7 @@ entries:
     version: 7.7.1
   - apiVersion: v2
     appVersion: 7.7.0
-    created: "2026-02-03T14:00:19.677012658Z"
+    created: "2026-02-05T22:14:20.301923296Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1637,7 +1675,7 @@ entries:
     version: 7.7.0
   - apiVersion: v2
     appVersion: 7.6.9
-    created: "2026-02-03T14:00:19.638616231Z"
+    created: "2026-02-05T22:14:20.252790075Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1675,7 +1713,7 @@ entries:
     version: 7.6.9
   - apiVersion: v2
     appVersion: 7.6.8
-    created: "2026-02-03T14:00:19.605810664Z"
+    created: "2026-02-05T22:14:20.204145577Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1713,7 +1751,7 @@ entries:
     version: 7.6.8
   - apiVersion: v2
     appVersion: 7.6.7
-    created: "2026-02-03T14:00:19.564511504Z"
+    created: "2026-02-05T22:14:20.156292034Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1751,7 +1789,7 @@ entries:
     version: 7.6.7
   - apiVersion: v2
     appVersion: 7.6.6
-    created: "2026-02-03T14:00:19.516327287Z"
+    created: "2026-02-05T22:14:20.110404282Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1789,7 +1827,7 @@ entries:
     version: 7.6.6
   - apiVersion: v2
     appVersion: 7.6.5
-    created: "2026-02-03T14:00:19.470893349Z"
+    created: "2026-02-05T22:14:20.06387165Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1827,7 +1865,7 @@ entries:
     version: 7.6.5
   - apiVersion: v2
     appVersion: 7.6.4
-    created: "2026-02-03T14:00:19.423792448Z"
+    created: "2026-02-05T22:14:20.023857651Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1865,7 +1903,7 @@ entries:
     version: 7.6.4
   - apiVersion: v2
     appVersion: 7.6.3
-    created: "2026-02-03T14:00:19.386676629Z"
+    created: "2026-02-05T22:14:19.978953748Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1903,7 +1941,7 @@ entries:
     version: 7.6.3
   - apiVersion: v2
     appVersion: 7.6.2
-    created: "2026-02-03T14:00:19.344461157Z"
+    created: "2026-02-05T22:14:19.949006155Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1941,7 +1979,7 @@ entries:
     version: 7.6.2
   - apiVersion: v2
     appVersion: 7.6.1
-    created: "2026-02-03T14:00:19.298191127Z"
+    created: "2026-02-05T22:14:19.90373264Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -1979,7 +2017,7 @@ entries:
     version: 7.6.1
   - apiVersion: v2
     appVersion: 7.6.0
-    created: "2026-02-03T14:00:19.258538962Z"
+    created: "2026-02-05T22:14:19.857646677Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2017,7 +2055,7 @@ entries:
     version: 7.6.0
   - apiVersion: v2
     appVersion: 7.5.9
-    created: "2026-02-03T14:00:19.235560004Z"
+    created: "2026-02-05T22:14:19.811507183Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2055,7 +2093,7 @@ entries:
     version: 7.5.9
   - apiVersion: v2
     appVersion: 7.5.8
-    created: "2026-02-03T14:00:19.215354707Z"
+    created: "2026-02-05T22:14:19.763557714Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2093,7 +2131,7 @@ entries:
     version: 7.5.8
   - apiVersion: v2
     appVersion: 7.5.7
-    created: "2026-02-03T14:00:19.190744376Z"
+    created: "2026-02-05T22:14:19.716682239Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2131,7 +2169,7 @@ entries:
     version: 7.5.7
   - apiVersion: v2
     appVersion: 7.5.6
-    created: "2026-02-03T14:00:19.148113278Z"
+    created: "2026-02-05T22:14:19.675875664Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2169,7 +2207,7 @@ entries:
     version: 7.5.6
   - apiVersion: v2
     appVersion: 7.5.5
-    created: "2026-02-03T14:00:19.122402311Z"
+    created: "2026-02-05T22:14:19.628107981Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2207,7 +2245,7 @@ entries:
     version: 7.5.5
   - apiVersion: v2
     appVersion: 7.5.4
-    created: "2026-02-03T14:00:19.081213514Z"
+    created: "2026-02-05T22:14:19.580503257Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2245,7 +2283,7 @@ entries:
     version: 7.5.4
   - apiVersion: v2
     appVersion: 7.5.3
-    created: "2026-02-03T14:00:19.031368013Z"
+    created: "2026-02-05T22:14:19.532077742Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2283,7 +2321,7 @@ entries:
     version: 7.5.3
   - apiVersion: v2
     appVersion: 7.5.2
-    created: "2026-02-03T14:00:19.00656228Z"
+    created: "2026-02-05T22:14:19.484103876Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2321,7 +2359,7 @@ entries:
     version: 7.5.2
   - apiVersion: v2
     appVersion: 7.5.1
-    created: "2026-02-03T14:00:18.974733996Z"
+    created: "2026-02-05T22:14:19.437028046Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2359,7 +2397,7 @@ entries:
     version: 7.5.1
   - apiVersion: v2
     appVersion: 7.5.0
-    created: "2026-02-03T14:00:18.928527537Z"
+    created: "2026-02-05T22:14:19.388492324Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2397,7 +2435,7 @@ entries:
     version: 7.5.0
   - apiVersion: v2
     appVersion: 7.4.9
-    created: "2026-02-03T14:00:18.883756479Z"
+    created: "2026-02-05T22:14:19.340805284Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2435,7 +2473,7 @@ entries:
     version: 7.4.9
   - apiVersion: v2
     appVersion: 7.4.8
-    created: "2026-02-03T14:00:18.848955153Z"
+    created: "2026-02-05T22:14:19.290431563Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2473,7 +2511,7 @@ entries:
     version: 7.4.8
   - apiVersion: v2
     appVersion: 7.4.7
-    created: "2026-02-03T14:00:18.826087497Z"
+    created: "2026-02-05T22:14:19.244395596Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2511,7 +2549,7 @@ entries:
     version: 7.4.7
   - apiVersion: v2
     appVersion: 7.4.6
-    created: "2026-02-03T14:00:18.782372004Z"
+    created: "2026-02-05T22:14:19.202797847Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2549,7 +2587,7 @@ entries:
     version: 7.4.6
   - apiVersion: v2
     appVersion: 7.4.5
-    created: "2026-02-03T14:00:18.748198566Z"
+    created: "2026-02-05T22:14:19.156152833Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2587,7 +2625,7 @@ entries:
     version: 7.4.5
   - apiVersion: v2
     appVersion: 7.4.4
-    created: "2026-02-03T14:00:18.728495195Z"
+    created: "2026-02-05T22:14:19.110761269Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2625,7 +2663,7 @@ entries:
     version: 7.4.4
   - apiVersion: v2
     appVersion: 7.4.3
-    created: "2026-02-03T14:00:18.703769563Z"
+    created: "2026-02-05T22:14:19.068004895Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2663,7 +2701,7 @@ entries:
     version: 7.4.3
   - apiVersion: v2
     appVersion: 7.4.2
-    created: "2026-02-03T14:00:18.661187546Z"
+    created: "2026-02-05T22:14:19.020034003Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2701,7 +2739,7 @@ entries:
     version: 7.4.2
   - apiVersion: v2
     appVersion: 7.4.1
-    created: "2026-02-03T14:00:18.634010369Z"
+    created: "2026-02-05T22:14:18.971088166Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2739,7 +2777,7 @@ entries:
     version: 7.4.1
   - apiVersion: v2
     appVersion: 7.4.0
-    created: "2026-02-03T14:00:18.602230146Z"
+    created: "2026-02-05T22:14:18.925115065Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2777,7 +2815,7 @@ entries:
     version: 7.4.0
   - apiVersion: v2
     appVersion: 7.3.9
-    created: "2026-02-03T14:00:18.563792008Z"
+    created: "2026-02-05T22:14:18.88074833Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2815,7 +2853,7 @@ entries:
     version: 7.3.9
   - apiVersion: v2
     appVersion: 7.3.8
-    created: "2026-02-03T14:00:18.529971285Z"
+    created: "2026-02-05T22:14:18.830990697Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2853,7 +2891,7 @@ entries:
     version: 7.3.8
   - apiVersion: v2
     appVersion: 7.3.7
-    created: "2026-02-03T14:00:18.480924376Z"
+    created: "2026-02-05T22:14:18.783526226Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2891,7 +2929,7 @@ entries:
     version: 7.3.7
   - apiVersion: v2
     appVersion: 7.3.6
-    created: "2026-02-03T14:00:18.433697772Z"
+    created: "2026-02-05T22:14:18.740847461Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2929,7 +2967,7 @@ entries:
     version: 7.3.6
   - apiVersion: v2
     appVersion: 7.3.5
-    created: "2026-02-03T14:00:18.39629986Z"
+    created: "2026-02-05T22:14:18.719616779Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -2967,7 +3005,7 @@ entries:
     version: 7.3.5
   - apiVersion: v2
     appVersion: 7.3.4
-    created: "2026-02-03T14:00:18.361146848Z"
+    created: "2026-02-05T22:14:18.676777109Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3005,7 +3043,7 @@ entries:
     version: 7.3.4
   - apiVersion: v2
     appVersion: 7.3.3
-    created: "2026-02-03T14:00:18.337325949Z"
+    created: "2026-02-05T22:14:18.64107152Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3043,7 +3081,7 @@ entries:
     version: 7.3.3
   - apiVersion: v2
     appVersion: 7.3.2
-    created: "2026-02-03T14:00:18.294246094Z"
+    created: "2026-02-05T22:14:18.60537224Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3081,7 +3119,7 @@ entries:
     version: 7.3.2
   - apiVersion: v2
     appVersion: 7.3.1
-    created: "2026-02-03T14:00:18.26024003Z"
+    created: "2026-02-05T22:14:18.559077319Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3119,7 +3157,7 @@ entries:
     version: 7.3.1
   - apiVersion: v2
     appVersion: 7.3.0
-    created: "2026-02-03T14:00:18.231663092Z"
+    created: "2026-02-05T22:14:18.510087395Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3157,7 +3195,7 @@ entries:
     version: 7.3.0
   - apiVersion: v2
     appVersion: 7.2.9
-    created: "2026-02-03T14:00:18.18592309Z"
+    created: "2026-02-05T22:14:18.463096195Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3195,7 +3233,7 @@ entries:
     version: 7.2.9
   - apiVersion: v2
     appVersion: 7.2.8
-    created: "2026-02-03T14:00:18.150569216Z"
+    created: "2026-02-05T22:14:18.415367191Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3233,7 +3271,7 @@ entries:
     version: 7.2.8
   - apiVersion: v2
     appVersion: 7.2.7
-    created: "2026-02-03T14:00:18.119662296Z"
+    created: "2026-02-05T22:14:18.376507961Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3271,7 +3309,7 @@ entries:
     version: 7.2.7
   - apiVersion: v2
     appVersion: 7.2.6
-    created: "2026-02-03T14:00:18.073662869Z"
+    created: "2026-02-05T22:14:18.337062718Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3309,7 +3347,7 @@ entries:
     version: 7.2.6
   - apiVersion: v2
     appVersion: 7.2.5
-    created: "2026-02-03T14:00:18.031313096Z"
+    created: "2026-02-05T22:14:18.301651577Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3347,7 +3385,7 @@ entries:
     version: 7.2.5
   - apiVersion: v2
     appVersion: 7.2.4
-    created: "2026-02-03T14:00:18.012228794Z"
+    created: "2026-02-05T22:14:18.262972481Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3385,7 +3423,7 @@ entries:
     version: 7.2.4
   - apiVersion: v2
     appVersion: 7.2.3
-    created: "2026-02-03T14:00:17.989219856Z"
+    created: "2026-02-05T22:14:18.219979567Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3423,7 +3461,7 @@ entries:
     version: 7.2.3
   - apiVersion: v2
     appVersion: 7.2.2
-    created: "2026-02-03T14:00:17.942878505Z"
+    created: "2026-02-05T22:14:18.171556296Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3461,7 +3499,7 @@ entries:
     version: 7.2.2
   - apiVersion: v2
     appVersion: 7.2.1
-    created: "2026-02-03T14:00:17.896972411Z"
+    created: "2026-02-05T22:14:18.127578924Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3499,7 +3537,7 @@ entries:
     version: 7.2.1
   - apiVersion: v2
     appVersion: 7.2.0
-    created: "2026-02-03T14:00:17.851263689Z"
+    created: "2026-02-05T22:14:18.08224742Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3537,7 +3575,7 @@ entries:
     version: 7.2.0
   - apiVersion: v2
     appVersion: 7.1.9
-    created: "2026-02-03T14:00:17.808420538Z"
+    created: "2026-02-05T22:14:18.03918468Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3575,7 +3613,7 @@ entries:
     version: 7.1.9
   - apiVersion: v2
     appVersion: 7.1.8
-    created: "2026-02-03T14:00:17.769837238Z"
+    created: "2026-02-05T22:14:18.004388215Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3613,7 +3651,7 @@ entries:
     version: 7.1.8
   - apiVersion: v2
     appVersion: 7.1.7
-    created: "2026-02-03T14:00:17.729211859Z"
+    created: "2026-02-05T22:14:17.969273054Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3651,7 +3689,7 @@ entries:
     version: 7.1.7
   - apiVersion: v2
     appVersion: 7.1.6
-    created: "2026-02-03T14:00:17.685215312Z"
+    created: "2026-02-05T22:14:17.929285136Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3689,7 +3727,7 @@ entries:
     version: 7.1.6
   - apiVersion: v2
     appVersion: 7.1.5
-    created: "2026-02-03T14:00:17.63882746Z"
+    created: "2026-02-05T22:14:17.883637761Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3727,7 +3765,7 @@ entries:
     version: 7.1.5
   - apiVersion: v2
     appVersion: 7.1.4
-    created: "2026-02-03T14:00:17.592358948Z"
+    created: "2026-02-05T22:14:17.839045092Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3765,7 +3803,7 @@ entries:
     version: 7.1.4
   - apiVersion: v2
     appVersion: 7.1.3
-    created: "2026-02-03T14:00:17.553362102Z"
+    created: "2026-02-05T22:14:17.792561995Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3803,7 +3841,7 @@ entries:
     version: 7.1.3
   - apiVersion: v2
     appVersion: 7.1.2
-    created: "2026-02-03T14:00:17.511982962Z"
+    created: "2026-02-05T22:14:17.748544541Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3841,7 +3879,7 @@ entries:
     version: 7.1.2
   - apiVersion: v2
     appVersion: 7.1.1
-    created: "2026-02-03T14:00:17.469793001Z"
+    created: "2026-02-05T22:14:17.699575179Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3879,7 +3917,7 @@ entries:
     version: 7.1.1
   - apiVersion: v2
     appVersion: 7.1.0
-    created: "2026-02-03T14:00:17.437055944Z"
+    created: "2026-02-05T22:14:17.652417615Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3917,7 +3955,7 @@ entries:
     version: 7.1.0
   - apiVersion: v2
     appVersion: 7.0.9
-    created: "2026-02-03T14:00:17.394285944Z"
+    created: "2026-02-05T22:14:17.607392959Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3955,7 +3993,7 @@ entries:
     version: 7.0.9
   - apiVersion: v2
     appVersion: 7.0.8
-    created: "2026-02-03T14:00:17.369891176Z"
+    created: "2026-02-05T22:14:17.56947442Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -3993,7 +4031,7 @@ entries:
     version: 7.0.8
   - apiVersion: v2
     appVersion: 7.0.7
-    created: "2026-02-03T14:00:17.333986444Z"
+    created: "2026-02-05T22:14:17.530395184Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4031,7 +4069,7 @@ entries:
     version: 7.0.7
   - apiVersion: v2
     appVersion: 7.0.6
-    created: "2026-02-03T14:00:17.297545785Z"
+    created: "2026-02-05T22:14:17.487596417Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4069,7 +4107,7 @@ entries:
     version: 7.0.6
   - apiVersion: v2
     appVersion: 7.0.5
-    created: "2026-02-03T14:00:17.267333075Z"
+    created: "2026-02-05T22:14:17.446448813Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4107,7 +4145,7 @@ entries:
     version: 7.0.5
   - apiVersion: v2
     appVersion: 7.0.4
-    created: "2026-02-03T14:00:17.239476727Z"
+    created: "2026-02-05T22:14:17.401583118Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4145,7 +4183,7 @@ entries:
     version: 7.0.4
   - apiVersion: v2
     appVersion: 7.0.3
-    created: "2026-02-03T14:00:17.21657303Z"
+    created: "2026-02-05T22:14:17.359913248Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4183,7 +4221,7 @@ entries:
     version: 7.0.3
   - apiVersion: v2
     appVersion: 7.0.2
-    created: "2026-02-03T14:00:17.195768864Z"
+    created: "2026-02-05T22:14:17.322610247Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4221,7 +4259,7 @@ entries:
     version: 7.0.2
   - apiVersion: v2
     appVersion: 7.0.1
-    created: "2026-02-03T14:00:17.171721151Z"
+    created: "2026-02-05T22:14:17.287421054Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4259,7 +4297,7 @@ entries:
     version: 7.0.1
   - apiVersion: v2
     appVersion: 7.0.0
-    created: "2026-02-03T14:00:17.146051615Z"
+    created: "2026-02-05T22:14:17.246264506Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4297,7 +4335,7 @@ entries:
     version: 7.0.0
   - apiVersion: v2
     appVersion: 6.9.9
-    created: "2026-02-03T14:00:17.125011785Z"
+    created: "2026-02-05T22:14:17.2051423Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4335,7 +4373,7 @@ entries:
     version: 6.9.9
   - apiVersion: v2
     appVersion: 6.9.8
-    created: "2026-02-03T14:00:17.105141712Z"
+    created: "2026-02-05T22:14:17.164913265Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4373,7 +4411,7 @@ entries:
     version: 6.9.8
   - apiVersion: v2
     appVersion: 6.9.7
-    created: "2026-02-03T14:00:17.070454578Z"
+    created: "2026-02-05T22:14:17.124734015Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4411,7 +4449,7 @@ entries:
     version: 6.9.7
   - apiVersion: v2
     appVersion: 6.9.6
-    created: "2026-02-03T14:00:17.044321125Z"
+    created: "2026-02-05T22:14:17.083094231Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4449,7 +4487,7 @@ entries:
     version: 6.9.6
   - apiVersion: v2
     appVersion: 6.9.5
-    created: "2026-02-03T14:00:17.025237383Z"
+    created: "2026-02-05T22:14:17.042586181Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4487,7 +4525,7 @@ entries:
     version: 6.9.5
   - apiVersion: v2
     appVersion: 6.9.4
-    created: "2026-02-03T14:00:16.999727499Z"
+    created: "2026-02-05T22:14:17.002064299Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4525,7 +4563,7 @@ entries:
     version: 6.9.4
   - apiVersion: v2
     appVersion: 6.9.3
-    created: "2026-02-03T14:00:16.958976408Z"
+    created: "2026-02-05T22:14:16.967621773Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4563,7 +4601,7 @@ entries:
     version: 6.9.3
   - apiVersion: v2
     appVersion: 6.9.2
-    created: "2026-02-03T14:00:16.922462748Z"
+    created: "2026-02-05T22:14:16.931393598Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4601,7 +4639,7 @@ entries:
     version: 6.9.2
   - apiVersion: v2
     appVersion: 6.9.1
-    created: "2026-02-03T14:00:16.897783786Z"
+    created: "2026-02-05T22:14:16.899771887Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4639,7 +4677,7 @@ entries:
     version: 6.9.1
   - apiVersion: v2
     appVersion: 6.9.0
-    created: "2026-02-03T14:00:16.880374917Z"
+    created: "2026-02-05T22:14:16.857311604Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4677,7 +4715,7 @@ entries:
     version: 6.9.0
   - apiVersion: v2
     appVersion: 6.8.9
-    created: "2026-02-03T14:00:16.85735369Z"
+    created: "2026-02-05T22:14:16.813920323Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4715,7 +4753,7 @@ entries:
     version: 6.8.9
   - apiVersion: v2
     appVersion: 6.8.8
-    created: "2026-02-03T14:00:16.817889506Z"
+    created: "2026-02-05T22:14:16.772478121Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4753,7 +4791,7 @@ entries:
     version: 6.8.8
   - apiVersion: v2
     appVersion: 6.8.7
-    created: "2026-02-03T14:00:16.779031633Z"
+    created: "2026-02-05T22:14:16.737819516Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4791,7 +4829,7 @@ entries:
     version: 6.8.7
   - apiVersion: v2
     appVersion: 6.8.6
-    created: "2026-02-03T14:00:16.749754555Z"
+    created: "2026-02-05T22:14:16.699847286Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4829,7 +4867,7 @@ entries:
     version: 6.8.6
   - apiVersion: v2
     appVersion: 6.8.5
-    created: "2026-02-03T14:00:16.717559887Z"
+    created: "2026-02-05T22:14:16.657567027Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4867,7 +4905,7 @@ entries:
     version: 6.8.5
   - apiVersion: v2
     appVersion: 6.8.4
-    created: "2026-02-03T14:00:16.67709096Z"
+    created: "2026-02-05T22:14:16.618110498Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4905,7 +4943,7 @@ entries:
     version: 6.8.4
   - apiVersion: v2
     appVersion: 6.8.3
-    created: "2026-02-03T14:00:16.63227423Z"
+    created: "2026-02-05T22:14:16.586670512Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4943,7 +4981,7 @@ entries:
     version: 6.8.3
   - apiVersion: v2
     appVersion: 6.8.2
-    created: "2026-02-03T14:00:16.599729907Z"
+    created: "2026-02-05T22:14:16.546484662Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -4981,7 +5019,7 @@ entries:
     version: 6.8.2
   - apiVersion: v2
     appVersion: 6.8.1
-    created: "2026-02-03T14:00:16.568112005Z"
+    created: "2026-02-05T22:14:16.50776214Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5019,7 +5057,7 @@ entries:
     version: 6.8.1
   - apiVersion: v2
     appVersion: 6.8.0
-    created: "2026-02-03T14:00:16.54032591Z"
+    created: "2026-02-05T22:14:16.467718025Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5057,7 +5095,7 @@ entries:
     version: 6.8.0
   - apiVersion: v2
     appVersion: 6.7.9
-    created: "2026-02-03T14:00:16.501181352Z"
+    created: "2026-02-05T22:14:16.425490778Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5095,7 +5133,7 @@ entries:
     version: 6.7.9
   - apiVersion: v2
     appVersion: 6.7.8
-    created: "2026-02-03T14:00:16.466325495Z"
+    created: "2026-02-05T22:14:16.386728775Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5133,7 +5171,7 @@ entries:
     version: 6.7.8
   - apiVersion: v2
     appVersion: 6.7.7
-    created: "2026-02-03T14:00:16.450106293Z"
+    created: "2026-02-05T22:14:16.360174639Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5171,7 +5209,7 @@ entries:
     version: 6.7.7
   - apiVersion: v2
     appVersion: 6.7.7-rc2
-    created: "2026-02-03T14:00:16.431108342Z"
+    created: "2026-02-05T22:14:16.321570617Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5209,7 +5247,7 @@ entries:
     version: 6.7.7-rc2
   - apiVersion: v2
     appVersion: 6.7.7-rc1
-    created: "2026-02-03T14:00:16.414405944Z"
+    created: "2026-02-05T22:14:16.279879946Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5247,7 +5285,7 @@ entries:
     version: 6.7.7-rc1
   - apiVersion: v2
     appVersion: 6.7.6
-    created: "2026-02-03T14:00:16.392971908Z"
+    created: "2026-02-05T22:14:16.238617196Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5285,7 +5323,7 @@ entries:
     version: 6.7.6
   - apiVersion: v2
     appVersion: 6.7.5
-    created: "2026-02-03T14:00:16.351745891Z"
+    created: "2026-02-05T22:14:16.204333742Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5323,7 +5361,7 @@ entries:
     version: 6.7.5
   - apiVersion: v2
     appVersion: 6.7.4
-    created: "2026-02-03T14:00:16.317607164Z"
+    created: "2026-02-05T22:14:16.161645883Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5361,7 +5399,7 @@ entries:
     version: 6.7.4
   - apiVersion: v2
     appVersion: 6.7.4-rc1
-    created: "2026-02-03T14:00:16.294947732Z"
+    created: "2026-02-05T22:14:16.121781853Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5399,7 +5437,7 @@ entries:
     version: 6.7.4-rc1
   - apiVersion: v2
     appVersion: 6.7.3
-    created: "2026-02-03T14:00:16.255124014Z"
+    created: "2026-02-05T22:14:16.081729006Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5437,7 +5475,7 @@ entries:
     version: 6.7.3
   - apiVersion: v2
     appVersion: 6.7.2-rc2
-    created: "2026-02-03T14:00:16.215278605Z"
+    created: "2026-02-05T22:14:16.04182229Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5475,7 +5513,7 @@ entries:
     version: 6.7.2-rc2
   - apiVersion: v2
     appVersion: 6.7.2-rc1
-    created: "2026-02-03T14:00:16.172741049Z"
+    created: "2026-02-05T22:14:16.001181357Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5513,7 +5551,7 @@ entries:
     version: 6.7.2-rc1
   - apiVersion: v2
     appVersion: 6.7.1
-    created: "2026-02-03T14:00:16.143575514Z"
+    created: "2026-02-05T22:14:15.965355024Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5551,7 +5589,7 @@ entries:
     version: 6.7.1
   - apiVersion: v2
     appVersion: 6.7.1-rc
-    created: "2026-02-03T14:00:16.126364598Z"
+    created: "2026-02-05T22:14:15.926080221Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5589,7 +5627,7 @@ entries:
     version: 6.7.1-rc
   - apiVersion: v2
     appVersion: 6.7.0
-    created: "2026-02-03T14:00:16.110278379Z"
+    created: "2026-02-05T22:14:15.886848063Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5627,7 +5665,7 @@ entries:
     version: 6.7.0
   - apiVersion: v2
     appVersion: 6.6.9
-    created: "2026-02-03T14:00:16.084913847Z"
+    created: "2026-02-05T22:14:15.84483438Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5665,7 +5703,7 @@ entries:
     version: 6.6.9
   - apiVersion: v2
     appVersion: 6.6.8
-    created: "2026-02-03T14:00:16.04727566Z"
+    created: "2026-02-05T22:14:15.803766527Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5703,7 +5741,7 @@ entries:
     version: 6.6.8
   - apiVersion: v2
     appVersion: 6.6.7
-    created: "2026-02-03T14:00:16.009805176Z"
+    created: "2026-02-05T22:14:15.762786639Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5741,7 +5779,7 @@ entries:
     version: 6.6.7
   - apiVersion: v2
     appVersion: 6.6.6
-    created: "2026-02-03T14:00:15.983292738Z"
+    created: "2026-02-05T22:14:15.726379862Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5779,7 +5817,7 @@ entries:
     version: 6.6.6
   - apiVersion: v2
     appVersion: 6.6.5
-    created: "2026-02-03T14:00:15.966988206Z"
+    created: "2026-02-05T22:14:15.689980797Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5817,7 +5855,7 @@ entries:
     version: 6.6.5
   - apiVersion: v2
     appVersion: 6.6.4
-    created: "2026-02-03T14:00:15.949876142Z"
+    created: "2026-02-05T22:14:15.651048005Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5855,7 +5893,7 @@ entries:
     version: 6.6.4
   - apiVersion: v2
     appVersion: 6.6.3
-    created: "2026-02-03T14:00:15.930891061Z"
+    created: "2026-02-05T22:14:15.609166022Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5893,7 +5931,7 @@ entries:
     version: 6.6.3
   - apiVersion: v2
     appVersion: 6.6.2
-    created: "2026-02-03T14:00:15.914507397Z"
+    created: "2026-02-05T22:14:15.569819129Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5931,7 +5969,7 @@ entries:
     version: 6.6.2
   - apiVersion: v2
     appVersion: 6.6.1
-    created: "2026-02-03T14:00:15.897960431Z"
+    created: "2026-02-05T22:14:15.528804237Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -5969,7 +6007,7 @@ entries:
     version: 6.6.1
   - apiVersion: v2
     appVersion: 6.6.0
-    created: "2026-02-03T14:00:15.880582914Z"
+    created: "2026-02-05T22:14:15.489058327Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6007,7 +6045,7 @@ entries:
     version: 6.6.0
   - apiVersion: v2
     appVersion: 6.5.9
-    created: "2026-02-03T14:00:15.863035054Z"
+    created: "2026-02-05T22:14:15.449693667Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6045,7 +6083,7 @@ entries:
     version: 6.5.9
   - apiVersion: v2
     appVersion: 6.5.8
-    created: "2026-02-03T14:00:15.843376974Z"
+    created: "2026-02-05T22:14:15.407029614Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6083,7 +6121,7 @@ entries:
     version: 6.5.8
   - apiVersion: v2
     appVersion: 6.5.7
-    created: "2026-02-03T14:00:15.823304747Z"
+    created: "2026-02-05T22:14:15.364861917Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6121,7 +6159,7 @@ entries:
     version: 6.5.7
   - apiVersion: v2
     appVersion: 6.5.6
-    created: "2026-02-03T14:00:15.791554415Z"
+    created: "2026-02-05T22:14:15.322798007Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6159,7 +6197,7 @@ entries:
     version: 6.5.6
   - apiVersion: v2
     appVersion: 6.5.5
-    created: "2026-02-03T14:00:15.776230967Z"
+    created: "2026-02-05T22:14:15.28024256Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6197,7 +6235,7 @@ entries:
     version: 6.5.5
   - apiVersion: v2
     appVersion: 6.5.4
-    created: "2026-02-03T14:00:15.760651054Z"
+    created: "2026-02-05T22:14:15.24040532Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6235,7 +6273,7 @@ entries:
     version: 6.5.4
   - apiVersion: v2
     appVersion: 6.5.3
-    created: "2026-02-03T14:00:15.740848582Z"
+    created: "2026-02-05T22:14:15.200878494Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6273,7 +6311,7 @@ entries:
     version: 6.5.3
   - apiVersion: v2
     appVersion: 6.5.2
-    created: "2026-02-03T14:00:15.722813044Z"
+    created: "2026-02-05T22:14:15.160816122Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6311,7 +6349,7 @@ entries:
     version: 6.5.2
   - apiVersion: v2
     appVersion: 6.5.1
-    created: "2026-02-03T14:00:15.696075763Z"
+    created: "2026-02-05T22:14:15.121643414Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6349,7 +6387,7 @@ entries:
     version: 6.5.1
   - apiVersion: v2
     appVersion: 6.5.0
-    created: "2026-02-03T14:00:15.669570315Z"
+    created: "2026-02-05T22:14:15.082631782Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6387,7 +6425,7 @@ entries:
     version: 6.5.0
   - apiVersion: v2
     appVersion: 6.4.9
-    created: "2026-02-03T14:00:15.645150858Z"
+    created: "2026-02-05T22:14:15.042585384Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6425,7 +6463,7 @@ entries:
     version: 6.4.9
   - apiVersion: v2
     appVersion: 6.4.8
-    created: "2026-02-03T14:00:15.606978503Z"
+    created: "2026-02-05T22:14:15.000928594Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6463,7 +6501,7 @@ entries:
     version: 6.4.8
   - apiVersion: v2
     appVersion: 6.4.7
-    created: "2026-02-03T14:00:15.590987565Z"
+    created: "2026-02-05T22:14:14.959240317Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6501,7 +6539,7 @@ entries:
     version: 6.4.7
   - apiVersion: v2
     appVersion: 6.4.6
-    created: "2026-02-03T14:00:15.569483358Z"
+    created: "2026-02-05T22:14:14.917073211Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6539,7 +6577,7 @@ entries:
     version: 6.4.6
   - apiVersion: v2
     appVersion: 6.4.5
-    created: "2026-02-03T14:00:15.547546266Z"
+    created: "2026-02-05T22:14:14.875858244Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6577,7 +6615,7 @@ entries:
     version: 6.4.5
   - apiVersion: v2
     appVersion: 6.4.4
-    created: "2026-02-03T14:00:15.518323999Z"
+    created: "2026-02-05T22:14:14.838096675Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6615,7 +6653,7 @@ entries:
     version: 6.4.4
   - apiVersion: v2
     appVersion: 6.4.3
-    created: "2026-02-03T14:00:15.49945969Z"
+    created: "2026-02-05T22:14:14.7991692Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6653,7 +6691,7 @@ entries:
     version: 6.4.3
   - apiVersion: v2
     appVersion: 6.4.2
-    created: "2026-02-03T14:00:15.475908254Z"
+    created: "2026-02-05T22:14:14.758841394Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6691,7 +6729,7 @@ entries:
     version: 6.4.2
   - apiVersion: v2
     appVersion: 6.4.1
-    created: "2026-02-03T14:00:15.43986941Z"
+    created: "2026-02-05T22:14:14.719082244Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6729,7 +6767,7 @@ entries:
     version: 6.4.1
   - apiVersion: v2
     appVersion: 6.4.0
-    created: "2026-02-03T14:00:15.410687925Z"
+    created: "2026-02-05T22:14:14.681341066Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6767,7 +6805,7 @@ entries:
     version: 6.4.0
   - apiVersion: v2
     appVersion: 6.3.9
-    created: "2026-02-03T14:00:15.371862861Z"
+    created: "2026-02-05T22:14:14.642318006Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6805,7 +6843,7 @@ entries:
     version: 6.3.9
   - apiVersion: v2
     appVersion: 6.3.8
-    created: "2026-02-03T14:00:15.331430155Z"
+    created: "2026-02-05T22:14:14.600012469Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6843,7 +6881,7 @@ entries:
     version: 6.3.8
   - apiVersion: v2
     appVersion: 6.3.7
-    created: "2026-02-03T14:00:15.305400483Z"
+    created: "2026-02-05T22:14:14.557231257Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6881,7 +6919,7 @@ entries:
     version: 6.3.7
   - apiVersion: v2
     appVersion: 6.3.6
-    created: "2026-02-03T14:00:15.270481306Z"
+    created: "2026-02-05T22:14:14.516271489Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6919,7 +6957,7 @@ entries:
     version: 6.3.6
   - apiVersion: v2
     appVersion: 6.3.5
-    created: "2026-02-03T14:00:15.230346044Z"
+    created: "2026-02-05T22:14:14.476933039Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6957,7 +6995,7 @@ entries:
     version: 6.3.5
   - apiVersion: v2
     appVersion: 6.3.4
-    created: "2026-02-03T14:00:15.182048055Z"
+    created: "2026-02-05T22:14:14.439108153Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -6995,7 +7033,7 @@ entries:
     version: 6.3.4
   - apiVersion: v2
     appVersion: 6.3.3
-    created: "2026-02-03T14:00:15.15288204Z"
+    created: "2026-02-05T22:14:14.40062746Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7033,7 +7071,7 @@ entries:
     version: 6.3.3
   - apiVersion: v2
     appVersion: 6.3.2
-    created: "2026-02-03T14:00:15.115454656Z"
+    created: "2026-02-05T22:14:14.36014706Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7071,7 +7109,7 @@ entries:
     version: 6.3.2
   - apiVersion: v2
     appVersion: 6.3.1
-    created: "2026-02-03T14:00:15.074049966Z"
+    created: "2026-02-05T22:14:14.319571858Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7109,7 +7147,7 @@ entries:
     version: 6.3.1
   - apiVersion: v2
     appVersion: 6.3.0
-    created: "2026-02-03T14:00:15.03929257Z"
+    created: "2026-02-05T22:14:14.282283499Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7147,7 +7185,7 @@ entries:
     version: 6.3.0
   - apiVersion: v2
     appVersion: 6.2.9
-    created: "2026-02-03T14:00:15.003044744Z"
+    created: "2026-02-05T22:14:14.240401457Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7185,7 +7223,7 @@ entries:
     version: 6.2.9
   - apiVersion: v2
     appVersion: 6.2.8
-    created: "2026-02-03T14:00:14.968782285Z"
+    created: "2026-02-05T22:14:14.197745896Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7223,7 +7261,7 @@ entries:
     version: 6.2.8
   - apiVersion: v2
     appVersion: 6.2.7
-    created: "2026-02-03T14:00:14.927592808Z"
+    created: "2026-02-05T22:14:14.155413899Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7261,7 +7299,7 @@ entries:
     version: 6.2.7
   - apiVersion: v2
     appVersion: 6.2.6
-    created: "2026-02-03T14:00:14.891226179Z"
+    created: "2026-02-05T22:14:14.11766542Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7299,7 +7337,7 @@ entries:
     version: 6.2.6
   - apiVersion: v2
     appVersion: 6.2.5
-    created: "2026-02-03T14:00:14.869439409Z"
+    created: "2026-02-05T22:14:14.076679633Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7337,7 +7375,7 @@ entries:
     version: 6.2.5
   - apiVersion: v2
     appVersion: 6.2.4
-    created: "2026-02-03T14:00:14.841966957Z"
+    created: "2026-02-05T22:14:14.03590746Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7375,7 +7413,7 @@ entries:
     version: 6.2.4
   - apiVersion: v2
     appVersion: 6.2.3
-    created: "2026-02-03T14:00:14.82397469Z"
+    created: "2026-02-05T22:14:14.000678896Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7413,7 +7451,7 @@ entries:
     version: 6.2.3
   - apiVersion: v2
     appVersion: 6.2.2
-    created: "2026-02-03T14:00:14.792988329Z"
+    created: "2026-02-05T22:14:13.961774237Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7451,7 +7489,7 @@ entries:
     version: 6.2.2
   - apiVersion: v2
     appVersion: 6.2.1
-    created: "2026-02-03T14:00:14.769487953Z"
+    created: "2026-02-05T22:14:13.920674286Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7489,7 +7527,7 @@ entries:
     version: 6.2.1
   - apiVersion: v2
     appVersion: 6.2.0
-    created: "2026-02-03T14:00:14.732594658Z"
+    created: "2026-02-05T22:14:13.879950827Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7527,7 +7565,7 @@ entries:
     version: 6.2.0
   - apiVersion: v2
     appVersion: 6.1.9
-    created: "2026-02-03T14:00:14.706452425Z"
+    created: "2026-02-05T22:14:13.843293219Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7565,7 +7603,7 @@ entries:
     version: 6.1.9
   - apiVersion: v2
     appVersion: 6.1.8
-    created: "2026-02-03T14:00:14.667822694Z"
+    created: "2026-02-05T22:14:13.803891822Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7603,7 +7641,7 @@ entries:
     version: 6.1.8
   - apiVersion: v2
     appVersion: 6.1.7
-    created: "2026-02-03T14:00:14.630838668Z"
+    created: "2026-02-05T22:14:13.762097744Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7641,7 +7679,7 @@ entries:
     version: 6.1.7
   - apiVersion: v2
     appVersion: 6.1.6
-    created: "2026-02-03T14:00:14.590939978Z"
+    created: "2026-02-05T22:14:13.721216666Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7679,7 +7717,7 @@ entries:
     version: 6.1.6
   - apiVersion: v2
     appVersion: 6.1.5
-    created: "2026-02-03T14:00:14.5552842Z"
+    created: "2026-02-05T22:14:13.680308957Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7717,7 +7755,7 @@ entries:
     version: 6.1.5
   - apiVersion: v2
     appVersion: 6.1.4
-    created: "2026-02-03T14:00:14.531531101Z"
+    created: "2026-02-05T22:14:13.637756123Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7755,7 +7793,7 @@ entries:
     version: 6.1.4
   - apiVersion: v2
     appVersion: 6.1.3
-    created: "2026-02-03T14:00:14.515852548Z"
+    created: "2026-02-05T22:14:13.597366153Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7793,7 +7831,7 @@ entries:
     version: 6.1.3
   - apiVersion: v2
     appVersion: 6.1.2
-    created: "2026-02-03T14:00:14.481565228Z"
+    created: "2026-02-05T22:14:13.555056299Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7831,7 +7869,7 @@ entries:
     version: 6.1.2
   - apiVersion: v2
     appVersion: 6.1.1
-    created: "2026-02-03T14:00:14.444196816Z"
+    created: "2026-02-05T22:14:13.512779906Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7869,7 +7907,7 @@ entries:
     version: 6.1.1
   - apiVersion: v2
     appVersion: 6.1.0
-    created: "2026-02-03T14:00:14.403746779Z"
+    created: "2026-02-05T22:14:13.475805345Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7907,7 +7945,7 @@ entries:
     version: 6.1.0
   - apiVersion: v2
     appVersion: 6.0.9
-    created: "2026-02-03T14:00:14.359774123Z"
+    created: "2026-02-05T22:14:13.43694991Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7945,7 +7983,7 @@ entries:
     version: 6.0.9
   - apiVersion: v2
     appVersion: 6.0.8
-    created: "2026-02-03T14:00:14.320458802Z"
+    created: "2026-02-05T22:14:13.403657574Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -7983,7 +8021,7 @@ entries:
     version: 6.0.8
   - apiVersion: v2
     appVersion: 6.0.7
-    created: "2026-02-03T14:00:14.287812667Z"
+    created: "2026-02-05T22:14:13.37469374Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8021,7 +8059,7 @@ entries:
     version: 6.0.7
   - apiVersion: v2
     appVersion: 6.0.6
-    created: "2026-02-03T14:00:14.260533097Z"
+    created: "2026-02-05T22:14:13.33367385Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8059,7 +8097,7 @@ entries:
     version: 6.0.6
   - apiVersion: v2
     appVersion: 6.0.5
-    created: "2026-02-03T14:00:14.220779911Z"
+    created: "2026-02-05T22:14:13.294811935Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8092,7 +8130,7 @@ entries:
     version: 6.0.5
   - apiVersion: v2
     appVersion: 6.0.4
-    created: "2026-02-03T14:00:14.193853328Z"
+    created: "2026-02-05T22:14:13.280337429Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8125,7 +8163,7 @@ entries:
     version: 6.0.4
   - apiVersion: v2
     appVersion: 6.0.3
-    created: "2026-02-03T14:00:14.167609743Z"
+    created: "2026-02-05T22:14:13.254321141Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8158,7 +8196,7 @@ entries:
     version: 6.0.3
   - apiVersion: v2
     appVersion: 6.0.2
-    created: "2026-02-03T14:00:14.151068217Z"
+    created: "2026-02-05T22:14:13.226520786Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8191,7 +8229,7 @@ entries:
     version: 6.0.2
   - apiVersion: v2
     appVersion: 6.0.1
-    created: "2026-02-03T14:00:14.126157182Z"
+    created: "2026-02-05T22:14:13.198435679Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8224,7 +8262,7 @@ entries:
     version: 6.0.1
   - apiVersion: v2
     appVersion: 6.0.0
-    created: "2026-02-03T14:00:14.110269876Z"
+    created: "2026-02-05T22:14:13.170118638Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8257,7 +8295,7 @@ entries:
     version: 6.0.0
   - apiVersion: v2
     appVersion: 5.9.9
-    created: "2026-02-03T14:00:14.08110817Z"
+    created: "2026-02-05T22:14:13.151192675Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8290,7 +8328,7 @@ entries:
     version: 5.9.9
   - apiVersion: v2
     appVersion: 5.9.8
-    created: "2026-02-03T14:00:14.052111487Z"
+    created: "2026-02-05T22:14:13.139008646Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8323,7 +8361,7 @@ entries:
     version: 5.9.8
   - apiVersion: v2
     appVersion: 5.9.7
-    created: "2026-02-03T14:00:14.028835215Z"
+    created: "2026-02-05T22:14:13.116828778Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8356,7 +8394,7 @@ entries:
     version: 5.9.7
   - apiVersion: v2
     appVersion: 5.9.6
-    created: "2026-02-03T14:00:13.997716371Z"
+    created: "2026-02-05T22:14:13.093745636Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8389,7 +8427,7 @@ entries:
     version: 5.9.6
   - apiVersion: v2
     appVersion: 5.9.5
-    created: "2026-02-03T14:00:13.961588816Z"
+    created: "2026-02-05T22:14:13.065650253Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8422,7 +8460,7 @@ entries:
     version: 5.9.5
   - apiVersion: v2
     appVersion: 5.9.4
-    created: "2026-02-03T14:00:13.935054708Z"
+    created: "2026-02-05T22:14:13.047871766Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8455,7 +8493,7 @@ entries:
     version: 5.9.4
   - apiVersion: v2
     appVersion: 5.9.3
-    created: "2026-02-03T14:00:13.9022913Z"
+    created: "2026-02-05T22:14:13.022759976Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8488,7 +8526,7 @@ entries:
     version: 5.9.3
   - apiVersion: v2
     appVersion: 5.9.2
-    created: "2026-02-03T14:00:13.872189622Z"
+    created: "2026-02-05T22:14:12.994744154Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8521,7 +8559,7 @@ entries:
     version: 5.9.2
   - apiVersion: v2
     appVersion: 5.9.1
-    created: "2026-02-03T14:00:13.844190452Z"
+    created: "2026-02-05T22:14:12.979015247Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8554,7 +8592,7 @@ entries:
     version: 5.9.1
   - apiVersion: v2
     appVersion: 5.9.0
-    created: "2026-02-03T14:00:13.813735588Z"
+    created: "2026-02-05T22:14:12.967822778Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8587,7 +8625,7 @@ entries:
     version: 5.9.0
   - apiVersion: v2
     appVersion: 5.8.9
-    created: "2026-02-03T14:00:13.786897165Z"
+    created: "2026-02-05T22:14:12.951641833Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8620,7 +8658,7 @@ entries:
     version: 5.8.9
   - apiVersion: v2
     appVersion: 5.8.7
-    created: "2026-02-03T14:00:13.758987857Z"
+    created: "2026-02-05T22:14:12.921093275Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8653,7 +8691,7 @@ entries:
     version: 5.8.7
   - apiVersion: v2
     appVersion: 5.8.6
-    created: "2026-02-03T14:00:13.730485562Z"
+    created: "2026-02-05T22:14:12.894205671Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8686,7 +8724,7 @@ entries:
     version: 5.8.6
   - apiVersion: v2
     appVersion: 5.8.5
-    created: "2026-02-03T14:00:13.702529923Z"
+    created: "2026-02-05T22:14:12.877468951Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8719,7 +8757,7 @@ entries:
     version: 5.8.5
   - apiVersion: v2
     appVersion: 5.8.4
-    created: "2026-02-03T14:00:13.674172758Z"
+    created: "2026-02-05T22:14:12.85190415Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8752,7 +8790,7 @@ entries:
     version: 5.8.4
   - apiVersion: v2
     appVersion: 5.8.3
-    created: "2026-02-03T14:00:13.649948413Z"
+    created: "2026-02-05T22:14:12.826568078Z"
     dependencies:
     - alias: postgresql
       condition: postgresql.enabled
@@ -8785,7 +8823,7 @@ entries:
     version: 5.8.3
   - apiVersion: v1
     appVersion: 5.4.4
-    created: "2026-02-03T14:00:13.625129019Z"
+    created: "2026-02-05T22:14:12.798093768Z"
     description: Waldur - Open-Source Cloud Marketplace
     digest: cc2264c6087d9cd4d6281c8cfd4dfbe260d9c0dadd064a3a698417ec17d15824
     home: https://waldur.com
@@ -8806,7 +8844,7 @@ entries:
     version: 5.8.0
   - apiVersion: v1
     appVersion: 5.4.4
-    created: "2026-02-03T14:00:13.619318606Z"
+    created: "2026-02-05T22:14:12.791802119Z"
     description: Waldur - Open-Source Cloud Marketplace
     digest: be6d7382fafb144d5e2ae464f6e38ac62985f27b1298c8e09e50d51d70bc3eb5
     home: https://waldur.com
@@ -8827,7 +8865,7 @@ entries:
     version: 5.7.8
   - apiVersion: v1
     appVersion: 5.4.4
-    created: "2026-02-03T14:00:13.612058313Z"
+    created: "2026-02-05T22:14:12.784696772Z"
     description: Waldur - Open-Source Cloud Marketplace
     digest: d6117a719598c5532b56a9473aefda018a94ec4707014cb07f20b88ef2accccd
     home: https://waldur.com
@@ -8848,7 +8886,7 @@ entries:
     version: 5.7.7
   - apiVersion: v1
     appVersion: 5.4.4
-    created: "2026-02-03T14:00:13.606320891Z"
+    created: "2026-02-05T22:14:12.77865934Z"
     description: Waldur - Open-Source Cloud Marketplace
     digest: 0d73abfb74df7bcde2151ac719dcf272d05a024ef8ba9ccbf03e3d855c5e8d77
     home: https://waldur.com
@@ -8869,7 +8907,7 @@ entries:
     version: 5.7.6
   - apiVersion: v1
     appVersion: 5.4.4
-    created: "2026-02-03T14:00:13.600438737Z"
+    created: "2026-02-05T22:14:12.772634388Z"
     description: Waldur - Open-Source Cloud Marketplace
     digest: 47550c3381a7707e9af83fc19862e5c0d499d698ad8548d0958997635aed0693
     home: https://waldur.com
@@ -8890,7 +8928,7 @@ entries:
     version: 5.7.5
   - apiVersion: v1
     appVersion: 5.4.4
-    created: "2026-02-03T14:00:13.594795437Z"
+    created: "2026-02-05T22:14:12.765922449Z"
     description: Waldur - Open-Source Cloud Marketplace
     digest: 7e60adc120be66dc0538fa35b457f223702542945241231dc4408e7975fb5183
     home: https://waldur.com
@@ -8911,7 +8949,7 @@ entries:
     version: 5.7.4
   - apiVersion: v1
     appVersion: 5.4.4
-    created: "2026-02-03T14:00:13.58734389Z"
+    created: "2026-02-05T22:14:12.759613695Z"
     description: Waldur - Open-Source Cloud Marketplace
     digest: 5ce1c52e9e24d73aab19732db11c2f38da23e821260b4bb9eea6c1841b21502e
     home: https://waldur.com
@@ -8932,7 +8970,7 @@ entries:
     version: 5.7.3
   - apiVersion: v1
     appVersion: 5.4.4
-    created: "2026-02-03T14:00:13.580620294Z"
+    created: "2026-02-05T22:14:12.755480512Z"
     description: Waldur - Open-Source Cloud Marketplace
     digest: 493a48776dcbf47df7f4092ef312460081ad868452df704dbf8eb05ae2eaf21a
     home: https://waldur.com
@@ -8953,7 +8991,7 @@ entries:
     version: 0.1.9
   - apiVersion: v1
     appVersion: 4.4.2
-    created: "2026-02-03T14:00:13.573956209Z"
+    created: "2026-02-05T22:14:12.752697815Z"
     dependencies:
     - condition: postgresql.enabled
       name: postgresql
@@ -8981,4 +9019,4 @@ entries:
     urls:
     - charts/waldur-0.1.0.tgz
     version: 0.1.0
-generated: "2026-02-03T14:00:13.563893586Z"
+generated: "2026-02-05T22:14:12.742338104Z"

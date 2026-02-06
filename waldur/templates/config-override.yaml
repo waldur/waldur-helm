@@ -305,6 +305,10 @@ data:
     WALDUR_INVOICES['PAYMENT_INTERVAL'] = {{ .Values.waldur.invoice.paymentInterval }}
     {{ end }}
 
+    {{ if gt (int .Values.waldur.invoice.finalizationGracePeriodHours) 0 }}
+    WALDUR_INVOICES['INVOICE_FINALIZATION_GRACE_PERIOD_HOURS'] = {{ .Values.waldur.invoice.finalizationGracePeriodHours }}
+    {{ end }}
+
     # Enable reporting of accounting data
     {{ if .Values.waldur.invoice_reporting.enabled }}
     WALDUR_INVOICES['INVOICE_REPORTING'].update({

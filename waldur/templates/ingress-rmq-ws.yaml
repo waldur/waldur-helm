@@ -8,12 +8,18 @@ metadata:
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /ws
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    {{ if .Values.ingress.whitelistSourceRange }}
+    nginx.ingress.kubernetes.io/whitelist-source-range: "{{ .Values.ingress.whitelistSourceRange }}"
+    {{ end }}
     {{ else if or (eq .Values.ingress.className "openshift-default") (eq .Values.ingress.className "haproxy") }}
     haproxy.org/cors-enable: "true"
     haproxy.org/path-rewrite: "/ws"
     haproxy.org/ssl-redirect: "true"
     {{ if and .Values.ingress.tls.enabled (.Values.ingress.tls.source | eq "cluster") }}
     route.openshift.io/termination: "edge"
+    {{ end }}
+    {{ if .Values.ingress.whitelistSourceRange }}
+    haproxy.org/allow-list: "{{ .Values.ingress.whitelistSourceRange }}"
     {{ end }}
     {{ end }}
     {{ if and .Values.ingress.tls.enabled (eq .Values.ingress.tls.source "letsEncrypt") }}

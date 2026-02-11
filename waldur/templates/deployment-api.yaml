@@ -120,7 +120,7 @@ spec:
             {{ if .Values.waldur.marketplace.script.enabled }}
             - name: waldur-script-kubeconfig
               mountPath: /etc/waldur/kubeconfig
-              subPath: kubeconfig
+              subPath: {{ with (dig "marketplace" "script" "kubeconfigSecret" (dict) .Values.waldur) }}{{ if and (get . "name") (get . "key") }}{{ get . "key" }}{{ else }}kubeconfig{{ end }}{{ else }}kubeconfig{{ end }}
               readOnly: true
             {{ end }}
       volumes:
@@ -179,7 +179,7 @@ spec:
       {{ if .Values.waldur.marketplace.script.enabled }}
       - name: waldur-script-kubeconfig
         secret:
-          secretName: waldur-script-kubeconfig
+          secretName: {{ with (dig "marketplace" "script" "kubeconfigSecret" (dict) .Values.waldur) }}{{ if and (get . "name") (get . "key") }}{{ get . "name" }}{{ else }}waldur-script-kubeconfig{{ end }}{{ else }}waldur-script-kubeconfig{{ end }}
       {{ end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:

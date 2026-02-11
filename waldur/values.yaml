@@ -110,13 +110,13 @@ ingress:
   tls:
     enabled: false
     source: "secret" # Possible values: `letsEncrypt`, `secret` and `cluster` (works for OpenShift only)
-    clusterIssuerName: "letsencrypt-prod-issuer"  # ClusterIssuer name for cert-manager (used when source == `letsEncrypt`), default: "letsencrypt-prod-issuer"
-    createClusterIssuer: false  # Set to true only if you have cluster-admin permissions to create ClusterIssuer resources
+    clusterIssuerName: "letsencrypt-prod-issuer" # ClusterIssuer name for cert-manager (used when source == `letsEncrypt`), default: "letsencrypt-prod-issuer"
+    createClusterIssuer: false # Set to true only if you have cluster-admin permissions to create ClusterIssuer resources
     customMastermindSecretName: ""
     customHomeportSecretName: ""
-    secretsDir: "tls"  # Enabled only if source == `secret`
-  whitelistSourceRange: '' # E.g. '192.168.22.0/24'
-  whitelistSourceRangeAdmin: ''
+    secretsDir: "tls" # Enabled only if source == `secret`
+  whitelistSourceRange: "" # E.g. '192.168.22.0/24'
+  whitelistSourceRangeAdmin: ""
 
 celery:
   worker:
@@ -354,11 +354,17 @@ waldur:
       dockerImages: {}
       kubeconfigPath: "k8s/kubeconfig"
       kubeconfig: ""
+      kubeconfigSecret:
+        name: ""
+        key: ""
       k8sNamespace: "default"
       jobTimeout: 1800
   pid_datacite:
     repository_id: ""
     password: ""
+    passwordSecret:
+      name: ""
+      key: ""
     prefix: ""
     url: ""
     publisher: ""
@@ -554,51 +560,51 @@ rabbitmq:
       cpu: 2
       memory: 4096Mi
   extraContainerPorts:
-  - name: mqtt
-    containerPort: 1883
-    protocol: TCP
-  - name: stomp
-    containerPort: 61613
-    protocol: TCP
-  - name: mqtt-websocket
-    containerPort: 15675
-    protocol: TCP
-  - name: stomp-websocket
-    containerPort: 15674
-    protocol: TCP
+    - name: mqtt
+      containerPort: 1883
+      protocol: TCP
+    - name: stomp
+      containerPort: 61613
+      protocol: TCP
+    - name: mqtt-websocket
+      containerPort: 15675
+      protocol: TCP
+    - name: stomp-websocket
+      containerPort: 15674
+      protocol: TCP
   service:
     extraPorts:
-    - name: mqtt
-      protocol: TCP
-      port: 1883
-      targetPort: mqtt
-    - name: stomp
-      protocol: TCP
-      port: 61613
-      targetPort: stomp
-    - name: mqtt-websocket
-      protocol: TCP
-      port: 15675
-      targetPort: mqtt-websocket
-    - name: stomp-websocket
-      protocol: TCP
-      port: 15674
-      targetPort: stomp-websocket
+      - name: mqtt
+        protocol: TCP
+        port: 1883
+        targetPort: mqtt
+      - name: stomp
+        protocol: TCP
+        port: 61613
+        targetPort: stomp
+      - name: mqtt-websocket
+        protocol: TCP
+        port: 15675
+        targetPort: mqtt-websocket
+      - name: stomp-websocket
+        protocol: TCP
+        port: 15674
+        targetPort: stomp-websocket
   networkPolicy:
     extraIngress:
-    - ports:
-      - protocol: TCP
-        containerPort: 1883
-        port: 1883
-      - protocol: TCP
-        containerPort: 61613
-        port: 61613
-      - protocol: TCP
-        containerPort: 15675
-        port: 15675
-      - protocol: TCP
-        containerPort: 15674
-        port: 15674
+      - ports:
+          - protocol: TCP
+            containerPort: 1883
+            port: 1883
+          - protocol: TCP
+            containerPort: 61613
+            port: 61613
+          - protocol: TCP
+            containerPort: 15675
+            port: 15675
+          - protocol: TCP
+            containerPort: 15674
+            port: 15674
   persistence:
     enabled: true
     size: "10Gi"
@@ -612,7 +618,6 @@ rabbitmq:
     name: ""
     usernameKey: ""
     passwordKey: ""
-
 
 global:
   imageRegistry: "docker.io"

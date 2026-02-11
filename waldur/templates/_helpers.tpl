@@ -345,6 +345,21 @@ Temporarily disabled as it crashes deployments with ansible installer
       key: {{ .Values.waldur.freeipa.passwordExistingSecret.key }}
 {{- end -}}
 
+{{- $pidDatacitePasswordSecret := dig "pid_datacite" "passwordSecret" (dict) .Values.waldur -}}
+{{- if and (get $pidDatacitePasswordSecret "name") (get $pidDatacitePasswordSecret "key") -}}
+- name: DATACITE_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ get $pidDatacitePasswordSecret "name" }}
+      key: {{ get $pidDatacitePasswordSecret "key" }}
+{{- else if .Values.waldur.pid_datacite.password -}}
+- name: DATACITE_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: waldur-secret
+      key: DATACITE_PASSWORD
+{{- end -}}
+
 {{- if .Values.waldur.paypal.existingSecret.name -}}
 - name: PAYPAL_SECRET
   valueFrom:

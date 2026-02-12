@@ -344,15 +344,14 @@ Temporarily disabled as it crashes deployments with ansible installer
       name: {{ .Values.waldur.freeipa.passwordExistingSecret.name }}
       key: {{ .Values.waldur.freeipa.passwordExistingSecret.key }}
 {{- end -}}
-
 {{- $pidDatacitePasswordSecret := dig "pid_datacite" "passwordSecret" (dict) .Values.waldur -}}
-{{- if and (get $pidDatacitePasswordSecret "name") (get $pidDatacitePasswordSecret "key") -}}
+{{- if and (get $pidDatacitePasswordSecret "name") (get $pidDatacitePasswordSecret "key") }}
 - name: DATACITE_PASSWORD
   valueFrom:
     secretKeyRef:
       name: {{ get $pidDatacitePasswordSecret "name" }}
       key: {{ get $pidDatacitePasswordSecret "key" }}
-{{- else if .Values.waldur.pid_datacite.password -}}
+{{- else if .Values.waldur.pid_datacite.password }}
 - name: DATACITE_PASSWORD
   valueFrom:
     secretKeyRef:

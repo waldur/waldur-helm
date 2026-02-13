@@ -1,3 +1,4 @@
+{{ if not .Values.waldur.freeipa.existingSecret.name }}
 # ConfigMap for freeipa configuration
 # Used for running freeipa in Kubernetes environment
 apiVersion: v1
@@ -19,3 +20,4 @@ data:
     {{ if (has "freeipa_group_synchronization_disabled" .Values.waldur.features) }}
     freeipa_group_synchronization_enabled: False
     {{ end }}
+{{ end }}

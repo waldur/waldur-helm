@@ -337,13 +337,6 @@ Temporarily disabled as it crashes deployments with ansible installer
       key: {{ .Values.waldur.ldap.passwordExistingSecret.key }}
 {{- end -}}
 
-{{- if .Values.waldur.freeipa.passwordExistingSecret.name -}}
-- name: FREEIPA_PASSWORD
-  valueFrom:
-    secretKeyRef:
-      name: {{ .Values.waldur.freeipa.passwordExistingSecret.name }}
-      key: {{ .Values.waldur.freeipa.passwordExistingSecret.key }}
-{{- end -}}
 {{- $pidDatacitePasswordSecret := dig "pid_datacite" "passwordSecret" (dict) .Values.waldur -}}
 {{- if and (get $pidDatacitePasswordSecret "name") (get $pidDatacitePasswordSecret "key") }}
 - name: DATACITE_PASSWORD

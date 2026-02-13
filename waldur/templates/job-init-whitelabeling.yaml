@@ -118,9 +118,15 @@ spec:
       - name: marketplace-script-yaml
         configMap:
           name: mastermind-marketplace-script-yaml
+      {{ if .Values.waldur.freeipa.existingSecret.name }}
+      - name: freeipa-yaml
+        secret:
+          secretName: {{ .Values.waldur.freeipa.existingSecret.name }}
+      {{ else }}
       - name: freeipa-yaml
         configMap:
           name: mastermind-freeipa-yaml
+      {{ end }}
       - name: marketplace-yaml
         configMap:
           name: mastermind-marketplace-yaml

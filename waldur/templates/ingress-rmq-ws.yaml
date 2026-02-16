@@ -13,7 +13,8 @@ metadata:
     {{ end }}
     {{ else if or (eq .Values.ingress.className "openshift-default") (eq .Values.ingress.className "haproxy") }}
     haproxy.org/cors-enable: "true"
-    haproxy.org/path-rewrite: "/ws"
+    haproxy.org/path-rewrite: "/ws" # For HAProxy Kubernetes Ingress Controller
+    haproxy.router.openshift.io/rewrite-target: "/ws" # For OpenShift's built-in routers
     haproxy.org/ssl-redirect: "true"
     {{ if and .Values.ingress.tls.enabled (.Values.ingress.tls.source | eq "cluster") }}
     route.openshift.io/termination: "edge"

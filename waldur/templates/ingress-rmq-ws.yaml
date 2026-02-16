@@ -1,4 +1,4 @@
-{{- if and .Values.ingress.enabled (or (.Values.waldur.rabbitmqEvents.mqttEnabled | default false) (.Values.waldur.rabbitmqEvents.stompEnabled | default false)) }}
+{{- if and .Values.ingress.enabled (.Values.waldur.rabbitmqEvents.stompEnabled | default false) }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -38,13 +38,6 @@ spec:
   {{ end }}
     http:
       paths:
-      - path: /rmqws
-        pathType: Prefix
-        backend:
-          service:
-            name: {{ include "waldur.rabbitmq.rmqHost" . | quote }}
-            port:
-              number: 15675
       - path: /rmqws-stomp
         pathType: Prefix
         backend:

@@ -103,8 +103,6 @@ spec:
 
       - rabbitmq_auth_backend_ldap  # If LDAP auth is needed
 
-      - rabbitmq_mqtt               # If MQTT protocol is needed
-
       - rabbitmq_stomp              # If STOMP protocol is needed
 
   # Service configuration

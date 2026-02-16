@@ -459,7 +459,6 @@ waldur:
     azureClientSecret: ""
     azureScope: ""
   rabbitmqEvents:
-    mqttEnabled: false
     stompEnabled: false
 
 networkPolicy:
@@ -551,7 +550,7 @@ rabbitmq:
     repository: "bitnamilegacy/rabbitmq"
     tag: "4.1.3-debian-12-r1"
   replicaCount: 1
-  extraPlugins: "rabbitmq_auth_backend_ldap rabbitmq_mqtt rabbitmq_web_mqtt rabbitmq_management rabbitmq_web_stomp rabbitmq_stomp"
+  extraPlugins: "rabbitmq_auth_backend_ldap rabbitmq_management rabbitmq_web_stomp rabbitmq_stomp"
   resources:
     requests:
       cpu: 1
@@ -560,32 +559,18 @@ rabbitmq:
       cpu: 2
       memory: 4096Mi
   extraContainerPorts:
-    - name: mqtt
-      containerPort: 1883
-      protocol: TCP
     - name: stomp
       containerPort: 61613
-      protocol: TCP
-    - name: mqtt-websocket
-      containerPort: 15675
       protocol: TCP
     - name: stomp-websocket
       containerPort: 15674
       protocol: TCP
   service:
     extraPorts:
-      - name: mqtt
-        protocol: TCP
-        port: 1883
-        targetPort: mqtt
       - name: stomp
         protocol: TCP
         port: 61613
         targetPort: stomp
-      - name: mqtt-websocket
-        protocol: TCP
-        port: 15675
-        targetPort: mqtt-websocket
       - name: stomp-websocket
         protocol: TCP
         port: 15674
@@ -594,14 +579,8 @@ rabbitmq:
     extraIngress:
       - ports:
           - protocol: TCP
-            containerPort: 1883
-            port: 1883
-          - protocol: TCP
             containerPort: 61613
             port: 61613
-          - protocol: TCP
-            containerPort: 15675
-            port: 15675
           - protocol: TCP
             containerPort: 15674
             port: 15674

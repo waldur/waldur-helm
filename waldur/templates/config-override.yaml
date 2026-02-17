@@ -128,7 +128,7 @@ data:
         {{ if .Values.waldur.remoteEduteams.enableSync }}
         'ENABLE_EDUTEAMS_SYNC': True,
         {{ end }}
-        {{ if and (.Values.waldur.remoteEduteams.clientID) (.Values.waldur.remoteEduteams.clientSecret) }}
+        {{ if or .Values.waldur.remoteEduteams.existingSecret.name (and (.Values.waldur.remoteEduteams.clientID) (.Values.waldur.remoteEduteams.clientSecret)) }}
         'REMOTE_EDUTEAMS_ENABLED': True,
         {{ end }}
     })

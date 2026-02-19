@@ -84,16 +84,14 @@ In `values.yaml` file, you need to setup the following vars (`rabbitmq` prefix):
 
 The chart supports additional messaging protocols beyond AMQP:
 
-- **MQTT** (port 1883) - for IoT device communication
-
 - **STOMP** (port 61613) - for simple text-based messaging
 
-- **WebSocket variants** (ports 15674, 15675) - for browser-based connections
+- **WebSocket variant** (port 15674) - for browser-based STOMP connections
 
 These protocols are enabled through the `extraPlugins` configuration:
 
 ```yaml
-extraPlugins: "rabbitmq_auth_backend_ldap rabbitmq_mqtt rabbitmq_web_mqtt rabbitmq_management rabbitmq_web_stomp rabbitmq_stomp"
+extraPlugins: "rabbitmq_auth_backend_ldap rabbitmq_management rabbitmq_web_stomp rabbitmq_stomp"
 ```
 
 Additional container and service ports are automatically configured for these protocols.

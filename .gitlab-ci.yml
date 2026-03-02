@@ -166,17 +166,8 @@ Publish new chart version and update docs on github:
     # Add version-specific docs
     - cp README.md waldur/
     - cp -r docs/ waldur/
-    # Add correct version to Chart.yaml
-    - |
-      sed -i -E -e "s/^version: ('.*'|.*)$/version: $CI_COMMIT_TAG/" waldur/Chart.yaml
-    - |
-      sed -i -E -e "s/^appVersion: ('.*'|.*)$/appVersion: \"$CI_COMMIT_TAG\"/" waldur/Chart.yaml
-    # Update Mastermind image tag
-    - |
-      sed -i -E -e "s/^  imageTag: \".*\"$/  imageTag: \"$CI_COMMIT_TAG\"/" waldur/values.yaml
-    # Update Homeport image tag
-    - |
-      sed -i -E -e "/^  homeport:$/{n;n;s/^    imageTag: \".*\"$/    imageTag: \"$CI_COMMIT_TAG\"/}" waldur/values.yaml
+    # Update Chart.yaml and image tags (mastermind + homeport)
+    - bash scripts/set-version.sh $CI_COMMIT_TAG
     # Package Waldur chart with a new version
     - helm dependency update waldur/
     - helm package waldur/

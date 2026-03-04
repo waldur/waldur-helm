@@ -1,0 +1,62 @@
+suite: homeport deployment tests
+templates:
+  - templates/deployment-homeport.yaml
+
+tests:
+  - it: should fall back to waldur.imageTag when homeport.imageTag is empty
+    set:
+      waldur.imageTag: "v1.0.0"
+      waldur.homeport.imageTag: ""
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "docker.io/opennode/waldur-homeport:v1.0.0"
+
+  - it: should use homeport.imageTag when explicitly set
+    set:
+      waldur.imageTag: "v1.0.0"
+      waldur.homeport.imageTag: "v2.0.0"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "docker.io/opennode/waldur-homeport:v2.0.0"
+
+  - it: should use imageDigest when set (priority over tag)
+    set:
+      waldur.imageTag: "v1.0.0"
+      waldur.homeport.imageDigest: "sha256:abc123def456"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "docker.io/opennode/waldur-homeport@sha256:abc123def456"
+
+  - it: should set imagePullPolicy to Always when resolved tag is latest
+    set:
+      waldur.imageTag: "latest"
+      waldur.homeport.imageTag: ""
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: "Always"
+
+  - it: should set imagePullPolicy to IfNotPresent for non-latest tag
+    set:
+      waldur.imageTag: "v1.0.0"
+      waldur.homeport.imageTag: ""
+      waldur.pullPolicy: "IfNotPresent"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: "IfNotPresent"
+
+  - it: should use homeport-specific tag for imagePullPolicy when set
+    set:
+      waldur.imageTag: "v1.0.0"
+      waldur.homeport.imageTag: "latest"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: "docker.io/opennode/waldur-homeport:latest"
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: "Always"

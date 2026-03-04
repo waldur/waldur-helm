@@ -27,12 +27,13 @@ spec:
       {{ end }}
       containers:
         - name: waldur-homeport
+          {{- $homeportTag := .Values.waldur.homeport.imageTag | default .Values.waldur.imageTag }}
           {{- if .Values.waldur.homeport.imageDigest }}
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.homeport.imageName }}@{{ .Values.waldur.homeport.imageDigest }}
           {{- else }}
-          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.homeport.imageName }}:{{ .Values.waldur.homeport.imageTag }}
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.homeport.imageName }}:{{ $homeportTag }}
           {{- end }}
-          imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" .Values.waldur.homeport.imageTag "Values" .Values) }}
+          imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" $homeportTag "Values" .Values) }}
           livenessProbe:
             httpGet:
               port: 8080

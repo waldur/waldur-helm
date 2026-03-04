@@ -1,0 +1,356 @@
+suite: whitelabeling configmap tests
+templates:
+  - templates/config-whitelabeling.yaml
+
+tests:
+  - it: should skip all string keys when values are empty
+    set:
+      waldur.site.name: ""
+      waldur.site.address: ""
+      waldur.site.email: ""
+      waldur.site.phone: ""
+      waldur.site.logo: ""
+      waldur.whitelabeling.shortPageTitle: ""
+      waldur.whitelabeling.modePageTitle: ""
+      waldur.whitelabeling.brandColor: ""
+      waldur.whitelabeling.heroLinkLabel: ""
+      waldur.whitelabeling.heroLinkUrl: ""
+      waldur.whitelabeling.siteDescription: ""
+      waldur.whitelabeling.supportPortalLink: ""
+      waldur.whitelabeling.sidebarStyle: ""
+      waldur.whitelabeling.poweredByLogoPath: ""
+      waldur.whitelabeling.heroImagePath: ""
+      waldur.whitelabeling.sidebarLogoPath: ""
+      waldur.whitelabeling.sidebarLogoDarkPath: ""
+      waldur.whitelabeling.loginLogoPath: ""
+      waldur.whitelabeling.faviconPath: ""
+      waldur.currencyName: ""
+      waldur.homeport.docsLink: ""
+      waldur.defaultIdp: ""
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "site_name:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "site_address:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "site_email:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "site_phone:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "site_logo:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "short_page_title:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "full_page_title:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "brand_color:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "hero_link_label:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "hero_link_url:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "site_description:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "currency_name:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "docs_url:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "support_portal_url:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "sidebar_style:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "default_idp:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "powered_by_logo:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "hero_image:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "sidebar_logo:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "sidebar_logo_dark:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "login_logo:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "favicon:"
+      # homeport_url is always present
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "homeport_url:"
+
+  - it: should include non-empty keys and skip empty ones
+    set:
+      waldur.site.name: "Test Site"
+      waldur.site.address: ""
+      waldur.site.email: "admin@example.com"
+      waldur.site.phone: ""
+      waldur.site.logo: "/path/to/logo.png"
+      waldur.whitelabeling.shortPageTitle: "Test Portal"
+      waldur.whitelabeling.modePageTitle: ""
+      waldur.whitelabeling.brandColor: "#0066cc"
+      waldur.whitelabeling.heroLinkLabel: ""
+      waldur.whitelabeling.heroLinkUrl: "https://example.com"
+      waldur.whitelabeling.siteDescription: "Test description"
+      waldur.whitelabeling.supportPortalLink: ""
+      waldur.whitelabeling.sidebarStyle: "light"
+      waldur.currencyName: "USD"
+      waldur.homeport.docsLink: ""
+      waldur.defaultIdp: "local"
+      homeportScheme: "https"
+      homeportHostname: "test.example.com"
+    asserts:
+      # Present keys
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "site_name:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "site_email:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "site_logo:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "short_page_title:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "brand_color:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "hero_link_url:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "site_description:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "currency_name:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "sidebar_style:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "default_idp:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "homeport_url:"
+      # Absent keys
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "site_address:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "site_phone:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "full_page_title:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "hero_link_label:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "support_portal_url:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "docs_url:"
+
+  - it: should include all 26 keys when all values are populated
+    set:
+      waldur.site.name: "Full Test Site"
+      waldur.site.address: "123 Test Street"
+      waldur.site.email: "contact@example.com"
+      waldur.site.phone: "+1-555-0123"
+      waldur.site.logo: "/assets/logo.png"
+      waldur.whitelabeling.shortPageTitle: "Portal"
+      waldur.whitelabeling.modePageTitle: "Full Portal Title"
+      waldur.whitelabeling.brandColor: "#ff6600"
+      waldur.whitelabeling.heroLinkLabel: "Get Started"
+      waldur.whitelabeling.heroLinkUrl: "https://portal.example.com/start"
+      waldur.whitelabeling.siteDescription: "Complete site description"
+      waldur.whitelabeling.supportPortalLink: "https://support.example.com"
+      waldur.whitelabeling.sidebarStyle: "dark"
+      waldur.whitelabeling.disableDarkTheme: false
+      waldur.whitelabeling.autoApproveUserTOS: true
+      waldur.whitelabeling.poweredByLogoPath: "/path/to/powered-by.png"
+      waldur.whitelabeling.heroImagePath: "/path/to/hero.jpg"
+      waldur.whitelabeling.sidebarLogoPath: "/path/to/sidebar.png"
+      waldur.whitelabeling.sidebarLogoDarkPath: "/path/to/sidebar-dark.png"
+      waldur.whitelabeling.loginLogoPath: "/path/to/login.png"
+      waldur.whitelabeling.faviconPath: "/path/to/favicon.ico"
+      waldur.currencyName: "EUR"
+      waldur.homeport.docsLink: "https://docs.example.com"
+      waldur.enableStrictCheckAcceptingInvitation: false
+      waldur.defaultIdp: "saml2"
+      homeportScheme: "https"
+      homeportHostname: "portal.example.com"
+    asserts:
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "site_name:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "site_address:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "site_email:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "site_phone:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "site_logo:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "short_page_title:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "full_page_title:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "homeport_url:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "brand_color:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "hero_link_label:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "hero_link_url:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "site_description:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "currency_name:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "docs_url:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "support_portal_url:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "sidebar_style:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "disable_dark_theme:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "auto_approve_user_tos:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "enable_strict_check_accepting_invitation:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "default_idp:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "powered_by_logo:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "hero_image:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "sidebar_logo:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "sidebar_logo_dark:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "login_logo:"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "favicon:"
+
+  - it: should preserve boolean false values via hasKey semantics
+    set:
+      waldur.whitelabeling.disableDarkTheme: false
+      waldur.whitelabeling.autoApproveUserTOS: false
+      waldur.enableStrictCheckAcceptingInvitation: false
+    asserts:
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "disable_dark_theme: false"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "auto_approve_user_tos: false"
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "enable_strict_check_accepting_invitation: false"
+
+  - it: should render correct values for populated fields
+    set:
+      waldur.site.name: "My Cloud"
+      waldur.whitelabeling.brandColor: "#ff0000"
+      waldur.currencyName: "USD"
+      waldur.defaultIdp: "saml2"
+      homeportScheme: "https"
+      homeportHostname: "cloud.example.com"
+    asserts:
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: 'site_name: "My Cloud"'
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: 'brand_color: "#ff0000"'
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: 'currency_name: "USD"'
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: 'default_idp: "saml2"'
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "homeport_url: https://cloud.example.com/"
+
+  - it: should not contain empty string values in output
+    set:
+      waldur.site.name: ""
+      waldur.site.address: ""
+      waldur.site.email: ""
+      waldur.site.phone: ""
+      waldur.site.logo: ""
+      waldur.whitelabeling.shortPageTitle: ""
+      waldur.whitelabeling.modePageTitle: ""
+      waldur.whitelabeling.brandColor: ""
+      waldur.whitelabeling.heroLinkLabel: ""
+      waldur.whitelabeling.heroLinkUrl: ""
+      waldur.whitelabeling.siteDescription: ""
+      waldur.whitelabeling.supportPortalLink: ""
+      waldur.whitelabeling.sidebarStyle: ""
+      waldur.whitelabeling.poweredByLogoPath: ""
+      waldur.whitelabeling.heroImagePath: ""
+      waldur.whitelabeling.sidebarLogoPath: ""
+      waldur.whitelabeling.sidebarLogoDarkPath: ""
+      waldur.whitelabeling.loginLogoPath: ""
+      waldur.whitelabeling.faviconPath: ""
+      waldur.currencyName: ""
+      waldur.homeport.docsLink: ""
+      waldur.defaultIdp: ""
+    asserts:
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: ': ""'

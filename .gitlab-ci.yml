@@ -64,7 +64,6 @@ Run linter:
     - helm uninstall waldur || true
     - kubectl delete job waldur-mastermind-init-whitelabeling-job || true
     - kubectl delete pvc -l app.kubernetes.io/instance=waldur --ignore-not-found
-    - kubectl delete deploy -l app.kubernetes.io/name=waldur-homeport-test --ignore-not-found || true
 
 Validate release installation (dry-run):
   extends: .Test template

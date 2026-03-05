@@ -63,6 +63,8 @@ Run linter:
     - export KUBECONFIG=${K8S_CONFIG_WALDUR_HELM_TEST}
     - helm uninstall waldur || true
     - kubectl delete job waldur-mastermind-init-whitelabeling-job || true
+    - kubectl delete pvc -l app.kubernetes.io/instance=waldur --ignore-not-found
+    - kubectl delete deploy -l app.kubernetes.io/name=waldur-homeport-test --ignore-not-found || true
 
 Validate release installation (dry-run):
   extends: .Test template
@@ -100,10 +102,12 @@ Test release installation and readiness:
     - kubectl apply -f waldur/test/k8s/networkpolicy-override.yaml
     - kubectl delete networkpolicy namespace-isolation --ignore-not-found
     - kubectl get pods
+    - kubectl get pvc
+    - kubectl get events --sort-by=.lastTimestamp | tail -30
     - |
       for NAME in $(kubectl get pods -l app.kubernetes.io/instance=waldur --field-selector status.phase!=Running -o name); do
         echo "Pod name: $NAME"
-        echo "Status: $(kubectl get pod $NAME -o jsonpath={.status.phase})"
+        kubectl describe pod $NAME | tail -30
         kubectl logs $NAME --tail 100 --all-containers
         echo ----
       done

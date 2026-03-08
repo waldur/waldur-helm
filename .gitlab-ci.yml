@@ -106,7 +106,7 @@ Test release installation and readiness:
     - |
       for NAME in $(kubectl get pods -l app.kubernetes.io/instance=waldur --field-selector status.phase!=Running -o name); do
         echo "Pod name: $NAME"
-        kubectl describe pod $NAME | tail -30
+        kubectl describe $NAME | tail -30
         kubectl logs $NAME --tail 100 --all-containers
         echo ----
       done

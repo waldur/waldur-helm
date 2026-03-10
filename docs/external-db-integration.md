@@ -62,17 +62,22 @@ spec:
   volume:
     size: 20Gi
   numberOfInstances: 2
+
   users:
     waldur:
-
     - superuser
-
     - createdb
 
   databases:
     waldur: waldur
   postgresql:
     version: "16"  # Updated to latest supported version
+    parameters: # Custom PostgreSQL parameters
+      log_connections: "off"
+      log_disconnections: "off"
+      max_connections: "200"
+  enableConnectionPooler: true # Enable connection pooler for load balancing
+  enableReplicaConnectionPooler: true
   resources:
     requests:
       cpu: '500m'

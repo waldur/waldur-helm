@@ -75,7 +75,7 @@ spec:
             - name: config-features-json
               mountPath: /etc/waldur/features.json
               subPath: features.json
-            {{ if .Values.waldur.mastermindTemplating.mastermindTemplatesPath }}
+            {{ if or .Values.waldur.mastermindTemplating.mastermindTemplatesPath .Values.waldur.mastermindTemplating.mastermindTemplates }}
             - name: waldur-mastermind-template
               mountPath: /etc/waldur/notifications-templates.yaml
               subPath: "mastermind-templates.yaml"
@@ -144,6 +144,16 @@ spec:
             - name: waldur-ssh-key
               mountPath: /etc/waldur/id_rsa
               subPath: id_rsa
+            {{ end }}
+            {{ if or .Values.waldur.mastermindTemplating.mastermindTemplatesPath .Values.waldur.mastermindTemplating.mastermindTemplates }}
+            - name: waldur-mastermind-template
+              mountPath: /etc/waldur/notifications-templates.yaml
+              subPath: "mastermind-templates.yaml"
+            {{ end }}
+            {{ if .Values.waldur.notifications }}
+            - name: mastermind-notifications-json
+              mountPath: /etc/waldur/notifications.json
+              subPath: "notifications.json"
             {{ end }}
       volumes:
       - name: api-override

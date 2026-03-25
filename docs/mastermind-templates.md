@@ -1,41 +1,58 @@
-# Mastermind templates configuration
+# Mastermind Templates
 
-If you want to configure custom mastermind templates, you should:
+Waldur supports custom notification templates (email subjects and bodies) via the `waldur.mastermindTemplating` values.
 
-1. Setup `waldur.mastermindTemplating.mastermindTemplatesPath`
+## Configuration
 
-    in values.yaml (by default, it is equal to `mastermind_templates/mastermind-templates.yaml`).
-    Alternatively, you can use `waldur.mastermindTemplating.mastermindTemplates` containing `.yaml`
-    file strings to get rid of file usage.
+There are two ways to provide templates:
 
-2. Put all the custom templates into the file in a following way:
+### Option 1: Inline in values.yaml
 
-**NB**: The keys in the file should have `<waldur_application_name>/<event_name>_<postfix>.<extension>`, where `<postfix>` can be either `message` or `subject`, and `<extension>` - either `txt` or `html`
+Set `waldur.mastermindTemplating.mastermindTemplates` directly:
 
 ```yaml
-<file-name1>: |
-    <Custom content1>
-<file-name2>: |
-    <Custom content2>
-...
-```
-
-Example:
-
-```yaml
-users/invitation_notification_message.txt: |
-    Hi!
-users/invitation_notification_message.html: |
-    <html>
-    <head lang="en">
-        <meta charset="UTF-8">
-        <title>Invitation has been created</title>
-    </head>
-    <body>
-    <p>
+waldur:
+  mastermindTemplating:
+    mastermindTemplates:
+      users/invitation_notification_message.txt: |
         Hi!
-    </p>
-    </body>
-    </html>
-...
+      users/invitation_notification_message.html: |
+        <html>
+        <head lang="en">
+          <meta charset="UTF-8">
+          <title>Invitation</title>
+        </head>
+        <body><p>Hi!</p></body>
+        </html>
 ```
+
+### Option 2: External file
+
+Place your templates in a YAML file within the Helm chart directory, then point to it with `waldur.mastermindTemplating.mastermindTemplatesPath`:
+
+```yaml
+waldur:
+  mastermindTemplating:
+    mastermindTemplatesPath: "mastermind_templates/mastermind-templates.yaml"
+```
+
+The file at that path should have the same structure as the inline option above.
+
+The default value of `mastermindTemplatesPath` is `mastermind_templates/mastermind-templates.yaml`. If neither option is set, no ConfigMap is created.
+
+## Template file format
+
+Templates are keyed by their path relative to the Waldur templates directory. The key format is:
+
+```txt
+<app_name>/<event_name>_<postfix>.<extension>
+```
+
+- `<postfix>`: either `message` or `subject`
+- `<extension>`: either `txt` or `html`
+
+Example keys:
+
+- `users/invitation_notification_message.txt` — plain-text email body
+- `users/invitation_notification_message.html` — HTML email body
+- `users/invitation_notification_subject.txt` — email subject line

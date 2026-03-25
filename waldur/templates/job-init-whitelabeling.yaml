@@ -17,6 +17,12 @@ spec:
       labels:
         {{ include "waldur.labels" . | nindent 8 }}
     spec:
+      {{ if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range $i, $val := .Values.imagePullSecrets }}
+        - name: {{ $val }}
+        {{ end -}}
+      {{ end }}
       containers:
         - name: waldur-mastermind-whitelabeling-init
           {{- if .Values.waldur.imageDigest }}

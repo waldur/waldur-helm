@@ -414,7 +414,7 @@ waldur:
     individual: 3
     group: 3
   mastermindTemplating:
-    mastermindTemplatesPath: "mastermind_templates/mastermind-templates.yaml"
+    mastermindTemplatesPath: ""
     mastermindTemplates:
       users/invitation_notification_message.txt: |
           test
@@ -511,12 +511,12 @@ readonlyDB:
   password: ""
 
 externalDB:
-  enabled: false
+  enabled: true
   secretName: "waldur.waldur-testing-postgres.credentials.postgresql.acid.zalan.do"
   serviceName: "waldur-testing-postgres"
 
 postgresql:
-  enabled: true
+  enabled: false
   auth:
     username: "waldur"
     password: "waldur"

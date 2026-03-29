@@ -115,6 +115,7 @@ ingress:
     customMastermindSecretName: ""
     customHomeportSecretName: ""
     secretsDir: "tls" # Enabled only if source == `secret`
+  proxyBufferSize: "8k" # Nginx proxy buffer size for upstream response headers. Increase if you get 502 errors due to long pagination Link headers.
   whitelistSourceRange: "" # E.g. '192.168.22.0/24'
   whitelistSourceRangeAdmin: ""
 

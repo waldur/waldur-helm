@@ -13,6 +13,7 @@ metadata:
     # This sets the file upload size limit for ingress.
     # Additional settings for file upload sizes for different endpoints are in mastermind.conf, in mastermind nginx.
     nginx.ingress.kubernetes.io/proxy-body-size: 10m
+    nginx.ingress.kubernetes.io/proxy-buffer-size: {{ .Values.ingress.proxyBufferSize | default "8k" | quote }}
     nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,sentry-trace,baggage,X-Impersonated-User-Uuid"
     nginx.ingress.kubernetes.io/cors-expose-headers: "Link, X-Result-Count"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"

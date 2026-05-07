@@ -1,0 +1,82 @@
+{{- if and .Values.ingress.enabled (eq .Values.ingress.className "traefik") }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: api-redirect-https
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: api-cors
+spec:
+  headers:
+    accessControlAllowMethods:
+      - GET
+      - POST
+      - PUT
+      - PATCH
+      - DELETE
+      - OPTIONS
+    accessControlAllowHeaders:
+      - DNT
+      - Keep-Alive
+      - User-Agent
+      - X-Requested-With
+      - If-Modified-Since
+      - Cache-Control
+      - Content-Type
+      - Range
+      - Authorization
+      - sentry-trace
+      - baggage
+      - X-Impersonated-User-Uuid
+    accessControlExposeHeaders:
+      - Link
+      - X-Result-Count
+      - Content-Length
+      - Content-Range
+    accessControlAllowOriginList:
+      - "*"
+    accessControlMaxAge: 100
+    addVaryHeader: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: api-buffering
+spec:
+  buffering:
+    maxRequestBodyBytes: 10485760
+---
+{{- if .Values.ingress.whitelistSourceRange }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: api-ipallowlist
+spec:
+  ipAllowList:
+    sourceRange:
+      {{- range (splitList "," .Values.ingress.whitelistSourceRange) }}
+      - {{ . | trim | quote }}
+      {{- end }}
+---
+{{- end }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: api-chain
+spec:
+  chain:
+    middlewares:
+      - name: api-redirect-https
+      - name: api-cors
+      - name: api-buffering
+      {{- if .Values.ingress.whitelistSourceRange }}
+      - name: api-ipallowlist
+      {{- end }}
+{{- end }}

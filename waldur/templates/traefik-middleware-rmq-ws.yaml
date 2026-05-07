@@ -1,0 +1,65 @@
+{{- if and .Values.ingress.enabled (.Values.waldur.rabbitmqEvents.stompEnabled | default false) (eq .Values.ingress.className "traefik") }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: rmq-ws-redirect-https
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: rmq-ws-rewrite
+spec:
+  replacePath:
+    path: /ws
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: rmq-ws-cors
+spec:
+  headers:
+    accessControlAllowMethods:
+      - GET
+      - POST
+      - OPTIONS
+    accessControlAllowHeaders:
+      - Authorization
+      - Content-Type
+      - Accept
+    accessControlAllowOriginList:
+      - "*"
+    accessControlMaxAge: 100
+    addVaryHeader: true
+---
+{{- if .Values.ingress.whitelistSourceRange }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: rmq-ws-ipallowlist
+spec:
+  ipAllowList:
+    sourceRange:
+      {{- range (splitList "," .Values.ingress.whitelistSourceRange) }}
+      - {{ . | trim | quote }}
+      {{- end }}
+---
+{{- end }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: rmq-ws-chain
+spec:
+  chain:
+    middlewares:
+      - name: rmq-ws-redirect-https
+      - name: rmq-ws-rewrite
+      - name: rmq-ws-cors
+      {{- if .Values.ingress.whitelistSourceRange }}
+      - name: rmq-ws-ipallowlist
+      {{- end }}
+{{- end }}

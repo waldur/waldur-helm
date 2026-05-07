@@ -1,0 +1,81 @@
+{{- if and .Values.ingress.enabled (eq .Values.ingress.className "traefik") }}
+{{- $customSentryUrl443 := "" }}
+{{- $customSentryUrl80 := "" }}
+{{- if .Values.waldur.homeport.customSentryURL }}
+{{- $customSentryUrl443 = (print .Values.waldur.homeport.customSentryURL ":443") }}
+{{- $customSentryUrl80 = (print .Values.waldur.homeport.customSentryURL ":80") }}
+{{- end }}
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: homeport-redirect-https
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: homeport-headers
+spec:
+  headers:
+    accessControlAllowMethods:
+      - GET
+      - POST
+      - PUT
+      - PATCH
+      - DELETE
+      - OPTIONS
+    accessControlAllowHeaders:
+      - DNT
+      - Keep-Alive
+      - User-Agent
+      - X-Requested-With
+      - If-Modified-Since
+      - Cache-Control
+      - Content-Type
+      - Range
+      - Authorization
+      - sentry-trace
+      - baggage
+      - X-Impersonated-User-Uuid
+    accessControlExposeHeaders:
+      - Link
+      - X-Result-Count
+      - Content-Length
+      - Content-Range
+    accessControlAllowOriginList:
+      - "*"
+    accessControlMaxAge: 100
+    addVaryHeader: true
+    customResponseHeaders:
+      Content-Security-Policy: "base-uri 'self'; object-src 'none'; media-src https://{{ .Values.homeportHostname }}/assets/; script-src 'self' sentry.opnd.org {{ .Values.waldur.homeport.customSentryURL }} {{ .Values.waldur.homeport.matomoUrlBase }}; style-src 'self' 'unsafe-inline'; img-src 'self' *.tile.openstreetmap.org {{ .Values.apiHostname }} blob: data: ; connect-src 'self' {{ .Values.apiHostname }} {{ .Values.waldur.homeport.matomoUrlBase }} nominatim.openstreetmap.org:443 sentry.opnd.org:443 sentry.opnd.org:80 {{ $customSentryUrl80 }} {{ $customSentryUrl443 }}; font-src 'self' data: ; frame-src 'none'; frame-ancestors 'none'"
+---
+{{- if .Values.ingress.whitelistSourceRange }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: homeport-ipallowlist
+spec:
+  ipAllowList:
+    sourceRange:
+      {{- range (splitList "," .Values.ingress.whitelistSourceRange) }}
+      - {{ . | trim | quote }}
+      {{- end }}
+---
+{{- end }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: homeport-chain
+spec:
+  chain:
+    middlewares:
+      - name: homeport-redirect-https
+      - name: homeport-headers
+      {{- if .Values.ingress.whitelistSourceRange }}
+      - name: homeport-ipallowlist
+      {{- end }}
+{{- end }}

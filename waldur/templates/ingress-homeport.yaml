@@ -37,6 +37,8 @@ metadata:
     {{ if .Values.ingress.whitelistSourceRange }}
     haproxy.org/allow-list: "{{ .Values.ingress.whitelistSourceRange }}"
     {{ end }}
+    {{ else if eq .Values.ingress.className "traefik" }}
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ .Release.Namespace }}-homeport-chain@kubernetescrd"
     {{ end }}
     {{ if and .Values.ingress.tls.enabled (eq .Values.ingress.tls.source "letsEncrypt") }}
     cert-manager.io/cluster-issuer: {{ .Values.ingress.tls.clusterIssuerName | default "letsencrypt-prod-issuer" }}

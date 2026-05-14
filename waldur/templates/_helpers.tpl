@@ -209,7 +209,12 @@ Add environment variables to configure database values and Sentry environment
   {{ end }}
 
 - name: POSTGRESQL_READONLY_PASSWORD
-  {{ if .Values.readonlyDB.password }}
+  {{ if .Values.readonlyDB.passwordExistingSecret.name }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.readonlyDB.passwordExistingSecret.name }}
+      key: {{ .Values.readonlyDB.passwordExistingSecret.key | default "READONLY_DB_PASSWORD" }}
+  {{ else if .Values.readonlyDB.password }}
   valueFrom:
     secretKeyRef:
       name: waldur-secret

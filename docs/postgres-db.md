@@ -95,6 +95,8 @@ helm dependency update
 
 In order to enable /api/query/ endpoint please make sure that read-only user is configured.
 
+The endpoint executes caller-supplied SQL against the read replica, so the calling Waldur user must have the `is_staff` flag set. (Prior to Waldur 8.x the endpoint also accepted `is_support` users; this was tightened to staff-only because even a SELECT-only DB role still exposes token hashes, password hashes, and PII.)
+
 ```sql
 -- Create a read-only user
 CREATE USER readonly WITH PASSWORD '{readonly_password}'

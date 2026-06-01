@@ -37,25 +37,35 @@ spec:
           imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" .Values.waldur.imageTag "Values" .Values) }}
           args:
             - "worker"
-          # startup probe: check if there are no pending migrations
+          # Worker needs ~35s to register; startupProbe blocks liveness until inspect ping succeeds.
+          # -t is Celery RPC timeout (default 1s is too low under load).
+          startupProbe:
+            exec:
+              command:
+                - "/bin/bash"
+                - "-c"
+                - "celery -A waldur_core.server inspect -d celery@$HOSTNAME ping -t 10"
+            periodSeconds: 10
+            failureThreshold: 12
+            timeoutSeconds: 30
           livenessProbe:
             exec:
               command:
                 - "/bin/bash"
                 - "-c"
-                - "celery -A waldur_core.server inspect -d celery@$HOSTNAME ping"
-            initialDelaySeconds: 15
-            periodSeconds: 25
-            timeoutSeconds: 20
+                - "celery -A waldur_core.server inspect -d celery@$HOSTNAME ping -t 10"
+            periodSeconds: 60
+            failureThreshold: 5
+            timeoutSeconds: 30
           readinessProbe:
             exec:
               command:
                 - "/bin/bash"
                 - "-c"
-                - "celery -A waldur_core.server inspect -d celery@$HOSTNAME ping"
-            initialDelaySeconds: 20
+                - "celery -A waldur_core.server inspect -d celery@$HOSTNAME ping -t 10"
             periodSeconds: 25
-            timeoutSeconds: 20
+            failureThreshold: 3
+            timeoutSeconds: 30
           env:
             {{- include "waldur.credentials" . | nindent 12 }}
             {{ if .Values.waldur.debug }}

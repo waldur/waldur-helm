@@ -134,6 +134,14 @@ data:
       {{ else }}
       is_active: true
       {{ end }}
+      add_permissions:
+        {{ if and (hasKey .Values.waldur.customRolePermissions "PROJECT.MEMBER") (hasKey (index .Values.waldur.customRolePermissions "PROJECT.MEMBER") "addPermissions") }}
+        {{- toYaml (index .Values.waldur.customRolePermissions "PROJECT.MEMBER").addPermissions | nindent 8 }}
+        {{- end }}
+      drop_permissions:
+        {{ if and (hasKey .Values.waldur.customRolePermissions "PROJECT.MEMBER") (hasKey (index .Values.waldur.customRolePermissions "PROJECT.MEMBER") "dropPermissions") }}
+        {{- toYaml (index .Values.waldur.customRolePermissions "PROJECT.MEMBER").dropPermissions | nindent 8 }}
+        {{- end }}
 
     - role: OFFERING.MANAGER
       {{- if hasKey .Values.waldur.customRoleDescriptions "OFFERING.MANAGER" }}

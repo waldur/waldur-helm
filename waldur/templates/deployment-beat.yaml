@@ -15,6 +15,13 @@ spec:
       labels:
         app: waldur-mastermind-beat
         {{ include "waldur.labels" . | nindent 8 }}
+        {{- with .Values.beat.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.beat.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       {{ if .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -122,6 +129,14 @@ spec:
             - "beat"
           env:
             {{- include "waldur.credentials" . | nindent 13 }}
+            {{- with (include "waldur.extraEnvVars" .Values.beat) }}
+            {{- . | nindent 13 }}
+            {{- end }}
+          {{- $envFrom := include "waldur.extraEnvFrom" .Values.beat }}
+          {{- if $envFrom }}
+          envFrom:
+            {{- $envFrom | nindent 12 }}
+          {{- end }}
           resources:
             {{ if .Values.hpa.celery.enabled }}
             {{- toYaml .Values.hpa.celery.beatResources | nindent 12 }}
@@ -155,6 +170,9 @@ spec:
               mountPath: /etc/waldur/notifications.json
               subPath: "notifications.json"
             {{ end }}
+            {{- with (include "waldur.extraVolumeMounts" .Values.beat) }}
+            {{- . | nindent 12 }}
+            {{- end }}
       volumes:
       - name: api-override
         configMap:
@@ -202,6 +220,9 @@ spec:
         secret:
           secretName: waldur-ssh-key-config
       {{ end }}
+      {{- with (include "waldur.extraVolumes" .Values.beat) }}
+      {{- . | nindent 6 }}
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

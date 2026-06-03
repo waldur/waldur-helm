@@ -1,0 +1,32 @@
+suite: ingress custom annotations
+templates:
+  - templates/ingress-api.yaml
+  - templates/ingress-api-admin.yaml
+  - templates/ingress-homeport.yaml
+  - templates/ingress-rmq-ws.yaml
+  - templates/ingress-uvk-everypay.yaml
+
+set:
+  ingress.enabled: true
+  ingress.className: nginx
+  waldur.uvkEverypay.enabled: true
+  waldur.rabbitmqEvents.stompEnabled: true
+
+tests:
+  - it: omits ingress.annotations entries when the map is empty
+    asserts:
+      - isNull:
+          path: metadata.annotations["external-dns.alpha.kubernetes.io/ttl"]
+
+  - it: merges ingress.annotations onto every rendered ingress
+    set:
+      ingress.annotations:
+        external-dns.alpha.kubernetes.io/ttl: "60"
+        external-dns.alpha.kubernetes.io/hostname: "api.example.com"
+    asserts:
+      - equal:
+          path: metadata.annotations["external-dns.alpha.kubernetes.io/ttl"]
+          value: "60"
+      - equal:
+          path: metadata.annotations["external-dns.alpha.kubernetes.io/hostname"]
+          value: "api.example.com"

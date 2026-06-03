@@ -1,0 +1,18 @@
+suite: celery configmap
+templates:
+  - templates/config-celery.yaml
+
+tests:
+  - it: defaults CELERYD_CONCURRENCY to 10
+    asserts:
+      - matchRegex:
+          path: data["celery.conf"]
+          pattern: 'CELERYD_CONCURRENCY=10\b'
+
+  - it: honours celery.concurrency override
+    set:
+      celery.concurrency: 32
+    asserts:
+      - matchRegex:
+          path: data["celery.conf"]
+          pattern: 'CELERYD_CONCURRENCY=32\b'

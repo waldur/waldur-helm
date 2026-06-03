@@ -16,6 +16,13 @@ spec:
       labels:
         app: waldur-mastermind-worker
         {{ include "waldur.labels" . | nindent 8 }}
+        {{- with .Values.worker.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.worker.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       {{ if .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -76,6 +83,14 @@ spec:
             - name: OPENPORTAL_CONFIG
               value: "/etc/waldur/openportal/config.toml"
             {{ end }}
+            {{- with (include "waldur.extraEnvVars" .Values.worker) }}
+            {{- . | nindent 12 }}
+            {{- end }}
+          {{- $envFrom := include "waldur.extraEnvFrom" .Values.worker }}
+          {{- if $envFrom }}
+          envFrom:
+            {{- $envFrom | nindent 12 }}
+          {{- end }}
           resources:
             {{ if .Values.hpa.celery.enabled }}
             {{- toYaml .Values.hpa.celery.workerResources | nindent 12 }}
@@ -129,6 +144,9 @@ spec:
               subPath: {{ with (dig "marketplace" "script" "kubeconfigSecret" (dict) .Values.waldur) }}{{ if and (get . "name") (get . "key") }}{{ get . "key" }}{{ else }}kubeconfig{{ end }}{{ else }}kubeconfig{{ end }}
               readOnly: true
             {{ end }}
+            {{- with (include "waldur.extraVolumeMounts" .Values.worker) }}
+            {{- . | nindent 12 }}
+            {{- end }}
       volumes:
       - name: api-override
         configMap:
@@ -176,6 +194,9 @@ spec:
         secret:
           secretName: {{ with (dig "marketplace" "script" "kubeconfigSecret" (dict) .Values.waldur) }}{{ if and (get . "name") (get . "key") }}{{ get . "name" }}{{ else }}waldur-script-kubeconfig{{ end }}{{ else }}waldur-script-kubeconfig{{ end }}
       {{ end }}
+      {{- with (include "waldur.extraVolumes" .Values.worker) }}
+      {{- . | nindent 6 }}
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

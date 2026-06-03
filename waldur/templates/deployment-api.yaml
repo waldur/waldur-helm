@@ -15,6 +15,13 @@ spec:
       labels:
         app: waldur-mastermind-api
         {{ include "waldur.labels" . | nindent 8 }}
+        {{- with .Values.api.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.api.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       {{ if .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -65,6 +72,19 @@ spec:
             - name: OPENPORTAL_CONFIG
               value: "/etc/waldur/openportal/config.toml"
             {{ end }}
+            {{- $gunicornArgs := include "waldur.gunicornCmdArgs" . }}
+            {{- if $gunicornArgs }}
+            - name: GUNICORN_CMD_ARGS
+              value: {{ $gunicornArgs | quote }}
+            {{- end }}
+            {{- with (include "waldur.extraEnvVars" .Values.api) }}
+            {{- . | nindent 12 }}
+            {{- end }}
+          {{- $envFrom := include "waldur.extraEnvFrom" .Values.api }}
+          {{- if $envFrom }}
+          envFrom:
+            {{- $envFrom | nindent 12 }}
+          {{- end }}
           resources:
             {{ if .Values.hpa.api.enabled }}
             {{- toYaml .Values.hpa.api.resources | nindent 12 }}
@@ -127,6 +147,9 @@ spec:
               subPath: {{ with (dig "marketplace" "script" "kubeconfigSecret" (dict) .Values.waldur) }}{{ if and (get . "name") (get . "key") }}{{ get . "key" }}{{ else }}kubeconfig{{ end }}{{ else }}kubeconfig{{ end }}
               readOnly: true
             {{ end }}
+            {{- with (include "waldur.extraVolumeMounts" .Values.api) }}
+            {{- . | nindent 12 }}
+            {{- end }}
       volumes:
       - name: api-override
         configMap:
@@ -185,6 +208,9 @@ spec:
         secret:
           secretName: {{ with (dig "marketplace" "script" "kubeconfigSecret" (dict) .Values.waldur) }}{{ if and (get . "name") (get . "key") }}{{ get . "name" }}{{ else }}waldur-script-kubeconfig{{ end }}{{ else }}waldur-script-kubeconfig{{ end }}
       {{ end }}
+      {{- with (include "waldur.extraVolumes" .Values.api) }}
+      {{- . | nindent 6 }}
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

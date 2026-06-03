@@ -118,11 +118,72 @@ ingress:
   proxyBufferSize: "8k" # Nginx proxy buffer size for upstream response headers. Increase if you get 502 errors due to long pagination Link headers.
   whitelistSourceRange: "" # E.g. '192.168.22.0/24'
   whitelistSourceRangeAdmin: ""
+  # Extra annotations merged onto every rendered Ingress object (api, api-admin,
+  # homeport, rmq-ws, uvk-everypay). Useful for cross-cutting concerns that the
+  # chart does not template natively — for example, controlling DNS TTL via
+  # external-dns. Values must be strings (YAML annotation requirement).
+  # Example:
+  #   annotations:
+  #     external-dns.alpha.kubernetes.io/ttl: "60"
+  #     external-dns.alpha.kubernetes.io/hostname: "api.example.com"
+  annotations: {}
 
 celery:
   worker:
     enabled: true
   resultDatabase: "celery_results" # Database name for Celery results, default: "celery_results"
+  concurrency: 10  # CELERYD_CONCURRENCY (number of worker child processes per pod)
+
+# Gunicorn process tuning for the mastermind API container.
+# Each non-empty value is appended to GUNICORN_CMD_ARGS, which gunicorn reads at startup.
+# Leave fields empty to keep the gunicorn.conf.py defaults baked into the image.
+gunicorn:
+  timeout: ""              # --timeout (seconds); default 30
+  gracefulTimeout: ""      # --graceful-timeout (seconds)
+  workers: ""              # --workers; gunicorn.conf.py default is 4
+  keepalive: ""            # --keep-alive (seconds); default 2
+  maxRequests: ""          # --max-requests (recycle worker after N requests; 0 disables)
+  maxRequestsJitter: ""    # --max-requests-jitter
+  extraArgs: ""            # raw passthrough, appended verbatim
+
+# Per-deployment extension hooks (api, worker, beat, homeport).
+# Defaults are empty so the rendered output is identical to the baseline chart.
+# All keys follow the Bitnami common-chart vocabulary.
+api:
+  extraEnvVars: []         # list of EnvVar (name/value or name/valueFrom)
+  extraEnvVarsCM: ""       # single ConfigMap name (rendered as envFrom.configMapRef)
+  extraEnvVarsSecret: ""   # single Secret name    (rendered as envFrom.secretRef)
+  extraVolumes: []         # list of Volume appended to the pod spec
+  extraVolumeMounts: []    # list of VolumeMount appended to the container
+  podAnnotations: {}
+  podLabels: {}
+
+worker:
+  extraEnvVars: []
+  extraEnvVarsCM: ""
+  extraEnvVarsSecret: ""
+  extraVolumes: []
+  extraVolumeMounts: []
+  podAnnotations: {}
+  podLabels: {}
+
+beat:
+  extraEnvVars: []
+  extraEnvVarsCM: ""
+  extraEnvVarsSecret: ""
+  extraVolumes: []
+  extraVolumeMounts: []
+  podAnnotations: {}
+  podLabels: {}
+
+homeport:
+  extraEnvVars: []
+  extraEnvVarsCM: ""
+  extraEnvVarsSecret: ""
+  extraVolumes: []
+  extraVolumeMounts: []
+  podAnnotations: {}
+  podLabels: {}
 
 proxy:
   httpsProxy: ""

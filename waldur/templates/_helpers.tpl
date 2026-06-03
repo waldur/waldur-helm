@@ -140,6 +140,94 @@ Set rabbitmq host
 
 
 {{/*
+Render a component's extraEnvVars list.
+Usage: {{- include "waldur.extraEnvVars" .Values.api | nindent 12 }}
+*/}}
+{{- define "waldur.extraEnvVars" -}}
+{{- with .extraEnvVars -}}
+{{ toYaml . }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Render a component's envFrom entries from extraEnvVarsCM / extraEnvVarsSecret.
+Skip the call site's envFrom: block entirely when both are empty.
+Usage:
+  {{- $envFrom := include "waldur.extraEnvFrom" .Values.api -}}
+  {{- if $envFrom }}
+  envFrom:
+  {{- $envFrom | nindent 12 }}
+  {{- end }}
+*/}}
+{{- define "waldur.extraEnvFrom" -}}
+{{- if .extraEnvVarsCM }}
+- configMapRef:
+    name: {{ .extraEnvVarsCM }}
+{{- end }}
+{{- if .extraEnvVarsSecret }}
+- secretRef:
+    name: {{ .extraEnvVarsSecret }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Render a component's extraVolumes list.
+Usage: {{- include "waldur.extraVolumes" .Values.api | nindent 6 }}
+*/}}
+{{- define "waldur.extraVolumes" -}}
+{{- with .extraVolumes -}}
+{{ toYaml . }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Render a component's extraVolumeMounts list.
+Usage: {{- include "waldur.extraVolumeMounts" .Values.api | nindent 12 }}
+*/}}
+{{- define "waldur.extraVolumeMounts" -}}
+{{- with .extraVolumeMounts -}}
+{{ toYaml . }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Render .Values.ingress.annotations as YAML key/value pairs, already indented
+to sit inside an Ingress metadata.annotations block. Emits nothing when the
+map is empty so the baseline render stays byte-identical.
+Used by every ingress template so operators can add cross-cutting annotations
+(e.g. external-dns.alpha.kubernetes.io/ttl: "60") without forking the chart.
+Usage: {{- include "waldur.ingressAnnotations" . }}
+*/}}
+{{- define "waldur.ingressAnnotations" -}}
+{{- with .Values.ingress.annotations -}}
+{{- toYaml . | nindent 4 -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Assemble GUNICORN_CMD_ARGS value from .Values.gunicorn.*. Returns empty when no field is set.
+Usage:
+  {{- $gun := include "waldur.gunicornCmdArgs" . -}}
+  {{- if $gun }}
+  - name: GUNICORN_CMD_ARGS
+    value: {{ $gun | quote }}
+  {{- end }}
+*/}}
+{{- define "waldur.gunicornCmdArgs" -}}
+{{- $parts := list -}}
+{{- with .Values.gunicorn -}}
+{{- if .timeout }}{{- $parts = append $parts (printf "--timeout %v" .timeout) -}}{{- end -}}
+{{- if .gracefulTimeout }}{{- $parts = append $parts (printf "--graceful-timeout %v" .gracefulTimeout) -}}{{- end -}}
+{{- if .workers }}{{- $parts = append $parts (printf "--workers %v" .workers) -}}{{- end -}}
+{{- if .keepalive }}{{- $parts = append $parts (printf "--keep-alive %v" .keepalive) -}}{{- end -}}
+{{- if .maxRequests }}{{- $parts = append $parts (printf "--max-requests %v" .maxRequests) -}}{{- end -}}
+{{- if .maxRequestsJitter }}{{- $parts = append $parts (printf "--max-requests-jitter %v" .maxRequestsJitter) -}}{{- end -}}
+{{- if .extraArgs }}{{- $parts = append $parts .extraArgs -}}{{- end -}}
+{{- end -}}
+{{- join " " $parts -}}
+{{- end -}}
+
+{{/*
 Add environment variables to configure private database
 */}}
 {{- define "waldur.env.initdb" -}}

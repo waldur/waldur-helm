@@ -14,6 +14,13 @@ spec:
       labels:
         app: waldur-homeport
         {{ include "waldur.labels" . | nindent 8 }}
+        {{- with .Values.homeport.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.homeport.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
     spec:
       {{ if .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -63,8 +70,24 @@ spec:
             - name: AUTH_STORAGE
               value: 'sessionStorage'
             {{ end }}
+            {{- with (include "waldur.extraEnvVars" .Values.homeport) }}
+            {{- . | nindent 12 }}
+            {{- end }}
+          {{- $envFrom := include "waldur.extraEnvFrom" .Values.homeport }}
+          {{- if $envFrom }}
+          envFrom:
+            {{- $envFrom | nindent 12 }}
+          {{- end }}
           resources:
             {{- toYaml .Values.homeportResources | nindent 12 }}
+          {{- with (include "waldur.extraVolumeMounts" .Values.homeport) }}
+          volumeMounts:
+            {{- . | nindent 12 }}
+          {{- end }}
+      {{- with (include "waldur.extraVolumes" .Values.homeport) }}
+      volumes:
+        {{- . | nindent 8 }}
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

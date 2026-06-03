@@ -1,0 +1,16 @@
+suite: worker deployment extension hooks
+templates:
+  - templates/deployment-worker.yaml
+
+tests:
+  - it: injects worker.extraEnvVars into the container env
+    set:
+      worker.extraEnvVars:
+        - name: WORKER_EXTRA
+          value: "yes"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: WORKER_EXTRA
+            value: "yes"

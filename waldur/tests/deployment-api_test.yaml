@@ -1,0 +1,85 @@
+suite: api deployment extension hooks
+templates:
+  - templates/deployment-api.yaml
+
+tests:
+  - it: does not emit GUNICORN_CMD_ARGS when no gunicorn knob is set
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GUNICORN_CMD_ARGS
+          any: true
+
+  - it: assembles GUNICORN_CMD_ARGS from the gunicorn block
+    set:
+      gunicorn.timeout: 120
+      gunicorn.workers: 6
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GUNICORN_CMD_ARGS
+            value: "--timeout 120 --workers 6"
+
+  - it: injects api.extraEnvVars into the container env
+    set:
+      api.extraEnvVars:
+        - name: API_EXTRA
+          value: "yes"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: API_EXTRA
+            value: "yes"
+
+  - it: renders api.extraEnvVarsCM and api.extraEnvVarsSecret as envFrom refs
+    set:
+      api.extraEnvVarsCM: my-cm
+      api.extraEnvVarsSecret: my-secret
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: my-cm
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: my-secret
+
+  - it: appends api.extraVolumes and api.extraVolumeMounts
+    set:
+      api.extraVolumes:
+        - name: scratch
+          emptyDir: {}
+      api.extraVolumeMounts:
+        - name: scratch
+          mountPath: /scratch
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: scratch
+            emptyDir: {}
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: scratch
+            mountPath: /scratch
+
+  - it: merges api.podAnnotations and api.podLabels onto the pod template
+    set:
+      api.podAnnotations:
+        prometheus.io/scrape: "true"
+      api.podLabels:
+        waldur.io/component: api
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["prometheus.io/scrape"]
+          value: "true"
+      - equal:
+          path: spec.template.metadata.labels["waldur.io/component"]
+          value: api

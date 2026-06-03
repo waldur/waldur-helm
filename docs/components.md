@@ -348,3 +348,81 @@ sequenceDiagram
 
 - RabbitMQ clustering supported
 - External message broker option
+
+## Tuning and Extension Hooks
+
+The chart exposes Bitnami-style extension hooks on the `api`, `worker`, `beat`, and `homeport` deployments so operators can inject site-specific configuration without forking. All defaults are empty — the rendered output is unchanged when the values are not set.
+
+### Per-deployment hooks
+
+Available on each of `api`, `worker`, `beat`, `homeport`:
+
+| Value | Type | Purpose |
+|---|---|---|
+| `<component>.extraEnvVars` | list of EnvVar | Extra container env vars (supports `value` and `valueFrom`) |
+| `<component>.extraEnvVarsCM` | string | Single ConfigMap name, rendered as `envFrom.configMapRef` |
+| `<component>.extraEnvVarsSecret` | string | Single Secret name, rendered as `envFrom.secretRef` |
+| `<component>.extraVolumes` | list of Volume | Extra volumes appended to the pod spec |
+| `<component>.extraVolumeMounts` | list of VolumeMount | Extra mounts appended to the main container |
+| `<component>.podAnnotations` | object | Merged onto the pod template metadata |
+| `<component>.podLabels` | object | Merged onto the pod template metadata |
+
+For `beat`, hooks affect only the main beat container — the migration / DB-bootstrap init containers are left untouched.
+
+Example: scrape the API pod with Prometheus and mount a shared scratch PVC.
+
+```yaml
+api:
+  podAnnotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8080"
+  extraVolumes:
+    - name: scratch
+      persistentVolumeClaim:
+        claimName: waldur-api-scratch
+  extraVolumeMounts:
+    - name: scratch
+      mountPath: /scratch
+```
+
+### Gunicorn process tuning (api only)
+
+The `gunicorn:` block translates into a `GUNICORN_CMD_ARGS` env var on the api container; gunicorn reads it at startup and appends it to its own argv. Any value left empty falls back to the gunicorn defaults baked into the image (`/etc/waldur/gunicorn.conf.py`).
+
+```yaml
+gunicorn:
+  timeout: 120           # --timeout
+  gracefulTimeout: 60    # --graceful-timeout
+  workers: 6             # --workers
+  keepalive: 5           # --keep-alive
+  maxRequests: 1000      # --max-requests (recycle worker after N requests)
+  maxRequestsJitter: 50  # --max-requests-jitter
+  extraArgs: ""          # raw passthrough appended verbatim
+```
+
+### Celery worker concurrency
+
+```yaml
+celery:
+  concurrency: 32        # CELERYD_CONCURRENCY (default 10)
+```
+
+This sets the number of child processes per worker pod. Combine with `replicaCount.worker` (and HPA, if enabled) to scale total parallelism. Note: increasing `concurrency` raises per-pod memory; size `workerResources` accordingly.
+
+### Ingress annotations
+
+`ingress.annotations` is a free-form map merged onto **every** ingress this chart renders — `api`, `api-admin`, `homeport`, `rmq-ws`, and `uvk-everypay`. It sits alongside the className-specific annotations the chart already templates (nginx, haproxy, traefik, openshift-default) and the cert-manager `cluster-issuer` annotation; ingress-controller and cert-manager keys should stay in their own values so they keep their conditional logic.
+
+The canonical use case is [external-dns](https://github.com/kubernetes-sigs/external-dns), which reads annotations on Ingress objects to manage DNS records:
+
+```yaml
+ingress:
+  annotations:
+    external-dns.alpha.kubernetes.io/ttl: "60"           # low TTL for fast cut-over during deploys
+    external-dns.alpha.kubernetes.io/hostname: "api.example.com"
+    external-dns.alpha.kubernetes.io/cloudflare-proxied: "false"
+```
+
+A 60-second TTL is a common operator choice for production rollouts: short enough that resolvers pick up an IP change within a minute, long enough to avoid hammering the upstream DNS provider during steady state. The external-dns default is 300 seconds; set it explicitly per environment.
+
+All values must be strings (Kubernetes annotation requirement) — quote numeric and boolean values. Leaving the map empty (the default) keeps the rendered ingresses byte-identical to the baseline chart.

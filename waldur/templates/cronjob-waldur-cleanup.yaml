@@ -12,6 +12,9 @@ spec:
   failedJobsHistoryLimit: 1
   jobTemplate:
     spec:
+      backoffLimit: {{ .Values.waldurCleanupCronjob.backoffLimit }}
+      activeDeadlineSeconds: {{ .Values.waldurCleanupCronjob.activeDeadlineSeconds }}
+      ttlSecondsAfterFinished: {{ .Values.waldurCleanupCronjob.ttlSecondsAfterFinished }}
       template:
         spec:
           {{ if .Values.imagePullSecrets }}

@@ -82,6 +82,11 @@ cronjobResources:
       cpu: 1000m
       memory: 1Gi
 
+waldurCleanupCronjob:
+  backoffLimit: 0
+  activeDeadlineSeconds: 1800 # Marked as failed after 30 minutes
+  ttlSecondsAfterFinished: 86400 # Deleted after 24 hours
+
 hpa:
   api:
     enabled: false

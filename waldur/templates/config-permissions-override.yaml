@@ -4,194 +4,130 @@ metadata:
   name: mastermind-config-permissions-override-yaml
 data:
   permissions-override.yaml: |
-    - role: CUSTOMER.OWNER
-      {{- if hasKey .Values.waldur.customRoleDescriptions "CUSTOMER.OWNER" }}
-      description: {{ index .Values.waldur.customRoleDescriptions "CUSTOMER.OWNER" }}
+    {{- $features          := .Values.waldur.features }}
+    {{- $descriptions      := .Values.waldur.customRoleDescriptions }}
+    {{- $customPermissions := .Values.waldur.customRolePermissions }}
+    {{- $disabledRoles     := .Values.waldur.disabledRoles }}
+    {{- $roles := list
+      (dict "name" "CUSTOMER.OWNER"          "disabledKey" "customer_owner")
+      (dict "name" "CUSTOMER.MANAGER"        "disabledKey" "customer_manager")
+      (dict "name" "CUSTOMER.SUPPORT"        "disabledKey" "customer_support")
+      (dict "name" "CUSTOMER.READER"         "disabledKey" "customer_reader")
+      (dict "name" "PROJECT.ADMIN"           "disabledKey" "project_admin")
+      (dict "name" "PROJECT.MANAGER"         "disabledKey" "project_manager")
+      (dict "name" "PROJECT.MEMBER"          "disabledKey" "project_member")
+      (dict "name" "OFFERING.MANAGER"        "disabledKey" "offering_manager")
+      (dict "name" "CALL.REVIEWER"           "disabledKey" "call_reviewer")
+      (dict "name" "CALL.MANAGER"            "disabledKey" "call_manager")
+      (dict "name" "PROPOSAL.MANAGER"        "disabledKey" "proposal_manager")
+      (dict "name" "PROPOSAL.MEMBER"         "disabledKey" "proposal_member")
+      (dict "name" "CUSTOMER.CALL_ORGANIZER" "disabledKey" "call_organizer" "scope" "call_organizer")
+    }}
+    {{- range $role := $roles }}
+    {{- $roleName := $role.name }}
+    {{- $rolePermissions := index $customPermissions $roleName }}
+    - role: {{ $roleName }}
+      {{- if $role.scope }}
+      scope: {{ $role.scope }}
+      {{- end }}
+      {{- /* description: customRoleDescriptions takes precedence; then feature-based or hardcoded fallbacks */ -}}
+      {{- if eq $roleName "CUSTOMER.CALL_ORGANIZER" }}
+      {{- if hasKey $descriptions "CUSTOMER.CALL_ORGANIZER" }}
+      description: {{ index $descriptions "CUSTOMER.CALL_ORGANIZER" }}
+      {{- else if hasKey $descriptions "CALL.MANAGER" }}
+      description: {{ index $descriptions "CALL.MANAGER" }}
       {{- else }}
-      {{ if has "academic_domain" .Values.waldur.features }}
+      description: Organization call organizer
+      {{- end }}
+      {{- else if hasKey $descriptions $roleName }}
+      description: {{ index $descriptions $roleName }}
+      {{- else if eq $roleName "CUSTOMER.OWNER" }}
+      {{ if has "academic_domain" $features }}
       description: PI
       {{ end }}
-      {{ if has "academic_shared_domain" .Values.waldur.features }}
+      {{ if has "academic_shared_domain" $features }}
       description: Resource allocator
       {{ end }}
-      {{- end }}
-      {{ if has "customer_owner" .Values.waldur.disabledRoles }}
-      is_active: false
-      {{ else }}
-      is_active: true
-      {{ end }}
-      add_permissions:
-        {{ if has "owner_can_register_service_provider" .Values.waldur.features }}
-        - SERVICE_PROVIDER.REGISTER
-        {{ end }}
-        {{ if not (has "owner_can_approve_order" .Values.waldur.features) }}
-        - ORDER.APPROVE
-        {{ end }}
-        {{ if or (has "owners_can_manage_owners" .Values.waldur.features) (has "owner_can_manage_customers" .Values.waldur.features) }}
-        - CUSTOMER.CREATE_PERMISSION
-        - CUSTOMER.UPDATE_PERMISSION
-        - CUSTOMER.DELETE_PERMISSION
-        {{ end }}
-      drop_permissions:
-        {{ if not (has "owner_can_register_service_provider" .Values.waldur.features) }}
-        - SERVICE_PROVIDER.REGISTER
-        {{ end }}
-        {{ if has "owner_can_approve_order" .Values.waldur.features }}
-        - ORDER.APPROVE
-        {{ end }}
-        {{ if not (or (has "owners_can_manage_owners" .Values.waldur.features) (has "owner_can_manage_customers" .Values.waldur.features)) }}
-        - CUSTOMER.CREATE_PERMISSION
-        - CUSTOMER.UPDATE_PERMISSION
-        - CUSTOMER.DELETE_PERMISSION
-        {{ end }}
-
-    - role: CUSTOMER.MANAGER
-      {{ if has "customer_manager" .Values.waldur.disabledRoles }}
-      is_active: false
-      {{ else }}
-      is_active: true
-      {{ end }}
-      {{- if hasKey .Values.waldur.customRoleDescriptions "CUSTOMER.MANAGER" }}
-      description: {{ index .Values.waldur.customRoleDescriptions "CUSTOMER.MANAGER" }}
-      {{- end }}
-
-    - role: CUSTOMER.SUPPORT
-      {{ if has "customer_support" .Values.waldur.disabledRoles }}
-      is_active: false
-      {{ else }}
-      is_active: true
-      {{ end }}
-      {{- if hasKey .Values.waldur.customRoleDescriptions "CUSTOMER.SUPPORT" }}
-      description: {{ index .Values.waldur.customRoleDescriptions "CUSTOMER.SUPPORT" }}
-      {{- end }}
-
-    - role: PROJECT.ADMIN
-      {{- if hasKey .Values.waldur.customRoleDescriptions "PROJECT.ADMIN" }}
-      description: {{ index .Values.waldur.customRoleDescriptions "PROJECT.ADMIN" }}
-      {{- else }}
-      {{ if has "academic_domain" .Values.waldur.features }}
+      {{- else if eq $roleName "PROJECT.ADMIN" }}
+      {{ if has "academic_domain" $features }}
       description: Member
       {{ end }}
-      {{ if has "academic_shared_domain" .Values.waldur.features }}
+      {{ if has "academic_shared_domain" $features }}
       description: Co-PI
       {{ end }}
-      {{- end }}
-      {{ if has "project_admin" .Values.waldur.disabledRoles }}
-      is_active: false
-      {{ else }}
-      is_active: true
-      {{ end }}
-      add_permissions:
-        {{ if has "admin_can_approve_order" .Values.waldur.features }}
-        - ORDER.APPROVE
-        {{ end }}
-      drop_permissions:
-        {{ if not (has "admin_can_approve_order" .Values.waldur.features) }}
-        - ORDER.APPROVE
-        {{ end }}
-
-    - role: PROJECT.MANAGER
-      {{- if hasKey .Values.waldur.customRoleDescriptions "PROJECT.MANAGER" }}
-      description: {{ index .Values.waldur.customRoleDescriptions "PROJECT.MANAGER" }}
-      {{- else }}
-      {{ if has "academic_domain" .Values.waldur.features }}
+      {{- else if eq $roleName "PROJECT.MANAGER" }}
+      {{ if has "academic_domain" $features }}
       description: Co-PI
       {{ end }}
-      {{ if has "academic_shared_domain" .Values.waldur.features }}
+      {{ if has "academic_shared_domain" $features }}
       description: PI
       {{ end }}
-      {{- end }}
-      {{ if has "project_manager" .Values.waldur.disabledRoles }}
-      is_active: false
-      {{ else }}
-      is_active: true
-      {{ end }}
-      add_permissions:
-        {{ if and (hasKey .Values.waldur.customRolePermissions "PROJECT.MANAGER") (hasKey (index .Values.waldur.customRolePermissions "PROJECT.MANAGER") "addPermissions") }}
-        {{- toYaml (index .Values.waldur.customRolePermissions "PROJECT.MANAGER").addPermissions | nindent 8 }}
-        {{ else if has "manager_can_approve_order" .Values.waldur.features }}
-        - ORDER.APPROVE
-        {{- end }}
-      drop_permissions:
-        {{ if and (hasKey .Values.waldur.customRolePermissions "PROJECT.MANAGER") (hasKey (index .Values.waldur.customRolePermissions "PROJECT.MANAGER") "dropPermissions") }}
-        {{- toYaml (index .Values.waldur.customRolePermissions "PROJECT.MANAGER").dropPermissions | nindent 8 }}
-        {{ else if not (has "manager_can_approve_order" .Values.waldur.features) }}
-        - ORDER.APPROVE
-        {{- end }}
-
-    - role: PROJECT.MEMBER
-      {{- if hasKey .Values.waldur.customRoleDescriptions "PROJECT.MEMBER" }}
-      description: {{ index .Values.waldur.customRoleDescriptions "PROJECT.MEMBER" }}
-      {{- else }}
-      {{ if has "academic_domain" .Values.waldur.features }}
+      {{- else if eq $roleName "PROJECT.MEMBER" }}
+      {{ if has "academic_domain" $features }}
       description: Guest
       {{ else }}
       description: Project member
       {{ end }}
       {{- end }}
-      {{ if has "project_member" .Values.waldur.disabledRoles }}
+      {{ if has $role.disabledKey $disabledRoles }}
       is_active: false
       {{ else }}
       is_active: true
       {{ end }}
+      {{- /* add_permissions: customRolePermissions first, then feature-based fallback for roles that have one */ -}}
+      {{- if and $rolePermissions (hasKey $rolePermissions "addPermissions") }}
       add_permissions:
-        {{ if and (hasKey .Values.waldur.customRolePermissions "PROJECT.MEMBER") (hasKey (index .Values.waldur.customRolePermissions "PROJECT.MEMBER") "addPermissions") }}
-        {{- toYaml (index .Values.waldur.customRolePermissions "PROJECT.MEMBER").addPermissions | nindent 8 }}
-        {{- end }}
+        {{- toYaml (index $rolePermissions "addPermissions") | nindent 8 }}
+      {{- else if eq $roleName "CUSTOMER.OWNER" }}
+      add_permissions:
+        {{ if has "owner_can_register_service_provider" $features }}
+        - SERVICE_PROVIDER.REGISTER
+        {{ end }}
+        {{ if not (has "owner_can_approve_order" $features) }}
+        - ORDER.APPROVE
+        {{ end }}
+        {{ if or (has "owners_can_manage_owners" $features) (has "owner_can_manage_customers" $features) }}
+        - CUSTOMER.CREATE_PERMISSION
+        - CUSTOMER.UPDATE_PERMISSION
+        - CUSTOMER.DELETE_PERMISSION
+        {{ end }}
+      {{- else if eq $roleName "PROJECT.ADMIN" }}
+      {{ if has "admin_can_approve_order" $features }}
+      add_permissions:
+        - ORDER.APPROVE
+      {{ end }}
+      {{- else if eq $roleName "PROJECT.MANAGER" }}
+      {{ if has "manager_can_approve_order" $features }}
+      add_permissions:
+        - ORDER.APPROVE
+      {{ end }}
+      {{- end }}
+      {{- /* drop_permissions: customRolePermissions first, then feature-based fallback */ -}}
+      {{- if and $rolePermissions (hasKey $rolePermissions "dropPermissions") }}
       drop_permissions:
-        {{ if and (hasKey .Values.waldur.customRolePermissions "PROJECT.MEMBER") (hasKey (index .Values.waldur.customRolePermissions "PROJECT.MEMBER") "dropPermissions") }}
-        {{- toYaml (index .Values.waldur.customRolePermissions "PROJECT.MEMBER").dropPermissions | nindent 8 }}
-        {{- end }}
-
-    - role: OFFERING.MANAGER
-      {{- if hasKey .Values.waldur.customRoleDescriptions "OFFERING.MANAGER" }}
-      description: {{ index .Values.waldur.customRoleDescriptions "OFFERING.MANAGER" }}
-      {{- end }}
-      {{ if has "offering_manger" .Values.waldur.disabledRoles }}
-      is_active: false
-      {{ else }}
-      is_active: true
+        {{- toYaml (index $rolePermissions "dropPermissions") | nindent 8 }}
+      {{- else if eq $roleName "CUSTOMER.OWNER" }}
+      drop_permissions:
+        {{ if not (has "owner_can_register_service_provider" $features) }}
+        - SERVICE_PROVIDER.REGISTER
+        {{ end }}
+        {{ if has "owner_can_approve_order" $features }}
+        - ORDER.APPROVE
+        {{ end }}
+        {{ if not (or (has "owners_can_manage_owners" $features) (has "owner_can_manage_customers" $features)) }}
+        - CUSTOMER.CREATE_PERMISSION
+        - CUSTOMER.UPDATE_PERMISSION
+        - CUSTOMER.DELETE_PERMISSION
+        {{ end }}
+      {{- else if eq $roleName "PROJECT.ADMIN" }}
+      {{ if not (has "admin_can_approve_order" $features) }}
+      drop_permissions:
+        - ORDER.APPROVE
       {{ end }}
-
-    - role: CALL.REVIEWER
-      {{- if hasKey .Values.waldur.customRoleDescriptions "CALL.REVIEWER" }}
-      description: {{ index .Values.waldur.customRoleDescriptions "CALL.REVIEWER" }}
-      {{- end }}
-      {{ if has "call_reviewer" .Values.waldur.disabledRoles }}
-      is_active: false
-      {{ else }}
-      is_active: true
+      {{- else if eq $roleName "PROJECT.MANAGER" }}
+      {{ if not (has "manager_can_approve_order" $features) }}
+      drop_permissions:
+        - ORDER.APPROVE
       {{ end }}
-
-    - role: CALL.MANAGER
-      {{- if hasKey .Values.waldur.customRoleDescriptions "CALL.MANAGER" }}
-      description: {{ index .Values.waldur.customRoleDescriptions "CALL.MANAGER" }}
       {{- end }}
-      {{ if has "call_manager" .Values.waldur.disabledRoles }}
-      is_active: false
-      {{ else }}
-      is_active: true
-      {{ end }}
-
-    - role: PROPOSAL.MANAGER
-      {{- if hasKey .Values.waldur.customRoleDescriptions "PROPOSAL.MANAGER" }}
-      description: {{ index .Values.waldur.customRoleDescriptions "PROPOSAL.MANAGER" }}
-      {{- end }}
-      {{ if has "proposal_manager" .Values.waldur.disabledRoles }}
-      is_active: false
-      {{ else }}
-      is_active: true
-      {{ end }}
-
-    - role: CUSTOMER.CALL_ORGANIZER
-      scope: call_organizer
-      {{- if hasKey .Values.waldur.customRoleDescriptions "CALL.MANAGER" }}
-      description: {{ index .Values.waldur.customRoleDescriptions "CALL.MANAGER" }}
-      {{- else }}
-      description: Organization call organizer
-      {{- end }}
-      {{ if has "call_organizer" .Values.waldur.disabledRoles }}
-      is_active: false
-      {{ else }}
-      is_active: true
-      {{ end }}
+    {{ end }}

@@ -51,7 +51,7 @@ spec:
               command:
                 - "/bin/bash"
                 - "-c"
-                - "celery -A waldur_core.server inspect -d celery@$HOSTNAME ping"
+                - "celery -A waldur_core.server inspect -d celery@$HOSTNAME ping -t 10"
             periodSeconds: 10
             failureThreshold: 12
             timeoutSeconds: 30
@@ -60,7 +60,7 @@ spec:
               command:
                 - "/bin/bash"
                 - "-c"
-                - "celery -A waldur_core.server inspect -d celery@$HOSTNAME ping"
+                - "celery -A waldur_core.server inspect -d celery@$HOSTNAME ping -t 10"
             periodSeconds: 60
             failureThreshold: 5
             timeoutSeconds: 30
@@ -69,7 +69,7 @@ spec:
               command:
                 - "/bin/bash"
                 - "-c"
-                - "celery -A waldur_core.server inspect -d celery@$HOSTNAME ping"
+                - "celery -A waldur_core.server inspect -d celery@$HOSTNAME ping -t 10"
             periodSeconds: 25
             failureThreshold: 3
             timeoutSeconds: 30

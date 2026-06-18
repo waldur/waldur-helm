@@ -1,0 +1,41 @@
+{{- if and .Values.ingress.enabled (eq .Values.ingress.className "traefik") .Values.matrixChat.enabled .Values.matrixChat.homeserver.enabled }}
+{{/*
+  matrix-ingress references the <namespace>-matrix-chain middleware. No CSP/CORS
+  middleware here on purpose: the homeserver, lk-jwt and LiveKit each emit their
+  own CORS headers (the Matrix spec requires Access-Control-Allow-Origin: * from
+  the homeserver), so injecting homeport's headers would corrupt the API responses.
+*/}}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: matrix-redirect-https
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+{{- if .Values.ingress.whitelistSourceRange }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: matrix-ipallowlist
+spec:
+  ipAllowList:
+    sourceRange:
+      {{- range (splitList "," .Values.ingress.whitelistSourceRange) }}
+      - {{ . | trim | quote }}
+      {{- end }}
+---
+{{- end }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: matrix-chain
+spec:
+  chain:
+    middlewares:
+      - name: matrix-redirect-https
+      {{- if .Values.ingress.whitelistSourceRange }}
+      - name: matrix-ipallowlist
+      {{- end }}
+{{- end }}

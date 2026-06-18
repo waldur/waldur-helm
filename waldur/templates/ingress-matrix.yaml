@@ -1,0 +1,98 @@
+{{- if and .Values.ingress.enabled .Values.matrixChat.enabled .Values.matrixChat.homeserver.enabled }}
+{{- $h := .Values.matrixChat.homeserver }}
+{{- if or ( gt .Capabilities.KubeVersion.Major "1" ) ( ge .Capabilities.KubeVersion.Minor "19" ) }}
+apiVersion: networking.k8s.io/v1
+{{- else }}
+apiVersion: networking.k8s.io/v1beta1
+{{- end }}
+kind: Ingress
+metadata:
+  name: matrix-ingress
+  annotations:
+    {{ if eq .Values.ingress.className "nginx" }}
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    # Matrix media/event uploads exceed the api's 10m; signaling is a long-lived websocket.
+    # Derived from the homeserver's maxRequestSize (bytes -> MiB) so the ingress cap and
+    # Tuwunel agree — otherwise uploads between the two limits 413 at the ingress. Round
+    # UP (ceil) so a non-MiB-multiple maxRequestSize never caps the ingress below Tuwunel.
+    nginx.ingress.kubernetes.io/proxy-body-size: {{ div (add (int64 $h.maxRequestSize) 1048575) 1048576 }}m
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    {{ if .Values.ingress.whitelistSourceRange }}
+    nginx.ingress.kubernetes.io/whitelist-source-range: "{{ .Values.ingress.whitelistSourceRange }}"
+    {{ end }}
+    {{ else if or (eq .Values.ingress.className "openshift-default") (eq .Values.ingress.className "haproxy") }}
+    haproxy.org/ssl-redirect: "true"
+    haproxy.org/timeout-tunnel: "3600s"
+    {{ if and .Values.ingress.tls.enabled (.Values.ingress.tls.source | eq "cluster") }}
+    route.openshift.io/termination: "edge"
+    {{ end }}
+    {{ if .Values.ingress.whitelistSourceRange }}
+    haproxy.org/allow-list: "{{ .Values.ingress.whitelistSourceRange }}"
+    {{ end }}
+    {{ else if eq .Values.ingress.className "traefik" }}
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ .Release.Namespace }}-matrix-chain@kubernetescrd"
+    {{ end }}
+    {{ if and .Values.ingress.tls.enabled (eq .Values.ingress.tls.source "letsEncrypt") }}
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.tls.clusterIssuerName | default "letsencrypt-prod-issuer" }}
+    {{ end }}
+    {{- include "waldur.ingressAnnotations" . }}
+spec:
+  {{ if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className | quote }}
+  {{ end }}
+  rules:
+  - host: {{ $h.serverName }}
+    http:
+      paths:
+      - path: /.well-known/matrix
+        pathType: Prefix
+        backend:
+          service:
+            name: matrix-homeserver
+            port:
+              number: {{ $h.clientPort }}
+      - path: /_matrix
+        pathType: Prefix
+        backend:
+          service:
+            name: matrix-homeserver
+            port:
+              number: {{ $h.clientPort }}
+      {{- if .Values.matrixChat.lkJwt.enabled }}
+      - path: /sfu
+        pathType: Prefix
+        backend:
+          service:
+            name: lk-jwt-service
+            port:
+              number: 8080
+      {{- end }}
+      {{- if .Values.matrixChat.livekit.enabled }}
+      # LiveKit signaling websocket (media stays on the livekit-rtc LoadBalancer).
+      # The browser LiveKit SDK dials publicUrl + /rtc.
+      - path: /rtc
+        pathType: Prefix
+        backend:
+          service:
+            name: livekit-signaling
+            port:
+              number: {{ .Values.matrixChat.livekit.rtc.signalingPort }}
+      # LiveKit RoomService (Twirp) API. lk-jwt-service calls publicUrl + /twirp
+      # to create the room before issuing a JWT; without this route room
+      # creation 404s and calls never start.
+      - path: /twirp
+        pathType: Prefix
+        backend:
+          service:
+            name: livekit-signaling
+            port:
+              number: {{ .Values.matrixChat.livekit.rtc.signalingPort }}
+      {{- end }}
+  {{ if and .Values.ingress.tls.enabled (.Values.ingress.tls.source | ne "cluster") }}
+  tls:
+  - hosts:
+    - {{ $h.serverName }}
+    secretName: matrix-certificate
+  {{ end }}
+{{- end }}

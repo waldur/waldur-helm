@@ -1,0 +1,42 @@
+{{- if and .Values.matrixChat.enabled .Values.matrixChat.livekit.enabled }}
+# LiveKit WebRTC media plane.
+# Exposed as an L4 LoadBalancer (NOT through the shared matrix ingress): real-time
+# media is UDP/TCP and cannot traverse an HTTP/L7 ingress. Keeping it on its own
+# external path also stops media bandwidth from contending with the shared ingress LB.
+# Mixed UDP+TCP on one Service requires the MixedProtocolLBService feature (GA k8s 1.26+).
+apiVersion: v1
+kind: Service
+metadata:
+  name: livekit-rtc
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+    {{- with .Values.matrixChat.livekit.rtc.serviceLabels }}
+{{ toYaml . | indent 4 }}
+    {{- end }}
+spec:
+  type: LoadBalancer
+  # No externalTrafficPolicy override -> defaults to `Cluster`. `Local` would
+  # preserve the client source IP, but on bare-metal LB-IPAM (e.g. Cilium) it
+  # only announces the VIP from the node running the pod, so the public IP goes
+  # dark whenever the pod is rescheduled onto a non-announcing node. `Cluster`
+  # announces from any node; rtc.nodeIp pins the advertised ICE address, so the
+  # SNAT that `Cluster` adds no longer flaps the candidate pair.
+  ports:
+    - name: rtc-udp
+      port: {{ .Values.matrixChat.livekit.rtc.udpPort }}
+      targetPort: {{ .Values.matrixChat.livekit.rtc.udpPort }}
+      protocol: UDP
+    - name: rtc-tcp
+      port: {{ .Values.matrixChat.livekit.rtc.tcpPort }}
+      targetPort: {{ .Values.matrixChat.livekit.rtc.tcpPort }}
+      protocol: TCP
+    {{- if .Values.matrixChat.livekit.turn.enabled }}
+    # TURNS shares this L4 LoadBalancer; turn.domain must resolve to its external IP.
+    - name: turns
+      port: {{ .Values.matrixChat.livekit.turn.tlsPort }}
+      targetPort: {{ .Values.matrixChat.livekit.turn.tlsPort }}
+      protocol: TCP
+    {{- end }}
+  selector:
+    app: livekit
+{{- end }}

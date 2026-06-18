@@ -1,0 +1,92 @@
+{{- if and .Values.matrixChat.enabled .Values.matrixChat.lkJwt.enabled }}
+{{- $j := .Values.matrixChat.lkJwt }}
+{{- $k := .Values.matrixChat.livekit.keys }}
+{{- $h := .Values.matrixChat.homeserver }}
+{{- if not .Values.matrixChat.livekit.publicUrl }}
+{{- fail "matrixChat.livekit.publicUrl is required when lk-jwt-service is enabled: it is the public wss URL lk-jwt returns to the browser for call signaling. An empty value hands clients LIVEKIT_URL=\"\" and calls fail silently with no render-time hint. Set it to e.g. wss://<serverName>." }}
+{{- end }}
+ {{- if and (not .Values.matrixChat.livekit.enabled) (not $k.existingSecret.name) }}
+{{- fail "matrixChat.lkJwt is enabled with matrixChat.livekit.enabled=false (external LiveKit), but matrixChat.livekit.keys.existingSecret.name is unset. The chart only creates the livekit-secret when it deploys the bundled server, so lk-jwt-service would reference a non-existent Secret and crashloop. Point keys.existingSecret.name at a Secret holding your external LiveKit's API key/secret." }}
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lk-jwt-service
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lk-jwt-service
+  template:
+    metadata:
+      labels:
+        app: lk-jwt-service
+        {{ include "waldur.labels" . | nindent 8 }}
+    spec:
+      {{ if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range $i, $val := .Values.imagePullSecrets }}
+        - name: {{ $val }}
+        {{ end -}}
+      {{ end }}
+      containers:
+        - name: lk-jwt-service
+          {{- if $j.imageDigest }}
+          image: {{ $j.imageRegistry }}/{{ $j.imageName }}@{{ $j.imageDigest }}
+          {{- else }}
+          image: {{ $j.imageRegistry }}/{{ $j.imageName }}:{{ $j.imageTag }}
+          {{- end }}
+          imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" $j.imageTag "Values" .Values) }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            # The public wss signaling URL lk-jwt returns to the browser.
+            - name: LIVEKIT_URL
+              value: {{ .Values.matrixChat.livekit.publicUrl | quote }}
+            # Homeservers lk-jwt grants full LiveKit access to (federation-verified).
+            - name: LIVEKIT_FULL_ACCESS_HOMESERVERS
+              value: {{ $h.serverName | quote }}
+            - name: LIVEKIT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $k.existingSecret.name | default "livekit-secret" }}
+                  key: {{ $k.existingSecret.apiKeyKey | default "LIVEKIT_API_KEY" }}
+            - name: LIVEKIT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $k.existingSecret.name | default "livekit-secret" }}
+                  key: {{ $k.existingSecret.apiSecretKey | default "LIVEKIT_API_SECRET" }}
+            {{- if $j.insecureSkipVerifyTls }}
+            # Dev only: accept the homeserver's self-signed federation cert.
+            - name: LIVEKIT_INSECURE_SKIP_VERIFY_TLS
+              value: "YES_I_KNOW_WHAT_I_AM_DOING"
+            {{- end }}
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          resources:
+            {{- toYaml $j.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+{{- end }}

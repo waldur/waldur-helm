@@ -1,0 +1,124 @@
+{{- if and .Values.matrixChat.enabled .Values.matrixChat.livekit.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: livekit
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: livekit
+  template:
+    metadata:
+      labels:
+        app: livekit
+        {{ include "waldur.labels" . | nindent 8 }}
+    spec:
+      {{ if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range $i, $val := .Values.imagePullSecrets }}
+        - name: {{ $val }}
+        {{ end -}}
+      {{ end }}
+      containers:
+        - name: livekit
+          {{- $lkRegistry := .Values.matrixChat.livekit.imageRegistry | default .Values.global.imageRegistry }}
+          {{- if .Values.matrixChat.livekit.imageDigest }}
+          image: {{ $lkRegistry }}/{{ .Values.matrixChat.livekit.imageName }}@{{ .Values.matrixChat.livekit.imageDigest }}
+          {{- else }}
+          image: {{ $lkRegistry }}/{{ .Values.matrixChat.livekit.imageName }}:{{ .Values.matrixChat.livekit.imageTag }}
+          {{- end }}
+          imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" .Values.matrixChat.livekit.imageTag "Values" .Values) }}
+          # RTC/port settings live in the mounted config file (see config-livekit.yaml);
+          # livekit-server ignores nested settings passed as env vars.
+          args:
+            - "--config"
+            - "/etc/livekit/config.yaml"
+          ports:
+            - name: signaling
+              containerPort: {{ .Values.matrixChat.livekit.rtc.signalingPort }}
+              protocol: TCP
+            - name: rtc-tcp
+              containerPort: {{ .Values.matrixChat.livekit.rtc.tcpPort }}
+              protocol: TCP
+            - name: rtc-udp
+              containerPort: {{ .Values.matrixChat.livekit.rtc.udpPort }}
+              protocol: UDP
+            {{- if .Values.matrixChat.livekit.turn.enabled }}
+            - name: turns
+              containerPort: {{ .Values.matrixChat.livekit.turn.tlsPort }}
+              protocol: TCP
+            {{- end }}
+          env:
+            # LiveKit server wants keys as one "apikey: secret" string (LIVEKIT_KEYS).
+            # Provided via Secret and merged with the mounted config at startup.
+            {{- $k := .Values.matrixChat.livekit.keys }}
+            {{- if $k.existingSecret.name }}
+            - name: LIVEKIT_KEYS
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $k.existingSecret.name }}
+                  key: {{ $k.existingSecret.livekitKeysKey | default "LIVEKIT_KEYS" }}
+            {{- else if and $k.apiKey $k.apiSecret }}
+            - name: LIVEKIT_KEYS
+              valueFrom:
+                secretKeyRef:
+                  name: livekit-secret
+                  key: LIVEKIT_KEYS
+            {{- end }}
+          # LiveKit serves GET / -> "OK" on the signaling port.
+          readinessProbe:
+            httpGet:
+              port: {{ .Values.matrixChat.livekit.rtc.signalingPort }}
+              path: /
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: {{ .Values.matrixChat.livekit.rtc.signalingPort }}
+              path: /
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          resources:
+            {{- toYaml .Values.matrixChat.livekit.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/livekit
+            {{- if .Values.matrixChat.livekit.turn.enabled }}
+            # Separate mount (not a subdir of /etc/livekit) to avoid nesting a
+            # Secret volume inside the ConfigMap mount. Matches cert_file/key_file
+            # in config-livekit.yaml.
+            - name: turn-tls
+              mountPath: /etc/livekit-turn
+              readOnly: true
+            {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: livekit-config
+        {{- if .Values.matrixChat.livekit.turn.enabled }}
+        {{- $turn := .Values.matrixChat.livekit.turn }}
+        - name: turn-tls
+          secret:
+            secretName: {{ $turn.tls.existingSecret }}
+            items:
+              - key: {{ $turn.tls.certKey }}
+                path: tls.crt
+              - key: {{ $turn.tls.keyKey }}
+                path: tls.key
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+{{- end }}

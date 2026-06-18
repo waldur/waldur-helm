@@ -673,6 +673,114 @@ rabbitmq:
     usernameKey: ""
     passwordKey: ""
 
+# Matrix chat integration (LiveKit media SFU + Matrix homeserver + lk-jwt).
+matrixChat:
+  enabled: false
+  livekit:
+    # Deploy the bundled livekit-server SFU. Set to false to use an EXTERNAL,
+    # operator-managed LiveKit instead: keep lkJwt.enabled=true, point publicUrl
+    # at the external wss endpoint, and supply its API key/secret via
+    # keys.existingSecret.name (the chart only creates livekit-secret when this
+    # is true, so an external setup MUST use existingSecret).
+    enabled: false
+    imageRegistry: docker.io
+    imageName: livekit/livekit-server
+    imageTag: "v1.12.0"
+    imageDigest: ""
+    # Public wss signaling URL the browser dials (returned to clients by lk-jwt).
+    # Bundled LiveKit: reachable via the matrix ingress (e.g. wss://matrix.example.org).
+    # External LiveKit: the external instance's own wss endpoint.
+    # Either way, NOT an in-cluster name.
+    publicUrl: ""           # e.g. wss://matrix.example.org
+    resources: {}
+    keys:
+      apiKey: ""              # set this (chart creates a Secret from it) or use existingSecret
+      apiSecret: ""           # set this or use existingSecret
+      existingSecret:
+        name: ""              # reference your own Secret instead (overrides the inline values)
+        apiKeyKey: "LIVEKIT_API_KEY"        # used by lk-jwt-service
+        apiSecretKey: "LIVEKIT_API_SECRET"  # used by lk-jwt-service
+        livekitKeysKey: "LIVEKIT_KEYS"      # used by livekit-server ("apikey: secret")
+    rtc:
+      signalingPort: 7880     # signaling (wss); ClusterIP behind the shared ingress
+      udpPort: 7882           # WebRTC media, primary; LoadBalancer, never ingress
+      tcpPort: 7881           # WebRTC media, fallback
+      # Set to the LiveKit node's public IP so it advertises a reachable address in
+      # ICE candidates; otherwise calls connect but carry no audio/video.
+      useExternalIp: true
+      nodeIp: ""
+      # Extra labels merged onto the livekit-rtc LoadBalancer Service. Empty by
+      # default; some bare-metal LB controllers select the public vs internal IP
+      # pool via a label (e.g. Cilium LB-IPAM: cilium.io/public-ip: "true").
+      serviceLabels: {}
+    turn:
+      # TURN/TLS relay. Direct host candidates (udpPort/tcpPort) cover cone NATs;
+      # symmetric-NAT clients otherwise connect to signaling but carry no media.
+      # Off by default; enable when users aren't all on friendly networks.
+      enabled: false
+      # Keep 443: TLS-only firewalls (what TURN/TLS exists to traverse) allow only
+      # 443, so a relay on any other port fails for the users it should rescue. The
+      # dedicated LoadBalancer IP leaves 443 free.
+      tlsPort: 443
+      # Hostname clients dial for TURNS (and the TLS CN). MUST resolve to the
+      # livekit-rtc LoadBalancer IP, not serverName (the matrix ingress).
+      # Use a dedicated name, e.g. turn.<serverName>.
+      domain: ""
+      tls:
+        # Secret (tls.crt / tls.key) for `domain` — LiveKit terminates TURNS TLS
+        # itself. Point at the cert-manager Secret issued for `domain`.
+        existingSecret: ""
+        certKey: "tls.crt"
+        keyKey: "tls.key"
+  lkJwt:
+    # Element's LiveKit JWT service.
+    enabled: false
+    imageRegistry: ghcr.io
+    imageName: element-hq/lk-jwt-service
+    # lk-jwt publishes no semver image tags — only latest / sha-<commit>.
+    imageTag: ""
+    imageDigest: "sha256:29918567e6b7cd920e2853b4cd6848ce01b79947c3d19a9f1ed5b74f0a2a88bf"
+    # Accept a self-signed homeserver cert. Dev only. Prod uses a real cert.
+    insecureSkipVerifyTls: false
+    resources: {}
+  homeserver:
+    # Matrix homeserver. The backend integration was built and tested against Tuwunel.
+    enabled: false
+    imageRegistry: ghcr.io
+    imageName: matrix-construct/tuwunel
+    imageTag: "v1.4.9"
+    imageDigest: ""
+    resources: {}
+    # server_name is baked into every user/room ID (@user:<serverName>) and is
+    # IMMUTABLE once the homeserver has data. Set it to your real domain.
+    serverName: ""
+    clientPort: 6167
+    allowRegistration: true
+    # Federation must stay on: lk-jwt-service verifies the user's Matrix OpenID
+    # token via the federation endpoint before issuing a LiveKit JWT.
+    allowFederation: true
+    maxRequestSize: 104857600
+    # Public lk-jwt base URL advertised to clients, e.g. https://<serverName>.
+    # Do NOT append /sfu — Element Call adds /sfu/get itself, so a trailing
+    # /sfu produces a 404 on /sfu/sfu/get and calls never connect.
+    # Required for calls. Leave empty until lk-jwt-service is deployed.
+    livekitServiceUrl: ""
+    # Registration token that gates user provisioning. MUST equal the backend's
+    # MATRIX_USER_REGISTRATION_SECRET.
+    registrationToken: ""
+    registrationTokenExistingSecret:
+      name: ""
+      key: "registration_token"
+    persistence:
+      enabled: true
+      size: 10Gi
+      storageClass: ""
+      # Empty: the StatefulSet provisions its own PVC (data-matrix-homeserver-0)
+      # from the volumeClaimTemplate. Set it to mount a pre-existing claim
+      # instead — e.g. to adopt the `matrix-homeserver-data` PVC from a prior
+      # Deployment-based release without losing the embedded database.
+      existingClaim: ""
+
 global:
   imageRegistry: "docker.io"
   # TODO: remove after migration to a stable RabbitMQ and PostgreSQL images from bitnamilegacy repo

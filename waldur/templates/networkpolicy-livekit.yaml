@@ -1,0 +1,30 @@
+{{ if and .Values.networkPolicy.enabled .Values.matrixChat.enabled .Values.matrixChat.livekit.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: livekit-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: livekit
+  policyTypes:
+  - Ingress
+  - Egress
+  # Empty `from` = allow from anywhere: LiveKit media is external WebRTC traffic.
+  # A same-namespace `podSelector: {}` rule would silently kill all calls.
+  ingress:
+  - from: []
+    ports:
+    - protocol: TCP
+      port: {{ .Values.matrixChat.livekit.rtc.signalingPort }}
+    - protocol: TCP
+      port: {{ .Values.matrixChat.livekit.rtc.tcpPort }}
+    - protocol: UDP
+      port: {{ .Values.matrixChat.livekit.rtc.udpPort }}
+    {{- if .Values.matrixChat.livekit.turn.enabled }}
+    - protocol: TCP
+      port: {{ .Values.matrixChat.livekit.turn.tlsPort }}
+    {{- end }}
+  egress:
+  - to: []
+{{ end }}

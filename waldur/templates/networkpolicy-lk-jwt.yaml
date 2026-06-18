@@ -1,0 +1,23 @@
+{{ if and .Values.networkPolicy.enabled .Values.matrixChat.enabled .Values.matrixChat.lkJwt.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: lk-jwt-service-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: lk-jwt-service
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 8080
+  # Egress open: lk-jwt must reach https://<serverName> to verify OpenID tokens
+  # and create LiveKit rooms via /twirp before issuing a JWT.
+  egress:
+  - to: []
+{{ end }}

@@ -1,0 +1,19 @@
+{{- if and .Values.matrixChat.enabled .Values.matrixChat.lkJwt.enabled }}
+# lk-jwt-service signs LiveKit JWTs from Matrix OpenID tokens. ClusterIP —
+# reached by the browser through the shared matrix ingress (L7).
+apiVersion: v1
+kind: Service
+metadata:
+  name: lk-jwt-service
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: lk-jwt-service
+{{- end }}

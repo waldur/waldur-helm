@@ -1,0 +1,119 @@
+{{- if and .Values.matrixChat.enabled .Values.matrixChat.homeserver.enabled }}
+{{- $h := .Values.matrixChat.homeserver }}
+# Tuwunel is a single-writer homeserver with an embedded RocksDB on a
+# ReadWriteOnce volume, so it runs as a single-replica StatefulSet: the stable
+# pod identity and per-replica volumeClaimTemplate structurally enforce
+# at-most-one-writer, and a rolling update deletes the old pod (releasing the
+# RWO disk) before creating its replacement, so the single-writer invariant
+# holds without the Deployment's Recreate strategy.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: matrix-homeserver
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+spec:
+  replicas: 1
+  # serviceName is required, but a single-replica Tuwunel has no peers to
+  # discover, so we reuse the ClusterIP service instead of a dedicated headless
+  # one (whose only feature — stable per-pod DNS — nothing here uses).
+  serviceName: matrix-homeserver
+  selector:
+    matchLabels:
+      app: matrix-homeserver
+  template:
+    metadata:
+      labels:
+        app: matrix-homeserver
+        {{ include "waldur.labels" . | nindent 8 }}
+    spec:
+      {{ if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range $i, $val := .Values.imagePullSecrets }}
+        - name: {{ $val }}
+        {{ end -}}
+      {{ end }}
+      containers:
+        - name: matrix-homeserver
+          {{- if $h.imageDigest }}
+          image: {{ $h.imageRegistry }}/{{ $h.imageName }}@{{ $h.imageDigest }}
+          {{- else }}
+          image: {{ $h.imageRegistry }}/{{ $h.imageName }}:{{ $h.imageTag }}
+          {{- end }}
+          imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" $h.imageTag "Values" .Values) }}
+          ports:
+            - name: client
+              containerPort: {{ $h.clientPort }}
+              protocol: TCP
+          env:
+            - name: TUWUNEL_CONFIG
+              value: /etc/tuwunel.toml
+            {{- if or $h.registrationTokenExistingSecret.name $h.registrationToken }}
+            - name: TUWUNEL_REGISTRATION_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $h.registrationTokenExistingSecret.name | default "matrix-homeserver-secret" }}
+                  key: {{ $h.registrationTokenExistingSecret.key | default "registration_token" }}
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              port: {{ $h.clientPort }}
+              path: /_matrix/client/versions
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              port: {{ $h.clientPort }}
+              path: /_matrix/client/versions
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          resources:
+            {{- toYaml $h.resources | nindent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/tuwunel.toml
+              subPath: tuwunel.toml
+            - name: data
+              mountPath: /var/lib/tuwunel
+      volumes:
+        - name: config
+          configMap:
+            name: matrix-homeserver-config
+        {{- if not $h.persistence.enabled }}
+        - name: data
+          emptyDir: {}
+        {{- else if $h.persistence.existingClaim }}
+        # BYO claim: mount it directly instead of letting the StatefulSet manage
+        # the volume. Also the migration path off a prior Deployment-based
+        # release — point existingClaim at its `matrix-homeserver-data` PVC.
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ $h.persistence.existingClaim }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+  {{- if and $h.persistence.enabled (not $h.persistence.existingClaim) }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ $h.persistence.size }}
+        {{- if $h.persistence.storageClass }}
+        storageClassName: {{ $h.persistence.storageClass }}
+        {{- end }}
+  {{- end }}
+{{- end }}

@@ -1,0 +1,21 @@
+{{ if and .Values.networkPolicy.enabled .Values.matrixChat.enabled .Values.matrixChat.homeserver.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: matrix-homeserver-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: matrix-homeserver
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: {{ .Values.matrixChat.homeserver.clientPort }}
+  egress:
+  - to: []
+{{ end }}

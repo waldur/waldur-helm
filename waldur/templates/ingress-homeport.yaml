@@ -14,13 +14,22 @@ metadata:
       {{ $customSentryUrl443 = (print .Values.waldur.homeport.customSentryURL ":443") }}
       {{ $customSentryUrl80 = (print .Values.waldur.homeport.customSentryURL ":80") }}
     {{ end }}
+    {{/* Matrix chat: the homeport SPA talks to the homeserver directly — https for
+         the chat sync/media and wss for LiveKit call signaling. Without these the
+         browser CSP blocks the chat client (https) and calls (wss). */}}
+    {{ $matrixConnect := "" }}
+    {{ $matrixMedia := "" }}
+    {{ if and .Values.matrixChat.enabled .Values.matrixChat.homeserver.enabled .Values.matrixChat.homeserver.serverName }}
+      {{ $matrixConnect = printf "%s://%s wss://%s" .Values.apiScheme .Values.matrixChat.homeserver.serverName .Values.matrixChat.homeserver.serverName }}
+      {{ $matrixMedia = printf "%s://%s" .Values.apiScheme .Values.matrixChat.homeserver.serverName }}
+    {{ end }}
     {{ if eq .Values.ingress.className "nginx" }}
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,sentry-trace,baggage,X-Impersonated-User-Uuid"
     nginx.ingress.kubernetes.io/cors-expose-headers: "Link, X-Result-Count"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     nginx.ingress.kubernetes.io/configuration-snippet: |
-      more_set_headers "Content-Security-Policy: base-uri 'self'; object-src 'none'; media-src https://{{ .Values.homeportHostname }}/assets/; script-src 'self' sentry.opnd.org {{ .Values.waldur.homeport.customSentryURL }} {{ .Values.waldur.homeport.matomoUrlBase }}; style-src 'self' 'unsafe-inline'; img-src 'self' *.tile.openstreetmap.org {{ .Values.apiHostname }} blob: data: ; connect-src 'self' {{ .Values.apiHostname }} {{ .Values.waldur.homeport.matomoUrlBase }} nominatim.openstreetmap.org:443 sentry.opnd.org:443 sentry.opnd.org:80 {{ $customSentryUrl80 }} {{ $customSentryUrl443 }}; font-src 'self' data: ; frame-src 'none'; frame-ancestors 'none'";
+      more_set_headers "Content-Security-Policy: base-uri 'self'; object-src 'none'; media-src https://{{ .Values.homeportHostname }}/assets/ {{ $matrixMedia }}; script-src 'self' sentry.opnd.org {{ .Values.waldur.homeport.customSentryURL }} {{ .Values.waldur.homeport.matomoUrlBase }}; style-src 'self' 'unsafe-inline'; img-src 'self' *.tile.openstreetmap.org {{ .Values.apiHostname }} {{ $matrixMedia }} blob: data: ; connect-src 'self' {{ .Values.apiHostname }} {{ .Values.waldur.homeport.matomoUrlBase }} nominatim.openstreetmap.org:443 sentry.opnd.org:443 sentry.opnd.org:80 {{ $customSentryUrl80 }} {{ $customSentryUrl443 }} {{ $matrixConnect }}; font-src 'self' data: ; frame-src 'none'; frame-ancestors 'none'";
     {{ if .Values.ingress.whitelistSourceRange }}
     nginx.ingress.kubernetes.io/whitelist-source-range: "{{ .Values.ingress.whitelistSourceRange }}"
     {{ end }}
@@ -33,7 +42,7 @@ metadata:
     route.openshift.io/termination: "edge"
     {{ end }}
     haproxy.org/backend-config-snippet: |
-      http-response set-header Content-Security-Policy "base-uri 'self'; object-src 'none'; media-src https://{{ .Values.homeportHostname }}/assets/; script-src 'self' sentry.opnd.org {{ .Values.waldur.homeport.customSentryURL }} {{ .Values.waldur.homeport.matomoUrlBase }}; style-src 'self' 'unsafe-inline'; img-src 'self' *.tile.openstreetmap.org {{ .Values.apiHostname }} blob: data: ; connect-src 'self' {{ .Values.apiHostname }} {{ .Values.waldur.homeport.matomoUrlBase }} nominatim.openstreetmap.org:443 sentry.opnd.org:443 sentry.opnd.org:80 {{ $customSentryUrl80 }} {{ $customSentryUrl443 }}; font-src 'self' data: ; frame-src 'none'; frame-ancestors 'none'";
+      http-response set-header Content-Security-Policy "base-uri 'self'; object-src 'none'; media-src https://{{ .Values.homeportHostname }}/assets/ {{ $matrixMedia }}; script-src 'self' sentry.opnd.org {{ .Values.waldur.homeport.customSentryURL }} {{ .Values.waldur.homeport.matomoUrlBase }}; style-src 'self' 'unsafe-inline'; img-src 'self' *.tile.openstreetmap.org {{ .Values.apiHostname }} {{ $matrixMedia }} blob: data: ; connect-src 'self' {{ .Values.apiHostname }} {{ .Values.waldur.homeport.matomoUrlBase }} nominatim.openstreetmap.org:443 sentry.opnd.org:443 sentry.opnd.org:80 {{ $customSentryUrl80 }} {{ $customSentryUrl443 }} {{ $matrixConnect }}; font-src 'self' data: ; frame-src 'none'; frame-ancestors 'none'";
     {{ if .Values.ingress.whitelistSourceRange }}
     haproxy.org/allow-list: "{{ .Values.ingress.whitelistSourceRange }}"
     {{ end }}

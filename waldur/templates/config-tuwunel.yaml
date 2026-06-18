@@ -1,0 +1,43 @@
+{{- if and .Values.matrixChat.enabled .Values.matrixChat.homeserver.enabled }}
+{{- $h := .Values.matrixChat.homeserver }}
+{{- if not $h.serverName }}
+{{- fail "matrixChat.homeserver.serverName is required when the homeserver is enabled. It is baked into every user/room ID and is the ingress host; rendering with an empty serverName produces a broken homeserver, a catch-all ingress, and a homeport CSP that silently omits the chat host. Set it to your real domain (e.g. matrix.example.org)." }}
+{{- end }}
+# Tuwunel (Matrix homeserver) configuration. Non-secret config only — the
+# registration token is injected as an env override from a Secret, not baked here.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: matrix-homeserver-config
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+data:
+  tuwunel.toml: |-
+    [global]
+    server_name = "{{ $h.serverName }}"
+    database_path = "/var/lib/tuwunel"
+    address = ["0.0.0.0"]
+    port = [{{ $h.clientPort }}]
+    allow_registration = {{ $h.allowRegistration }}
+    {{- if and $h.allowRegistration (not $h.registrationToken) (not $h.registrationTokenExistingSecret.name) }}
+    {{- fail "matrixChat.homeserver: allowRegistration is true but no registrationToken / registrationTokenExistingSecret is set. Set a registration token to gate user provisioning, or set allowRegistration=false. Refusing to render an open, abusable homeserver." }}
+    {{- end }}
+    max_request_size = {{ int64 $h.maxRequestSize }}
+    allow_federation = {{ $h.allowFederation }}
+
+    [global.well_known]
+    client = "{{ .Values.apiScheme }}://{{ $h.serverName }}"
+    server = "{{ $h.serverName }}:443"
+    {{- if .Values.matrixChat.lkJwt.enabled }}
+    {{- if not $h.livekitServiceUrl }}
+    {{- fail "matrixChat.homeserver.livekitServiceUrl is required when lkJwt is enabled: it is the lk-jwt base URL the homeserver advertises to Element Call (e.g. https://<serverName> — do NOT append /sfu, Element Call adds /sfu/get itself, so a trailing /sfu yields a 404 on /sfu/sfu/get). An empty value advertises a broken RTC transport, so calls fail to start with no render-time hint." }}
+    {{- end }}
+
+    # LiveKit SFU endpoint for Element Call / Matrix RTC (MSC4143).
+    # Advertised only when lk-jwt-service is deployed — the homeserver must not
+    # announce a call capability that has no SFU broker behind it.
+    [[global.well_known.rtc_transports]]
+    type = "livekit"
+    livekit_service_url = "{{ $h.livekitServiceUrl }}"
+    {{- end }}
+{{- end }}

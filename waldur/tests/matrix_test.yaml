@@ -1,0 +1,432 @@
+suite: matrix chat stack
+templates:
+  - templates/deployment-lk-jwt.yaml
+  - templates/ingress-matrix.yaml
+  - templates/config-tuwunel.yaml
+  - templates/config-livekit.yaml
+  - templates/networkpolicy-livekit.yaml
+  - templates/secret-livekit.yaml
+  - templates/service-livekit-rtc.yaml
+  - templates/ingress-homeport.yaml
+  - templates/traefik-middleware-matrix.yaml
+  - templates/statefulset-matrix-homeserver.yaml
+
+tests:
+  - it: does not render lk-jwt when matrixChat disabled
+    template: templates/deployment-lk-jwt.yaml
+    set:
+      matrixChat.enabled: false
+      matrixChat.lkJwt.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: wires lk-jwt to the public signaling URL and homeserver
+    template: templates/deployment-lk-jwt.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.lkJwt.enabled: true
+      # Bundled livekit (the default deployment): satisfies lk-jwt's secret-source
+      # guard and supplies secret-livekit's keys, both co-rendered per whole-chart run.
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+      matrixChat.livekit.publicUrl: "wss://matrix.example.org"
+      matrixChat.homeserver.serverName: "matrix.example.org"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LIVEKIT_URL
+            value: "wss://matrix.example.org"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LIVEKIT_FULL_ACCESS_HOMESERVERS
+            value: "matrix.example.org"
+
+  - it: refuses external livekit (lk-jwt on, bundled livekit off) without an existingSecret
+    template: templates/deployment-lk-jwt.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.lkJwt.enabled: true
+      matrixChat.livekit.enabled: false
+      matrixChat.livekit.publicUrl: "wss://livekit.operator.example.org"
+      matrixChat.homeserver.serverName: "matrix.example.org"
+    asserts:
+      - failedTemplate:
+          errorMessage: "matrixChat.lkJwt is enabled with matrixChat.livekit.enabled=false (external LiveKit), but matrixChat.livekit.keys.existingSecret.name is unset. The chart only creates the livekit-secret when it deploys the bundled server, so lk-jwt-service would reference a non-existent Secret and crashloop. Point keys.existingSecret.name at a Secret holding your external LiveKit's API key/secret."
+
+  - it: wires lk-jwt to an external livekit via existingSecret when bundled livekit is off
+    template: templates/deployment-lk-jwt.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.lkJwt.enabled: true
+      matrixChat.livekit.enabled: false
+      matrixChat.livekit.publicUrl: "wss://livekit.operator.example.org"
+      matrixChat.livekit.keys.existingSecret.name: "operator-livekit-creds"
+      matrixChat.homeserver.serverName: "matrix.example.org"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LIVEKIT_URL
+            value: "wss://livekit.operator.example.org"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LIVEKIT_KEY
+            valueFrom:
+              secretKeyRef:
+                name: operator-livekit-creds
+                key: LIVEKIT_API_KEY
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LIVEKIT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: operator-livekit-creds
+                key: LIVEKIT_API_SECRET
+
+  - it: routes matrix paths on the serverName host
+    template: templates/ingress-matrix.yaml
+    set:
+      ingress.enabled: true
+      ingress.className: nginx
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.lkJwt.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      # helm-unittest renders the whole chart per test, so every guarded template
+      # must get valid config: a registration token for config-tuwunel, livekit
+      # keys for secret-livekit, and publicUrl for deployment-lk-jwt, or their
+      # fail-closed guards abort the render.
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.livekitServiceUrl: "https://matrix.example.org"
+      matrixChat.livekit.publicUrl: "wss://matrix.example.org"
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: matrix.example.org
+
+  - it: defines the matrix-chain middleware the matrix ingress references on traefik
+    # ingress-matrix points its traefik router at <ns>-matrix-chain; without this
+    # template the router references a non-existent middleware and traefik drops
+    # the matrix routes while helm install still reports success.
+    template: templates/traefik-middleware-matrix.yaml
+    set:
+      ingress.enabled: true
+      ingress.className: traefik
+      ingress.whitelistSourceRange: "10.0.0.0/8"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.lkJwt.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.livekitServiceUrl: "https://matrix.example.org"
+      matrixChat.livekit.publicUrl: "wss://matrix.example.org"
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+    asserts:
+      - contains:
+          path: spec.chain.middlewares
+          content:
+            name: matrix-redirect-https
+        documentSelector:
+          path: metadata.name
+          value: matrix-chain
+      - contains:
+          path: spec.chain.middlewares
+          content:
+            name: matrix-ipallowlist
+        documentSelector:
+          path: metadata.name
+          value: matrix-chain
+
+  - it: refuses to render an open homeserver
+    template: templates/config-tuwunel.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.allowRegistration: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "matrixChat.homeserver: allowRegistration is true but no registrationToken / registrationTokenExistingSecret is set. Set a registration token to gate user provisioning, or set allowRegistration=false. Refusing to render an open, abusable homeserver."
+
+  - it: does not advertise an RTC transport when lk-jwt is not deployed
+    template: templates/config-tuwunel.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.lkJwt.enabled: false
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+    asserts:
+      - notMatchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "rtc_transports"
+
+  - it: advertises the RTC transport when lk-jwt is deployed
+    template: templates/config-tuwunel.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.lkJwt.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.livekitServiceUrl: "https://matrix.example.org"
+      # lk-jwt co-renders: give it a publicUrl and an external secret source so its
+      # own guards don't abort the whole-chart render before config-tuwunel is reached.
+      matrixChat.livekit.publicUrl: "wss://matrix.example.org"
+      matrixChat.livekit.keys.existingSecret.name: "operator-livekit-creds"
+    asserts:
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "livekit_service_url = \"https://matrix.example.org\""
+
+  - it: refuses to advertise an empty RTC transport when lk-jwt is deployed without a service URL
+    template: templates/config-tuwunel.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.lkJwt.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      # Satisfy lk-jwt's guards so the only render failure is config-tuwunel's missing
+      # livekitServiceUrl — otherwise lk-jwt aborts first and this assert sees no failed doc.
+      matrixChat.livekit.publicUrl: "wss://matrix.example.org"
+      matrixChat.livekit.keys.existingSecret.name: "operator-livekit-creds"
+    asserts:
+      - failedTemplate:
+          errorMessage: "matrixChat.homeserver.livekitServiceUrl is required when lkJwt is enabled: it is the lk-jwt base URL the homeserver advertises to Element Call (e.g. https://<serverName> — do NOT append /sfu, Element Call adds /sfu/get itself, so a trailing /sfu yields a 404 on /sfu/sfu/get). An empty value advertises a broken RTC transport, so calls fail to start with no render-time hint."
+
+  - it: allows external media into livekit
+    template: templates/networkpolicy-livekit.yaml
+    set:
+      networkPolicy.enabled: true
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: true
+      # secret-livekit also renders here — supply keys so its guard doesn't abort.
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+    asserts:
+      - equal:
+          path: spec.ingress[0].from
+          value: []
+
+  - it: pins livekit media to the single udp_port and explicit node_ip
+    template: templates/config-livekit.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.rtc.udpPort: 7882
+      matrixChat.livekit.rtc.nodeIp: "203.0.113.10"
+      # secret-livekit also renders here — supply keys so its guard doesn't abort.
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+    asserts:
+      # The config file is the only place these take effect — assert the rendered
+      # YAML carries the single mux port and the static advertised IP.
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "udp_port: 7882"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "node_ip: \"203.0.113.10\""
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "use_external_ip: false"
+
+  - it: refuses a livekit secret shorter than 32 chars
+    template: templates/secret-livekit.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "tooshort"
+    asserts:
+      - failedTemplate:
+          errorMessage: "matrixChat.livekit.keys.apiSecret must be at least 32 characters. livekit-server only logs a warning for short secrets and starts anyway, shipping a weak signing key to prod. Generate a strong secret (e.g. `openssl rand -hex 32`) or supply one via keys.existingSecret."
+
+  - it: refuses livekit enabled with no credentials at all
+    template: templates/secret-livekit.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "matrixChat.livekit is enabled but no API credentials are set. livekit-server would start with no signing key and lk-jwt-service would reference a non-existent Secret, so calls fail at runtime with no render-time hint. Set keys.apiKey + keys.apiSecret, or point keys.existingSecret.name at your own Secret."
+
+  - it: injects the matrix homeserver into the homeport CSP when enabled
+    template: templates/ingress-homeport.yaml
+    set:
+      ingress.enabled: true
+      ingress.className: nginx
+      apiScheme: https
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      # config-tuwunel also renders here — supply a token so its guard doesn't abort.
+      matrixChat.homeserver.registrationToken: "s3cret"
+    asserts:
+      # Chat sync/media (https) and LiveKit call signaling (wss) must be allowed
+      # in connect-src or the browser silently blocks them — no server-side error.
+      - matchRegex:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+          pattern: "connect-src[^;]*https://matrix.example.org"
+      - matchRegex:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+          pattern: "connect-src[^;]*wss://matrix.example.org"
+
+  - it: leaves the homeport CSP untouched when matrix chat is disabled
+    template: templates/ingress-homeport.yaml
+    set:
+      ingress.enabled: true
+      ingress.className: nginx
+      matrixChat.enabled: false
+    asserts:
+      - notMatchRegex:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+          pattern: "matrix"
+
+  - it: omits the TURN relay from the livekit config by default
+    template: templates/config-livekit.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+    asserts:
+      # No relay unless explicitly enabled — keeps the default footprint minimal.
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "turn:"
+
+  - it: renders a TURNS relay in the livekit config when turn is enabled
+    template: templates/config-livekit.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+      matrixChat.livekit.turn.enabled: true
+      matrixChat.livekit.turn.domain: "turn.matrix.example.org"
+      matrixChat.livekit.turn.tlsPort: 5349
+      matrixChat.livekit.turn.tls.existingSecret: "livekit-turn-tls"
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "tls_port: 5349"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "domain: \"turn.matrix.example.org\""
+
+  - it: refuses a TURN relay without a TLS cert secret
+    template: templates/config-livekit.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+      matrixChat.livekit.turn.enabled: true
+      matrixChat.livekit.turn.domain: "turn.matrix.example.org"
+    asserts:
+      - failedTemplate:
+          errorMessage: "matrixChat.livekit.turn.enabled requires turn.tls.existingSecret: LiveKit terminates TURNS TLS itself and needs a cert/key Secret for turn.domain. Without it livekit-server boots but TURNS never accepts a connection, so symmetric-NAT clients fail silently. Point it at the cert-manager Secret for turn.domain."
+
+  - it: refuses a TURN relay without a domain
+    template: templates/config-livekit.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+      matrixChat.livekit.turn.enabled: true
+      matrixChat.livekit.turn.tls.existingSecret: "livekit-turn-tls"
+    asserts:
+      - failedTemplate:
+          errorMessage: "matrixChat.livekit.turn.enabled requires turn.domain: the hostname clients dial for TURNS and the cert CN they validate. It must resolve to the livekit-rtc LoadBalancer IP (same target as livekit.rtc.nodeIp), NOT serverName, which points at the matrix ingress. An empty domain ships a relay no client can reach."
+
+  - it: exposes the TURNS port on the livekit-rtc load balancer when turn is enabled
+    template: templates/service-livekit-rtc.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+      matrixChat.livekit.turn.enabled: true
+      matrixChat.livekit.turn.domain: "turn.matrix.example.org"
+      matrixChat.livekit.turn.tls.existingSecret: "livekit-turn-tls"
+    asserts:
+      - contains:
+          path: spec.ports
+          content:
+            name: turns
+            port: 443
+            targetPort: 443
+            protocol: TCP
+
+  - it: does not pin externalTrafficPolicy so the media LB defaults to Cluster
+    # `Local` only announces the LB VIP from the node running the pod, so the
+    # public IP goes dark when the pod reschedules onto a non-announcing node
+    # (bare-metal LB-IPAM). Defaulting to `Cluster` announces from any node;
+    # rtc.nodeIp pins the advertised ICE address so SNAT no longer flaps it.
+    template: templates/service-livekit-rtc.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+    asserts:
+      - notExists:
+          path: spec.externalTrafficPolicy
+
+  - it: runs the homeserver as a single-replica StatefulSet owning its RWO volume
+    template: templates/statefulset-matrix-homeserver.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+    asserts:
+      - isKind:
+          of: StatefulSet
+      - equal:
+          path: spec.replicas
+          value: 1
+      - equal:
+          path: spec.serviceName
+          value: matrix-homeserver
+      - equal:
+          path: spec.volumeClaimTemplates[0].metadata.name
+          value: data
+      - equal:
+          path: spec.volumeClaimTemplates[0].spec.accessModes[0]
+          value: ReadWriteOnce
+
+  - it: adopts an existing claim instead of provisioning one when existingClaim is set
+    # The migration path off a prior Deployment-based release: mount its
+    # matrix-homeserver-data PVC directly rather than letting the StatefulSet
+    # provision a fresh (empty) data-matrix-homeserver-0.
+    template: templates/statefulset-matrix-homeserver.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.persistence.existingClaim: "matrix-homeserver-data"
+    asserts:
+      - notExists:
+          path: spec.volumeClaimTemplates
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: data
+            persistentVolumeClaim:
+              claimName: matrix-homeserver-data

@@ -39,7 +39,7 @@ workerResources:
     memory: 2000Mi
     cpu: 1000m
   limits:
-    memory: 4000Mi
+    memory: 8000Mi
     cpu: 2000m
 
 homeportResources:
@@ -88,8 +88,8 @@ ingress:
     clusterIssuerName: "vault-hpc-issuer"
     customMastermindSecretName: "helm-testing.waldur.com"
     customHomeportSecretName: "helm-testing.waldur.com"
-  whitelistSourceRange: '172.17.36.95/32,172.18.128.82/32,172.17.152.13/32,172.18.4.16/32,172.18.130.4/32,172.17.36.92/32,172.18.4.31/32,217.159.213.82/32,172.18.128.78/32,172.17.36.8/32,172.17.152.11/32,172.18.128.77/32,172.18.64.0/24'
-  whitelistSourceRangeAdmin: '172.17.36.95/32,172.18.128.82/32,172.17.152.13/32,172.18.4.16/32,172.18.130.4/32,172.17.36.92/32,172.18.4.31/32,217.159.213.82/32,172.18.128.78/32,172.18.64.0/24'
+  whitelistSourceRange: ''
+  whitelistSourceRangeAdmin: ''
   annotations:
     external-dns.alpha.kubernetes.io/ttl: "60"
 
@@ -137,7 +137,7 @@ hostAliases:
 waldur:
   imageName: "opennode/waldur-mastermind"
   imageTag: "latest"
-  imageDigest: "sha256:ab0050279b011d49f1daf910b016055c114ce3aa1eb8e70c9771e80ce9f963d1"
+  imageDigest: ""
   initdbEnabled: true
   initdbImageName: "library/postgres"
   pullPolicy: Always
@@ -658,6 +658,40 @@ rabbitmq:
     usernameKey: ""
     passwordKey: ""
 
+
+# Matrix chat smoke test on helm-testing. Reuses the apex host (already resolves,
+# already has a vault-hpc-issuer cert) instead of a dedicated subdomain — the
+# matrix ingress only claims specific path prefixes, so traefik longest-prefix
+# routing sends them to the matrix services and everything else to homeport.
+# This proves the chart deploys and serves; it is not a full backend↔matrix test.
+# TURN off — direct host candidates are enough to verify the stack comes up.
+matrixChat:
+  enabled: true
+  livekit:
+    enabled: true
+    publicUrl: "wss://helm-testing.waldur.com"
+    keys:
+      apiKey: "waldur-helmtest"
+      apiSecret: "c4f54a4a734e2dac5fc2b3a7c3ff37b1abd71c60e4bb3e07"
+    rtc:
+      # helm-testing runs on UT HPC Cilium LB-IPAM. Without this label the
+      # livekit-rtc Service lands on the internal campus pool, so WebRTC media is
+      # unreachable from the internet; the label opts it into the public pool.
+      serviceLabels:
+        cilium.io/public-ip: "true"
+      # Public LB IP assigned by Cilium from the label above. STUN auto-discovery
+      # returns the cluster egress NAT (wrong for inbound), so advertise it
+      # explicitly; otherwise calls connect but carry no audio/video.
+      nodeIp: "193.40.46.193"
+    turn:
+      enabled: false
+  lkJwt:
+    enabled: true
+  homeserver:
+    enabled: true
+    serverName: "helm-testing.waldur.com"
+    livekitServiceUrl: "https://helm-testing.waldur.com"
+    registrationToken: "helmtest-registration-token"
 
 global:
   imageRegistry: "registry.hpc.ut.ee/mirror"

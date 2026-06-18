@@ -1,0 +1,20 @@
+{{- if and .Values.matrixChat.enabled .Values.matrixChat.homeserver.enabled }}
+{{- $h := .Values.matrixChat.homeserver }}
+# Matrix homeserver client API. ClusterIP — exposed externally through the shared
+# matrix ingress (L7), same as the LiveKit signaling plane.
+apiVersion: v1
+kind: Service
+metadata:
+  name: matrix-homeserver
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: client
+      port: {{ $h.clientPort }}
+      targetPort: {{ $h.clientPort }}
+      protocol: TCP
+  selector:
+    app: matrix-homeserver
+{{- end }}

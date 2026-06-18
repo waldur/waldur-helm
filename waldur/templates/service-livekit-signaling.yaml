@@ -1,0 +1,19 @@
+{{- if and .Values.matrixChat.enabled .Values.matrixChat.livekit.enabled }}
+# LiveKit signaling (wss). Internal ClusterIP — the browser reaches it through the
+# shared matrix ingress (L7), unlike the media plane which needs its own LoadBalancer.
+apiVersion: v1
+kind: Service
+metadata:
+  name: livekit-signaling
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: signaling
+      port: {{ .Values.matrixChat.livekit.rtc.signalingPort }}
+      targetPort: {{ .Values.matrixChat.livekit.rtc.signalingPort }}
+      protocol: TCP
+  selector:
+    app: livekit
+{{- end }}

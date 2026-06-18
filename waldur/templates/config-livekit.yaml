@@ -1,0 +1,52 @@
+{{- if and .Values.matrixChat.enabled .Values.matrixChat.livekit.enabled }}
+{{- $lk := .Values.matrixChat.livekit }}
+{{- if $lk.turn.enabled }}
+{{- if not $lk.turn.domain }}
+{{- fail "matrixChat.livekit.turn.enabled requires turn.domain: the hostname clients dial for TURNS and the cert CN they validate. It must resolve to the livekit-rtc LoadBalancer IP (same target as livekit.rtc.nodeIp), NOT serverName, which points at the matrix ingress. An empty domain ships a relay no client can reach." }}
+{{- end }}
+{{- if not $lk.turn.tls.existingSecret }}
+{{- fail "matrixChat.livekit.turn.enabled requires turn.tls.existingSecret: LiveKit terminates TURNS TLS itself and needs a cert/key Secret for turn.domain. Without it livekit-server boots but TURNS never accepts a connection, so symmetric-NAT clients fail silently. Point it at the cert-manager Secret for turn.domain." }}
+{{- end }}
+{{- end }}
+# LiveKit server config. The RTC settings here are NOT expressible as discrete
+# env vars: livekit-server only honours a handful of LIVEKIT_* overrides
+# (LIVEKIT_KEYS, LIVEKIT_PORT, ...) and silently ignores invented names like
+# LIVEKIT_RTC_UDP_PORT. Without this file livekit falls back to its default ICE
+# port range (50000-60000) and STUN-discovered node IP, so media never reaches
+# the single udp_port the livekit-rtc LoadBalancer and NetworkPolicy expose.
+# Keys stay out of here — they are merged in from the Secret via LIVEKIT_KEYS.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: livekit-config
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+data:
+  config.yaml: |-
+    port: {{ $lk.rtc.signalingPort }}
+    rtc:
+      tcp_port: {{ $lk.rtc.tcpPort }}
+      # Single UDP mux port so the LoadBalancer needs to forward exactly one
+      # UDP port instead of a 10k-port range.
+      udp_port: {{ $lk.rtc.udpPort }}
+      {{- if $lk.rtc.nodeIp }}
+      # Explicit advertised IP: skip STUN auto-discovery, which picks the wrong
+      # address behind a cluster LoadBalancer / NAT.
+      use_external_ip: false
+      node_ip: {{ $lk.rtc.nodeIp | quote }}
+      {{- else }}
+      use_external_ip: {{ $lk.rtc.useExternalIp }}
+      {{- end }}
+    {{- if $lk.turn.enabled }}
+    turn:
+      enabled: true
+      # CN clients validate; resolves to the livekit-rtc LoadBalancer, not the ingress.
+      domain: {{ $lk.turn.domain | quote }}
+      tls_port: {{ $lk.turn.tlsPort }}
+      # LiveKit terminates the TURNS TLS itself from the mounted cert (see
+      # deployment-livekit.yaml). Plain TURN/UDP is intentionally left off so
+      # relayed media always rides TLS and survives TLS-only firewalls.
+      cert_file: /etc/livekit-turn/tls.crt
+      key_file: /etc/livekit-turn/tls.key
+    {{- end }}
+{{- end }}

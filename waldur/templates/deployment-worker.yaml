@@ -83,6 +83,10 @@ spec:
             - name: OPENPORTAL_CONFIG
               value: "/etc/waldur/openportal/config.toml"
             {{ end }}
+            {{- if .Values.celery.maxMemoryPerChild }}
+            - name: CELERY_WORKER_MAX_MEMORY_PER_CHILD
+              value: {{ .Values.celery.maxMemoryPerChild | quote }}
+            {{- end }}
             {{- with (include "waldur.extraEnvVars" .Values.worker) }}
             {{- . | nindent 12 }}
             {{- end }}

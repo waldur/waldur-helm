@@ -138,11 +138,13 @@ celery:
     enabled: true
   resultDatabase: "celery_results" # Database name for Celery results, default: "celery_results"
   concurrency: 10  # CELERYD_CONCURRENCY (number of worker child processes per pod)
+  maxMemoryPerChild: ""  # CELERY_WORKER_MAX_MEMORY_PER_CHILD (KB): recycle a child once it exceeds this; empty/0 disables
 
 # Gunicorn process tuning for the mastermind API container.
 # Each non-empty value is appended to GUNICORN_CMD_ARGS, which gunicorn reads at startup.
 # Leave fields empty to keep the gunicorn.conf.py defaults baked into the image.
 gunicorn:
+  preload: ""              # GUNICORN_PRELOAD; image default enables preload (workers share imports copy-on-write). Set "false" to disable.
   timeout: ""              # --timeout (seconds); default 30
   gracefulTimeout: ""      # --graceful-timeout (seconds)
   workers: ""              # --workers; gunicorn.conf.py default is 4

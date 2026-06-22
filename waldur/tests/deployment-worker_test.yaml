@@ -3,6 +3,24 @@ templates:
   - templates/deployment-worker.yaml
 
 tests:
+  - it: does not emit CELERY_WORKER_MAX_MEMORY_PER_CHILD by default
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CELERY_WORKER_MAX_MEMORY_PER_CHILD
+          any: true
+
+  - it: renders CELERY_WORKER_MAX_MEMORY_PER_CHILD when celery.maxMemoryPerChild is set
+    set:
+      celery.maxMemoryPerChild: 400000
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CELERY_WORKER_MAX_MEMORY_PER_CHILD
+            value: "400000"
+
   - it: injects worker.extraEnvVars into the container env
     set:
       worker.extraEnvVars:

@@ -22,6 +22,24 @@ tests:
             name: GUNICORN_CMD_ARGS
             value: "--timeout 120 --workers 6"
 
+  - it: does not emit GUNICORN_PRELOAD by default
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GUNICORN_PRELOAD
+          any: true
+
+  - it: renders GUNICORN_PRELOAD when gunicorn.preload is set
+    set:
+      gunicorn.preload: "false"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GUNICORN_PRELOAD
+            value: "false"
+
   - it: injects api.extraEnvVars into the container env
     set:
       api.extraEnvVars:

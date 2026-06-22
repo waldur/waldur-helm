@@ -77,6 +77,10 @@ spec:
             - name: GUNICORN_CMD_ARGS
               value: {{ $gunicornArgs | quote }}
             {{- end }}
+            {{- if ne (toString .Values.gunicorn.preload) "" }}
+            - name: GUNICORN_PRELOAD
+              value: {{ .Values.gunicorn.preload | quote }}
+            {{- end }}
             {{- with (include "waldur.extraEnvVars" .Values.api) }}
             {{- . | nindent 12 }}
             {{- end }}

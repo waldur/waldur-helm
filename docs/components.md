@@ -409,6 +409,24 @@ celery:
 
 This sets the number of child processes per worker pod. Combine with `replicaCount.worker` (and HPA, if enabled) to scale total parallelism. Note: increasing `concurrency` raises per-pod memory; size `workerResources` accordingly.
 
+### Memory tuning
+
+The mastermind image already ships two memory optimisations enabled by default, so the lower footprint applies without any chart change:
+
+- **gunicorn preload** — the API master imports the application once and forks workers, which then share that import footprint copy-on-write instead of each holding a private copy. This is the dominant saving for the API pod.
+- **jemalloc** — preloaded via `LD_PRELOAD` in the image to curb allocator fragmentation in long-running prefork workers.
+
+Two values let operators retune:
+
+```yaml
+gunicorn:
+  preload: "false"         # GUNICORN_PRELOAD; disable preloading (default: enabled in the image)
+celery:
+  maxMemoryPerChild: 400000  # CELERY_WORKER_MAX_MEMORY_PER_CHILD (KB): recycle a child once it exceeds this
+```
+
+`gunicorn.preload` renders the `GUNICORN_PRELOAD` env var on the api pod; leave it empty to keep the image default (enabled). `celery.maxMemoryPerChild` renders `CELERY_WORKER_MAX_MEMORY_PER_CHILD` on the worker pod — a hard per-child ceiling that recycles a child once it crosses the limit; empty or `0` disables it (the default).
+
 ### Ingress annotations
 
 `ingress.annotations` is a free-form map merged onto **every** ingress this chart renders — `api`, `api-admin`, `homeport`, `rmq-ws`, and `uvk-everypay`. It sits alongside the className-specific annotations the chart already templates (nginx, haproxy, traefik, openshift-default) and the cert-manager `cluster-issuer` annotation; ingress-controller and cert-manager keys should stay in their own values so they keep their conditional logic.

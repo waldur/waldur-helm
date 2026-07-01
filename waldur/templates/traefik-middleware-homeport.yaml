@@ -58,7 +58,7 @@ spec:
     accessControlMaxAge: 100
     addVaryHeader: true
     customResponseHeaders:
-      Content-Security-Policy: "base-uri 'self'; object-src 'none'; media-src https://{{ .Values.homeportHostname }}/assets/ {{ $matrixMedia }}; script-src 'self' sentry.opnd.org {{ .Values.waldur.homeport.customSentryURL }} {{ .Values.waldur.homeport.matomoUrlBase }}; style-src 'self' 'unsafe-inline'; img-src 'self' *.tile.openstreetmap.org {{ .Values.apiHostname }} {{ $matrixMedia }} blob: data: ; connect-src 'self' {{ .Values.apiHostname }} {{ .Values.waldur.homeport.matomoUrlBase }} nominatim.openstreetmap.org:443 sentry.opnd.org:443 sentry.opnd.org:80 {{ $customSentryUrl80 }} {{ $customSentryUrl443 }} {{ $matrixConnect }}; font-src 'self' data: ; frame-src 'none'; frame-ancestors 'none'"
+      Content-Security-Policy: "base-uri 'self'; object-src 'none'; media-src https://{{ .Values.homeportHostname }}/assets/ {{ $matrixMedia }} blob:; script-src 'self' sentry.opnd.org {{ .Values.waldur.homeport.customSentryURL }} {{ .Values.waldur.homeport.matomoUrlBase }}; style-src 'self' 'unsafe-inline'; img-src 'self' *.tile.openstreetmap.org {{ .Values.apiHostname }} {{ $matrixMedia }} blob: data: ; connect-src 'self' {{ .Values.apiHostname }} {{ .Values.waldur.homeport.matomoUrlBase }} nominatim.openstreetmap.org:443 sentry.opnd.org:443 sentry.opnd.org:80 {{ $customSentryUrl80 }} {{ $customSentryUrl443 }} {{ $matrixConnect }}; font-src 'self' data: ; frame-src 'none'; frame-ancestors 'none'"
 ---
 {{- if .Values.ingress.whitelistSourceRange }}
 apiVersion: traefik.io/v1alpha1

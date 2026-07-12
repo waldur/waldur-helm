@@ -53,6 +53,24 @@ spec:
   buffering:
     maxRequestBodyBytes: 10485760
 ---
+# Compress proxied API responses (parity with the nginx/haproxy ingress
+# branches). Payloads such as /api/roles/ are mostly repeated permission-enum
+# strings and shrink ~85% under gzip. Scoped to API-ish content types and to
+# responses over 256 bytes to skip tiny bodies where compression is pointless.
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: api-compress
+spec:
+  compress:
+    minResponseBodyBytes: 256
+    includedContentTypes:
+      - application/json
+      - application/javascript
+      - text/css
+      - text/plain
+      - application/xml
+---
 {{- if .Values.ingress.whitelistSourceRange }}
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
@@ -76,6 +94,7 @@ spec:
       - name: api-redirect-https
       - name: api-cors
       - name: api-buffering
+      - name: api-compress
       {{- if .Values.ingress.whitelistSourceRange }}
       - name: api-ipallowlist
       {{- end }}

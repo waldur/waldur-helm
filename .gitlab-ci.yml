@@ -1,5 +1,7 @@
 include:
   - project: "waldur/waldur-pipelines"
+    file: "/templates/release/tag-release.yml"
+  - project: "waldur/waldur-pipelines"
     file: "/templates/stages.yml"
   - project: "waldur/waldur-pipelines"
     file: "/templates/test/check-merge-compatibility.yml"
@@ -228,3 +230,14 @@ Check for deprecated Kubernetes resources:
     - helm template waldur | pluto detect --target-versions k8s=v1.27.0 -v 5 -
     - helm template waldur | pluto detect --target-versions k8s=v1.28.0 -v 5 -
     - helm template waldur | pluto detect --target-versions k8s=v1.29.0 -v 5 -
+
+Release tag:
+  extends: .release-tag-base
+  script:
+    - sed -i -E -e "s/^version: ('.*'|.*)$/version: $RELEASE_VERSION/" waldur/Chart.yaml
+    - sed -i -E -e "s/^appVersion: ('.*'|.*)$/appVersion: \"$RELEASE_VERSION\"/" waldur/Chart.yaml
+    - sed -i -E -e "s/^  imageTag: ('.*'|.*)$/  imageTag: \"$RELEASE_VERSION\"/" waldur/values.yaml
+    - git add waldur/Chart.yaml waldur/values.yaml
+    - git diff --cached --quiet && echo "waldur-helm versions already updated" || (git commit -m "Set target version to ${RELEASE_VERSION}" && git push -o "ci.skip" origin HEAD)
+    - git tag -a $RELEASE_VERSION -m "Release $RELEASE_VERSION" || echo "Tag already exists"
+    - git push origin $RELEASE_VERSION || echo "Tag already pushed"

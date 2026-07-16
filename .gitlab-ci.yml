@@ -234,9 +234,12 @@ Check for deprecated Kubernetes resources:
 Release tag:
   extends: .release-tag-base
   script:
-    - sed -i -E -e "s/^version: ('.*'|.*)$/version: $RELEASE_VERSION/" waldur/Chart.yaml
-    - sed -i -E -e "s/^appVersion: ('.*'|.*)$/appVersion: \"$RELEASE_VERSION\"/" waldur/Chart.yaml
-    - sed -i -E -e "s/^  imageTag: ('.*'|.*)$/  imageTag: \"$RELEASE_VERSION\"/" waldur/values.yaml
+    - >-
+      sed -i -E -e "s/^version: ('.*'|.*)$/version: $RELEASE_VERSION/" waldur/Chart.yaml
+    - >-
+      sed -i -E -e "s/^appVersion: ('.*'|.*)$/appVersion: \"$RELEASE_VERSION\"/" waldur/Chart.yaml
+    - >-
+      sed -i -E -e "s/^  imageTag: ('.*'|.*)$/  imageTag: \"$RELEASE_VERSION\"/" waldur/values.yaml
     - git add waldur/Chart.yaml waldur/values.yaml
     - git diff --cached --quiet && echo "waldur-helm versions already updated" || (git commit -m "Set target version to ${RELEASE_VERSION}" && git push -o "ci.skip" origin HEAD)
     - git tag -a $RELEASE_VERSION -m "Release $RELEASE_VERSION" || echo "Tag already exists"

@@ -667,6 +667,10 @@ rabbitmq:
 # TURN off — direct host candidates are enough to verify the stack comes up.
 matrixChat:
   enabled: true
+  # Matrix policies are gated on their own flag, not the chart-wide
+  # networkPolicy.enabled above — enable it so the media policy renders here.
+  networkPolicy:
+    enabled: true
   livekit:
     enabled: true
     publicUrl: "wss://helm-testing.waldur.com"

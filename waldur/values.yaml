@@ -678,6 +678,13 @@ rabbitmq:
 # Matrix chat integration (LiveKit media SFU + Matrix homeserver + lk-jwt).
 matrixChat:
   enabled: false
+  # The only gate for the matrix-chat NetworkPolicies (livekit, lk-jwt,
+  # homeserver). Independent of the chart-wide `networkPolicy.enabled`, which
+  # gates only the homeport/mastermind-api policies. Set this to ship the
+  # matrix/livekit policies — the LiveKit media rule is what lets Element Call
+  # media connect — without opting the rest of the stack into NetworkPolicy.
+  networkPolicy:
+    enabled: false
   livekit:
     # Deploy the bundled livekit-server SFU. Set to false to use an EXTERNAL,
     # operator-managed LiveKit instead: keep lkJwt.enabled=true, point publicUrl

@@ -5,6 +5,8 @@ templates:
   - templates/config-tuwunel.yaml
   - templates/config-livekit.yaml
   - templates/networkpolicy-livekit.yaml
+  - templates/networkpolicy-homeport.yaml
+  - templates/networkpolicy-mastermind-api.yaml
   - templates/secret-livekit.yaml
   - templates/service-livekit-rtc.yaml
   - templates/ingress-homeport.yaml
@@ -209,7 +211,7 @@ tests:
   - it: allows external media into livekit
     template: templates/networkpolicy-livekit.yaml
     set:
-      networkPolicy.enabled: true
+      matrixChat.networkPolicy.enabled: true
       matrixChat.enabled: true
       matrixChat.livekit.enabled: true
       # secret-livekit also renders here — supply keys so its guard doesn't abort.
@@ -219,6 +221,69 @@ tests:
       - equal:
           path: spec.ingress[0].from
           value: []
+
+  - it: renders the livekit policy from its own flag while the global gate is off
+    # The decoupling: matrixChat.networkPolicy turns the matrix/livekit policies on
+    # while networkPolicy.enabled stays off, so an operator can ship the media rule
+    # (what lets calls connect) without opting the whole stack into NetworkPolicy.
+    template: templates/networkpolicy-livekit.yaml
+    set:
+      networkPolicy.enabled: false
+      matrixChat.networkPolicy.enabled: true
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.ingress[0].from
+          value: []
+
+  - it: does not render the livekit policy from the chart-wide flag alone
+    # The sever: networkPolicy.enabled gates only homeport/mastermind-api now, so
+    # with the matrix flag off the livekit policy must NOT appear even when the
+    # global flag is on. Guards the decoupling against regressing back to the OR.
+    template: templates/networkpolicy-livekit.yaml
+    set:
+      networkPolicy.enabled: true
+      matrixChat.networkPolicy.enabled: false
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: keeps the homeport policy off when only the matrix flag is on
+    # matrixChat.networkPolicy must not drag in the chart-wide policies that gate
+    # on networkPolicy.enabled alone — that is the whole point of the decoupling.
+    template: templates/networkpolicy-homeport.yaml
+    set:
+      networkPolicy.enabled: false
+      matrixChat.networkPolicy.enabled: true
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: keeps the mastermind-api policy off when only the matrix flag is on
+    template: templates/networkpolicy-mastermind-api.yaml
+    set:
+      networkPolicy.enabled: false
+      matrixChat.networkPolicy.enabled: true
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+    asserts:
+      - hasDocuments:
+          count: 0
 
   - it: pins livekit media to the single udp_port and explicit node_ip
     template: templates/config-livekit.yaml

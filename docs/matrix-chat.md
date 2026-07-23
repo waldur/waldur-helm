@@ -8,6 +8,8 @@ LiveKit media SFU, and lk-jwt-service (required for voice/video calls).
 ```yaml
 matrixChat:
   enabled: true
+  networkPolicy:
+    enabled: true   # ships the livekit/lk-jwt/homeserver NetworkPolicies; independent of the chart-wide networkPolicy.enabled
   homeserver:
     enabled: true
     serverName: matrix.example.org   # immutable; baked into every user/room ID
@@ -135,12 +137,16 @@ exposed — relayed media always rides TLS.
   `https://<serverName>` (chat media/images). Without this the browser would block
   the chat client and calls. No action needed — it follows `homeserver.serverName`
   and is a no-op when matrix is disabled.
-- **NetworkPolicies.** When `networkPolicy.enabled` is `true`, the chart adds a
-  policy per pod. The livekit policy accepts media from **anywhere** (external
-  WebRTC). The homeserver and lk-jwt policies accept HTTP only from **in-namespace**
-  pods (i.e. the ingress controller, same assumption as the homeport/API
-  policies). Egress is left open on all three — federation, OpenID verification,
-  and `/twirp` room creation all need outbound reach to `serverName`.
+- **NetworkPolicies.** When `matrixChat.networkPolicy.enabled` is `true`, the chart
+  adds a policy per pod. This gate is independent of the chart-wide
+  `networkPolicy.enabled` (which only covers the homeport/mastermind-api
+  policies) — set it to ship the matrix/livekit policies without opting the
+  rest of the stack into NetworkPolicy. The livekit policy accepts media from
+  **anywhere** (external WebRTC). The homeserver and lk-jwt policies accept
+  HTTP only from **in-namespace** pods (i.e. the ingress controller, same
+  assumption as the homeport/API policies). Egress is left open on all three —
+  federation, OpenID verification, and `/twirp` room creation all need
+  outbound reach to `serverName`.
 
 ## Using an external LiveKit
 

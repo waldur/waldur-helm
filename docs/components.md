@@ -319,6 +319,44 @@ sequenceDiagram
 
 - **waldur-script-kubeconfig:** Kubernetes config for script execution
 
+### Field encryption
+
+Secret DB columns (resource API keys, for example) are encrypted at rest with
+Fernet. The key comes from `waldur.fieldEncryptionKey`, injected into every
+mastermind pod as `FIELD_ENCRYPTION_KEY` via a secret reference — it is never
+rendered into a ConfigMap or pod spec.
+
+Leaving it empty is supported: mastermind then derives the key from
+`waldur.secretKey` and logs a warning at startup. Set a dedicated one in
+production, so leaking Django settings does not by itself unlock encrypted
+fields:
+
+```yaml
+waldur:
+  fieldEncryptionKey: "<output of Fernet.generate_key()>"
+  # or point at a secret you manage yourself:
+  fieldEncryptionKeyExistingSecret:
+    name: my-vault-secret
+    key: fernet-key
+```
+
+To rotate the key without downtime, promote a new one and keep the previous
+key(s) readable through `waldur.fieldEncryptionKeyFallbacks`. Decryption is
+attempted against the primary and every fallback; only the primary is used for
+new writes, so rows re-encrypt themselves as they are re-saved. Drop the old key
+once none remain:
+
+```yaml
+waldur:
+  fieldEncryptionKey: "<new key>"
+  fieldEncryptionKeyFallbacks:
+    - "<previous key>"
+```
+
+A deployment that started without a dedicated key can adopt one at any time —
+the `secretKey`-derived key stays an implicit last-resort fallback, so rows
+written before the switch keep decrypting with no fallback entry needed.
+
 ## High Availability Considerations
 
 1. **API Layer:**

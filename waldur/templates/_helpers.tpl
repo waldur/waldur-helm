@@ -260,6 +260,22 @@ Add environment variables to configure database values and Sentry environment
       name: {{ .Values.waldur.secretKeyExistingSecret.name | default "waldur-secret" }}
       key: {{ .Values.waldur.secretKeyExistingSecret.key | default "GLOBAL_SECRET_KEY" }}
 
+{{ if or .Values.waldur.fieldEncryptionKey .Values.waldur.fieldEncryptionKeyExistingSecret.name }}
+- name: FIELD_ENCRYPTION_KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.waldur.fieldEncryptionKeyExistingSecret.name | default "waldur-secret" }}
+      key: {{ .Values.waldur.fieldEncryptionKeyExistingSecret.key | default "FIELD_ENCRYPTION_KEY" }}
+{{ end }}
+
+{{ if or .Values.waldur.fieldEncryptionKeyFallbacks .Values.waldur.fieldEncryptionKeyFallbacksExistingSecret.name }}
+- name: FIELD_ENCRYPTION_KEY_FALLBACKS
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.waldur.fieldEncryptionKeyFallbacksExistingSecret.name | default "waldur-secret" }}
+      key: {{ .Values.waldur.fieldEncryptionKeyFallbacksExistingSecret.key | default "FIELD_ENCRYPTION_KEY_FALLBACKS" }}
+{{ end }}
+
 - name: POSTGRESQL_HOST
   value: {{ include "waldur.postgresql.host" . }}
 

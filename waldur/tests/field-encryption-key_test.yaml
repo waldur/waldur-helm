@@ -1,0 +1,97 @@
+suite: field encryption key wiring
+templates:
+  - templates/deployment-api.yaml
+  - templates/secrets.yaml
+
+tests:
+  - it: does not emit FIELD_ENCRYPTION_KEY when the value is unset
+    template: templates/deployment-api.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FIELD_ENCRYPTION_KEY
+          any: true
+
+  - it: wires FIELD_ENCRYPTION_KEY from the chart-managed secret
+    template: templates/deployment-api.yaml
+    set:
+      waldur.fieldEncryptionKey: "test-fernet-key"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FIELD_ENCRYPTION_KEY
+            valueFrom:
+              secretKeyRef:
+                name: waldur-secret
+                key: FIELD_ENCRYPTION_KEY
+
+  - it: honors an existing secret reference
+    template: templates/deployment-api.yaml
+    set:
+      waldur.fieldEncryptionKeyExistingSecret:
+        name: my-vault-secret
+        key: fernet-key
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FIELD_ENCRYPTION_KEY
+            valueFrom:
+              secretKeyRef:
+                name: my-vault-secret
+                key: fernet-key
+
+  - it: does not emit FIELD_ENCRYPTION_KEY_FALLBACKS when none are configured
+    template: templates/deployment-api.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FIELD_ENCRYPTION_KEY_FALLBACKS
+          any: true
+
+  - it: wires FIELD_ENCRYPTION_KEY_FALLBACKS from the chart-managed secret
+    template: templates/deployment-api.yaml
+    set:
+      waldur.fieldEncryptionKeyFallbacks:
+        - old-key-1
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FIELD_ENCRYPTION_KEY_FALLBACKS
+            valueFrom:
+              secretKeyRef:
+                name: waldur-secret
+                key: FIELD_ENCRYPTION_KEY_FALLBACKS
+
+  - it: honors an existing secret reference for the fallbacks
+    template: templates/deployment-api.yaml
+    set:
+      waldur.fieldEncryptionKeyFallbacksExistingSecret:
+        name: my-vault-secret
+        key: fernet-fallbacks
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FIELD_ENCRYPTION_KEY_FALLBACKS
+            valueFrom:
+              secretKeyRef:
+                name: my-vault-secret
+                key: fernet-fallbacks
+
+  # The backend splits this value on "," without trimming, so a padded entry
+  # would reach Fernet as an invalid key.
+  - it: joins fallback keys with commas and no padding
+    template: templates/secrets.yaml
+    set:
+      waldur.fieldEncryptionKeyFallbacks:
+        - old-key-1
+        - old-key-2
+    asserts:
+      - equal:
+          path: data.FIELD_ENCRYPTION_KEY_FALLBACKS
+          value: b2xkLWtleS0xLG9sZC1rZXktMg==

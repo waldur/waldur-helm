@@ -36,15 +36,15 @@ spec:
         livenessProbe:
           httpGet:
             port: 8080
-            path: /metrics/
+            path: /healthz
           initialDelaySeconds: 3
-          periodSeconds: 3
+          periodSeconds: 10
         readinessProbe:
           httpGet:
             port: 8080
-            path: /metrics/
+            path: /ready
           initialDelaySeconds: 3
-          periodSeconds: 3
+          periodSeconds: 10
         ports:
           - name: http
             containerPort: 8080

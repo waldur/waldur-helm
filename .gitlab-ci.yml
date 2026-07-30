@@ -231,6 +231,12 @@ Check for deprecated Kubernetes resources:
     - helm template waldur | pluto detect --target-versions k8s=v1.28.0 -v 5 -
     - helm template waldur | pluto detect --target-versions k8s=v1.29.0 -v 5 -
 
+# These seds intentionally do NOT reuse scripts/set-version.sh, even though it
+# covers the same files. That script additionally pins waldur.homeport.imageTag,
+# which must stay empty on the branch so deployment-homeport.yaml can fall back
+# to waldur.imageTag; pinning it belongs to the packaged chart only, where the
+# publish job applies set-version.sh at package time. The script is also bash,
+# and the alpine/git image this job runs on has no bash.
 Release tag:
   extends: .release-tag-base
   script:

@@ -241,6 +241,8 @@ Release tag:
     - >-
       sed -i -E -e "s/^  imageTag: ('.*'|.*)$/  imageTag: \"$RELEASE_VERSION\"/" waldur/values.yaml
     - git add waldur/Chart.yaml waldur/values.yaml
-    - git diff --cached --quiet && echo "waldur-helm versions already updated" || (git commit -m "Set target version to ${RELEASE_VERSION}" && git push -o "ci.skip" origin HEAD)
+    # Push to HEAD:$CI_COMMIT_REF_NAME, not HEAD: the runner checks out a
+    # detached HEAD, so git cannot infer the remote branch from HEAD alone.
+    - git diff --cached --quiet && echo "waldur-helm versions already updated" || (git commit -m "Set target version to ${RELEASE_VERSION}" && git push -o "ci.skip" origin "HEAD:${CI_COMMIT_REF_NAME}")
     - git tag -a $RELEASE_VERSION -m "Release $RELEASE_VERSION" || echo "Tag already exists"
     - git push origin $RELEASE_VERSION || echo "Tag already pushed"

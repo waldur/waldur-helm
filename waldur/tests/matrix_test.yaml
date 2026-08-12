@@ -5,6 +5,8 @@ templates:
   - templates/config-tuwunel.yaml
   - templates/config-livekit.yaml
   - templates/networkpolicy-livekit.yaml
+  - templates/networkpolicy-matrix-homeserver.yaml
+  - templates/networkpolicy-lk-jwt.yaml
   - templates/networkpolicy-homeport.yaml
   - templates/networkpolicy-mastermind-api.yaml
   - templates/secret-livekit.yaml
@@ -221,6 +223,50 @@ tests:
       - equal:
           path: spec.ingress[0].from
           value: []
+
+  - it: admits the ingress controller into the homeserver
+    # ingress-matrix.yaml publishes clientPort at /_matrix and /.well-known/matrix,
+    # so the browser's connection arrives from the ingress controller — a pod in
+    # ITS OWN namespace. `podSelector: {}` scopes to the policy's namespace only,
+    # so it drops every public request while the in-cluster bot path stays green.
+    template: templates/networkpolicy-matrix-homeserver.yaml
+    set:
+      matrixChat.networkPolicy.enabled: true
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+    asserts:
+      - equal:
+          path: spec.ingress[0].from
+          value: []
+      - equal:
+          path: spec.ingress[0].ports[0].port
+          value: 6167
+
+  - it: admits the ingress controller into lk-jwt
+    # Same trap on /sfu: Element Call fetches its LiveKit JWT from the browser,
+    # so this port is reached through the ingress, never from a namespace peer.
+    template: templates/networkpolicy-lk-jwt.yaml
+    set:
+      matrixChat.networkPolicy.enabled: true
+      matrixChat.enabled: true
+      matrixChat.lkJwt.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.livekitServiceUrl: "https://matrix.example.org"
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.publicUrl: "wss://matrix.example.org"
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+    asserts:
+      - equal:
+          path: spec.ingress[0].from
+          value: []
+      - equal:
+          path: spec.ingress[0].ports[0].port
+          value: 8080
 
   - it: renders the livekit policy from its own flag while the global gate is off
     # The decoupling: matrixChat.networkPolicy turns the matrix/livekit policies on

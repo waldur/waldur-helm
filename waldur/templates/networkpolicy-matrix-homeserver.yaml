@@ -11,8 +11,12 @@ spec:
   - Ingress
   - Egress
   ingress:
-  - from:
-    - podSelector: {}
+  # Empty `from` = allow from anywhere: ingress-matrix.yaml publishes clientPort at
+  # /_matrix and /.well-known/matrix, so every browser request arrives from the
+  # ingress controller — a pod in its OWN namespace. `podSelector: {}` scopes to
+  # this namespace only, which black-holes the entire public client path while the
+  # in-cluster bot path (and so every diagnostic but one) stays green.
+  - from: []
     ports:
     - protocol: TCP
       port: {{ .Values.matrixChat.homeserver.clientPort }}

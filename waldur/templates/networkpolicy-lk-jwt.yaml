@@ -11,8 +11,11 @@ spec:
   - Ingress
   - Egress
   ingress:
-  - from:
-    - podSelector: {}
+  # Empty `from` = allow from anywhere: Element Call fetches its LiveKit JWT from
+  # the browser over the /sfu ingress route, so this port is reached through the
+  # ingress controller — a pod in its OWN namespace. `podSelector: {}` scopes to
+  # this namespace only and would drop every call setup.
+  - from: []
     ports:
     - protocol: TCP
       port: 8080

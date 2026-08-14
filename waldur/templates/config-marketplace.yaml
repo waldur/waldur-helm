@@ -14,3 +14,11 @@ data:
     # Resource change notification settings
     NOTIFY_ABOUT_RESOURCE_CHANGE: False
     {{ end }}
+
+    {{ if .Values.waldur.marketplace.countries }}
+    # Countries offered in the organization creation dialog.
+    # Setting this makes the chart the source of truth: the value is reapplied
+    # on every upgrade, overwriting changes made through the admin UI.
+    COUNTRIES:
+{{ toYaml .Values.waldur.marketplace.countries | indent 6 }}
+    {{ end }}

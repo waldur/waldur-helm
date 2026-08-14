@@ -48,3 +48,21 @@ To setup white-labeling, you can define next variables in `waldur/values.yaml` f
 
 Alternatively, TOS and PP files content can be provided as multiline values in `tosHtml` and `privacyHtml` options respectfully.
 If defined, they take precedence over the aforementioned ones.
+
+## Available countries
+
+The countries offered in the organization creation dialog are set with
+`waldur.marketplace.countries` — a list of ISO 3166-1 alpha-2 codes (plus the
+synthetic `EU` entry):
+
+```yaml
+waldur:
+  marketplace:
+    countries: [EE, FI, US, JP, BR, AU]
+```
+
+By default the value is empty and the chart does not touch the setting, so a list
+configured through *Administration → Branding* is preserved. Once the value is
+set, the chart becomes the source of truth: it is reapplied by the
+`init-whitelabeling` hook on every `helm upgrade`, overwriting changes made
+through the admin UI.

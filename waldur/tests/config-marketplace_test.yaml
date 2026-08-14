@@ -1,0 +1,24 @@
+suite: marketplace configmap tests
+templates:
+  - templates/config-marketplace.yaml
+
+tests:
+  - it: should not manage the country list by default
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - notMatchRegex:
+          path: data["marketplace.yaml"]
+          pattern: "COUNTRIES:"
+
+  - it: should render the configured country list
+    set:
+      waldur.marketplace.countries:
+        - EE
+        - FI
+        - US
+        - JP
+    asserts:
+      - matchRegex:
+          path: data["marketplace.yaml"]
+          pattern: "COUNTRIES:\n  - EE\n  - FI\n  - US\n  - JP"

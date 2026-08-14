@@ -435,6 +435,10 @@ waldur:
       verifySSL: True
   marketplace:
     notify_staff: false
+    # ISO 3166-1 alpha-2 codes offered in the organization creation dialog,
+    # e.g. [EE, FI, US, JP]. Left empty, the setting is not managed by the chart
+    # and whatever is configured in the admin UI is preserved.
+    countries: []
     script:
       enabled: false
       dockerImages: {}

@@ -331,15 +331,6 @@ data:
     })
     {{ end }}
 
-    {{ if has "slurm" .Values.waldur.features }}
-    # See also http://docs.waldur.com/SLURM+plugin+configuration
-    WALDUR_SLURM.update({
-        'ENABLED': True,
-        'CUSTOMER_PREFIX': '{{ .Values.waldur.slurm.customerPrefix }}',
-        'PROJECT_PREFIX': '{{ .Values.waldur.slurm.projectPrefix }}',
-        'ALLOCATION_PREFIX': '{{ .Values.waldur.slurm.allocationPrefix }}',
-    })
-    {{ end }}
     #
     # waldur-openstack
     #

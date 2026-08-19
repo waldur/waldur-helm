@@ -321,15 +321,18 @@ sequenceDiagram
 
 ### Field encryption
 
-Secret DB columns (resource API keys, for example) are encrypted at rest with
-Fernet. The key comes from `waldur.fieldEncryptionKey`, injected into every
-mastermind pod as `FIELD_ENCRYPTION_KEY` via a secret reference — it is never
-rendered into a ConfigMap or pod spec.
+Secret DB columns are encrypted at rest with Fernet: resource API keys, service
+settings credentials (`password`, `token`, and the credential values inside
+`options`), and offering secret options. The key comes from
+`waldur.fieldEncryptionKey`, injected into every mastermind pod as
+`FIELD_ENCRYPTION_KEY` via a secret reference — it is never rendered into a
+ConfigMap or pod spec.
 
-Leaving it empty is supported: mastermind then derives the key from
-`waldur.secretKey` and logs a warning at startup. Set a dedicated one in
-production, so leaking Django settings does not by itself unlock encrypted
-fields:
+Leaving it empty is supported but not advisable in production: mastermind then
+derives the key from `waldur.secretKey` and logs a warning at startup. That
+leaves every backend credential in the deployment protected by a value that
+lives in plaintext in `values.yaml` and is commonly shared or committed, which
+is the separation this key exists to provide. Set a dedicated one:
 
 ```yaml
 waldur:
@@ -340,11 +343,14 @@ waldur:
     key: fernet-key
 ```
 
+Back the key up separately from the database and at least as carefully: a
+database backup without it is unreadable for these columns, and losing it loses
+the data they hold.
+
 To rotate the key without downtime, promote a new one and keep the previous
 key(s) readable through `waldur.fieldEncryptionKeyFallbacks`. Decryption is
 attempted against the primary and every fallback; only the primary is used for
-new writes, so rows re-encrypt themselves as they are re-saved. Drop the old key
-once none remain:
+new writes:
 
 ```yaml
 waldur:
@@ -352,6 +358,22 @@ waldur:
   fieldEncryptionKeyFallbacks:
     - "<previous key>"
 ```
+
+Then re-encrypt every stored row under the new primary, from any mastermind pod:
+
+```bash
+kubectl exec -it deploy/waldur-mastermind-api -- waldur reencrypt_fields
+```
+
+Only once that reports every row rotated is the old key safe to remove from
+`fieldEncryptionKeyFallbacks`. **Do not wait for rows to re-encrypt themselves.**
+A value is only rewritten when something happens to rewrite it, so there is no
+point at which you could tell the old key had become unnecessary — dropping it
+early makes every row still holding it unrecoverable.
+
+`waldur reencrypt_fields --dry-run` reports the same counts without writing, and
+in particular how many rows *no* configured key can decrypt. Worth running on its
+own: such rows are invisible until something tries to read them.
 
 A deployment that started without a dedicated key can adopt one at any time —
 the `secretKey`-derived key stays an implicit last-resort fallback, so rows

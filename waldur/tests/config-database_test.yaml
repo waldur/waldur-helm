@@ -1,0 +1,26 @@
+suite: database configmap
+templates:
+  - templates/config-override.yaml
+
+tests:
+  - it: disables server-side cursors by default
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: "'DISABLE_SERVER_SIDE_CURSORS': False,"
+
+  - it: disables server-side cursors when externalDB.disableServerSideCursors is set
+    set:
+      externalDB.disableServerSideCursors: "true"
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: "'DISABLE_SERVER_SIDE_CURSORS': True,"
+
+  - it: disables server-side cursors whenever postgresqlha (pgpool) is enabled
+    set:
+      postgresqlha.enabled: true
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: "'DISABLE_SERVER_SIDE_CURSORS': True,"

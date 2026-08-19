@@ -24,6 +24,8 @@ To use external PostgreSQL, set the following variables in `values.yaml`:
 
 5. `externalDB.username` - custom username (optional, defaults to "waldur")
 
+6. `externalDB.disableServerSideCursors` - set to `"true"` when the external Postgres sits behind a connection pooler running in transaction-pooling mode (e.g. the Zalando Postgres Operator's built-in PgBouncer sidecar, `enableConnectionPooler: true`). Named server-side cursors opened by Django's `QuerySet.iterator()` can be routed to a different backend between `DECLARE` and `FETCH`/`CLOSE` under transaction pooling, raising `psycopg.errors.InvalidCursorName`. Defaults to `"false"`. `postgresqlha` (pgpool) always pools connections, so it forces this on regardless of this setting.
+
 ## CloudNativePG Integration Example
 
 For CloudNativePG clusters, use this configuration:

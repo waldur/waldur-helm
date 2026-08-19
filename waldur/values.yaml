@@ -580,6 +580,15 @@ externalDB:
   serviceName: "waldur-postgres"
   database: ""
   username: ""
+  # Set to "true" when the external Postgres sits behind a connection pooler
+  # running in transaction-pooling mode (e.g. the Zalando Postgres Operator's
+  # built-in PgBouncer sidecar, enableConnectionPooler: true). Named
+  # server-side cursors opened by Django's QuerySet.iterator() and by
+  # reversion's serialization can be routed to a different backend between
+  # DECLARE and FETCH/CLOSE under transaction pooling, raising
+  # psycopg.errors.InvalidCursorName. postgresqlha (pgpool) always pools
+  # connections, so it forces this on regardless of this setting.
+  disableServerSideCursors: "false"
 
 postgresql:
   enabled: false

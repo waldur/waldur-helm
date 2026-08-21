@@ -103,8 +103,10 @@ data:
 
     EMAIL_HOST = '{{ .Values.waldur.mail.host }}'
     EMAIL_PORT = {{ .Values.waldur.mail.port | default 25 | int }}
-    EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
-    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASSWORD')
+    # Default to '' rather than None: Django only calls SMTP.login() when both are truthy,
+    # and '' is the documented empty value for these settings.
+    EMAIL_HOST_USER = os.environ.get('EMAIL_USER', '')
+    EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASSWORD', '')
     EMAIL_USE_TLS = {{ .Values.waldur.mail.useTLS | default "False" | camelcase }}
     EMAIL_USE_SSL = {{ .Values.waldur.mail.useSSL | default "False" | camelcase }}
 

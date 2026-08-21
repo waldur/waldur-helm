@@ -120,6 +120,8 @@ kubectl -n waldur exec -it \
   -- waldur sendtestemail you@example.org
 ```
 
-This bypasses the notification system, so it isolates the transport half.
-Messages Waldur composes are recorded regardless of relay outcome and can be
-browsed under **Support → Email logs**.
+This bypasses the notification system, so it isolates the transport half. It
+does not appear under **Support → Email logs**: that log is written by Waldur's
+own send path, and only once the relay has accepted a message. An empty log with
+SMTP errors in the worker logs points at the transport; an empty log with silent
+workers means nothing was generated, so check the notifications above.

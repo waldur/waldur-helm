@@ -332,21 +332,31 @@ Add environment variables to configure database values and Sentry environment
 {{ end }}
 
 {{/*
-Temporarily disabled as it crashes deployments with ansible installer
-{{ if or (and .Values.waldur.mail.username (ne .Values.waldur.mail.username "")) (and .Values.waldur.mail.existingSecret.name (ne .Values.waldur.mail.existingSecret.name "")) }}
+SMTP credentials. Emitted per key rather than as a pair: secrets.yaml writes MAIL_USER and
+MAIL_PASSWORD under independent conditions, so a username configured without a password used to
+leave EMAIL_PASSWORD pointing at a key that does not exist, and every pod including this helper
+failed with CreateContainerConfigError. That is what previously took this block out of service.
+optional: true keeps the same shape safe when an operator-supplied existingSecret carries only
+one of the two keys — the variable is simply absent and the SMTP session stays anonymous, which
+is the behaviour of an unconfigured relay rather than a crash loop.
+*/}}
+{{ if or .Values.waldur.mail.existingSecret.name .Values.waldur.mail.username }}
 - name: EMAIL_USER
   valueFrom:
     secretKeyRef:
       name: {{ .Values.waldur.mail.existingSecret.name | default "waldur-secret" }}
       key: {{ .Values.waldur.mail.existingSecret.userKey | default "MAIL_USER" }}
+      optional: true
+{{ end }}
 
+{{ if or .Values.waldur.mail.existingSecret.name .Values.waldur.mail.password }}
 - name: EMAIL_PASSWORD
   valueFrom:
     secretKeyRef:
-      name: {{ .Values.waldur.mail.existingSecret.name | default "waldur-secret"}}
-      key: {{ .Values.waldur.mail.existingSecret.passwordKey | default "MAIL_PASSWORD"}}
+      name: {{ .Values.waldur.mail.existingSecret.name | default "waldur-secret" }}
+      key: {{ .Values.waldur.mail.existingSecret.passwordKey | default "MAIL_PASSWORD" }}
+      optional: true
 {{ end }}
-*/}}
 
 - name: RABBITMQ_HOSTNAME
   value: {{ include "waldur.rabbitmq.rmqHost" . | quote }}

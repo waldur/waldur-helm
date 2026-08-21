@@ -28,6 +28,8 @@ Outline:
 
 - [TLS](tls-config.md)
 
+- [Outgoing email](mail.md)
+
 - [White-labeling](whitelabeling.md)
 
 - [Custom Mastermind templates](mastermind-templates.md)

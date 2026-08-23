@@ -5,6 +5,12 @@
 {{- end }}
 # Tuwunel (Matrix homeserver) configuration. Non-secret config only — the
 # registration token is injected as an env override from a Secret, not baked here.
+#
+# This renders a *template*, not the final config: @LISTEN_ADDRESSES@ is resolved
+# by the render-config initContainer in statefulset-matrix-homeserver.yaml at pod
+# start. The listen addresses depend on whether the node's kernel has IPv6, which
+# helm cannot know at render time, and tuwunel binds every listed address
+# explicitly rather than relying on net.ipv6.bindv6only=0 the way gunicorn does.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -16,7 +22,7 @@ data:
     [global]
     server_name = "{{ $h.serverName }}"
     database_path = "/var/lib/tuwunel"
-    address = ["0.0.0.0"]
+    address = @LISTEN_ADDRESSES@
     port = [{{ $h.clientPort }}]
     allow_registration = {{ $h.allowRegistration }}
     {{- if and $h.allowRegistration (not $h.registrationToken) (not $h.registrationTokenExistingSecret.name) }}

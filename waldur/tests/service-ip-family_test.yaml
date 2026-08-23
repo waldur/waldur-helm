@@ -1,0 +1,36 @@
+suite: service IP family policy
+templates:
+  - templates/service-api.yaml
+  - templates/service-homeport.yml
+  - templates/service-livekit-rtc.yaml
+
+tests:
+  # PreferDualStack keeps one chart working on IPv4-only, IPv6-only and
+  # dual-stack clusters without per-cluster values: it takes every family the
+  # cluster offers and falls back to the only one on a single-stack cluster.
+  - it: prefers dual stack on the API service
+    template: templates/service-api.yaml
+    asserts:
+      - equal:
+          path: spec.ipFamilyPolicy
+          value: PreferDualStack
+
+  - it: prefers dual stack on the homeport service
+    template: templates/service-homeport.yml
+    asserts:
+      - equal:
+          path: spec.ipFamilyPolicy
+          value: PreferDualStack
+
+  # Dual-stack load balancer support varies by cloud provider and the media path
+  # is pinned to an explicit IP anyway, so the RTC LoadBalancer is left alone.
+  - it: leaves the livekit RTC load balancer single stack
+    template: templates/service-livekit-rtc.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.publicUrl: "wss://matrix.example.org"
+      matrixChat.livekit.keys.existingSecret.name: "operator-livekit-creds"
+    asserts:
+      - notExists:
+          path: spec.ipFamilyPolicy

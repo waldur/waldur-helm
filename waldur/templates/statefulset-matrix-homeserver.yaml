@@ -33,6 +33,40 @@ spec:
         - name: {{ $val }}
         {{ end -}}
       {{ end }}
+      initContainers:
+        # config-tuwunel.yaml ships a template, not the final config: the listen
+        # addresses depend on whether this node's kernel has IPv6, which helm
+        # cannot know at render time. Resolve it here, at pod start. Binding only
+        # 0.0.0.0 leaves the pod unreachable at its IPv6 address on an IPv6-only
+        # cluster (readiness is refused forever) and dark on the IPv6 half of a
+        # dual-stack one; /proc/net/if_inet6 is absent exactly where a "::" bind
+        # would fail outright. The tuwunel image has no shell, so this cannot be
+        # a command wrapper on the main container — and it reuses the initdb
+        # image the chart already ships rather than adding one for `sed`.
+        - name: render-config
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.initdbImageName }}:{{ template "waldur.postgresql.version" . }}
+          command: ['sh', '-c']
+          args:
+            - |
+              if [ -f /proc/net/if_inet6 ]; then
+                  ADDRESSES='["0.0.0.0", "::"]'
+              else
+                  ADDRESSES='["0.0.0.0"]'
+              fi
+              sed "s|@LISTEN_ADDRESSES@|$ADDRESSES|" /tuwunel-tpl/tuwunel.toml > /etc/tuwunel/tuwunel.toml
+              echo "INFO: tuwunel listen addresses: $ADDRESSES"
+          volumeMounts:
+            - name: config
+              mountPath: /tuwunel-tpl
+            - name: rendered-config
+              mountPath: /etc/tuwunel
+          resources:
+            requests:
+              cpu: 100m
+              memory: 200Mi
+            limits:
+              cpu: 100m
+              memory: 200Mi
       containers:
         - name: matrix-homeserver
           {{- if $h.imageDigest }}
@@ -47,7 +81,7 @@ spec:
               protocol: TCP
           env:
             - name: TUWUNEL_CONFIG
-              value: /etc/tuwunel.toml
+              value: /etc/tuwunel/tuwunel.toml
             {{- if or $h.registrationTokenExistingSecret.name $h.registrationToken }}
             - name: TUWUNEL_REGISTRATION_TOKEN
               valueFrom:
@@ -70,15 +104,17 @@ spec:
           resources:
             {{- toYaml $h.resources | nindent 12 }}
           volumeMounts:
-            - name: config
-              mountPath: /etc/tuwunel.toml
-              subPath: tuwunel.toml
+            - name: rendered-config
+              mountPath: /etc/tuwunel
             - name: data
               mountPath: /var/lib/tuwunel
       volumes:
         - name: config
           configMap:
             name: matrix-homeserver-config
+        # Written by render-config, read by the homeserver.
+        - name: rendered-config
+          emptyDir: {}
         {{- if not $h.persistence.enabled }}
         - name: data
           emptyDir: {}

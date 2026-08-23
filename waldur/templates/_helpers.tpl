@@ -525,3 +525,20 @@ Always
 {{ .Values.waldur.pullPolicy }}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Service IP family policy.
+
+PreferDualStack so a Service gets a ClusterIP in every family the cluster
+supports, and silently falls back to the single available family on an
+IPv4-only or IPv6-only cluster — no per-cluster values needed. Without it
+Services default to SingleStack on the cluster's *primary* family, so on a
+dual-stack cluster IPv6 clients cannot reach them at all.
+
+Deliberately not applied to the livekit-rtc LoadBalancer: dual-stack load
+balancer support varies by cloud provider, and its media path is pinned to an
+explicit node/external IP anyway.
+*/}}
+{{- define "waldur.serviceIpFamilyPolicy" -}}
+ipFamilyPolicy: PreferDualStack
+{{- end -}}

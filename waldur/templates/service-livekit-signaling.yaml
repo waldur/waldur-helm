@@ -9,6 +9,7 @@ metadata:
 {{ include "waldur.labels" . | indent 4 }}
 spec:
   type: ClusterIP
+  {{ include "waldur.serviceIpFamilyPolicy" . }}
   ports:
     - name: signaling
       port: {{ .Values.matrixChat.livekit.rtc.signalingPort }}

@@ -6,6 +6,7 @@ metadata:
 {{ include "waldur.labels" . | indent 4 }}
 spec:
   type: ClusterIP
+  {{ include "waldur.serviceIpFamilyPolicy" . }}
   ports:
     - port: 80
       targetPort: 8080

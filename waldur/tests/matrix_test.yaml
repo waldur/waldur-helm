@@ -541,3 +541,37 @@ tests:
             name: data
             persistentVolumeClaim:
               claimName: matrix-homeserver-data
+
+  - it: leaves the listen addresses for the initContainer to resolve at pod start
+    template: templates/config-tuwunel.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+    asserts:
+      # helm cannot know the node's IP family at render time, so the ConfigMap
+      # ships a placeholder rather than a hardcoded 0.0.0.0.
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "address = @LISTEN_ADDRESSES@"
+
+  - it: resolves the listen addresses in an initContainer the homeserver reads
+    template: templates/statefulset-matrix-homeserver.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: render-config
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].args[0]
+          pattern: 'if \[ -f /proc/net/if_inet6 \]'
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: TUWUNEL_CONFIG
+            value: /etc/tuwunel/tuwunel.toml

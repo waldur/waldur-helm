@@ -57,8 +57,6 @@ Set postgres host
 {{- define "waldur.postgresql.host" -}}
 {{- if .Values.externalDB.enabled -}}
 {{ .Values.externalDB.serviceName }}
-{{- else if .Values.postgresqlha.enabled -}}
-"{{ .Release.Name }}-postgresqlha-pgpool"
 {{- else if .Values.postgresql.enabled -}}
 "{{ .Release.Name }}-postgresql"
 {{- else -}}
@@ -79,8 +77,6 @@ Set postgres secret
 {{- define "waldur.postgresql.secret" -}}
 {{- if .Values.externalDB.enabled -}}
 {{ .Values.externalDB.secretName }}
-{{- else if .Values.postgresqlha.enabled -}}
-"{{ .Release.Name }}-postgresqlha-postgresql"
 {{- else if .Values.postgresql.enabled -}}
 "{{ .Release.Name }}-postgresql"
 {{- else -}}
@@ -89,19 +85,28 @@ Set postgres secret
 {{- end -}}
 
 {{/*
-Set postgres secret password key
+Set postgres secret password key.
+
+The bundled subchart generates its admin secret with the key
+"postgres-password". Operator-managed secrets differ: both CloudNativePG's
+<cluster>-app secret and Zalando's *.credentials.postgresql.acid.zalan.do use
+"password", which is the default for externalDB.passwordKey.
 */}}
 {{- define "waldur.postgresql.secret.passwordKey" -}}
+{{- if .Values.externalDB.enabled -}}
+{{ .Values.externalDB.passwordKey | default "password" | quote }}
+{{- else if .Values.postgresql.enabled -}}
+"postgres-password"
+{{- else -}}
 "password"
+{{- end -}}
 {{- end -}}
 
 {{/*
 Set postgres database name
 */}}
 {{- define "waldur.postgresql.dbname" -}}
-{{- if .Values.postgresqlha.enabled -}}
-{{ .Values.postgresqlha.postgresql.database | quote }}
-{{- else if .Values.postgresql.enabled -}}
+{{- if .Values.postgresql.enabled -}}
 {{ .Values.postgresql.auth.database | quote }}
 {{- else if and .Values.externalDB.enabled .Values.externalDB.database -}}
 {{ .Values.externalDB.database | quote }}
@@ -114,9 +119,7 @@ Set postgres database name
 Set postgres user
 */}}
 {{- define "waldur.postgresql.user" -}}
-{{- if .Values.postgresqlha.enabled -}}
-{{ .Values.postgresqlha.postgresql.username | quote }}
-{{- else if .Values.postgresql.enabled -}}
+{{- if .Values.postgresql.enabled -}}
 {{ .Values.postgresql.auth.username | quote }}
 {{- else if and .Values.externalDB.enabled .Values.externalDB.username -}}
 {{ .Values.externalDB.username | quote }}
@@ -366,7 +369,7 @@ is the behaviour of an unconfigured relay rather than a crash loop.
     secretKeyRef:
       name: {{ .Values.rabbitmq.secret.name }}
       key: {{ .Values.rabbitmq.secret.usernameKey }}
-  {{ else if and (hasKey .Values.rabbitmq.auth "existingSecret") .Values.rabbitmq.auth.existingSecret.name }}
+  {{ else if and (kindIs "map" .Values.rabbitmq.auth.existingSecret) .Values.rabbitmq.auth.existingSecret.name }}
   valueFrom:
     secretKeyRef:
       name: {{ .Values.rabbitmq.auth.existingSecret.name }}
@@ -383,7 +386,7 @@ is the behaviour of an unconfigured relay rather than a crash loop.
     secretKeyRef:
       name: {{ .Values.rabbitmq.secret.name }}
       key: {{ .Values.rabbitmq.secret.passwordKey }}
-  {{ else if and (hasKey .Values.rabbitmq.auth "existingSecret") .Values.rabbitmq.auth.existingSecret.name }}
+  {{ else if and (kindIs "map" .Values.rabbitmq.auth.existingSecret) .Values.rabbitmq.auth.existingSecret.name }}
   valueFrom:
     secretKeyRef:
       name: {{ .Values.rabbitmq.auth.existingSecret.name }}

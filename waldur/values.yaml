@@ -586,53 +586,41 @@ externalDB:
   # server-side cursors opened by Django's QuerySet.iterator() and by
   # reversion's serialization can be routed to a different backend between
   # DECLARE and FETCH/CLOSE under transaction pooling, raising
-  # psycopg.errors.InvalidCursorName. postgresqlha (pgpool) always pools
-  # connections, so it forces this on regardless of this setting.
+  # psycopg.errors.InvalidCursorName. Set it yourself when fronting the
+  # database with any transaction-pooling proxy -- nothing forces it on now
+  # that the pgpool-based postgresql-ha subchart is gone.
   disableServerSideCursors: "false"
+  # Key holding the password inside externalDB.secretName. Both
+  # CloudNativePG's <cluster>-app secret and Zalando's
+  # *.credentials.postgresql.acid.zalan.do secret use "password".
+  passwordKey: "password"
 
 postgresql:
+  # Bundled PostgreSQL for dev/test installs (CloudPirates chart, official
+  # docker.io/postgres image). Production should use externalDB with an
+  # operator-managed cluster -- see docs/postgres-operator.md.
   enabled: false
   auth:
     username: "waldur"
     password: "waldur"
     database: "waldur"
-  # The values are in use only if postgresql.enabled = true
-  primary:
-    persistence:
-      size: "10Gi"
-    resources:
-      requests:
-        memory: "1024Mi"
-        cpu: "500m"
-      limits:
-        memory: "2048Mi"
-        cpu: "1000m"
+  # The values below are in use only if postgresql.enabled = true
   image:
-    repository: bitnamilegacy/postgresql
-    tag: "16.4.0-debian-12-r19"
-  metrics:
-    enabled: false
-    image:
-      registry: "docker.io"
-      repository: bitnamilegacy/postgres-exporter
-      tag: 0.17.1-debian-12-r14
+    # Pinned to 17 to match waldur.postgresql.version in _helpers.tpl, which
+    # selects the client image used by the initdb/backup containers. Move both
+    # together or pg_dump/psql will refuse on a server-version mismatch.
+    tag: "17.6"
+  persistence:
+    enabled: true
+    size: "10Gi"
+  resources:
+    requests:
+      memory: "1024Mi"
+      cpu: "500m"
+    limits:
+      memory: "2048Mi"
+      cpu: "1000m"
 
-postgresqlha:
-  enabled: false
-  postgresql:
-    database: waldur
-    username: waldur
-    password: waldur
-    postgresPassword: postgres
-    repmgrPassword: repmgr
-    replicaCount: 3
-    image:
-      repository: bitnamilegacy/postgresql-repmgr
-      tag: "16.4.0-debian-12-r26"
-  pgpool:
-    image:
-      repository: bitnamilegacy/pgpool
-      tag: "4.6.2-debian-12-r7"
 
 postgresBackup:
   enabled: false
@@ -642,7 +630,11 @@ postgresBackup:
   image: opennode/postgres-minio:0.1.0
   name: "waldur"
 
-minio:
+# S3-compatible destination for the optional postgresBackup CronJobs.
+# Any S3 endpoint works -- the jobs use the `mc` client, so MinIO, AWS S3,
+# Ceph RGW and friends are all fine. Only consulted when
+# postgresBackup.enabled is true.
+backupStorage:
   accessKey: ""
   secretKey: ""
   bucketName: data
@@ -654,13 +646,26 @@ rabbitmq:
   auth:
     username: "waldur"
     password: "waldur"
-  # The values are in use only if rabbitmq.enabled = true
+  # The values below are in use only if rabbitmq.enabled = true
   image:
-    registry: "docker.io"
-    repository: "bitnamilegacy/rabbitmq"
-    tag: "4.1.3-debian-12-r1"
+    tag: "4.3.5-management"
   replicaCount: 1
-  extraPlugins: "rabbitmq_auth_backend_ldap rabbitmq_management rabbitmq_web_stomp rabbitmq_stomp"
+  # The chart derives nothing from plugin names, so the ports below must be
+  # declared explicitly. 61613/15674 are what config-override.yaml and
+  # ingress-rmq-ws.yaml expect; 5672 and 15672 are always present.
+  additionalPlugins:
+    - rabbitmq_stomp
+    - rabbitmq_web_stomp
+    - rabbitmq_auth_backend_ldap
+  extraPorts:
+    - name: stomp
+      port: 61613
+      containerPort: 61613
+      targetPort: 61613
+    - name: stomp-websocket
+      port: 15674
+      containerPort: 15674
+      targetPort: 15674
   resources:
     requests:
       cpu: 1
@@ -668,38 +673,10 @@ rabbitmq:
     limits:
       cpu: 2
       memory: 4096Mi
-  extraContainerPorts:
-    - name: stomp
-      containerPort: 61613
-      protocol: TCP
-    - name: stomp-websocket
-      containerPort: 15674
-      protocol: TCP
-  service:
-    extraPorts:
-      - name: stomp
-        protocol: TCP
-        port: 61613
-        targetPort: stomp
-      - name: stomp-websocket
-        protocol: TCP
-        port: 15674
-        targetPort: stomp-websocket
-  networkPolicy:
-    extraIngress:
-      - ports:
-          - protocol: TCP
-            containerPort: 61613
-            port: 61613
-          - protocol: TCP
-            containerPort: 15674
-            port: 15674
   persistence:
     enabled: true
     size: "10Gi"
     storageClass: ""
-  clustering:
-    forceBoot: true
   # hostname of rabbitmq service, respected only if rabbitmq.enabled = false and RMQ release is deployed separately
   host: "rmq-rabbitmq"
   # secrets of rabbitmq admin user, respected only if rabbitmq.enabled = false and RMQ release is deployed separately
@@ -825,6 +802,3 @@ matrixChat:
 
 global:
   imageRegistry: "docker.io"
-  # TODO: remove after migration to a stable RabbitMQ and PostgreSQL images from bitnamilegacy repo
-  security:
-    allowInsecureImages: true

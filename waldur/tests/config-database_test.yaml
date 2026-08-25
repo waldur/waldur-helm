@@ -17,10 +17,10 @@ tests:
           path: data["override.conf.py"]
           pattern: "'DISABLE_SERVER_SIDE_CURSORS': True,"
 
-  - it: disables server-side cursors whenever postgresqlha (pgpool) is enabled
+  - it: leaves server-side cursors enabled for the bundled postgresql subchart
     set:
-      postgresqlha.enabled: true
+      postgresql.enabled: true
     asserts:
       - matchRegex:
           path: data["override.conf.py"]
-          pattern: "'DISABLE_SERVER_SIDE_CURSORS': True,"
+          pattern: "'DISABLE_SERVER_SIDE_CURSORS': False,"

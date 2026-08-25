@@ -24,7 +24,7 @@ data:
             'PORT': os.environ.get('POSTGRESQL_PORT'),
             'USER': os.environ.get('POSTGRESQL_USER'),
             'PASSWORD': os.environ.get('POSTGRESQL_PASSWORD'),
-            'DISABLE_SERVER_SIDE_CURSORS': {{ if or .Values.postgresqlha.enabled (eq (.Values.externalDB.disableServerSideCursors | toString) "true") }}True{{ else }}False{{ end }},
+            'DISABLE_SERVER_SIDE_CURSORS': {{ if eq (.Values.externalDB.disableServerSideCursors | toString) "true" }}True{{ else }}False{{ end }},
             'OPTIONS': {
                 'prepare_threshold': None,
             },

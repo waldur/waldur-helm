@@ -16,21 +16,22 @@ waldur-helm/
 ├── scripts/
 │   └── set-version.sh            # Bumps Chart.yaml + waldur.imageTag + waldur.homeport.imageTag
 ├── applicationset.yaml           # ArgoCD ApplicationSet definition for managed deployments
-├── postgresql-values.yaml        # Reference values for the bundled Bitnami postgresql sub-chart
-├── postgresql-ha-values.yaml     # Reference values for postgresql-ha sub-chart
-├── rmq-values.yaml               # Reference values for the bundled Bitnami rabbitmq sub-chart
-├── minio-values.yaml             # Reference values for optional MinIO (used by DB-backup cronjobs)
+├── postgresql-values.yaml        # Reference values for PostgreSQL as a separate release
+├── rmq-values.yaml               # Reference values for RabbitMQ as a separate release
 └── README.md                     # User-facing install instructions
 ```
 
 ## Chart structure
 
-- Single chart `waldur` (no umbrella, no subcharts beyond Bitnami dependencies).
-- Three optional Bitnami dependencies declared in `Chart.yaml`, gated by conditions in values:
-  - `postgresql` (cond `postgresql.enabled`) — single-node Postgres for quick setup.
-  - `postgresqlha` (cond `postgresqlha.enabled`) — Postgres HA for production.
+- Single chart `waldur` (no umbrella, no subcharts beyond the two backing-service dependencies).
+- Two optional dependencies declared in `Chart.yaml`, gated by conditions in values, both
+  from CloudPirates (`oci://registry-1.docker.io/cloudpirates`) on official upstream images:
+  - `postgres` aliased `postgresql` (cond `postgresql.enabled`) — single-node Postgres for dev/test.
   - `rabbitmq` (cond `rabbitmq.enabled`) — task queue for Celery workers.
-- Use one of `postgresql.enabled` / `postgresqlha.enabled` / external DB (`docs/external-db-integration.md`) — never two of them.
+- The aliases are load-bearing: they make the subchart fullnames `<release>-postgresql` /
+  `<release>-rabbitmq`, which `_helpers.tpl` derives Service and Secret names from.
+- For production use `externalDB` with a Postgres operator (`docs/postgres-operator.md`) and an
+  operator-managed broker (`docs/rabbitmq-operator.md`). There is no in-chart HA path.
 - Mastermind image: `waldur.imageName` / `waldur.imageTag` (defaults to `opennode/waldur-mastermind`).
 - Homeport image: `waldur.homeport.imageName` / `waldur.homeport.imageTag`.
 
@@ -48,7 +49,7 @@ waldur-helm/
 ## Local development workflow
 
 ```bash
-# Pull Bitnami dependencies
+# Pull chart dependencies
 helm dependency update waldur/
 
 # Lint
@@ -104,9 +105,9 @@ CI cluster credentials are in `K8S_CONFIG_WALDUR_HELM_TEST` (GitLab CI variable)
 ## Conventions / gotchas
 
 - **Configmap + volume mount**: new server-side config files require (a) `config-*.yaml` template, (b) volume + volumeMount in every relevant deployment, (c) corresponding entry in `values.yaml`.
-- **Bitnami dep upgrades**: bump version in `Chart.yaml` only after testing locally — Bitnami's chart-level breaking changes are routine. Run `helm dep update waldur/` and inspect `Chart.lock`.
+- **Subchart upgrades**: bump the version in `Chart.yaml` only after testing locally, then run `helm dep update waldur/` and inspect `Chart.lock`. The CloudPirates charts release very frequently and pin images by digest, so a chart bump is also an image bump.
 - **`init-whitelabeling-job` and `load-features-job`** must be deleted before `helm upgrade` (the README spells this out). Anyone scripting upgrades around this chart should bake this in.
-- **One DB chart at a time**: enabling both `postgresql.enabled` and `postgresqlha.enabled` will collide. See `docs/migration-from-psql-ha.md` for moving between them.
+- **`externalDB` wins**: when `externalDB.enabled` is true the bundled `postgresql` subchart is ignored by the helpers, so do not enable both and expect the subchart to be used.
 - **`docs/` content is synced** into the `waldur-docs` repo via `external-sources.yml` there. Edit here; don't edit the synced copy in waldur-docs.
 - **Test values matter**: `waldur/test/values.yaml` is what CI installs. New required values must land there too or the install job fails.
 - **Skip flags**: most CI jobs honour `SKIP_TESTS=true|yes` to bail out — useful for docs-only changes.

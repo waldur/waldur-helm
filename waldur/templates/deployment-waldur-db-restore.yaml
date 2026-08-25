@@ -35,13 +35,13 @@ spec:
           env:
             {{- include "waldur.env.initdb" . | nindent 12 }}
             - name: MINIO_SERVER
-              value: {{ .Values.minio.endpoint | quote }}
+              value: {{ .Values.backupStorage.endpoint | quote }}
             - name: MINIO_ACCESS_KEY
-              value: {{ .Values.minio.accessKey | quote }}
+              value: {{ .Values.backupStorage.accessKey | quote }}
             - name: MINIO_SECRET_KEY
-              value: {{ .Values.minio.secretKey | quote }}
+              value: {{ .Values.backupStorage.secretKey | quote }}
             - name: MINIO_BUCKET
-              value: {{ .Values.minio.bucketName | quote }}
+              value: {{ .Values.backupStorage.bucketName | quote }}
             - name: MINIO_API_VERSION
               value: "S3v4"
           volumeMounts:

@@ -39,9 +39,8 @@ on a Kubernetes cluster using the [Helm](https://helm.sh) package manager.
 
    2.2. Advanced setup of dependencies
       Setup database using one of:
-      - Simple PostgreSQL DB: [instructions](docs/postgres-db.md) or
-      - PostgreSQL HA DB: [instructions](docs/postgres-db-ha.md) or
-      - Integrate with external DB: [instructions](docs/external-db-integration.md)
+      - Bundled PostgreSQL subchart: [instructions](docs/postgres-db.md) or
+      - Integrate with external DB or a Postgres operator: [instructions](docs/external-db-integration.md)
 
       Install RabbitMQ for task queue: [instructions](docs/rabbitmq.md)
 

@@ -1,0 +1,34 @@
+# Layered on top of test/values.yaml to exercise the bundled backing services.
+#
+# CI's main install job uses an external PostgreSQL and an operator-managed
+# RabbitMQ; this file installs the chart's own subcharts instead, so the
+# batteries-included path that dev/test installs rely on is actually covered.
+#
+# Ingress is off because the ingress hostnames are fixed, so this must never
+# claim the same hosts as the primary release. Note that a real install of this
+# path also needs its own namespace -- several resources here carry fixed,
+# non-release-prefixed names -- and the CI credential is namespace-scoped, so
+# CI validates this path by rendering rather than installing it.
+externalDB:
+  enabled: false
+
+postgresql:
+  enabled: true
+  persistence:
+    enabled: false
+
+rabbitmq:
+  enabled: true
+  persistence:
+    enabled: false
+  # test/values.yaml points these at the operator-managed cluster's secret,
+  # which does not exist in this namespace. Clearing them sends the credential
+  # helpers back to waldur-secret, which secrets.yaml populates from
+  # rabbitmq.auth.* -- the same values the subchart is configured with.
+  secret:
+    name: ""
+    usernameKey: ""
+    passwordKey: ""
+
+ingress:
+  enabled: false

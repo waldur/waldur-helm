@@ -82,6 +82,9 @@ Validate release installation (dry-run):
 
 Test release installation and readiness:
   extends: .Test template
+  # The broker apply can roll the RabbitMQ StatefulSet, and this job shares one
+  # `waldur` release with every other pipeline on the test cluster.
+  resource_group: waldur-helm-test
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       changes:
@@ -94,12 +97,80 @@ Test release installation and readiness:
         - waldur/**/*
   script:
     - set -xv
+    # The chart's test values run against an operator-managed broker
+    # (rabbitmq.enabled=false, rabbitmq.host=rabbitmq-waldur-test), so the
+    # cluster has to exist before `helm install --wait` -- otherwise the
+    # mastermind pods block on a Service and a secret that aren't there.
+    # `kubectl apply` is idempotent, so a rebuilt test cluster self-heals here
+    # rather than needing the CR re-applied by hand.
+    - |
+      # Probe the namespaced resource, not the CRD: the CI credential is scoped
+      # to the test namespace and cannot read cluster-scoped objects, so
+      # `kubectl get crd` fails even when the operator is installed. Surface the
+      # real kubectl error rather than swallowing it.
+      if ! PROBE=$(kubectl get rabbitmqcluster -o name 2>&1); then
+        echo "ERROR: cannot list RabbitmqCluster resources in this namespace."
+        echo "kubectl said: ${PROBE}"
+        echo
+        echo "waldur/test/values.yaml sets rabbitmq.enabled=false and expects an"
+        echo "operator-managed broker. If the RabbitMQ Cluster Operator is missing,"
+        echo "install it once as a cluster admin:"
+        echo "  kubectl apply -f https://github.com/rabbitmq/cluster-operator/releases/download/v2.22.5/cluster-operator.yml"
+        echo "See docs/rabbitmq-operator.md."
+        exit 1
+      fi
+    - |
+      set -e
+      RMQ=rabbitmq-waldur-test
+      # Server-side apply so field ownership is explicit. The object may already
+      # exist without a last-applied-configuration annotation (created by hand),
+      # which makes a client-side apply drop unmanaged fields on the *second*
+      # run rather than the first.
+      kubectl apply --server-side --force-conflicts -f waldur/test/k8s/rabbitmq-cluster.yaml
+
+      # The operator reconciles asynchronously. Immediately after apply the CR
+      # still carries the previous generation's status, so waiting on
+      # AllReplicasReady straight away can return True for the *old* StatefulSet.
+      # Gate on observedGeneration catching up first.
+      GEN=$(kubectl get rabbitmqcluster "$RMQ" -o jsonpath='{.metadata.generation}')
+      for _ in $(seq 1 24); do
+        OBS=$(kubectl get rabbitmqcluster "$RMQ" -o jsonpath='{.status.observedGeneration}' 2>/dev/null || true)
+        if [ -n "$OBS" ] && [ "$OBS" -ge "$GEN" ] 2>/dev/null; then break; fi
+        sleep 5
+      done
+
+      kubectl rollout status "statefulset/${RMQ}-server" --timeout=10m
+      kubectl wait --for=condition=AllReplicasReady --timeout=10m "rabbitmqcluster/${RMQ}"
+
+      # helm install --wait would otherwise sit for 20 minutes while every pod
+      # fails on a missing secretKeyRef.
+      kubectl get "secret/${RMQ}-default-user" -o jsonpath='{.data.username}' >/dev/null
+
+      # The operator derives Service ports from spec.rabbitmq.additionalPlugins,
+      # and the chart hard-codes them: 15674 backs templates/ingress-rmq-ws.yaml,
+      # 61613/15672 are written into the app config by config-override.yaml.
+      # Assert them so a drifted plugin list fails here instead of silently
+      # leaving the STOMP event path dead.
+      for PORT in 5672 15672 15674 61613; do
+        if ! kubectl get "svc/${RMQ}" -o jsonpath="{.spec.ports[?(@.port==${PORT})].port}" | grep -q "^${PORT}$"; then
+          echo "ERROR: port ${PORT} is missing from service/${RMQ}."
+          echo "Check that waldur/test/k8s/rabbitmq-cluster.yaml still lists rabbitmq_stomp and rabbitmq_web_stomp."
+          kubectl get "svc/${RMQ}" -o yaml
+          exit 1
+        fi
+      done
     - helm dep update waldur/
     - helm install waldur waldur/ --wait -f waldur/test/values.yaml --set waldur.pullPolicy=Always --timeout 20m0s
   after_script:
     - set -xv
     - export KUBECONFIG=${K8S_CONFIG_WALDUR_HELM_TEST}
     - helm list
+    # The pod loop below filters on app.kubernetes.io/instance=waldur, which the
+    # operator's resources do not carry, so a broken broker would otherwise leave
+    # no trace in this job's output.
+    - kubectl get rabbitmqcluster -o wide || true
+    - kubectl get svc rabbitmq-waldur-test -o yaml || true
+    - kubectl logs -l app.kubernetes.io/name=rabbitmq-waldur-test --tail=100 --all-containers || true
     - kubectl apply -f waldur/test/k8s/networkpolicy-override.yaml
     - kubectl delete networkpolicy namespace-isolation --ignore-not-found
     - kubectl get pods
@@ -149,6 +220,7 @@ Test ArgoCD sync:
 
 Cleanup previous test deployment:
   extends: .Cleanup template
+  resource_group: waldur-helm-test
   stage: .pre
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'

@@ -2,6 +2,21 @@
 
 For **production deployments**, it is strongly recommended to use the official [RabbitMQ Cluster Kubernetes Operator](https://www.rabbitmq.com/kubernetes/operator/operator-overview) instead of the Bitnami Helm chart. The operator provides better lifecycle management, high availability, and production-grade features.
 
+> **The bundled Bitnami subchart is stuck on RabbitMQ 4.1 and cannot be upgraded.**
+> The chart's `rabbitmq` dependency pulls `bitnamilegacy/rabbitmq`, a registry
+> that's frozen at `4.1.3-debian-12-r1` — no `4.2.x`/`4.3.x` tags exist
+> (confirmed via `docker manifest inspect` against several candidate tags on
+> 2026-08-03, and reproduced in-cluster: `helm install` with a bumped
+> `rabbitmq.image.tag` leaves the RabbitMQ pod in `ImagePullBackOff`/
+> `ErrImagePull` — `... not found`). Since RabbitMQ 4.1 loses community
+> support in January 2026 and 4.2 reaches EOL July 31, 2026, the bundled
+> subchart cannot be the long-term path for any deployment. This is why
+> `waldur/test/values.yaml` (CI's test install target) now points at an
+> operator-managed cluster instead of the subchart. Migrating the bundled
+> subchart itself off the frozen registry — to a different chart/image
+> entirely — is tracked as separate future work, not part of this
+> compatibility fix.
+
 ## Overview
 
 The RabbitMQ Cluster Operator automates:
@@ -24,13 +39,48 @@ The RabbitMQ Cluster Operator automates:
 
 - Appropriate RBAC permissions
 
+## Version upgrade path
+
+RabbitMQ does not support skipping a minor version. From the upstream
+[upgrade guide](https://www.rabbitmq.com/docs/upgrade): *"Upgrading to `4.3.x` is
+only possible from `4.2.x`."* The supported steps are `4.1.x → 4.2.x` and
+`4.2.x → 4.3.x`; there is no `4.1.x → 4.3.x` path. A cluster on 4.1 must therefore
+be walked through 4.2, rolling and verifying at each step, rather than jumped
+straight to 4.3.
+
+Before each step:
+
+- **Enable all stable feature flags.** The upgrade guide is explicit that *"all
+  stable feature flags must be enabled before an upgrade, or the upgrade may
+  fail"*. This is not hypothetical — a default 4.1 node has `khepri_db` disabled,
+  and 4.3 requires it.
+
+  ```bash
+  kubectl exec -n <namespace> <cluster-name>-server-0 -- rabbitmqctl enable_feature_flag all
+  kubectl exec -n <namespace> <cluster-name>-server-0 -- rabbitmqctl list_feature_flags
+  ```
+
+- **Check the Erlang requirement.** RabbitMQ `4.3.3` and later require Erlang 27,
+  and nodes fail to start on anything older. The official `rabbitmq:4.3.x` container
+  images already ship OTP 27, so this only affects package-based installations.
+
+Bump `spec.image` one minor series at a time and let the operator roll the
+StatefulSet, waiting for `AllReplicasReady` before starting the next step:
+
+```bash
+kubectl wait --for=condition=AllReplicasReady --timeout=600s rabbitmqcluster/<cluster-name>
+```
+
 ## Installation
 
 ### 1. Install the RabbitMQ Cluster Operator
 
 ```bash
-kubectl apply -f "<https://github.com/rabbitmq/cluster-operator/releases/latest/download/cluster-operator.yml">
+kubectl apply -f https://github.com/rabbitmq/cluster-operator/releases/download/v2.22.5/cluster-operator.yml
 ```
+
+Pin the version rather than using `latest`: the operator is cluster-scoped, so an
+unpinned re-apply upgrades it for every `RabbitmqCluster` on the cluster at once.
 
 Verify the operator is running:
 
@@ -49,6 +99,10 @@ metadata:
   name: waldur-rabbitmq
   namespace: default
 spec:
+  # Pin explicitly -- an unset image field silently takes whatever the
+  # operator's default is, rather than a deliberate version.
+  image: rabbitmq:4.3.5
+
   # Production recommendation: use odd numbers (3, 5, 7)
   replicas: 3
 
@@ -91,8 +145,17 @@ spec:
       log.console = true
       log.console.level = info
 
-      # Queue master location policy
-      queue_master_locator = balanced
+      # Queue leader location policy (queue_master_locator is deprecated)
+      queue_leader_locator = balanced
+
+      # RabbitMQ 4.3 compatibility: 4.3 denies transient, non-exclusive
+      # queues by default, the combination kombu's pidbox and Celery's
+      # gossip queues declare. Mastermind now declares both exclusive
+      # (CELERY_CONTROL_QUEUE_EXCLUSIVE / CELERY_EVENT_QUEUE_EXCLUSIVE), so
+      # this flag is only needed while the deployed Waldur image predates
+      # that change. It is read at node boot and is accepted on 4.1, 4.2 and
+      # 4.3 alike, so it can be set or removed at any point in the walk.
+      deprecated_features.permit.transient_nonexcl_queues = true
 
     # Additional plugins
     additionalPlugins:
@@ -104,6 +167,8 @@ spec:
       - rabbitmq_auth_backend_ldap  # If LDAP auth is needed
 
       - rabbitmq_stomp              # If STOMP protocol is needed
+
+      - rabbitmq_web_stomp          # Required for Waldur's websocket-STOMP ingress
 
   # Service configuration
   service:
@@ -172,25 +237,26 @@ Update your Waldur `values.yaml`:
 
 ```yaml
 
-# Disable the bitnami rabbitmq chart
+# Disable the bundled rabbitmq subchart and point the chart at the
+# operator-managed cluster. `host` must match the RabbitmqCluster name -- the
+# operator creates a Service of that name -- and the secret is the one the
+# operator generates as `<cluster-name>-default-user`.
 
 rabbitmq:
   enabled: false
-  # External RabbitMQ secret configuration
+  host: "waldur-rabbitmq"
   secret:
     name: "waldur-rabbitmq-default-user"
     usernameKey: "username"
     passwordKey: "password"
-
-# Configure external RabbitMQ connection
-
-global:
-  waldur:
-    rabbitmq:
-      host: "waldur-rabbitmq.default.svc.cluster.local"
-      port: 5672
-      vhost: "/"
 ```
+
+> **Do not set `global.waldur.rabbitmq.*`.** The chart does not read those keys;
+> the broker host comes from the top-level `rabbitmq.host` value
+> (`templates/_helpers.tpl`, `waldur.rabbitmq.rmqHost`). Setting only the
+> `global.*` form leaves `rabbitmq.host` at its default of `rmq-rabbitmq` — the
+> name of the old Bitnami release — and the deployment points at a Service that
+> does not exist.
 
 **RabbitMQ Operator Secret Management:**
 

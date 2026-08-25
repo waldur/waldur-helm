@@ -625,7 +625,12 @@ minio:
   endpoint: "http://minio:9000" ## See docs/service-endpoint.md for details.
 
 rabbitmq:
-  enabled: true
+  # bitnamilegacy/rabbitmq is frozen at 4.1.3-debian-12-r1 (no 4.2.x/4.3.x
+  # tags published) -- the bundled subchart can't reach RabbitMQ 4.3, so
+  # CI's test install now depends on an operator-managed RabbitmqCluster
+  # (waldur/test/k8s/rabbitmq-cluster.yaml) instead. See
+  # docs/rabbitmq-operator.md for the registry-freeze note.
+  enabled: false
   auth:
     erlangCookie: "30ed8c5d20cadb62f491987d2e292848f8d35b26"
     username: "waldur"
@@ -650,12 +655,12 @@ rabbitmq:
   clustering:
     forceBoot: true
   # hostname of rabbitmq service, respected only if rabbitmq.enabled = false and RMQ release is deployed separately
-  host: "rmq-rabbitmq"
+  host: "rabbitmq-waldur-test"
   # secrets of rabbitmq admin user, respected only if rabbitmq.enabled = false and RMQ release is deployed separately
   secret:
-    name: ""
-    usernameKey: ""
-    passwordKey: ""
+    name: "rabbitmq-waldur-test-default-user"
+    usernameKey: "username"
+    passwordKey: "password"
 
 
 # Matrix chat smoke test on helm-testing. Reuses the apex host (already resolves,

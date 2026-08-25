@@ -1,0 +1,41 @@
+apiVersion: rabbitmq.com/v1beta1
+kind: RabbitmqCluster
+metadata:
+  name: rabbitmq-waldur-test
+spec:
+  replicas: 1
+  image: rabbitmq:4.3.5
+  rabbitmq:
+    # RabbitMQ 4.3 compatibility: 4.3 denies transient, non-exclusive queues
+    # by default, the combination kombu's pidbox and Celery's gossip queues
+    # declare. Mastermind now declares both exclusive
+    # (CELERY_CONTROL_QUEUE_EXCLUSIVE / CELERY_EVENT_QUEUE_EXCLUSIVE), so this
+    # flag is only needed while the deployed image predates that change. It is
+    # read at node boot and is accepted on 4.1, 4.2 and 4.3 alike, so it can be
+    # set or removed at any point in the version walk.
+    additionalConfig: |
+      deprecated_features.permit.transient_nonexcl_queues = true
+    # The operator derives Service ports from this list: rabbitmq_stomp adds
+    # 61613 and rabbitmq_web_stomp adds 15674 (amqp 5672 and management 15672
+    # are always present). Waldur needs all three -- 15674 is the backend of
+    # templates/ingress-rmq-ws.yaml, and 61613/15672 are what
+    # templates/config-override.yaml writes into the app config. This matches
+    # the plugin set of the Bitnami release this cluster replaces.
+    # rabbitmq_management, rabbitmq_prometheus and rabbitmq_peer_discovery_k8s
+    # are enabled by the operator unconditionally and are deliberately not
+    # repeated here.
+    additionalPlugins:
+      - rabbitmq_web_stomp
+      - rabbitmq_stomp
+      - rabbitmq_auth_backend_ldap
+  service:
+    type: ClusterIP
+  persistence:
+    storage: 5Gi
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 1Gi

@@ -1,47 +1,43 @@
+# Reference values for installing RabbitMQ as a SEPARATE release alongside
+# Waldur, rather than as the chart's bundled subchart.
+#
+#   helm install rmq oci://registry-1.docker.io/cloudpirates/rabbitmq \
+#     --version 0.21.19 -f rmq-values.yaml
+#
+# This produces a Service named `rmq-rabbitmq`, which is the default of
+# `rabbitmq.host` in values.yaml.
 image:
-  registry: "docker.io"
-  repository: "bitnamilegacy/rabbitmq"
-  tag: "4.1.3-debian-12-r1"
+  tag: "4.3.5-management"
 
 replicaCount: 3
-persistence:
-  enabled: true
-  size: "10Gi"
-  storageClass: ""
+
 auth:
   username: "waldur"
   password: "waldur"
 
-extraPlugins: "rabbitmq_auth_backend_ldap rabbitmq_management rabbitmq_web_stomp rabbitmq_stomp"
+# Waldur needs STOMP and web-STOMP in addition to AMQP and the management API.
+# This chart does not derive ports from plugin names, so extraPorts below has to
+# declare them explicitly: 61613 is what config-override.yaml writes into the
+# app config, 15674 is the backend of templates/ingress-rmq-ws.yaml.
+additionalPlugins:
+  - rabbitmq_stomp
+  - rabbitmq_web_stomp
+  - rabbitmq_auth_backend_ldap
 
-extraContainerPorts:
-- name: stomp
-  containerPort: 61613
-  protocol: TCP
-- name: stomp-websocket
-  containerPort: 15674
-  protocol: TCP
-
-service:
-  extraPorts:
+extraPorts:
   - name: stomp
-    protocol: TCP
     port: 61613
-    targetPort: stomp
+    containerPort: 61613
+    targetPort: 61613
   - name: stomp-websocket
-    protocol: TCP
     port: 15674
-    targetPort: stomp-websocket
+    containerPort: 15674
+    targetPort: 15674
 
-networkPolicy:
-  extraIngress:
-  - ports:
-    - protocol: TCP
-      containerPort: 61613
-      port: 61613
-    - protocol: TCP
-      containerPort: 15674
-      port: 15674
+persistence:
+  enabled: true
+  size: "10Gi"
+  storageClass: ""
 
 resources:
   requests:
@@ -50,11 +46,3 @@ resources:
   limits:
     cpu: 2
     memory: 4096Mi
-
-clustering:
-  forceBoot: true
-
-# TODO: remove after migration to a stable RabbitMQ and PostgreSQL images from bitnamilegacy repo
-global:
-  security:
-    allowInsecureImages: true

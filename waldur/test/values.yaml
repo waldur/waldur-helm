@@ -565,49 +565,30 @@ externalDB:
   serviceName: "waldur-testing-postgres"
 
 postgresql:
+  # Bundled PostgreSQL for dev/test installs (CloudPirates chart, official
+  # docker.io/postgres image). CI's default install uses externalDB instead;
+  # the bundled path is exercised by waldur/test/bundled-values.yaml.
   enabled: false
   auth:
     username: "waldur"
     password: "waldur"
     database: "waldur"
-  # The values are in use only if postgresql.enabled = true
-  primary:
-    persistence:
-      size: "10Gi"
-    resources:
-      requests:
-        memory: "1024Mi"
-        cpu: "500m"
-      limits:
-        memory: "2048Mi"
-        cpu: "1000m"
+  # The values below are in use only if postgresql.enabled = true
   image:
-    repository: bitnamilegacy/postgresql
-    tag: "16.4.0-debian-12-r19"
-  metrics:
+    # Matches waldur.postgresql.version in _helpers.tpl (client image for the
+    # initdb/backup containers) -- move both together.
+    tag: "17.6"
+  persistence:
     enabled: true
-    image:
-      registry: "docker.io"
-      repository: bitnamilegacy/postgres-exporter
-      tag: 0.17.1-debian-12-r14
+    size: "10Gi"
+  resources:
+    requests:
+      memory: "1024Mi"
+      cpu: "500m"
+    limits:
+      memory: "2048Mi"
+      cpu: "1000m"
 
-postgresqlha:
-  enabled: false
-  postgresql:
-    database: waldur
-    username: waldur
-    password: waldur
-    postgresPassword: postgres
-    repmgrPassword: repmgr
-    replicaCount: 1
-    image:
-      repository: bitnamilegacy/postgresql-repmgr
-      tag: "16.4.0-debian-12-r26"
-  pgpool:
-    adminPassword: "2ILwp6GBDKNRMymXoDU="
-    image:
-      repository: bitnamilegacy/pgpool
-      tag: "4.6.2-debian-12-r7"
 
 postgresBackup:
   enabled: true
@@ -617,7 +598,11 @@ postgresBackup:
   image: opennode/postgres-minio:0.1.0
   name: "waldur"
 
-minio:
+# S3-compatible destination for the optional postgresBackup CronJobs.
+# Any S3 endpoint works -- the jobs use the `mc` client, so MinIO, AWS S3,
+# Ceph RGW and friends are all fine. Only consulted when
+# postgresBackup.enabled is true.
+backupStorage:
   accessKey: "accessKey"
   secretKey: "secret"
   bucketName: data
@@ -625,21 +610,31 @@ minio:
   endpoint: "http://minio:9000" ## See docs/service-endpoint.md for details.
 
 rabbitmq:
-  # bitnamilegacy/rabbitmq is frozen at 4.1.3-debian-12-r1 (no 4.2.x/4.3.x
-  # tags published) -- the bundled subchart can't reach RabbitMQ 4.3, so
-  # CI's test install now depends on an operator-managed RabbitmqCluster
-  # (waldur/test/k8s/rabbitmq-cluster.yaml) instead. See
-  # docs/rabbitmq-operator.md for the registry-freeze note.
+  # CI's default install points at the operator-managed RabbitmqCluster
+  # (waldur/test/k8s/rabbitmq-cluster.yaml); the bundled subchart is exercised
+  # by waldur/test/bundled-values.yaml instead.
   enabled: false
   auth:
     erlangCookie: "30ed8c5d20cadb62f491987d2e292848f8d35b26"
     username: "waldur"
     password: "waldur"
-  # The values are in use only if rabbitmq.enabled = true
+  # The values below are in use only if rabbitmq.enabled = true
   image:
-    repository: "bitnamilegacy/rabbitmq"
-    tag: "4.1.3-debian-12-r1"
+    tag: "4.3.5-management"
   replicaCount: 1
+  additionalPlugins:
+    - rabbitmq_stomp
+    - rabbitmq_web_stomp
+    - rabbitmq_auth_backend_ldap
+  extraPorts:
+    - name: stomp
+      port: 61613
+      containerPort: 61613
+      targetPort: 61613
+    - name: stomp-websocket
+      port: 15674
+      containerPort: 15674
+      targetPort: 15674
   resources:
     requests:
       cpu: 1
@@ -647,13 +642,10 @@ rabbitmq:
     limits:
       cpu: 2
       memory: 1024Mi
-  networkPolicy: {}
   persistence:
     enabled: true
     size: "10Gi"
     storageClass: ""
-  clustering:
-    forceBoot: true
   # hostname of rabbitmq service, respected only if rabbitmq.enabled = false and RMQ release is deployed separately
   host: "rabbitmq-waldur-test"
   # secrets of rabbitmq admin user, respected only if rabbitmq.enabled = false and RMQ release is deployed separately

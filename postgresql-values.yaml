@@ -1,34 +1,33 @@
+# Reference values for installing PostgreSQL as a SEPARATE release alongside
+# Waldur, rather than as the chart's bundled subchart.
+#
+#   helm install postgresql oci://registry-1.docker.io/cloudpirates/postgres \
+#     --version 0.20.1 -f postgresql-values.yaml
+#
+# nameOverride keeps the Service and Secret named `postgresql-waldur`, which is
+# the fallback that templates/_helpers.tpl uses when neither externalDB nor the
+# bundled subchart is enabled. Change it here and you must change the helper.
 nameOverride: "waldur"
+
+image:
+  # Pinned to 17 to match waldur.postgresql.version in _helpers.tpl, which picks
+  # the client image for the initdb and backup containers. Move both together.
+  tag: "17.6"
 
 auth:
   username: "waldur"
   password: "waldur"
   database: "waldur"
 
-primary:
-  persistence:
-    size: "10Gi"
-  resources:
-    requests:
-      memory: "1024Mi"
-      cpu: "500m"
-    limits:
-      memory: "2048Mi"
-      cpu: "1000m"
+persistence:
+  enabled: true
+  size: "10Gi"
+  storageClass: ""
 
-image:
-  registry: "docker.io"
-  repository: bitnamilegacy/postgresql
-  tag: "16.4.0-debian-12-r19"
-
-metrics:
-  enabled: false
-  image:
-    registry: "docker.io"
-    repository: bitnamilegacy/postgres-exporter
-    tag: 0.17.1-debian-12-r14
-
-# TODO: remove after migration to a stable RabbitMQ and PostgreSQL images from bitnamilegacy repo
-global:
-  security:
-    allowInsecureImages: true
+resources:
+  requests:
+    cpu: 500m
+    memory: 1024Mi
+  limits:
+    cpu: 1000m
+    memory: 2048Mi

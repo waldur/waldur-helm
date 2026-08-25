@@ -1,118 +1,80 @@
-# PostgreSQL Configuration
+# PostgreSQL (bundled subchart)
 
-## Production vs Demo Deployments
+For **demo and development** installs, the chart can bring up its own PostgreSQL.
+For **production**, use an operator instead — see
+[PostgreSQL Operators](postgres-operator.md) and
+[External DB Integration](external-db-integration.md).
 
-⚠️ **Important:** This document describes PostgreSQL setup for **demo/development environments only**.
+The subchart is [CloudPirates `postgres`](https://github.com/CloudPirates-io/helm-charts/tree/main/charts/postgres),
+which runs the official `docker.io/postgres` image.
 
-**For production deployments**, use the [CloudNativePG Operator](postgres-operator.md) instead of the Bitnami Helm chart. The operator provides:
+## Enabling it
 
-- Kubernetes-native PostgreSQL cluster management
+```yaml
+postgresql:
+  enabled: true
+  auth:
+    username: "waldur"
+    password: "waldur"
+    database: "waldur"
+  persistence:
+    enabled: true
+    size: "10Gi"
+```
 
-- Automated failover and high availability
+Then `helm dependency update waldur/ && helm install waldur waldur/ -f values.yaml`.
+Nothing else is needed: the chart derives the database host and credentials from
+the subchart's own Service and Secret.
 
-- Built-in backup and Point-in-Time Recovery (PITR)
+`externalDB.enabled` takes precedence over this, so leave it `false` when using
+the bundled database.
 
-- Zero-downtime maintenance operations
+## PostgreSQL version
 
-- Enhanced monitoring and observability
+`waldur/values.yaml` pins `postgresql.image.tag` to a 17.x release because
+`templates/_helpers.tpl` hardcodes `waldur.postgresql.version: 17`, which selects
+the client image used by the initdb and backup containers. **Move both together** —
+`pg_dump` and `psql` refuse to talk to a server newer than themselves.
 
-- Production-grade security features
+## Installing PostgreSQL separately
 
-## Demo/Development Installation
-
-For development and demo environments,
-[bitnami/postgresql chart](https://github.com/bitnami/charts/tree/main/bitnami/postgresql)
-can be used for quick setup.
-
-## Demo Standalone Installation
-
-Add `bitnami` repo to helm:
+To run PostgreSQL as its own release rather than as a subchart, use
+`postgresql-values.yaml` from the repository root:
 
 ```bash
-  helm repo add bitnami <https://charts.bitnami.com/bitnami>
+helm install postgresql oci://registry-1.docker.io/cloudpirates/postgres \
+  --version 0.20.1 -f postgresql-values.yaml
 ```
 
-Install PostgreSQL release for demo/development:
+Its `nameOverride: "waldur"` produces a Service and Secret named
+`postgresql-waldur`, which is what the chart falls back to when neither
+`externalDB.enabled` nor `postgresql.enabled` is set.
+
+## Migrating from the Bitnami subchart
+
+Earlier releases used the Bitnami `postgresql` and `postgresql-ha` subcharts.
+Both are gone: Bitnami moved its images to a frozen `bitnamilegacy` archive, and
+the chart's own image references no longer resolve.
+
+**An existing Bitnami volume cannot be reused, even though the PVC name is the
+same.** Bitnami stored data at `/bitnami/postgresql`; the official image uses
+`/var/lib/postgresql/data`. Reattaching the old claim gives PostgreSQL a
+directory it does not recognise, and it will refuse to initialise into it.
+
+Migrate with a dump and restore:
 
 ```bash
-  helm install postgresql bitnami/postgresql --version 16.0.1 -f postgresql-values.yaml
+kubectl exec -it <old-postgres-pod> -- pg_dump -U waldur waldur | gzip > waldur.sql.gz
+# switch the values over, delete the old PVC, install
+gunzip -c waldur.sql.gz | kubectl exec -i <new-postgres-pod> -- psql -U waldur waldur
 ```
 
-**Note:**
+`postgresql-ha` has no replacement subchart. It was frozen upstream, and every
+credible HA option is an operator that cannot work as a plain Helm dependency —
+use [PostgreSQL Operators](postgres-operator.md) via `externalDB`.
 
-- The default configuration in `postgresql-values.yaml` uses `bitnamilegacy` Docker images for compatibility
-
-- This setup is **not recommended for production use**
-
-**NB**: the values `postgresql.enabled` and `postgresqlha.enabled` must be `false`.
-
-### Chart configuration
-
-You can change default PostgreSQL config with the following variables in `postgresql-values.yaml`:
-
-1. `auth.database` - name of a database.
-
-    **NB**: must match `postgresql.database` value in `waldur/values.yaml`
-
-2. `auth.username` - name of a database user.
-
-    **NB**: must match `postgresql.username` value in `waldur/values.yaml`
-
-3. `auth.password` - password of a database user
-
-4. `primary.persistence.size` - size of a database
-
-5. `image.tag` - tag of `PostgreSQL` image.
-
-    Possible tags for default image can be found [here](https://hub.docker.com/r/bitnami/postgresql/tags)
-
-6. `image.registry` - registry of `PostgreSQL` image.
-
-More information related to possible values [here](https://github.com/bitnami/charts/tree/main/bitnami/postgresql#parameters).
-
-**Important:**
-
-- The PostgreSQL configuration uses legacy Bitnami images (`bitnamilegacy/postgresql` and `bitnamilegacy/postgres-exporter`) for demo/development compatibility
-
-- These images are configured in the `postgresql-values.yaml` file
-
-- For production deployments, migrate to the [CloudNativePG Operator](postgres-operator.md)
-
-## Demo Dependency Installation
-
-Waldur Helm chart supports PostgreSQL installation as a dependency.
-For this, set `postgresql.enabled` to `true` and update related settings in `postgresql` section in `waldur/values.yaml`
-
-**NB**: the value `postgresqlha.enabled` and `externalDB.enabled` must be `false`.
-
-Prior Waldur installation, update chart dependencies:
-
-```bash
-helm dependency update
-```
-
-## Readonly user configuration
-
-In order to enable /api/query/ endpoint please make sure that read-only user is configured.
-
-The endpoint executes caller-supplied SQL against the read replica, so the calling Waldur user must have the `is_staff` flag set. (Prior to Waldur 8.x the endpoint also accepted `is_support` users; this was tightened to staff-only because even a SELECT-only DB role still exposes token hashes, password hashes, and PII.)
-
-```sql
--- Create a read-only user
-CREATE USER readonly WITH PASSWORD '{readonly_password}'
-
--- Grant read-only access to the database
-GRANT CONNECT ON DATABASE '{database_name}' TO '{readonly_username}'
-
--- Grant read-only access to the schema
-GRANT USAGE ON SCHEMA public TO '{readonly_username}'
-
--- Grant read-only access to existing tables
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO '{readonly_username}'
-
--- Grant read-only access to future tables
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO '{readonly_username}'
-
--- Revoke access to authtoken_token table
-REVOKE SELECT ON authtoken_token FROM '{readonly_username}'
-```
+One behavioural note: `postgresql-ha` used pgpool, and the chart forced
+`DISABLE_SERVER_SIDE_CURSORS` on because transaction pooling breaks Django's
+named cursors. Nothing forces it now. If you front the database with any
+transaction-pooling proxy — PgBouncer under CloudNativePG or Zalando's connection
+pooler — set `externalDB.disableServerSideCursors: "true"` yourself.

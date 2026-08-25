@@ -124,9 +124,9 @@ graph TB
 
 ### PostgreSQL Database
 
-**Chart:** Bitnami PostgreSQL v16.7.26
+**Chart:** CloudPirates `postgres` (bundled subchart, `postgresql.enabled`)
 **Enabled by:** `postgresql.enabled`
-**Images:** Uses `bitnamilegacy` Docker images for compatibility
+**Images:** Official upstream images (`docker.io/postgres`, `docker.io/rabbitmq`)
 **Environment:** Demo/Development only
 
 ⚠️ **Production Recommendation:** Use [CloudNativePG Operator](postgres-operator.md) for production deployments
@@ -134,8 +134,6 @@ graph TB
 - **Options:**
 
   - Simple PostgreSQL deployment
-
-  - PostgreSQL HA deployment (using `postgresqlha.enabled`)
 
   - External database configuration
 
@@ -155,9 +153,9 @@ graph TB
 
 ### RabbitMQ Message Broker
 
-**Chart:** Bitnami RabbitMQ v16.0.13
+**Chart:** CloudPirates `rabbitmq` (bundled subchart, `rabbitmq.enabled`)
 **Enabled by:** `rabbitmq.enabled`
-**Images:** Uses `bitnamilegacy` Docker images for compatibility
+**Images:** Official upstream images (`docker.io/postgres`, `docker.io/rabbitmq`)
 **Environment:** Demo/Development only
 
 ⚠️ **Production Recommendation:** Use [RabbitMQ Cluster Operator](rabbitmq-operator.md) for production deployments

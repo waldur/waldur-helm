@@ -14,7 +14,7 @@ For **production deployments**, see the comprehensive [PostgreSQL Operators docu
 
 To use external PostgreSQL, set the following variables in `values.yaml`:
 
-1. `externalDB.enabled` - toggler for integration; requires `postgresql.enabled` and `postgresqlha.enabled` to be `false`
+1. `externalDB.enabled` - toggler for integration; requires `postgresql.enabled` to be `false`
 
 2. `externalDB.secretName` - name of the secret with PostgreSQL credentials for Waldur user
 
@@ -24,7 +24,9 @@ To use external PostgreSQL, set the following variables in `values.yaml`:
 
 5. `externalDB.username` - custom username (optional, defaults to "waldur")
 
-6. `externalDB.disableServerSideCursors` - set to `"true"` when the external Postgres sits behind a connection pooler running in transaction-pooling mode (e.g. the Zalando Postgres Operator's built-in PgBouncer sidecar, `enableConnectionPooler: true`). Named server-side cursors opened by Django's `QuerySet.iterator()` can be routed to a different backend between `DECLARE` and `FETCH`/`CLOSE` under transaction pooling, raising `psycopg.errors.InvalidCursorName`. Defaults to `"false"`. `postgresqlha` (pgpool) always pools connections, so it forces this on regardless of this setting.
+6. `externalDB.passwordKey` - key holding the password inside `externalDB.secretName`. Defaults to `"password"`, which is correct for both CloudNativePG's `<cluster>-app` secret and Zalando's `*.credentials.postgresql.acid.zalan.do` secret.
+
+7. `externalDB.disableServerSideCursors` - set to `"true"` when the external Postgres sits behind a connection pooler running in transaction-pooling mode (e.g. the Zalando Postgres Operator's built-in PgBouncer sidecar, `enableConnectionPooler: true`). Named server-side cursors opened by Django's `QuerySet.iterator()` can be routed to a different backend between `DECLARE` and `FETCH`/`CLOSE` under transaction pooling, raising `psycopg.errors.InvalidCursorName`. Defaults to `"false"`. Nothing forces it on any more — the pgpool-based `postgresql-ha` subchart has been removed — so set it yourself when using any transaction-pooling proxy.
 
 ## CloudNativePG Integration Example
 

@@ -292,8 +292,6 @@ Update your Waldur `values.yaml`:
 
 postgresql:
   enabled: false
-postgresqlha:
-  enabled: false
 
 # Configure external PostgreSQL connection
 
@@ -915,8 +913,6 @@ Update your Waldur `values.yaml`:
 # Disable bitnami postgresql charts
 
 postgresql:
-  enabled: false
-postgresqlha:
   enabled: false
 
 # Configure external PostgreSQL connection

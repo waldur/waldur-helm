@@ -54,9 +54,10 @@ Run linter:
     - apk add curl git
     - kubectl config view
     - kubectl config current-context
-    - helm repo add stable https://charts.helm.sh/stable
-    - helm repo add bitnami https://charts.bitnami.com/bitnami
-    - helm repo update
+    # Dependencies are OCI artifacts (oci://registry-1.docker.io/cloudpirates),
+    # which need no `helm repo add`. The former bitnami and stable repos are
+    # gone: nothing references charts.helm.sh/stable, and the Bitnami subcharts
+    # were replaced.
     - helm dependency update waldur/
 
 .Cleanup template:
@@ -183,6 +184,45 @@ Test release installation and readiness:
         kubectl logs $NAME --tail 100 --all-containers
         echo ----
       done
+
+Validate bundled dependencies (dry-run):
+  extends: .Test template
+  # A real install of the bundled path would need its own namespace: several
+  # resources in this chart have fixed, non-release-prefixed names
+  # (api-celery-config, mastermind-*, livekit-secret) and the ingress hostnames
+  # are fixed, so a second release in the shared namespace collides. The CI
+  # credential is scoped to a single namespace and cannot create one, so this
+  # job validates the bundled path without installing it. Runtime coverage
+  # needs a pre-created namespace plus RBAC -- tracked separately.
+  rules:
+    - if: '$SKIP_TESTS == "true" || $SKIP_TESTS == "yes"'
+      when: never
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: never
+    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: $CI_COMMIT_TAG
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+  script:
+    - set -xv
+    - helm dep update waldur/
+    - |
+      helm install waldur waldur/ --dry-run --debug \
+        -f waldur/test/values.yaml -f waldur/test/bundled-values.yaml
+    # Assert the bundled subcharts actually render the Services and ports the
+    # chart hard-codes: 15674 backs templates/ingress-rmq-ws.yaml and
+    # 61613/15672 are written into the app config by config-override.yaml.
+    - |
+      helm template waldur waldur/ \
+        -f waldur/test/values.yaml -f waldur/test/bundled-values.yaml > /tmp/bundled.yaml
+      for EXPECT in "waldur-postgresql" "waldur-rabbitmq"; do
+        grep -q "name: ${EXPECT}$" /tmp/bundled.yaml || {
+          echo "ERROR: expected Service ${EXPECT} in the bundled render"; exit 1; }
+      done
+      for PORT in 5672 15672 15674 61613; do
+        grep -q "port: ${PORT}$" /tmp/bundled.yaml || {
+          echo "ERROR: port ${PORT} missing from the bundled render"; exit 1; }
+      done
+      echo "bundled dependencies render with the expected services and ports."
 
 .Test ArgoCD template:
   image: registry.hpc.ut.ee/iljatest/docker:24.0.6

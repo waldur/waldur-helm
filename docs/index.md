@@ -8,9 +8,7 @@ Outline:
 
 - **Production:** [External DB Integration](external-db-integration.md)
 
-- **Demo/Dev:** [PostgreSQL (Bitnami)](postgres-db.md)
-
-- **Demo/Dev:** [PostgreSQL HA (Bitnami)](postgres-db-ha.md)
+- **Demo/Dev:** [Bundled PostgreSQL](postgres-db.md)
 
 - [Postgres backup management](postgres-backup-management.md)
 
@@ -18,7 +16,7 @@ Outline:
 
 - **Production:** [RabbitMQ Operator](rabbitmq-operator.md) ⭐ *Recommended*
 
-- **Demo/Dev:** [RabbitMQ (Bitnami)](rabbitmq.md)
+- **Demo/Dev:** [Bundled RabbitMQ](rabbitmq.md)
 
 ## Additional Services
 

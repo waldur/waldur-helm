@@ -1,5 +1,17 @@
 # Migration from Postgresql HA
 
+**The `postgresql-ha` subchart has been removed.** It was frozen upstream at
+images that only exist in Bitnami's archived `bitnamilegacy` registry, and no
+replacement subchart offers real HA — every credible option is an operator, which
+cannot work as a plain Helm dependency.
+
+Migrate to a Postgres operator via `externalDB` — see
+[PostgreSQL Operators](postgres-operator.md) and
+[External DB Integration](external-db-integration.md). The bundled
+[single-node PostgreSQL](postgres-db.md) is a dev/test destination only.
+
+The dump-and-restore steps below still apply; the destination has changed.
+
 Plan:
 
 1. Scale api, beat, worker -> 0

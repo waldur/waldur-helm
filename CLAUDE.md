@@ -15,7 +15,6 @@ waldur-helm/
 ├── docs/                         # Operator documentation (synced into waldur-docs)
 ├── scripts/
 │   └── set-version.sh            # Bumps Chart.yaml + waldur.imageTag + waldur.homeport.imageTag
-├── applicationset.yaml           # ArgoCD ApplicationSet definition for managed deployments
 ├── postgresql-values.yaml        # Reference values for PostgreSQL as a separate release
 ├── rmq-values.yaml               # Reference values for RabbitMQ as a separate release
 └── README.md                     # User-facing install instructions
@@ -95,7 +94,6 @@ CI pulls templates from `waldur/waldur-pipelines`. Jobs:
 | `Run linter` | MRs, master, tags | `helm dep update` + `helm lint` (twice: default & test values) + `helm unittest`, then renders templates and `py_compile`s the rendered override config |
 | `Validate release installation (dry-run)` | MRs, master, tags | `helm install --dry-run --debug` against the test k8s cluster |
 | `Test release installation and readiness` | MRs / scheduled / triggered, when `waldur/**` changed | Real `helm install --wait --timeout 20m0s` on the test cluster, then `helm list` |
-| `Test ArgoCD sync` | similar | Validates `applicationset.yaml` syncs cleanly |
 | `Cleanup previous test deployment` | pre-stage | `helm uninstall` + delete leftover jobs/PVCs to keep the test cluster healthy |
 | `Publish new chart version and update docs on github` | on tag | Packages the chart, pushes to the `gh-pages` branch (the `waldur.github.io/waldur-helm/` index) |
 | `Check for deprecated Kubernetes resources` | periodic | Catches drift against current k8s APIs |

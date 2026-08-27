@@ -65,6 +65,9 @@ data:
         'default': {
             'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
             'LOCATION': 'waldur_cache',
+            'OPTIONS': {
+                'MAX_ENTRIES': {{ .Values.waldur.cacheMaxEntries | default 100000 | int }},
+            },
         }
     }
 

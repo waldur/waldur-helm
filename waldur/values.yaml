@@ -263,6 +263,15 @@ waldur:
     replyTo: ""
   notificationSubject: ""
   timeZone: "UTC"
+  # Row cap on the "waldur_cache" database cache table. Django's own default is
+  # 300, which is far too small here: that one table holds the brute-force login
+  # lockout counters, the blocked-user event dedup keys and the whole DRF
+  # throttle history, so on a busy deployment those get culled long before they
+  # expire and the limits they implement quietly stop applying.
+  # On overflow Django deletes a third of the table, so this is a ceiling rather
+  # than a steady-state size. Raise it if the deployment has many concurrent
+  # users. There is no "unlimited" setting - 0 makes Django cull on every write.
+  cacheMaxEntries: 100000
   features: []
   currencyName: "EUR"
   mastermindUrl: ""

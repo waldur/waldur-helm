@@ -1,0 +1,91 @@
+suite: passkey configuration tests
+templates:
+  - templates/config-override.yaml
+
+tests:
+  - it: emits nothing when passkeys are not enabled
+    asserts:
+      - notMatchRegex:
+          path: data["override.conf.py"]
+          pattern: "PASSKEY_RP_ID"
+
+  - it: derives the RP ID and origin from the homeport hostname
+    set:
+      homeportHostname: portal.example.com
+      homeportScheme: https
+      waldur.authMethods:
+        - LOCAL_SIGNIN
+        - PASSKEY_SIGNIN
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: "PASSKEY_RP_ID'\\] = 'portal.example.com'"
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: 'PASSKEY_ALLOWED_ORIGINS.\] = \["https://portal.example.com"\]'
+
+  - it: includes extra hosts in the origins
+    set:
+      homeportHostname: portal.example.com
+      homeportExtraHosts:
+        - alt.example.com
+      homeportScheme: https
+      waldur.passkey.rpId: example.com
+      waldur.authMethods:
+        - PASSKEY_SIGNIN
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: '"https://portal.example.com","https://alt.example.com"'
+
+  # A passkey is bound to one RP ID and a browser will not run a ceremony from
+  # an origin the RP ID does not cover. Failing at template time is far kinder
+  # than a pod that starts and then refuses every enrolment.
+  - it: refuses an extra host the RP ID cannot cover
+    set:
+      homeportHostname: portal.example.com
+      homeportExtraHosts:
+        - portal.example.net
+      homeportScheme: https
+      waldur.authMethods:
+        - PASSKEY_SIGNIN
+    asserts:
+      - failedTemplate:
+          errorPattern: "is not covered by the passkey RP ID"
+
+  - it: accepts a shared parent domain as the RP ID
+    set:
+      homeportHostname: portal.example.com
+      homeportExtraHosts:
+        - alt.example.com
+      homeportScheme: https
+      waldur.passkey.rpId: example.com
+      waldur.authMethods:
+        - PASSKEY_SIGNIN
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: "PASSKEY_RP_ID'\\] = 'example.com'"
+
+  - it: renders an explicit RP name when set
+    set:
+      waldur.passkey.rpName: Example Portal
+      waldur.authMethods:
+        - PASSKEY_MFA
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: "PASSKEY_RP_NAME'\\] = 'Example Portal'"
+
+  - it: honours explicitly configured origins over the derived ones
+    set:
+      homeportHostname: portal.example.com
+      homeportScheme: https
+      waldur.passkey.allowedOrigins:
+        - https://portal.example.com:8443
+      waldur.authMethods:
+        - PASSKEY_SIGNIN
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: 'PASSKEY_ALLOWED_ORIGINS.\] = \["https://portal.example.com:8443"\]'

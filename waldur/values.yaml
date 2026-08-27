@@ -272,6 +272,38 @@ waldur:
   # than a steady-state size. Raise it if the deployment has many concurrent
   # users. There is no "unlimited" setting - 0 makes Django cull on every write.
   cacheMaxEntries: 100000
+  # Native passkey (FIDO2/WebAuthn) support. Inert unless PASSKEY_SIGNIN or
+  # PASSKEY_MFA is also present in waldur.authMethods above.
+  #
+  # The defaults derive everything from homeportHostname / homeportScheme /
+  # homeportExtraHosts, so a standard deployment needs to set nothing here.
+  passkey:
+    # WebAuthn Relying Party ID: the bare registrable domain credentials are
+    # bound to, with no scheme, port or path. Empty derives it from
+    # homeportHostname.
+    #
+    # CHANGING THIS ORPHANS EVERY REGISTERED CREDENTIAL. A passkey is bound to
+    # the RP ID it was created under; after a change the browser will not
+    # offer it and every user must enrol again. Waldur logs a startup warning
+    # counting affected credentials, but it cannot undo the change.
+    #
+    # Set it explicitly to a shared parent domain if the portal is served from
+    # several subdomains, e.g. "example.com" for both "waldur.example.com" and
+    # "portal.example.com". A single RP ID cannot span two different
+    # registrable domains; if homeportExtraHosts contains one, startup fails
+    # with waldur.passkeys.E006 and the extra host must be dropped from
+    # allowedOrigins below.
+    rpId: ""
+    # Human-readable name the authenticator shows during enrolment. Empty
+    # falls back to the site name.
+    rpName: ""
+    # Full origins the portal is served from. Empty derives them from
+    # homeportScheme + homeportHostname + homeportExtraHosts.
+    #
+    # Note homeportScheme defaults to "http": browsers expose WebAuthn only in
+    # a secure context, so anything other than localhost must be served over
+    # HTTPS or startup fails with waldur.passkeys.E005.
+    allowedOrigins: []
   features: []
   currencyName: "EUR"
   mastermindUrl: ""

@@ -124,6 +124,43 @@ data:
 
     WALDUR_CORE['AUTHENTICATION_METHODS'] = {{ .Values.waldur.authMethods | toJson }}
 
+    {{- $passkey := .Values.waldur.passkey | default dict }}
+    {{- if or (has "PASSKEY_SIGNIN" .Values.waldur.authMethods) (has "PASSKEY_MFA" .Values.waldur.authMethods) }}
+    {{- /*
+      Derived from the homeport hostnames unless overridden, so a standard
+      deployment configures nothing. Waldur validates all of this at startup
+      (waldur.passkeys.E001-E006) and refuses to boot on a mismatch rather
+      than presenting a sign-in button that cannot work.
+    */}}
+    {{- $rpId := $passkey.rpId | default .Values.homeportHostname }}
+    {{- $origins := $passkey.allowedOrigins }}
+    {{- if not $origins }}
+    {{- $scheme := .Values.homeportScheme | default "https" }}
+    {{- $hosts := prepend .Values.homeportExtraHosts .Values.homeportHostname }}
+    {{- $origins = list }}
+    {{- range $hosts }}
+    {{- $origins = append $origins (printf "%s://%s" $scheme .) }}
+    {{- end }}
+    {{- end }}
+    {{- /*
+      A passkey is bound to one RP ID, and a browser only runs a ceremony from
+      an origin that the RP ID covers. Catching a mismatch here fails
+      `helm install` with an actionable message; Waldur would otherwise catch
+      it at pod startup (waldur.passkeys.E006), which is later and noisier.
+    */}}
+    {{- range $origins }}
+    {{- $host := . | trimPrefix "https://" | trimPrefix "http://" | splitList ":" | first }}
+    {{- if not (or (eq $host $rpId) (hasSuffix (printf ".%s" $rpId) $host)) }}
+    {{- fail (printf "waldur.passkey: origin %s is not covered by the passkey RP ID %s, so passkeys cannot work there. The portal is served from several hostnames; set waldur.passkey.rpId to a domain that is a parent of all of them (e.g. the shared registrable domain), or drop that hostname from waldur.passkey.allowedOrigins to leave passkeys enabled only on %s. A single RP ID cannot span two different registrable domains." $host $rpId $rpId) }}
+    {{- end }}
+    {{- end }}
+    WALDUR_CORE['PASSKEY_RP_ID'] = '{{ $rpId }}'
+    {{- if $passkey.rpName }}
+    WALDUR_CORE['PASSKEY_RP_NAME'] = '{{ $passkey.rpName }}'
+    {{- end }}
+    WALDUR_CORE['PASSKEY_ALLOWED_ORIGINS'] = {{ $origins | toJson }}
+    {{- end }}
+
     {{ if .Values.waldur.remoteEduteams }}
     WALDUR_AUTH_SOCIAL.update({
         'REMOTE_EDUTEAMS_REFRESH_TOKEN': os.environ.get("REMOTE_EDUTEAMS_REFRESH_TOKEN", '{{ .Values.waldur.remoteEduteams.refreshToken | default "" }}'),

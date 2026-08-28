@@ -89,3 +89,34 @@ tests:
       - matchRegex:
           path: data["override.conf.py"]
           pattern: 'PASSKEY_ALLOWED_ORIGINS.\] = \["https://portal.example.com:8443"\]'
+
+  - it: does not enforce for staff by default
+    set:
+      waldur.authMethods:
+        - PASSKEY_MFA
+    asserts:
+      - notMatchRegex:
+          path: data["override.conf.py"]
+          pattern: "PASSKEY_ENFORCED_FOR_STAFF"
+
+  - it: enforces for staff when asked
+    set:
+      waldur.passkey.enforcedForStaff: true
+      waldur.authMethods:
+        - PASSKEY_MFA
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: "PASSKEY_ENFORCED_FOR_STAFF'\\] = True"
+
+  # Enforcement without a passkey method would leave staff no way to comply,
+  # so it must not leak out of the passkey block.
+  - it: is inert when no passkey method is enabled
+    set:
+      waldur.passkey.enforcedForStaff: true
+      waldur.authMethods:
+        - LOCAL_SIGNIN
+    asserts:
+      - notMatchRegex:
+          path: data["override.conf.py"]
+          pattern: "PASSKEY_ENFORCED_FOR_STAFF"

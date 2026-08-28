@@ -159,6 +159,9 @@ data:
     WALDUR_CORE['PASSKEY_RP_NAME'] = '{{ $passkey.rpName }}'
     {{- end }}
     WALDUR_CORE['PASSKEY_ALLOWED_ORIGINS'] = {{ $origins | toJson }}
+    {{- if $passkey.enforcedForStaff }}
+    WALDUR_CORE['PASSKEY_ENFORCED_FOR_STAFF'] = True
+    {{- end }}
     {{- end }}
 
     {{ if .Values.waldur.remoteEduteams }}

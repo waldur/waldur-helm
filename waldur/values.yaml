@@ -304,6 +304,24 @@ waldur:
     # a secure context, so anything other than localhost must be served over
     # HTTPS or startup fails with waldur.passkeys.E005.
     allowedOrigins: []
+    # Require staff and support accounts to hold a passkey and to have
+    # satisfied it for the current session. Closes the paths that otherwise
+    # yield a privileged session without one: reading another user's API
+    # token, impersonation, the Django admin, and minting a personal access
+    # token.
+    #
+    # ENABLING THIS LOGS EVERY STAFF MEMBER OUT. Tokens issued before the
+    # switch were created without a passkey, so leaving them in place would
+    # mean the setting changed nothing until each expired. Run
+    # "waldur revoke_unverified_staff_tokens" as part of the rollout.
+    #
+    # Staff without a passkey are not locked out: they can still sign in with
+    # a password and are held at an enrollment page until they add one. The
+    # Django admin gains a passkey step of its own rather than being closed.
+    #
+    # Inert unless a passkey method is present in authMethods above — without
+    # one there would be no way to comply.
+    enforcedForStaff: false
   features: []
   currencyName: "EUR"
   mastermindUrl: ""

@@ -1,10 +1,6 @@
 {{- if and .Values.ingress.enabled .Values.matrixChat.enabled .Values.matrixChat.homeserver.enabled }}
 {{- $h := .Values.matrixChat.homeserver }}
-{{- if or ( gt .Capabilities.KubeVersion.Major "1" ) ( ge .Capabilities.KubeVersion.Minor "19" ) }}
 apiVersion: networking.k8s.io/v1
-{{- else }}
-apiVersion: networking.k8s.io/v1beta1
-{{- end }}
 kind: Ingress
 metadata:
   name: matrix-ingress

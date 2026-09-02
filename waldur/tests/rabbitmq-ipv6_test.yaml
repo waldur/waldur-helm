@@ -1,0 +1,37 @@
+suite: bundled RabbitMQ IPv6 wiring
+templates:
+  - templates/config-rabbitmq-ipv6.yaml
+
+tests:
+  - it: is not rendered when the bundled broker is disabled
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: ships an inetrc and a start-time-guarded env file with the broker
+    set:
+      rabbitmq.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: metadata.name
+          value: waldur-rabbitmq-ipv6
+      - matchRegex:
+          path: data["erl_inetrc"]
+          pattern: '\{inet6, true\}\.'
+      # The guard is what keeps a host with IPv6 compiled out able to boot.
+      - matchRegex:
+          path: data["rabbitmq-env.conf"]
+          pattern: 'if \[ -e /proc/net/if_inet6 \]'
+      # The broker half: without the inetrc epmd aborts the boot with nxdomain.
+      - matchRegex:
+          path: data["rabbitmq-env.conf"]
+          pattern: 'SERVER_ADDITIONAL_ERL_ARGS=.*-kernel inetrc'
+      # The CLI half: both probes shell out to rabbitmq-diagnostics, so without
+      # this the broker boots but the pod never becomes ready.
+      - matchRegex:
+          path: data["rabbitmq-env.conf"]
+          pattern: 'CTL_ERL_ARGS=.*-proto_dist inet6_tcp'

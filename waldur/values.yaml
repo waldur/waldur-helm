@@ -726,6 +726,37 @@ rabbitmq:
       port: 15674
       containerPort: 15674
       targetPort: 15674
+  # IPv6. Two separate parts of the broker default to IPv4 and both have to be
+  # redirected; templates/config-rabbitmq-ipv6.yaml carries the full rationale.
+  # Subchart values cannot be templated, so this wiring is unconditional -- it
+  # is correct on IPv4-only, IPv6-only and dual-stack clusters alike, and the
+  # Erlang half no-ops at container start on a host without IPv6. Only a host
+  # with IPv6 compiled out of the kernel would need config.extraConfiguration
+  # below emptied.
+  #
+  # 1. Erlang name resolution and the CLI transport, decided at container start
+  #    by the rabbitmq-env.conf in that ConfigMap. Without it epmd aborts the
+  #    boot with `nxdomain` on a name that has only an AAAA record, and the
+  #    probes -- which shell out to rabbitmq-diagnostics -- hang forever.
+  extraEnvVars:
+    - name: RABBITMQ_CONF_ENV_FILE
+      value: /etc/rabbitmq-ipv6/rabbitmq-env.conf
+  extraVolumes:
+    - name: rabbitmq-ipv6
+      configMap:
+        name: waldur-rabbitmq-ipv6
+  extraVolumeMounts:
+    - name: rabbitmq-ipv6
+      mountPath: /etc/rabbitmq-ipv6
+      readOnly: true
+  # 2. The Cowboy HTTP listeners. The AMQP (5672) and STOMP (61613) listeners
+  #    already come up on [::]; the management API (15672) and web-STOMP (15674,
+  #    where ingress-rmq-ws.yaml sends the realtime event stream) do not, and
+  #    `rabbitmq-diagnostics listeners` misreports them as [::] either way.
+  config:
+    extraConfiguration: |
+      management.tcp.ip = ::
+      web_stomp.tcp.ip = ::
   resources:
     requests:
       cpu: 1

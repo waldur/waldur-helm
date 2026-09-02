@@ -1,0 +1,61 @@
+suite: whitelabeling hook waits for the schema
+templates:
+  - templates/job-init-whitelabeling.yaml
+
+tests:
+  # The hook is post-install, but migrations run in an initContainer of the beat
+  # Deployment, which helm does not sequence it behind. Without this gate the
+  # hook raced them and died on `relation "constance_constance" does not exist`.
+  - it: gates the hook on migrations being complete
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: wait-for-migrations
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].command[2]
+          pattern: "waldur migrate --check"
+      # It needs the DB settings the same way the job's own containers do.
+      - contains:
+          path: spec.template.spec.initContainers[0].volumeMounts
+          content:
+            name: api-override
+            mountPath: /etc/waldur/override.conf.py
+            subPath: override.conf.py
+
+  - it: runs the same image as the job it gates
+    set:
+      global.imageRegistry: registry.example.com
+      waldur.imageName: acme/mastermind
+      waldur.imageTag: "9.9.9"
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: registry.example.com/acme/mastermind:9.9.9
+
+  - it: covers a full migration run from an empty database by default
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].command[2]
+          pattern: 'DEADLINE=\$\(\( \$\(date \+%s\) \+ 2700 \)\)'
+
+  # A hook that hangs forever is worse than one that fails: helm --wait would
+  # sit until its own timeout with nothing explaining why.
+  - it: bounds the wait and fails with the reason
+    set:
+      waldur.initdbWaitTimeout: 42
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].command[2]
+          pattern: 'DEADLINE=\$\(\( \$\(date \+%s\) \+ 42 \)\)'
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].command[2]
+          pattern: "exit 1"
+
+  # initdbEnabled: false means migrations are run out of band, so there is
+  # nothing in-cluster to wait for.
+  - it: omits the wait when the chart does not manage the schema
+    set:
+      waldur.initdbEnabled: false
+    asserts:
+      - hasDocuments:
+          count: 0

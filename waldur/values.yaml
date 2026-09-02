@@ -208,6 +208,19 @@ waldur:
   imageDigest: ""  # Optional: if set, uses the unique docker image hash, priority over tag
   imageTag: "8.1.3-rc.8"
   initdbEnabled: true
+  # How long the whitelabeling hook waits for the schema before giving up, in
+  # seconds. It cannot start until migrations are done -- they run in the beat
+  # pod's initContainer, which helm does not sequence this hook behind -- so on
+  # a first install this has to cover the entire migration run from an empty
+  # database, which is the slowest thing the chart does.
+  #
+  # 45 minutes is deliberately generous. The cost of overshooting is that a
+  # genuinely stuck install takes longer to report failure; the cost of
+  # undershooting is a failed hook on a slow or contended cluster, which is the
+  # exact failure this wait exists to prevent. A from-empty migration run
+  # measured 834s on a small kind node, so this is roughly three times the
+  # observed need. The hook fails with the reason rather than hanging forever.
+  initdbWaitTimeout: 2700
   initdbImageName: "library/postgres"
   pullPolicy: IfNotPresent
   secretKey: "SecretKeyChangeMe"

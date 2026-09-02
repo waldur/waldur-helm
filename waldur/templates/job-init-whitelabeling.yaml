@@ -23,6 +23,75 @@ spec:
         - name: {{ $val }}
         {{ end -}}
       {{ end }}
+      {{ if .Values.waldur.initdbEnabled }}
+      initContainers:
+        {{/*
+          Wait for the schema before touching Constance.
+
+          This job is a post-install/post-upgrade hook, but migrations run in an
+          initContainer of the *beat Deployment* (deployment-beat.yaml, args:
+          initdb) -- an ordinary resource that helm does not sequence hooks
+          behind, and does not wait for at all without --wait. So on a fresh
+          install the hook opened a connection to a database that was still
+          mid-migration and died on an unmigrated schema:
+
+              ERROR: relation "constance_constance" does not exist
+              ERROR: relation "logging_systemlog" does not exist
+
+          Being a race it was intermittent -- fast database, or an upgrade where
+          the schema is already current, and it succeeded -- which is why it
+          survived. When it lost, the operator was left with a failed job and,
+          after deleting it as the README says, none of their waldur.site.* /
+          waldur.whitelabeling.* values ever applied, silently.
+
+          `migrate --check` exits non-zero while any migration is unapplied, and
+          also while the database is unreachable, so one condition covers both
+          waits. It is a valid gate on either initdb path: the empty-database
+          path runs migrate_fresh, which records every migration as applied, so
+          both converge on the same answer.
+        */}}
+        - name: wait-for-migrations
+          {{- if .Values.waldur.imageDigest }}
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}@{{ .Values.waldur.imageDigest }}
+          {{- else }}
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
+          {{- end }}
+          imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" .Values.waldur.imageTag "Values" .Values) }}
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              DEADLINE=$(( $(date +%s) + {{ .Values.waldur.initdbWaitTimeout | default 2700 | int }} ))
+              until waldur migrate --check >/dev/null 2>&1; do
+                  if [ "$(date +%s)" -ge "$DEADLINE" ]; then
+                      echo "ERROR: migrations still incomplete after {{ .Values.waldur.initdbWaitTimeout | default 2700 | int }}s." >&2
+                      echo "ERROR: the beat pod runs them in its waldur-mastermind-migrate initContainer -- check it." >&2
+                      # Surface the reason rather than just the timeout.
+                      waldur migrate --check || true
+                      exit 1
+                  fi
+                  echo "INFO: waiting for migrations to complete..."
+                  # 30s, not a tighter loop: `migrate --check` boots the whole
+                  # Django app registry every time (~4s measured), and it does
+                  # so on the node that is busy running the migrations we are
+                  # waiting for. Polling every 10s spent ~234s of CPU across 60
+                  # boots during one 834s wait; 30s cuts that by about 60% and
+                  # costs at most half a minute of extra lag on an operation
+                  # measured in tens of minutes. The first check runs before any
+                  # sleep, so an upgrade against an already-current schema --
+                  # the common case -- still proceeds immediately.
+                  sleep 30
+              done
+              echo "INFO: schema is up to date, applying configuration."
+          env:
+            {{- include "waldur.credentials" . | nindent 13 }}
+          volumeMounts:
+            - name: api-override
+              mountPath: /etc/waldur/override.conf.py
+              subPath: override.conf.py
+          resources:
+            {{- toYaml .Values.apiResources | nindent 12 }}
+      {{ end }}
       containers:
         - name: waldur-mastermind-whitelabeling-init
           {{- if .Values.waldur.imageDigest }}

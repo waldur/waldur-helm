@@ -1,0 +1,65 @@
+{{- if .Values.rabbitmq.enabled }}
+{{/*
+  IPv6 support for the bundled RabbitMQ.
+
+  Two independent parts of the broker default to IPv4 and have to be pointed at
+  IPv6 separately. Both are wired up from waldur/values.yaml (the rabbitmq.*
+  block), because subchart values cannot be templated -- only the content of
+  this ConfigMap can carry any logic.
+
+  1. Erlang's name resolution. epmd resolves the node's own hostname through
+     inet, which asks for A records only, so on a cluster with no A records the
+     broker aborts at boot with
+
+         {epmd_error,"<pod>.<svc>.<ns>.svc.cluster.local",nxdomain}
+
+     even though the AAAA record resolves. Fixing it needs an inetrc with
+     {inet6, true} for the broker, and -proto_dist inet6_tcp for both the broker
+     and the CLI tools -- the CLI half is not optional: livenessProbe and
+     readinessProbe both run `rabbitmq-diagnostics -q check_running`, so without
+     it the broker boots but the pod never becomes ready and every rabbitmqctl
+     call hangs until it times out.
+
+     This half is decided at container start, following the rule established in
+     waldur/waldur-mastermind#278: rabbitmq-env.conf is sourced as shell by both
+     the broker and the CLI tools, so it can test for IPv6 the same way gunicorn
+     and the homeport entrypoint do, and add nothing on a host where IPv6 is
+     compiled out or disabled at boot.
+
+  2. The Cowboy HTTP listeners -- the management API (15672) and web-STOMP
+     (15674, which ingress-rmq-ws.yaml routes the realtime event stream to).
+     Unlike the AMQP and STOMP listeners, which already come up on [::], these
+     bind 0.0.0.0 and are simply unreachable on an IPv6-only cluster. Note that
+     `rabbitmq-diagnostics listeners` reports them as [::] regardless, so
+     /proc/net/tcp{,6} is the only reliable way to check this.
+
+     Their addresses live in rabbitmq.conf (see rabbitmq.config.extraConfiguration
+     in values.yaml) and so cannot be decided at container start. Binding [::]
+     is correct on IPv4-only, IPv6-only and dual-stack clusters alike, because
+     with the Linux default net.ipv6.bindv6only=0 that socket also accepts IPv4
+     as v4-mapped -- verified on both an IPv4-only and an IPv6-only cluster. A
+     host with IPv6 compiled out of the kernel would need
+     rabbitmq.config.extraConfiguration overridden to drop these two lines.
+*/}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: waldur-rabbitmq-ipv6
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+data:
+  erl_inetrc: |
+    {inet6, true}.
+  rabbitmq-env.conf: |
+    # Sourced as shell by rabbitmq-server and by the CLI tools (rabbitmqctl,
+    # rabbitmq-diagnostics), via RABBITMQ_CONF_ENV_FILE. Variables are set
+    # without the RABBITMQ_ prefix here, which is the documented convention.
+    #
+    # /proc/net/if_inet6 is absent exactly when IPv6 is compiled out or disabled
+    # at boot, where forcing inet6 resolution would stop the broker from
+    # starting at all.
+    if [ -e /proc/net/if_inet6 ]; then
+        SERVER_ADDITIONAL_ERL_ARGS="${SERVER_ADDITIONAL_ERL_ARGS:-} -kernel inetrc '/etc/rabbitmq-ipv6/erl_inetrc' -proto_dist inet6_tcp"
+        CTL_ERL_ARGS="${CTL_ERL_ARGS:-} -proto_dist inet6_tcp"
+    fi
+{{- end }}

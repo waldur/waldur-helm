@@ -1,0 +1,43 @@
+suite: bundled RabbitMQ IPv6 subchart wiring
+templates:
+  - charts/rabbitmq/templates/statefulset.yaml
+  - charts/rabbitmq/templates/configmap.yaml
+
+set:
+  rabbitmq.enabled: true
+
+tests:
+  - it: points the broker at the env file the parent chart renders
+    templates:
+      - charts/rabbitmq/templates/statefulset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: RABBITMQ_CONF_ENV_FILE
+            value: /etc/rabbitmq-ipv6/rabbitmq-env.conf
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: rabbitmq-ipv6
+            mountPath: /etc/rabbitmq-ipv6
+            readOnly: true
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: rabbitmq-ipv6
+            configMap:
+              name: waldur-rabbitmq-ipv6
+
+  # The Cowboy listeners are the half that cannot be decided at container start.
+  # web-STOMP is where ingress-rmq-ws.yaml sends the realtime event stream.
+  - it: binds the management and web-STOMP listeners on the IPv6 wildcard
+    templates:
+      - charts/rabbitmq/templates/configmap.yaml
+    asserts:
+      - matchRegex:
+          path: data["rabbitmq.conf"]
+          pattern: 'management\.tcp\.ip = ::'
+      - matchRegex:
+          path: data["rabbitmq.conf"]
+          pattern: 'web_stomp\.tcp\.ip = ::'

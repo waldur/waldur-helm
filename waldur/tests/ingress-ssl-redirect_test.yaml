@@ -1,0 +1,100 @@
+suite: ingress http -> https redirect follows the TLS configuration
+templates:
+  - templates/ingress-api.yaml
+  - templates/ingress-api-admin.yaml
+  - templates/ingress-homeport.yaml
+  - templates/ingress-matrix.yaml
+  - templates/ingress-rmq-ws.yaml
+  - templates/ingress-uvk-everypay.yaml
+
+set:
+  ingress.enabled: true
+  waldur.uvkEverypay.enabled: true
+  waldur.rabbitmqEvents.stompEnabled: true
+  matrixChat.enabled: true
+  matrixChat.homeserver.enabled: true
+  matrixChat.homeserver.serverName: matrix.example.com
+  matrixChat.homeserver.registrationToken: tok
+
+tests:
+  # The reported bug: a plain-http install still 301'd to a scheme the chart had
+  # not configured a certificate for, so homeport loaded over https while the
+  # API_URL baked into its pod stayed http and the SPA could not bootstrap.
+  - it: does not redirect on a plain-http install (nginx)
+    set:
+      ingress.className: nginx
+      ingress.tls.enabled: false
+      apiScheme: http
+      homeportScheme: http
+    asserts:
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/force-ssl-redirect"]
+          value: "false"
+
+  - it: does not redirect on a plain-http install (haproxy)
+    set:
+      ingress.className: haproxy
+      ingress.tls.enabled: false
+      apiScheme: http
+      homeportScheme: http
+    asserts:
+      - equal:
+          path: metadata.annotations["haproxy.org/ssl-redirect"]
+          value: "false"
+
+  - it: does not redirect on a plain-http install (openshift-default)
+    set:
+      ingress.className: openshift-default
+      ingress.tls.enabled: false
+      apiScheme: http
+      homeportScheme: http
+    asserts:
+      - equal:
+          path: metadata.annotations["haproxy.org/ssl-redirect"]
+          value: "false"
+
+  - it: redirects when the chart terminates TLS itself (nginx)
+    set:
+      ingress.className: nginx
+      ingress.tls.enabled: true
+      apiScheme: https
+      homeportScheme: https
+    asserts:
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/force-ssl-redirect"]
+          value: "true"
+
+  - it: redirects when the chart terminates TLS itself (haproxy)
+    set:
+      ingress.className: haproxy
+      ingress.tls.enabled: true
+      apiScheme: https
+      homeportScheme: https
+    asserts:
+      - equal:
+          path: metadata.annotations["haproxy.org/ssl-redirect"]
+          value: "true"
+
+  # TLS terminated by an upstream load balancer: ingress.tls stays off, but the
+  # deployment is still addressed as https, so the redirect must be kept.
+  - it: redirects when TLS is terminated upstream (nginx)
+    set:
+      ingress.className: nginx
+      ingress.tls.enabled: false
+      apiScheme: https
+      homeportScheme: https
+    asserts:
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/force-ssl-redirect"]
+          value: "true"
+
+  - it: redirects when tls is enabled but the schemes were not updated (nginx)
+    set:
+      ingress.className: nginx
+      ingress.tls.enabled: true
+      apiScheme: http
+      homeportScheme: http
+    asserts:
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/force-ssl-redirect"]
+          value: "true"

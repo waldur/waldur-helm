@@ -125,6 +125,11 @@ tests:
     set:
       ingress.enabled: true
       ingress.className: traefik
+      # Both chain members are conditional. TLS on keeps matrix-redirect-https,
+      # the allow list keeps matrix-ipallowlist, so this asserts the full chain.
+      # tests/traefik-ssl-redirect_test.yaml covers the plain-http shape, where
+      # the chain is omitted along with the annotation referencing it.
+      ingress.tls.enabled: true
       ingress.whitelistSourceRange: "10.0.0.0/8"
       matrixChat.enabled: true
       matrixChat.homeserver.enabled: true

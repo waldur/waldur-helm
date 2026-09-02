@@ -6,10 +6,10 @@ metadata:
   annotations:
     {{ if eq .Values.ingress.className "nginx" }}
     nginx.ingress.kubernetes.io/rewrite-target: /$1
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "{{ include "waldur.sslRedirect" (dict "scheme" .Values.apiScheme "Values" .Values) }}"
     {{ else if or (eq .Values.ingress.className "openshift-default") (eq .Values.ingress.className "haproxy") }}
     haproxy.org/path-rewrite: /uvk-everypay/(.*) /\1
-    haproxy.org/ssl-redirect: "true"
+    haproxy.org/ssl-redirect: "{{ include "waldur.sslRedirect" (dict "scheme" .Values.apiScheme "Values" .Values) }}"
     {{ if and .Values.ingress.tls.enabled (.Values.ingress.tls.source | eq "cluster") }}
     route.openshift.io/termination: "edge"
     {{ end }}

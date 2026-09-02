@@ -61,7 +61,9 @@ metadata:
 spec:
   chain:
     middlewares:
+      {{- if eq (include "waldur.sslRedirect" (dict "scheme" .Values.apiScheme "Values" .Values)) "true" }}
       - name: api-admin-redirect-https
+      {{- end }}
       - name: api-admin-cors
       {{- if $whitelistRange }}
       - name: api-admin-ipallowlist

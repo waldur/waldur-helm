@@ -27,6 +27,7 @@ spec:
       {{- end }}
 ---
 {{- end }}
+{{- if eq (include "waldur.matrixChainEnabled" .) "true" }}
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
@@ -34,8 +35,11 @@ metadata:
 spec:
   chain:
     middlewares:
+      {{- if eq (include "waldur.sslRedirect" (dict "scheme" .Values.apiScheme "Values" .Values)) "true" }}
       - name: matrix-redirect-https
+      {{- end }}
       {{- if .Values.ingress.whitelistSourceRange }}
       - name: matrix-ipallowlist
       {{- end }}
+{{- end }}
 {{- end }}

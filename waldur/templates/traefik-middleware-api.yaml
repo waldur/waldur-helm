@@ -91,7 +91,9 @@ metadata:
 spec:
   chain:
     middlewares:
+      {{- if eq (include "waldur.sslRedirect" (dict "scheme" .Values.apiScheme "Values" .Values)) "true" }}
       - name: api-redirect-https
+      {{- end }}
       - name: api-cors
       - name: api-buffering
       - name: api-compress

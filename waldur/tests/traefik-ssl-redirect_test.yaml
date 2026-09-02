@@ -1,0 +1,197 @@
+suite: traefik middleware chains follow the TLS configuration
+templates:
+  - templates/traefik-middleware-api.yaml
+  - templates/traefik-middleware-api-admin.yaml
+  - templates/traefik-middleware-homeport.yaml
+  - templates/traefik-middleware-matrix.yaml
+  - templates/traefik-middleware-rmq-ws.yaml
+  - templates/traefik-middleware-uvk-everypay.yaml
+  - templates/ingress-matrix.yaml
+
+set:
+  ingress.enabled: true
+  ingress.className: traefik
+  waldur.uvkEverypay.enabled: true
+  waldur.rabbitmqEvents.stompEnabled: true
+  matrixChat.enabled: true
+  matrixChat.homeserver.enabled: true
+  matrixChat.homeserver.serverName: matrix.example.com
+  matrixChat.homeserver.registrationToken: tok
+
+tests:
+  # The reported bug: api-chain 301'd every request to https even though the
+  # chart had configured no certificate, so the SPA's XHRs never landed.
+  - it: drops the redirect from api-chain on a plain-http install
+    set:
+      ingress.tls.enabled: false
+      apiScheme: http
+      homeportScheme: http
+    templates:
+      - templates/traefik-middleware-api.yaml
+    documentSelector:
+      path: metadata.name
+      value: api-chain
+    asserts:
+      - notContains:
+          path: spec.chain.middlewares
+          content:
+            name: api-redirect-https
+      - contains:
+          path: spec.chain.middlewares
+          content:
+            name: api-cors
+
+  - it: keeps the redirect first in api-chain when the chart terminates TLS
+    set:
+      ingress.tls.enabled: true
+      apiScheme: https
+      homeportScheme: https
+    templates:
+      - templates/traefik-middleware-api.yaml
+    documentSelector:
+      path: metadata.name
+      value: api-chain
+    asserts:
+      - equal:
+          path: spec.chain.middlewares[0].name
+          value: api-redirect-https
+
+  - it: keeps the redirect in api-chain when TLS is terminated upstream
+    set:
+      ingress.tls.enabled: false
+      apiScheme: https
+      homeportScheme: https
+    templates:
+      - templates/traefik-middleware-api.yaml
+    documentSelector:
+      path: metadata.name
+      value: api-chain
+    asserts:
+      - equal:
+          path: spec.chain.middlewares[0].name
+          value: api-redirect-https
+
+  - it: drops the redirect from homeport-chain on a plain-http install
+    templates:
+      - templates/traefik-middleware-homeport.yaml
+    set:
+      ingress.tls.enabled: false
+      apiScheme: http
+      homeportScheme: http
+    documentSelector:
+      path: metadata.name
+      value: homeport-chain
+    asserts:
+      - notContains:
+          path: spec.chain.middlewares
+          content:
+            name: homeport-redirect-https
+      - contains:
+          path: spec.chain.middlewares
+          content:
+            name: homeport-headers
+
+  - it: drops the redirect from rmq-ws-chain on a plain-http install
+    templates:
+      - templates/traefik-middleware-rmq-ws.yaml
+    set:
+      ingress.tls.enabled: false
+      apiScheme: http
+      homeportScheme: http
+    documentSelector:
+      path: metadata.name
+      value: rmq-ws-chain
+    asserts:
+      - notContains:
+          path: spec.chain.middlewares
+          content:
+            name: rmq-ws-redirect-https
+
+  - it: drops the redirect from uvk-everypay-chain on a plain-http install
+    templates:
+      - templates/traefik-middleware-uvk-everypay.yaml
+    set:
+      ingress.tls.enabled: false
+      apiScheme: http
+      homeportScheme: http
+    documentSelector:
+      path: metadata.name
+      value: uvk-everypay-chain
+    asserts:
+      - notContains:
+          path: spec.chain.middlewares
+          content:
+            name: uvk-everypay-redirect-https
+
+  - it: drops the redirect from api-admin-chain on a plain-http install
+    templates:
+      - templates/traefik-middleware-api-admin.yaml
+    set:
+      ingress.tls.enabled: false
+      apiScheme: http
+      homeportScheme: http
+    documentSelector:
+      path: metadata.name
+      value: api-admin-chain
+    asserts:
+      - notContains:
+          path: spec.chain.middlewares
+          content:
+            name: api-admin-redirect-https
+
+  # matrix-chain's members are all optional (no CORS/header middleware: the
+  # homeserver emits its own), so once the redirect became conditional it could
+  # render an empty middlewares list, which Traefik rejects. Chain and the
+  # annotation referencing it must both disappear together.
+  - it: omits matrix-chain entirely when it would be empty
+    templates:
+      - templates/traefik-middleware-matrix.yaml
+    set:
+      ingress.tls.enabled: false
+      apiScheme: http
+      homeportScheme: http
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: omits the matrix ingress annotation when matrix-chain is not rendered
+    templates:
+      - templates/ingress-matrix.yaml
+    set:
+      ingress.tls.enabled: false
+      apiScheme: http
+      homeportScheme: http
+    asserts:
+      - isNull:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+
+  - it: keeps matrix-chain when the ip allow list is its only member
+    templates:
+      - templates/traefik-middleware-matrix.yaml
+    set:
+      ingress.tls.enabled: false
+      apiScheme: http
+      homeportScheme: http
+      ingress.whitelistSourceRange: "10.0.0.0/8"
+    documentSelector:
+      path: metadata.name
+      value: matrix-chain
+    asserts:
+      - equal:
+          path: spec.chain.middlewares[0].name
+          value: matrix-ipallowlist
+
+  - it: keeps the redirect first in matrix-chain when TLS is enabled
+    templates:
+      - templates/traefik-middleware-matrix.yaml
+    set:
+      ingress.tls.enabled: true
+      apiScheme: https
+      homeportScheme: https
+    documentSelector:
+      path: metadata.name
+      value: matrix-chain
+    asserts:
+      - equal:
+          path: spec.chain.middlewares[0].name
+          value: matrix-redirect-https

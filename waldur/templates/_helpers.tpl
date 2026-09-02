@@ -545,3 +545,50 @@ explicit node/external IP anyway.
 {{- define "waldur.serviceIpFamilyPolicy" -}}
 ipFamilyPolicy: PreferDualStack
 {{- end -}}
+
+{{/*
+Whether an ingress should redirect http -> https.
+
+Takes a dict of "scheme" (the apiScheme / homeportScheme this ingress serves)
+and "Values". Returns the string "true" or "false", so it can be used both as
+an annotation value and in an `if`.
+
+Redirecting is correct in exactly two cases:
+
+  * the chart terminates TLS itself (`ingress.tls.enabled`), or
+  * TLS is terminated upstream by a load balancer and the deployment is still
+    addressed as https (`apiScheme` / `homeportScheme` set to https while
+    `ingress.tls.enabled` stays false).
+
+Redirecting unconditionally — which is what every ingress did before — breaks
+the third case: a plain-http deployment (`ingress.tls.enabled: false` with both
+schemes left at their "http" default) got a 301 to a scheme the chart had not
+configured a certificate for, so homeport ended up on https while the API_URL
+baked into its pod stayed http and the SPA could not bootstrap.
+*/}}
+{{- define "waldur.sslRedirect" -}}
+{{- if or .Values.ingress.tls.enabled (eq .scheme "https") -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end -}}
+
+{{/*
+Whether the traefik matrix-chain middleware has any member.
+
+Unlike every other chain in the chart, matrix-chain's members are *all*
+optional — the https redirect and the IP allow list, nothing else (the
+homeserver, lk-jwt and LiveKit emit their own CORS headers, so no header
+middleware is attached). Once the redirect became conditional, a plain-http
+deployment with no whitelistSourceRange would render `middlewares:` with an
+empty list, which Traefik rejects. So the chain object and the ingress
+annotation that references it are both gated on this.
+*/}}
+{{- define "waldur.matrixChainEnabled" -}}
+{{- if or (eq (include "waldur.sslRedirect" (dict "scheme" .Values.apiScheme "Values" .Values)) "true") .Values.ingress.whitelistSourceRange -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end -}}

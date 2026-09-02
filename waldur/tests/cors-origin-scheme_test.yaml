@@ -1,0 +1,93 @@
+suite: CORS origins and homeport CSP follow homeportScheme
+templates:
+  - templates/config-override.yaml
+  - templates/traefik-middleware-homeport.yaml
+  - templates/ingress-homeport.yaml
+
+set:
+  ingress.enabled: true
+  homeportHostname: waldur.example.com
+
+tests:
+  # The reported bug: the origin was hardcoded to https, so on a plain-http
+  # deployment the browser's `Origin: http://...` matched nothing, django-cors-
+  # headers emitted no Access-Control-Allow-Origin and every API call failed.
+  - it: uses http origins on a plain-http deployment
+    templates:
+      - templates/config-override.yaml
+    set:
+      homeportScheme: http
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: "'http://waldur\\.example\\.com'"
+      - notMatchRegex:
+          path: data["override.conf.py"]
+          pattern: "'https://waldur\\.example\\.com'"
+
+  - it: uses https origins on an https deployment
+    templates:
+      - templates/config-override.yaml
+    set:
+      homeportScheme: https
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: "'https://waldur\\.example\\.com'"
+
+  - it: allows every host the portal is served from
+    templates:
+      - templates/config-override.yaml
+    set:
+      homeportScheme: https
+      homeportExtraHosts:
+        - portal.example.com
+        - legacy.example.com
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: "'https://waldur\\.example\\.com'"
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: "'https://portal\\.example\\.com'"
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: "'https://legacy\\.example\\.com'"
+
+  # media-src carried the same hardcoded https, so on a plain-http deployment
+  # the browser blocked homeport's own media assets.
+  - it: scopes the traefik CSP media-src to the scheme actually served
+    templates:
+      - templates/traefik-middleware-homeport.yaml
+    set:
+      ingress.className: traefik
+      homeportScheme: http
+    documentSelector:
+      path: metadata.name
+      value: homeport-headers
+    asserts:
+      - matchRegex:
+          path: spec.headers.customResponseHeaders["Content-Security-Policy"]
+          pattern: "media-src http://waldur\\.example\\.com/assets/"
+
+  - it: scopes the nginx CSP media-src to the scheme actually served
+    templates:
+      - templates/ingress-homeport.yaml
+    set:
+      ingress.className: nginx
+      homeportScheme: http
+    asserts:
+      - matchRegex:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+          pattern: "media-src http://waldur\\.example\\.com/assets/"
+
+  - it: scopes the haproxy CSP media-src to the scheme actually served
+    templates:
+      - templates/ingress-homeport.yaml
+    set:
+      ingress.className: haproxy
+      homeportScheme: http
+    asserts:
+      - matchRegex:
+          path: metadata.annotations["haproxy.org/backend-config-snippet"]
+          pattern: "media-src http://waldur\\.example\\.com/assets/"

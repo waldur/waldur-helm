@@ -56,7 +56,9 @@ metadata:
 spec:
   chain:
     middlewares:
+      {{- if eq (include "waldur.sslRedirect" (dict "scheme" .Values.apiScheme "Values" .Values)) "true" }}
       - name: rmq-ws-redirect-https
+      {{- end }}
       - name: rmq-ws-rewrite
       - name: rmq-ws-cors
       {{- if .Values.ingress.whitelistSourceRange }}

@@ -25,6 +25,8 @@ metadata:
 spec:
   chain:
     middlewares:
+      {{- if eq (include "waldur.sslRedirect" (dict "scheme" .Values.apiScheme "Values" .Values)) "true" }}
       - name: uvk-everypay-redirect-https
+      {{- end }}
       - name: uvk-everypay-rewrite
 {{- end }}

@@ -503,8 +503,15 @@ data:
     from corsheaders.defaults import default_headers
     INSTALLED_APPS += ('corsheaders',)
     MIDDLEWARE = ('corsheaders.middleware.CorsMiddleware',) + MIDDLEWARE
+    # Scheme comes from homeportScheme, not a hardcoded https: on a plain-http
+    # deployment the browser sends `Origin: http://<homeportHostname>`, which a
+    # hardcoded https entry does not match, so django-cors-headers emits no
+    # Access-Control-Allow-Origin and every API call fails as a CORS error.
     CORS_ALLOWED_ORIGINS = [
-        'https://{{ .Values.homeportHostname }}'
+        '{{ .Values.homeportScheme }}://{{ .Values.homeportHostname }}',
+        {{- range .Values.homeportExtraHosts }}
+        '{{ $.Values.homeportScheme }}://{{ . }}',
+        {{- end }}
     ]
     CORS_EXPOSE_HEADERS = (
         'x-result-count',

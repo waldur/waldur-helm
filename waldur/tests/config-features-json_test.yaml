@@ -1,0 +1,41 @@
+suite: features.json configmap tests
+templates:
+  - templates/config-features-json.yml
+
+tests:
+  - it: should default project.estimated_cost to true
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - matchRegex:
+          path: data["features.json"]
+          pattern: '"project\.estimated_cost": true'
+
+  - it: should allow overriding project.estimated_cost via featureFlags
+    set:
+      waldur.featureFlags:
+        project.estimated_cost: false
+    asserts:
+      - matchRegex:
+          path: data["features.json"]
+          pattern: '"project\.estimated_cost": false'
+      - notMatchRegex:
+          path: data["features.json"]
+          pattern: '"project\.estimated_cost": true'
+
+  - it: should render arbitrary feature flags not covered by waldur.features
+    set:
+      waldur.featureFlags:
+        marketplace.conceal_offering_pricing_tab_in_public_view: true
+        support.pricelist: true
+        invitations.show_service_accounts: true
+    asserts:
+      - matchRegex:
+          path: data["features.json"]
+          pattern: '"marketplace\.conceal_offering_pricing_tab_in_public_view": true'
+      - matchRegex:
+          path: data["features.json"]
+          pattern: '"support\.pricelist": true'
+      - matchRegex:
+          path: data["features.json"]
+          pattern: '"invitations\.show_service_accounts": true'

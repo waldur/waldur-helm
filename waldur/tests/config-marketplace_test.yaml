@@ -22,3 +22,22 @@ tests:
       - matchRegex:
           path: data["marketplace.yaml"]
           pattern: "COUNTRIES:\n  - EE\n  - FI\n  - US\n  - JP"
+
+  - it: should not render any settings overrides by default
+    asserts:
+      - notMatchRegex:
+          path: data["marketplace.yaml"]
+          pattern: "SCIM_INBOUND_ENABLED"
+
+  - it: should render arbitrary settings overrides
+    set:
+      waldur.settingsOverrides:
+        SCIM_INBOUND_ENABLED: true
+        MARKETPLACE_LANDING_PAGE: "Catalog"
+    asserts:
+      - matchRegex:
+          path: data["marketplace.yaml"]
+          pattern: "SCIM_INBOUND_ENABLED:\\s+true"
+      - matchRegex:
+          path: data["marketplace.yaml"]
+          pattern: "MARKETPLACE_LANDING_PAGE:\\s+Catalog"

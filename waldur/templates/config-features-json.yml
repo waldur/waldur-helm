@@ -63,6 +63,11 @@ data:
         "marketplace.show_resource_end_date": true,
       {{ end }}
         "marketplace.import_resources": true,
-        "user.notifications": true,
-        "project.estimated_cost": true
+        "user.notifications": true
+      {{ if not (hasKey .Values.waldur.featureFlags "project.estimated_cost") }}
+        ,"project.estimated_cost": true
+      {{ end }}
+      {{- range $key, $value := .Values.waldur.featureFlags }}
+        ,"{{ $key }}": {{ $value | toJson }}
+      {{- end }}
     }

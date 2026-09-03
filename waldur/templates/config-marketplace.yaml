@@ -22,3 +22,12 @@ data:
     COUNTRIES:
 {{ toYaml .Values.waldur.marketplace.countries | indent 6 }}
     {{ end }}
+
+    {{ if .Values.waldur.settingsOverrides }}
+    # Arbitrary runtime setting overrides not covered by a dedicated value
+    # above (see waldur.settingsOverrides in values.yaml).
+    {{- range $key, $value := .Values.waldur.settingsOverrides }}
+    {{ $key }}:
+{{ $value | toYaml | indent 6 }}
+    {{- end }}
+    {{ end }}

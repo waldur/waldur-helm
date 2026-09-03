@@ -336,6 +336,25 @@ waldur:
     # one there would be no way to comply.
     enforcedForStaff: false
   features: []
+  # Escape hatch for feature flags (waldur_core.core.models.Feature rows) that
+  # aren't covered by the curated toggles in `features` above. Keys are dotted
+  # "section.key" names as used by the `load_features` management command
+  # (e.g. "marketplace.conceal_offering_pricing_tab_in_public_view": true).
+  # Applied on every pod start, alongside the curated list, so it also lets
+  # you override a value the chart otherwise hardcodes (e.g.
+  # "project.estimated_cost": false).
+  featureFlags: {}
+  # Escape hatch for admin-configurable runtime settings that aren't covered
+  # by a dedicated value elsewhere in this file (waldur.support,
+  # waldur.marketplace etc). Keys are the setting names as defined in
+  # waldur-mastermind's waldur_core/server/constance_settings.py, e.g.:
+  #   settingsOverrides:
+  #     SCIM_INBOUND_ENABLED: true
+  #     MARKETPLACE_LANDING_PAGE: "Catalog"
+  # Applied once via the init-whitelabeling post-install/post-upgrade hook,
+  # like the dedicated settings above — it overwrites any value set through
+  # the admin UI on every `helm upgrade`.
+  settingsOverrides: {}
   currencyName: "EUR"
   mastermindUrl: ""
   site:

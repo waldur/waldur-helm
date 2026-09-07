@@ -30,6 +30,8 @@ Outline:
 
 - [White-labeling](whitelabeling.md)
 
+- [Additional settings overrides and feature flags](configuration-overrides.md)
+
 - [Custom Mastermind templates](mastermind-templates.md)
 
 - [SAML2](saml2.md)

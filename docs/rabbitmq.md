@@ -60,6 +60,46 @@ Drop an entry from either list and the STOMP event stream stops working without
 from there. When pointing at a broker deployed outside the chart, set
 `rabbitmq.enabled: false` plus `rabbitmq.host` and `rabbitmq.secret.*` instead.
 
+## IPv6-only and dual-stack clusters
+
+The bundled broker works on an IPv6-only cluster out of the box; the chart's
+default values carry the wiring and no operator configuration is needed. Two
+separate parts of RabbitMQ default to IPv4 and both are redirected:
+
+| part | what defaults to IPv4 | how the chart fixes it |
+|---|---|---|
+| Erlang name resolution | epmd resolves the node's own hostname through `inet`, which asks for A records only | an inetrc with `{inet6, true}` plus `-proto_dist inet6_tcp`, applied from a `rabbitmq-env.conf` that tests `/proc/net/if_inet6` at container start |
+| Cowboy HTTP listeners | the management API (15672) and web-STOMP (15674) bind `0.0.0.0` | `management.tcp.ip = ::` and `web_stomp.tcp.ip = ::` in `rabbitmq.config.extraConfiguration` |
+
+Without the first, the broker aborts at boot even though the AAAA record
+resolves:
+
+```text
+{epmd_error,"<pod>.<svc>.<ns>.svc.cluster.local",nxdomain}
+```
+
+The CLI half of it (`CTL_ERL_ARGS`) is not optional. Both the liveness and the
+readiness probe run `rabbitmq-diagnostics -q check_running`, so without it the
+broker boots but the pod never becomes ready and every `rabbitmqctl` call hangs
+until it times out.
+
+Without the second, the broker runs and AMQP works, but the management API and
+the realtime web-STOMP stream behind `templates/ingress-rmq-ws.yaml` are
+unreachable. Note that `rabbitmq-diagnostics listeners` reports these two as
+`[::]` whether or not they are — `/proc/net/tcp` and `/proc/net/tcp6` inside the
+pod are the only reliable check:
+
+```bash
+kubectl exec <broker-pod> -- bash -c \
+  'tail -n +2 /proc/net/tcp | awk "\$4==\"0A\"{print \$2}"'
+```
+
+Binding `[::]` is correct on IPv4-only, IPv6-only and dual-stack clusters alike:
+with the Linux default `net.ipv6.bindv6only=0` the same socket also accepts IPv4
+connections as v4-mapped. A host whose kernel has IPv6 compiled out or disabled
+at boot is the one case that needs an override — empty
+`rabbitmq.config.extraConfiguration`; the Erlang half already no-ops there.
+
 ## Installing RabbitMQ separately
 
 ```bash

@@ -1,0 +1,30 @@
+{{- if and .Values.gatewayAPI.enabled .Values.waldur.uvkEverypay.enabled }}
+{{- include "waldur.gatewayAPI.assertAvailable" . }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: uvk-everypay-httproute
+  {{- if .Values.gatewayAPI.annotations }}
+  annotations:
+    {{- include "waldur.gatewayAPI.annotations" . | nindent 4 }}
+  {{- end }}
+spec:
+  parentRefs:
+    {{- include "waldur.gatewayAPI.parentRefs" . | nindent 4 }}
+  hostnames:
+    - {{ .Values.localApiHostname | default .Values.apiHostname | quote }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /uvk-everypay
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /
+      backendRefs:
+        - name: waldur-uvk-everypay
+          port: 8000
+{{- end }}

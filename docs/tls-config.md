@@ -2,6 +2,10 @@
 
 To enable tls globally please set `ingress.tls.enabled=true` in `values.yaml`
 
+**Note**: this page covers the Ingress path. If you're using [Gateway API](gateway-api.md)
+instead (or alongside it), TLS is configured differently -- as a Gateway listener setting,
+not a per-Ingress one -- see the TLS section of that doc.
+
 ## Let’s Encrypt setup
 
 If you want to configure [letsencrypt](https://letsencrypt.org/)

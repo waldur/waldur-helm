@@ -1,0 +1,30 @@
+{{- if and .Values.gatewayAPI.enabled .Values.gatewayAPI.createGateway }}
+{{- include "waldur.gatewayAPI.assertAvailable" . }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ include "waldur.fullname" . }}-gateway
+  {{- $certManagerAnnotations := and .Values.gatewayAPI.tls.enabled (eq .Values.gatewayAPI.tls.source "letsEncrypt") }}
+  {{- if or $certManagerAnnotations .Values.gatewayAPI.annotations }}
+  annotations:
+    {{- if $certManagerAnnotations }}
+    cert-manager.io/cluster-issuer: {{ .Values.gatewayAPI.tls.clusterIssuerName | default "letsencrypt-prod-issuer" }}
+    {{- end }}
+    {{- if .Values.gatewayAPI.annotations }}
+    {{- include "waldur.gatewayAPI.annotations" . | nindent 4 }}
+    {{- end }}
+  {{- end }}
+spec:
+  gatewayClassName: {{ required "gatewayAPI.gatewayClassName is required when gatewayAPI.createGateway is true" .Values.gatewayAPI.gatewayClassName | quote }}
+  listeners:
+    {{- if .Values.gatewayAPI.listeners }}
+    {{- tpl (toYaml .Values.gatewayAPI.listeners) . | nindent 4 }}
+    {{- else }}
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same
+    {{- end }}
+{{- end }}

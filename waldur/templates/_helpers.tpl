@@ -208,6 +208,56 @@ Usage: {{- include "waldur.ingressAnnotations" . }}
 {{- end -}}
 
 {{/*
+Fail fast when gatewayAPI.enabled but the target cluster doesn't advertise the
+Gateway API CRDs -- a clearer error than the apiserver's own "no matches for
+kind HTTPRoute" during apply. Against a real cluster, .Capabilities.APIVersions
+reflects what's actually installed; `helm template`/`helm lint` need an
+explicit `--api-versions gateway.networking.k8s.io/v1/HTTPRoute` to simulate
+that (see waldur/test/values-gateway.yaml usage in .gitlab-ci.yml).
+Usage: {{- include "waldur.gatewayAPI.assertAvailable" . }}
+*/}}
+{{- define "waldur.gatewayAPI.assertAvailable" -}}
+{{- if not (.Capabilities.APIVersions.Has "gateway.networking.k8s.io/v1/HTTPRoute") -}}
+{{- fail "gatewayAPI.enabled is true, but the Gateway API CRDs (gateway.networking.k8s.io/v1) are not installed on the target cluster. Install them first: https://gateway-api.sigs.k8s.io/guides/#installing-gateway-api" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Render the parentRefs list for a chart-managed HTTPRoute: the chart's own
+Gateway when gatewayAPI.createGateway is true, otherwise the operator-supplied
+gatewayAPI.parentRefs (required non-empty in that case -- an HTTPRoute with no
+parentRefs never attaches anywhere).
+Usage:
+  spec:
+    parentRefs:
+      {{- include "waldur.gatewayAPI.parentRefs" . | nindent 4 }}
+*/}}
+{{- define "waldur.gatewayAPI.parentRefs" -}}
+{{- if .Values.gatewayAPI.createGateway -}}
+- name: {{ include "waldur.fullname" . }}-gateway
+{{- else if .Values.gatewayAPI.parentRefs -}}
+{{- toYaml .Values.gatewayAPI.parentRefs -}}
+{{- else -}}
+{{- fail "gatewayAPI.enabled is true, but neither gatewayAPI.parentRefs nor gatewayAPI.createGateway is set -- HTTPRoutes need a Gateway to attach to." -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Render .Values.gatewayAPI.annotations as YAML, for callers to nindent under
+their own metadata.annotations. Emits nothing when the map is empty -- guard
+with `if .Values.gatewayAPI.annotations` at the call site so an empty map
+doesn't leave a dangling "annotations:" key.
+Usage:
+  {{- if .Values.gatewayAPI.annotations }}
+  annotations:
+    {{- include "waldur.gatewayAPI.annotations" . | nindent 4 }}
+  {{- end }}
+*/}}
+{{- define "waldur.gatewayAPI.annotations" -}}
+{{- toYaml .Values.gatewayAPI.annotations -}}
+{{- end -}}
+
+{{/*
 Assemble GUNICORN_CMD_ARGS value from .Values.gunicorn.*. Returns empty when no field is set.
 Usage:
   {{- $gun := include "waldur.gunicornCmdArgs" . -}}

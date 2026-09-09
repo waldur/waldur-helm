@@ -1,0 +1,25 @@
+# Kept separate from httproute_test.yaml: httproute-homeport.yaml hits the
+# same "no parentRefs" fail under identical values, and when several suite
+# templates fail at once, helm-unittest attributes the single resulting
+# render error arbitrarily among the suite's templates. Listing only
+# httproute-api.yaml here removes the ambiguity.
+suite: gateway API HTTPRoute fail-fast guard
+templates:
+  - templates/httproute-api.yaml
+
+capabilities:
+  majorVersion: 1
+  minorVersion: 29
+  apiVersions:
+    - gateway.networking.k8s.io/v1/HTTPRoute
+    - gateway.networking.k8s.io/v1/Gateway
+
+tests:
+  - it: fails when enabled with no parentRefs and no createGateway
+    set:
+      gatewayAPI.enabled: true
+      gatewayAPI.createGateway: false
+      gatewayAPI.parentRefs: []
+    asserts:
+      - failedTemplate:
+          errorMessage: "gatewayAPI.enabled is true, but neither gatewayAPI.parentRefs nor gatewayAPI.createGateway is set -- HTTPRoutes need a Gateway to attach to."

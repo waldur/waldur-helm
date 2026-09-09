@@ -1,0 +1,33 @@
+{{/*
+Global HTTP->HTTPS redirect, attached only to the chart-managed Gateway's
+plain HTTP listener (sectionName: http -- see templates/gateway.yaml's
+default, or keep a listener named "http" in gatewayAPI.listeners if you
+override it). One shared route covers every hostname/path, unlike Ingress
+where each of the 6 ingress-*.yaml templates carried its own
+force-ssl-redirect annotation: Gateway API's RequestRedirect filter can't be
+combined with a rule that also serves real backend traffic (the redirect
+always wins), so it has to live on a route that ONLY matches the HTTP
+listener.
+
+Only rendered for the chart-managed Gateway: with an existing Gateway
+(createGateway: false) the chart doesn't own its listener names, so add an
+equivalent redirect HTTPRoute yourself (or configure it on the Gateway
+implementation) -- see docs/gateway-api.md.
+*/}}
+{{- if and .Values.gatewayAPI.enabled .Values.gatewayAPI.createGateway .Values.gatewayAPI.tls.enabled }}
+{{- include "waldur.gatewayAPI.assertAvailable" . }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: http-to-https-redirect
+spec:
+  parentRefs:
+    - name: {{ include "waldur.fullname" . }}-gateway
+      sectionName: http
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: 301
+{{- end }}

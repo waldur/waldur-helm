@@ -1,0 +1,50 @@
+{{- if .Values.gatewayAPI.enabled }}
+{{- include "waldur.gatewayAPI.assertAvailable" . }}
+{{/* Matrix chat: the homeport SPA talks to the homeserver directly -- https for
+     the chat sync/media and wss for LiveKit call signaling. Without these the
+     browser CSP blocks the chat client (https) and calls (wss). Mirrors the
+     CSP built by templates/ingress-homeport.yaml. */}}
+{{- $customSentryUrl443 := "" }}
+{{- $customSentryUrl80 := "" }}
+{{- if .Values.waldur.homeport.customSentryURL }}
+{{- $customSentryUrl443 = (print .Values.waldur.homeport.customSentryURL ":443") }}
+{{- $customSentryUrl80 = (print .Values.waldur.homeport.customSentryURL ":80") }}
+{{- end }}
+{{- $matrixConnect := "" }}
+{{- $matrixMedia := "" }}
+{{- if and .Values.matrixChat.enabled .Values.matrixChat.homeserver.enabled .Values.matrixChat.homeserver.serverName }}
+{{- $matrixConnect = printf "%s://%s wss://%s" .Values.apiScheme .Values.matrixChat.homeserver.serverName .Values.matrixChat.homeserver.serverName }}
+{{- $matrixMedia = printf "%s://%s" .Values.apiScheme .Values.matrixChat.homeserver.serverName }}
+{{- end }}
+{{- $csp := printf "base-uri 'self'; object-src 'none'; media-src https://%s/assets/ %s blob:; script-src 'self' sentry.opnd.org %s %s; style-src 'self' 'unsafe-inline'; img-src 'self' *.tile.openstreetmap.org %s %s blob: data: ; connect-src 'self' %s %s nominatim.openstreetmap.org:443 sentry.opnd.org:443 sentry.opnd.org:80 %s %s %s %s; font-src 'self' data: ; frame-src 'none'; frame-ancestors 'none'" .Values.homeportHostname $matrixMedia .Values.waldur.homeport.customSentryURL .Values.waldur.homeport.matomoUrlBase .Values.apiHostname $matrixMedia .Values.apiHostname .Values.waldur.homeport.matomoUrlBase $customSentryUrl80 $customSentryUrl443 $matrixConnect .Values.waldur.homeport.inferencePlaygroundURL }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: homeport-httproute
+  {{- if .Values.gatewayAPI.annotations }}
+  annotations:
+    {{- include "waldur.gatewayAPI.annotations" . | nindent 4 }}
+  {{- end }}
+spec:
+  parentRefs:
+    {{- include "waldur.gatewayAPI.parentRefs" . | nindent 4 }}
+  hostnames:
+    - {{ .Values.localHomeportHostname | default .Values.homeportHostname | quote }}
+    {{- range .Values.homeportExtraHosts }}
+    - {{ . | quote }}
+    {{- end }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      filters:
+        - type: ResponseHeaderModifier
+          responseHeaderModifier:
+            set:
+              - name: Content-Security-Policy
+                value: {{ $csp | quote }}
+      backendRefs:
+        - name: waldur-homeport
+          port: 80
+{{- end }}

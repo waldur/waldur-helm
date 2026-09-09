@@ -26,6 +26,8 @@ Outline:
 
 - [TLS](tls-config.md)
 
+- [Gateway API](gateway-api.md)
+
 - [Outgoing email](mail.md)
 
 - [White-labeling](whitelabeling.md)

@@ -1,0 +1,13 @@
+{{/*
+Escape hatch for implementation-specific Gateway API policies that have no
+standard resource -- CORS, IP allow-listing, proxy body/buffer size. Each
+entry in gatewayAPI.extraPolicies is a full YAML document, rendered as-is and
+passed through `tpl` so it may reference .Values. See docs/gateway-api.md for
+recommended Envoy Gateway / NGINX Gateway Fabric examples.
+*/}}
+{{- if .Values.gatewayAPI.enabled }}
+{{- range .Values.gatewayAPI.extraPolicies }}
+---
+{{ tpl . $ }}
+{{- end }}
+{{- end }}

@@ -23,3 +23,7 @@ ingress:
 This will limit access to the admin endpoint only for `192.168.22.1` IP. **Note: The `whitelistSourceRangeAdmin` option takes precedence over `whitelistSourceRange`.**
 
 In case of multiple subnets/IPs, comma separated list can be used as a value. E.g.: `192.168.22.1/32,192.168.21.0/24`. This works for both options.
+
+**Note**: this page covers the Ingress path. [Gateway API](gateway-api.md) has no standard
+resource for IP allow-listing -- see the `extraPolicies` section of that doc for the
+implementation-specific equivalent (e.g. Envoy Gateway's `SecurityPolicy`).

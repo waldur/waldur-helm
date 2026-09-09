@@ -1,0 +1,333 @@
+suite: gateway API HTTPRoute/Gateway rendering
+templates:
+  - templates/gateway.yaml
+  - templates/httproute-api.yaml
+  - templates/httproute-api-admin.yaml
+  - templates/httproute-homeport.yaml
+  - templates/httproute-rmq-ws.yaml
+  - templates/httproute-uvk-everypay.yaml
+  - templates/httproute-matrix.yaml
+  - templates/httproute-redirect.yaml
+  - templates/gateway-extra-policies.yaml
+  - templates/ingress-api.yaml
+
+capabilities:
+  majorVersion: 1
+  minorVersion: 29
+  apiVersions:
+    - gateway.networking.k8s.io/v1/HTTPRoute
+    - gateway.networking.k8s.io/v1/Gateway
+
+tests:
+  - it: renders nothing when gatewayAPI is disabled (the default)
+    templates:
+      - templates/gateway.yaml
+      - templates/httproute-api.yaml
+      - templates/httproute-api-admin.yaml
+      - templates/httproute-homeport.yaml
+      - templates/httproute-rmq-ws.yaml
+      - templates/httproute-uvk-everypay.yaml
+      - templates/httproute-matrix.yaml
+      - templates/httproute-redirect.yaml
+      - templates/gateway-extra-policies.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders both ingress and Gateway API resources when both are enabled (no conflict)
+    set:
+      gatewayAPI.enabled: true
+      gatewayAPI.createGateway: true
+      gatewayAPI.gatewayClassName: envoy-gateway
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: templates/ingress-api.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/httproute-api.yaml
+
+  - it: creates a Gateway with the default HTTP listener when createGateway is true and no listeners are supplied
+    set:
+      gatewayAPI.enabled: true
+      gatewayAPI.createGateway: true
+      gatewayAPI.gatewayClassName: envoy-gateway
+    template: templates/gateway.yaml
+    asserts:
+      - equal:
+          path: spec.gatewayClassName
+          value: envoy-gateway
+      - equal:
+          path: spec.listeners[0]
+          value:
+            name: http
+            protocol: HTTP
+            port: 80
+            allowedRoutes:
+              namespaces:
+                from: Same
+
+  - it: sets the cert-manager annotation on the Gateway when tls.source is letsEncrypt
+    set:
+      gatewayAPI.enabled: true
+      gatewayAPI.createGateway: true
+      gatewayAPI.gatewayClassName: envoy-gateway
+      gatewayAPI.tls.enabled: true
+      gatewayAPI.tls.source: letsEncrypt
+      gatewayAPI.tls.clusterIssuerName: my-issuer
+    template: templates/gateway.yaml
+    asserts:
+      - equal:
+          path: metadata.annotations["cert-manager.io/cluster-issuer"]
+          value: my-issuer
+
+  - it: fails when createGateway is true but gatewayClassName is empty
+    templates:
+      - templates/gateway.yaml
+    set:
+      gatewayAPI.enabled: true
+      gatewayAPI.createGateway: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "gatewayAPI.gatewayClassName is required when gatewayAPI.createGateway is true"
+
+  # The "enabled with no parentRefs" fail-fast case lives in its own suite
+  # file (httproute-guards_test.yaml): httproute-homeport.yaml hits the same
+  # fail under identical values, and when several suite templates fail at
+  # once, Helm's render aborts on whichever it reaches first -- helm-unittest
+  # then attributes the single resulting error arbitrarily among the suite's
+  # templates, not necessarily to the one named in `asserts`. A per-test
+  # `templates:` override does not narrow this (confirmed empirically); only
+  # a suite whose top-level `templates:` lists just the one file avoids the
+  # ambiguity.
+
+  - it: attaches to an existing Gateway via parentRefs when createGateway is false
+    set:
+      gatewayAPI.enabled: true
+      gatewayAPI.parentRefs:
+        - name: external-gateway
+          sectionName: https
+    template: templates/httproute-api.yaml
+    asserts:
+      - equal:
+          path: spec.parentRefs[0].name
+          value: external-gateway
+      - equal:
+          path: spec.parentRefs[0].sectionName
+          value: https
+
+  - it: routes /api, /api-auth and /health-check to waldur-mastermind-api
+    set:
+      gatewayAPI.enabled: true
+      gatewayAPI.createGateway: true
+      gatewayAPI.gatewayClassName: envoy-gateway
+    template: templates/httproute-api.yaml
+    asserts:
+      - equal:
+          path: spec.rules[0].matches[0].path.value
+          value: /api
+      - equal:
+          path: spec.rules[0].matches[1].path.value
+          value: /api-auth
+      - equal:
+          path: spec.rules[0].matches[2].path.value
+          value: /health-check
+      - equal:
+          path: spec.rules[0].backendRefs[0].name
+          value: waldur-mastermind-api
+
+  - it: uses the apiHostname/apiExtraHosts as HTTPRoute hostnames
+    set:
+      apiHostname: api.example.com
+      apiExtraHosts:
+        - api-extra.example.com
+      gatewayAPI.enabled: true
+      gatewayAPI.createGateway: true
+      gatewayAPI.gatewayClassName: envoy-gateway
+    template: templates/httproute-api.yaml
+    asserts:
+      - equal:
+          path: spec.hostnames
+          value:
+            - api.example.com
+            - api-extra.example.com
+
+  - it: prefers localApiHostname over apiHostname
+    set:
+      apiHostname: api.example.com
+      localApiHostname: local-api.example.com
+      gatewayAPI.enabled: true
+      gatewayAPI.createGateway: true
+      gatewayAPI.gatewayClassName: envoy-gateway
+    template: templates/httproute-api.yaml
+    asserts:
+      - equal:
+          path: spec.hostnames[0]
+          value: local-api.example.com
+
+  - it: rewrites /rmqws-stomp to /ws only when stompEnabled is true
+    set:
+      waldur.rabbitmqEvents.stompEnabled: true
+      gatewayAPI.enabled: true
+      gatewayAPI.createGateway: true
+      gatewayAPI.gatewayClassName: envoy-gateway
+    template: templates/httproute-rmq-ws.yaml
+    asserts:
+      - equal:
+          path: spec.rules[0].filters[0].urlRewrite.path.replacePrefixMatch
+          value: /ws
+      - equal:
+          path: spec.rules[0].backendRefs[0].port
+          value: 15674
+
+  - it: omits the rmq-ws HTTPRoute when stompEnabled is false
+    set:
+      waldur.rabbitmqEvents.stompEnabled: false
+      gatewayAPI.enabled: true
+      gatewayAPI.createGateway: true
+      gatewayAPI.gatewayClassName: envoy-gateway
+    template: templates/httproute-rmq-ws.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: strips the /uvk-everypay prefix only when uvkEverypay is enabled
+    set:
+      waldur.uvkEverypay.enabled: true
+      gatewayAPI.enabled: true
+      gatewayAPI.createGateway: true
+      gatewayAPI.gatewayClassName: envoy-gateway
+    template: templates/httproute-uvk-everypay.yaml
+    asserts:
+      - equal:
+          path: spec.rules[0].matches[0].path.value
+          value: /uvk-everypay
+      - equal:
+          path: spec.rules[0].filters[0].urlRewrite.path.replacePrefixMatch
+          value: /
+
+  - it: routes matrix paths to their respective backends when livekit and lkJwt are enabled
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: matrix.example.com
+      matrixChat.homeserver.clientPort: 6167
+      matrixChat.lkJwt.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.rtc.signalingPort: 7880
+      gatewayAPI.enabled: true
+      gatewayAPI.createGateway: true
+      gatewayAPI.gatewayClassName: envoy-gateway
+    template: templates/httproute-matrix.yaml
+    asserts:
+      - equal:
+          path: spec.hostnames[0]
+          value: matrix.example.com
+      - equal:
+          path: spec.rules[0].backendRefs[0].name
+          value: matrix-homeserver
+      - equal:
+          path: spec.rules[1].backendRefs[0].name
+          value: lk-jwt-service
+      - equal:
+          path: spec.rules[2].matches[0].path.value
+          value: /rtc
+      - equal:
+          path: spec.rules[3].matches[0].path.value
+          value: /twirp
+
+  - it: omits the matrix HTTPRoute when matrixChat is disabled
+    set:
+      matrixChat.enabled: false
+      gatewayAPI.enabled: true
+      gatewayAPI.createGateway: true
+      gatewayAPI.gatewayClassName: envoy-gateway
+    template: templates/httproute-matrix.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: sets a CSP response header on the homeport HTTPRoute
+    set:
+      gatewayAPI.enabled: true
+      gatewayAPI.createGateway: true
+      gatewayAPI.gatewayClassName: envoy-gateway
+    template: templates/httproute-homeport.yaml
+    asserts:
+      - equal:
+          path: spec.rules[0].filters[0].type
+          value: ResponseHeaderModifier
+      - matchRegex:
+          path: spec.rules[0].filters[0].responseHeaderModifier.set[0].value
+          pattern: "Content-Security-Policy|base-uri 'self'"
+
+  - it: renders the redirect HTTPRoute only when createGateway and tls.enabled are both true
+    set:
+      gatewayAPI.enabled: true
+      gatewayAPI.createGateway: true
+      gatewayAPI.gatewayClassName: envoy-gateway
+      gatewayAPI.tls.enabled: true
+    template: templates/httproute-redirect.yaml
+    asserts:
+      - equal:
+          path: spec.parentRefs[0].sectionName
+          value: http
+      - equal:
+          path: spec.rules[0].filters[0].requestRedirect.scheme
+          value: https
+
+  - it: omits the redirect HTTPRoute when tls is disabled
+    set:
+      gatewayAPI.enabled: true
+      gatewayAPI.createGateway: true
+      gatewayAPI.gatewayClassName: envoy-gateway
+      gatewayAPI.tls.enabled: false
+    template: templates/httproute-redirect.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: omits the redirect HTTPRoute when using an existing Gateway (createGateway false)
+    set:
+      gatewayAPI.enabled: true
+      gatewayAPI.parentRefs:
+        - name: external-gateway
+      gatewayAPI.tls.enabled: true
+    template: templates/httproute-redirect.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders extraPolicies as raw manifests, tpl-rendered
+    set:
+      gatewayAPI.enabled: true
+      gatewayAPI.createGateway: true
+      gatewayAPI.gatewayClassName: envoy-gateway
+      apiHostname: api.example.com
+      gatewayAPI.extraPolicies:
+        - |
+          apiVersion: gateway.envoyproxy.io/v1alpha1
+          kind: SecurityPolicy
+          metadata:
+            name: waldur-cors-{{ .Values.apiHostname }}
+    template: templates/gateway-extra-policies.yaml
+    asserts:
+      - equal:
+          path: kind
+          value: SecurityPolicy
+      - equal:
+          path: metadata.name
+          value: waldur-cors-api.example.com
+
+  - it: merges gatewayAPI.annotations onto rendered HTTPRoutes
+    set:
+      gatewayAPI.enabled: true
+      gatewayAPI.createGateway: true
+      gatewayAPI.gatewayClassName: envoy-gateway
+      gatewayAPI.annotations:
+        external-dns.alpha.kubernetes.io/ttl: "60"
+    template: templates/httproute-api.yaml
+    asserts:
+      - equal:
+          path: metadata.annotations["external-dns.alpha.kubernetes.io/ttl"]
+          value: "60"

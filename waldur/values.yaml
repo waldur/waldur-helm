@@ -133,6 +133,51 @@ ingress:
   #     external-dns.alpha.kubernetes.io/hostname: "api.example.com"
   annotations: {}
 
+# Gateway API (HTTPRoute/Gateway) support, alongside -- not instead of -- ingress
+# above. Both can be enabled at once. See docs/gateway-api.md for the migration
+# guide, recommended implementations, and the extraPolicies examples referenced below.
+gatewayAPI:
+  enabled: false
+  # GatewayClass implementation, e.g. "envoy-gateway", "nginx", "istio".
+  # Only consulted when createGateway is true.
+  gatewayClassName: ""
+  # References to an existing Gateway (or Gateways) that the chart's HTTPRoutes
+  # attach to. Ignored when createGateway is true. Required (non-empty) otherwise.
+  # Example:
+  #   parentRefs:
+  #     - name: my-gateway
+  parentRefs: []
+  # Set to true to have the chart create and manage its own Gateway resource
+  # (templates/gateway.yaml) instead of attaching to one that already exists.
+  createGateway: false
+  # Listener list for the chart-managed Gateway (only used when createGateway is
+  # true). Empty renders a single plain HTTP listener named "http" on port 80 --
+  # enough to route unencrypted traffic. For HTTPS, supply your own listeners
+  # here (see docs/gateway-api.md for a worked example with per-hostname TLS
+  # certificateRefs); keep one listener named "http" if you also want the
+  # automatic HTTP->HTTPS redirect route (rendered when tls.enabled is true).
+  # Templated with `tpl`, so entries may reference .Values.
+  listeners: []
+  tls:
+    enabled: false
+    source: "secret" # Possible values: `letsEncrypt` and `secret`
+    clusterIssuerName: "letsencrypt-prod-issuer" # cert-manager ClusterIssuer, set on the Gateway (only used when createGateway is true)
+    createClusterIssuer: false
+    customMastermindSecretName: ""
+    customHomeportSecretName: ""
+  # Extra annotations merged onto every rendered HTTPRoute/Gateway object.
+  annotations: {}
+  # Raw manifests for the implementation-specific policies Gateway API has no
+  # standard resource for -- CORS, IP allow-listing, proxy body/buffer size.
+  # Each entry is a full YAML document (rendered as-is, separated by `---`) and
+  # is passed through `tpl`, so it may reference .Values (e.g.
+  # .Values.ingress.whitelistSourceRange, already defined above, to keep one
+  # source of truth for both the ingress and Gateway API paths).
+  # See docs/gateway-api.md for recommended Envoy Gateway / NGINX Gateway Fabric
+  # examples (SecurityPolicy for CORS/IP allow-list, Client/BackendTrafficPolicy
+  # for proxy tuning).
+  extraPolicies: []
+
 celery:
   worker:
     enabled: true

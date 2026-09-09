@@ -1,0 +1,58 @@
+{{- if and .Values.gatewayAPI.enabled .Values.matrixChat.enabled .Values.matrixChat.homeserver.enabled }}
+{{- include "waldur.gatewayAPI.assertAvailable" . }}
+{{- $h := .Values.matrixChat.homeserver }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: matrix-httproute
+  {{- if .Values.gatewayAPI.annotations }}
+  annotations:
+    {{- include "waldur.gatewayAPI.annotations" . | nindent 4 }}
+  {{- end }}
+spec:
+  parentRefs:
+    {{- include "waldur.gatewayAPI.parentRefs" . | nindent 4 }}
+  hostnames:
+    - {{ $h.serverName | quote }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /.well-known/matrix
+        - path:
+            type: PathPrefix
+            value: /_matrix
+      backendRefs:
+        - name: matrix-homeserver
+          port: {{ $h.clientPort }}
+    {{- if .Values.matrixChat.lkJwt.enabled }}
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /sfu
+      backendRefs:
+        - name: lk-jwt-service
+          port: 8080
+    {{- end }}
+    {{- if .Values.matrixChat.livekit.enabled }}
+    # LiveKit signaling websocket (media stays on the livekit-rtc LoadBalancer).
+    # The browser LiveKit SDK dials publicUrl + /rtc.
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /rtc
+      backendRefs:
+        - name: livekit-signaling
+          port: {{ .Values.matrixChat.livekit.rtc.signalingPort }}
+    # LiveKit RoomService (Twirp) API. lk-jwt-service calls publicUrl + /twirp
+    # to create the room before issuing a JWT; without this route room
+    # creation 404s and calls never start.
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /twirp
+      backendRefs:
+        - name: livekit-signaling
+          port: {{ .Values.matrixChat.livekit.rtc.signalingPort }}
+    {{- end }}
+{{- end }}

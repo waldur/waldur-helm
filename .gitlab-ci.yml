@@ -32,17 +32,28 @@ Run linter:
     - helm dependency update waldur/
     - helm lint waldur/
     - helm lint waldur/ -f waldur/test/values.yaml
+    # Gateway API path. `helm lint` has no --api-versions flag, so
+    # waldur.gatewayAPI.assertAvailable's `fail` logs as INFO here rather than
+    # failing the lint (Helm's lint engine treats template execution errors as
+    # advisory) -- the render below is what actually exercises the CRD check,
+    # via --api-versions simulating what a real cluster with the Gateway API
+    # CRDs installed would report to .Capabilities.APIVersions.
+    - helm lint waldur/ -f waldur/test/values.yaml -f waldur/test/values-gateway.yaml
     - helm unittest waldur/
     # lint for correctness of known configuration
     - mkdir rendered-templates && helm template waldur -f waldur/test/values.yaml --output-dir rendered-templates/ --debug
     - yq e '.data."features.json"' rendered-templates/waldur/templates/config-features-json.yml | jq
     - yq e '.data."override.conf.py"' rendered-templates/waldur/templates/config-override.yaml > rendered-templates/waldur/templates/override.conf.py
     - python3 -m py_compile rendered-templates/waldur/templates/override.conf.py
+    # Gateway API path renders alongside the same known configuration, plus
+    # ingress (both enabled at once, see waldur/test/values-gateway.yaml).
+    - mkdir rendered-templates-gateway && helm template waldur -f waldur/test/values.yaml -f waldur/test/values-gateway.yaml --output-dir rendered-templates-gateway/ --debug --api-versions gateway.networking.k8s.io/v1/HTTPRoute --api-versions gateway.networking.k8s.io/v1/Gateway
   artifacts:
     expire_in: 1 week
     when: always
     paths:
       - rendered-templates
+      - rendered-templates-gateway
 
 .Test template:
   image: $HELM_TEST_IMAGE

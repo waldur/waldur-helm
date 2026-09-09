@@ -741,6 +741,11 @@ rabbitmq:
   # The values below are in use only if rabbitmq.enabled = true
   image:
     tag: "4.3.5-management"
+  # Keep this at 1 unless you also set `peerDiscoveryK8sPlugin.enabled: true`.
+  # The subchart does not cluster on its own: raising replicaCount without peer
+  # discovery deploys that many INDEPENDENT brokers behind one Service, which
+  # splits queues across unrelated nodes and crash-loops the Celery worker
+  # (its probes ping a random node). See docs/rabbitmq.md and #14.
   replicaCount: 1
   # The chart derives nothing from plugin names, so the ports below must be
   # declared explicitly. 61613/15674 are what config-override.yaml and

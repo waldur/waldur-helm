@@ -11,6 +11,20 @@ image:
 
 replicaCount: 3
 
+# REQUIRED whenever replicaCount > 1. This chart does not cluster on its own --
+# without the Kubernetes peer discovery plugin, `replicaCount: 3` deploys three
+# INDEPENDENT brokers behind one Service. The install looks healthy (3/3 pods
+# Ready), but connections are load-balanced across unrelated nodes: a queue
+# declared on one node does not exist on the others, `celery inspect ping`
+# usually cannot reach the worker's pidbox queue (so the worker's probes fail
+# and it crash-loops), and published tasks strand on nodes that have no
+# consumer. See docs/rabbitmq.md and #14.
+#
+# Verify after install -- every pod must list all three nodes:
+#   kubectl exec rmq-rabbitmq-0 -c rabbitmq -- rabbitmqctl cluster_status
+peerDiscoveryK8sPlugin:
+  enabled: true
+
 auth:
   username: "waldur"
   password: "waldur"

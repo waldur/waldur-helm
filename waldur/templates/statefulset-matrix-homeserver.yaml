@@ -89,6 +89,18 @@ spec:
                   name: {{ $h.registrationTokenExistingSecret.name | default "matrix-homeserver-secret" }}
                   key: {{ $h.registrationTokenExistingSecret.key | default "registration_token" }}
             {{- end }}
+          # Tuwunel migrates its database in place before it opens the
+          # listener, silently, for as long as the volume size dictates. A
+          # liveness kill during that window is the documented way to corrupt
+          # the database, so startup holds liveness off for hours: a cap that
+          # is too high leaves a broken pod Pending, a cap that is too low
+          # destroys data. 720 x 30s = 6h.
+          startupProbe:
+            httpGet:
+              port: {{ $h.clientPort }}
+              path: /_matrix/client/versions
+            periodSeconds: 30
+            failureThreshold: 720
           readinessProbe:
             httpGet:
               port: {{ $h.clientPort }}

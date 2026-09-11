@@ -35,8 +35,9 @@ managers.
 
 Images are pinned to specific versions by default — never `latest`:
 
-- **homeserver** — `ghcr.io/matrix-construct/tuwunel`, pinned to the latest bare
-  multiarch tag. Set `homeserver.imageDigest` to pin immutably by digest.
+- **homeserver** — `ghcr.io/matrix-construct/tuwunel`, pinned to the single
+  supported version (see below). Set `homeserver.imageDigest` to pin immutably by
+  digest.
 - **livekit** — `livekit/livekit-server`, pinned by tag; `livekit.imageDigest`
   available. Pulled from `livekit.imageRegistry` (`docker.io` by default) — its
   own key, **not** `global.imageRegistry`, so pointing `global` at a private
@@ -46,6 +47,66 @@ Images are pinned to specific versions by default — never `latest`:
   (only `latest` and `sha-<commit>`), so it is pinned **by digest**
   (`lkJwt.imageDigest`). Update the digest to upgrade, or set `lkJwt.imageTag` to
   a `sha-<commit>` tag and clear the digest.
+
+## Supported homeserver version
+
+Waldur bundles the homeserver, so its version is ours to support, not yours to
+choose. **One version is supported at a time**, the same across both packaging
+paths:
+
+| Path | Value |
+| --- | --- |
+| Helm | `matrixChat.homeserver.imageTag` |
+| Docker Compose | `WALDUR_TUWUNEL_IMAGE_TAG` |
+
+Both are `v1.9.0`. Do not set a version we do not ship, and do not let the two
+diverge.
+
+### Upgrading
+
+Tuwunel migrates its embedded database in place on the first boot of a new
+version, before it opens its port, and logs nothing while it runs. Every minor
+release so far has done this, so read the
+[upstream release notes](https://github.com/matrix-construct/tuwunel/releases)
+before moving in either direction.
+
+1. Scale the homeserver StatefulSet to zero and snapshot the PVC.
+2. Bump `imageTag` and `helm upgrade`.
+3. Let the first boot finish. A pod that is slow to become ready is migrating,
+   not hung. The chart's `startupProbe` keeps liveness off for up to six hours
+   so Kubernetes does not kill it mid-migration, which corrupts the database.
+4. Check `/_matrix/client/versions`, then `/api/admin/matrix/diagnostics/` on
+   the Waldur side.
+
+**Downgrades are the dangerous direction.** An older Tuwunel starts cleanly on
+a migrated database and then silently serves stale data from the old stores. A
+successful downgrade boot means nothing. Roll back by restoring the snapshot,
+never by re-pointing the tag at an older image.
+
+`serverName` is immutable: it is baked into every user and room ID. From 1.9.0
+the homeserver stamps it into the database and refuses to boot under another
+name:
+
+```text
+Critical error starting server: Database belongs to old.example; configured server name is new.example. Cannot reuse.
+```
+
+Restore the original `serverName`; do not wipe the PVC, which is the chat
+corpus.
+
+### CVE response
+
+Tuwunel publishes advisories on its
+[GitHub repository](https://github.com/matrix-construct/tuwunel/security/advisories).
+Both the client-server and federation surfaces are exposed through the Matrix
+ingress.
+
+- Fix in a patch release of the supported minor: bump both packaging paths and
+  ship a chart patch release.
+- Fix needs a minor or major jump: follow the upgrade procedure above, verify
+  on a restored snapshot first, bump both paths together.
+- No fixed release yet: `matrixChat.enabled=false` removes the homeserver, its
+  ingress and the chat UI. The PVC and its history are kept.
 
 ## Required runtime steps (not automated by the chart)
 

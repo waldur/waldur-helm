@@ -580,3 +580,28 @@ tests:
           content:
             name: TUWUNEL_CONFIG
             value: /etc/tuwunel/tuwunel.toml
+
+  - it: holds liveness off the homeserver until its migration has finished
+    # Tuwunel migrates its database in place before it opens the listener, and
+    # a liveness kill mid-migration corrupts it. The startupProbe has to be
+    # sized for a large volume, and liveness must still be there afterwards.
+    template: templates/statefulset-matrix-homeserver.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.httpGet.path
+          value: /_matrix/client/versions
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.periodSeconds
+          value: 30
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.failureThreshold
+          value: 720
+      - isNotNull:
+          path: spec.template.spec.containers[0].livenessProbe
+      - isNotNull:
+          path: spec.template.spec.containers[0].readinessProbe

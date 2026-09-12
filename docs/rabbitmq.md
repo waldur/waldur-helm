@@ -109,6 +109,44 @@ helm install rmq oci://registry-1.docker.io/cloudpirates/rabbitmq \
 
 That produces a Service named `rmq-rabbitmq`, the default of `rabbitmq.host`.
 
+## Clustering
+
+**More than one replica requires peer discovery.** This chart does not cluster on
+its own — the Kubernetes peer discovery plugin has to be switched on explicitly:
+
+```yaml
+replicaCount: 3
+peerDiscoveryK8sPlugin:
+  enabled: true
+```
+
+`rmq-values.yaml` sets both. Leave the plugin off and `replicaCount: 3` gives you
+three *independent* brokers sharing one Service. Nothing fails: `helm install`
+succeeds and all three pods report Ready. But every client connection is
+load-balanced onto an arbitrary node, and the nodes share no state, so:
+
+- a queue declared on one node does not exist on the others;
+- `celery inspect ping` — the worker's startup, liveness and readiness probe —
+  usually lands on a node without the worker's pidbox queue and returns
+  `Error: No nodes replied within time constraint`, so the worker fails its probes
+  and is killed and restarted while logging `celery@… ready.`;
+- published tasks strand on whichever node the publisher happened to reach,
+  leaving durable queues with messages and `consumers=0`;
+- Celery's native delayed delivery fails to bind (`Exchange.bind: (404)
+  NOT_FOUND - no exchange 'tasks-durable' in vhost '/'`), because the
+  `celery_delayed_*` queues and the task exchanges land on different nodes.
+
+Verify clustering after install — every pod must list all nodes, not just itself:
+
+```bash
+for i in 0 1 2; do
+  kubectl exec rmq-rabbitmq-$i -c rabbitmq -- rabbitmqctl cluster_status
+done
+```
+
+The bundled subchart defaults to `replicaCount: 1`, where none of this applies;
+the same rule holds if you raise it.
+
 ## Migrating from the Bitnami subchart
 
 **An existing Bitnami volume cannot be reused, even though the PVC name is the

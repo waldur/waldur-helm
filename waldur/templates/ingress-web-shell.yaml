@@ -1,0 +1,60 @@
+{{- if and .Values.ingress.enabled .Values.waldur.webShell.enabled }}
+# Routes /webshell on the API host to the web shell, behind the same IP
+# allowlist as the Django admin. WebSocket upgrades pass through; the server
+# pings every 20 s, so idle shells stay inside the controllers' default read
+# timeouts.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web-shell-ingress
+  annotations:
+    {{ if eq .Values.ingress.className "nginx" }}
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "{{ include "waldur.sslRedirect" (dict "scheme" .Values.apiScheme "Values" .Values) }}"
+    {{ if .Values.ingress.whitelistSourceRangeAdmin }}
+    nginx.ingress.kubernetes.io/whitelist-source-range: "{{ .Values.ingress.whitelistSourceRangeAdmin }}"
+    {{ else if .Values.ingress.whitelistSourceRange }}
+    nginx.ingress.kubernetes.io/whitelist-source-range: "{{ .Values.ingress.whitelistSourceRange }}"
+    {{ end }}
+    {{ else if or (eq .Values.ingress.className "openshift-default") (eq .Values.ingress.className "haproxy") }}
+    haproxy.org/ssl-redirect: "{{ include "waldur.sslRedirect" (dict "scheme" .Values.apiScheme "Values" .Values) }}"
+    {{ if and .Values.ingress.tls.enabled (.Values.ingress.tls.source | eq "cluster") }}
+    route.openshift.io/termination: "edge"
+    {{ end }}
+    {{ if .Values.ingress.whitelistSourceRangeAdmin }}
+    haproxy.org/allow-list: "{{ .Values.ingress.whitelistSourceRangeAdmin }}"
+    {{ else if .Values.ingress.whitelistSourceRange }}
+    haproxy.org/allow-list: "{{ .Values.ingress.whitelistSourceRange }}"
+    {{ end }}
+    {{ else if eq .Values.ingress.className "traefik" }}
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ .Release.Namespace }}-api-admin-chain@kubernetescrd"
+    {{ end }}
+    {{ if and .Values.ingress.tls.enabled (eq .Values.ingress.tls.source "letsEncrypt") }}
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.tls.clusterIssuerName | default "letsencrypt-prod-issuer" }}
+    {{ end }}
+    {{- include "waldur.ingressAnnotations" . }}
+spec:
+  {{ if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className | quote }}
+  {{ end }}
+  rules:
+  - host: {{ .Values.localApiHostname | default .Values.apiHostname }}
+    http:
+      paths:
+      - path: /webshell
+        pathType: Prefix
+        backend:
+          service:
+            name: waldur-mastermind-web-shell
+            port:
+              number: 80
+  {{ if and .Values.ingress.tls.enabled (.Values.ingress.tls.source | ne "cluster") }}
+  tls:
+  - hosts:
+    - {{ .Values.apiHostname }}
+    {{ if .Values.ingress.tls.customMastermindSecretName }}
+    secretName: {{ .Values.ingress.tls.customMastermindSecretName | quote }}
+    {{ else }}
+    secretName: api-certificate
+    {{ end }}
+  {{ end }}
+{{- end }}

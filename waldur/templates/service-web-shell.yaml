@@ -1,0 +1,18 @@
+{{- if .Values.waldur.webShell.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: waldur-mastermind-web-shell
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+spec:
+  type: ClusterIP
+  {{ include "waldur.serviceIpFamilyPolicy" . }}
+  ports:
+    - port: 80
+      targetPort: 8090
+      protocol: TCP
+      name: http
+  selector:
+    app: waldur-mastermind-web-shell
+{{- end }}

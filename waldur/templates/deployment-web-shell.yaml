@@ -1,0 +1,122 @@
+{{- if .Values.waldur.webShell.enabled }}
+{{- if not .Values.waldur.debug }}
+{{- fail "waldur.webShell.enabled requires waldur.debug: the web shell serves `waldur shell` in the browser and refuses to start without DEBUG. Enable it only on development or demo deployments." }}
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: waldur-mastermind-web-shell
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+spec:
+  # One replica: each pod remembers the tickets it has redeemed.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: waldur-mastermind-web-shell
+  template:
+    metadata:
+      labels:
+        app: waldur-mastermind-web-shell
+        {{ include "waldur.labels" . | nindent 8 }}
+    spec:
+      {{ if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range $i, $val := .Values.imagePullSecrets }}
+        - name: {{ $val }}
+        {{ end -}}
+      {{ end }}
+      {{ if .Values.hostAliases }}
+      hostAliases:
+        {{ toYaml .Values.hostAliases | nindent 8 }}
+      {{ end }}
+      containers:
+        - name: waldur-mastermind-web-shell
+          {{- if .Values.waldur.imageDigest }}
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}@{{ .Values.waldur.imageDigest }}
+          {{- else }}
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
+          {{- end }}
+          imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" .Values.waldur.imageTag "Values" .Values) }}
+          args:
+            - "waldur"
+            - "web_shell"
+            - "--host"
+            - "0.0.0.0"
+            - "--port"
+            - "8090"
+          ports:
+            - name: http
+              containerPort: 8090
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: 8090
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8090
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          env:
+            {{- include "waldur.credentials" . | nindent 12 }}
+            - name: GLOBAL_DEBUG
+              value: "true"
+            - name: WALDUR_WEB_SHELL_ENABLED
+              value: "true"
+            - name: WALDUR_WEB_SHELL_URL
+              value: {{ .Values.waldur.webShell.url | default (printf "%s://%s/webshell/" .Values.apiScheme .Values.apiHostname) | quote }}
+            {{- if .Values.localApiHostname }}
+            # The routes serve /webshell on localApiHostname. Browsers still
+            # open the public URL above, so only the Host check needs it.
+            - name: WALDUR_WEB_SHELL_ALLOWED_HOSTS
+              value: {{ .Values.localApiHostname | quote }}
+            {{- end }}
+            {{ if and (hasKey .Values.waldur "openportal") .Values.waldur.openportal.existingSecret.name }}
+            - name: OPENPORTAL_CONFIG
+              value: "/etc/waldur/openportal/config.toml"
+            {{ end }}
+          resources:
+            {{- toYaml .Values.waldur.webShell.resources | nindent 12 }}
+          # Only the settings files: SSH keys and the script kubeconfig are
+          # deliberately not mounted into a pod that runs an interactive shell.
+          volumeMounts:
+            - name: api-override
+              mountPath: /etc/waldur/override.conf.py
+              subPath: override.conf.py
+            - name: config-features-json
+              mountPath: /etc/waldur/features.json
+              subPath: features.json
+            {{ if and (hasKey .Values.waldur "openportal") .Values.waldur.openportal.existingSecret.name }}
+            - name: openportal-config
+              mountPath: /etc/waldur/openportal
+              readOnly: true
+            {{ end }}
+      volumes:
+      - name: api-override
+        configMap:
+          name: api-override-config
+      - name: config-features-json
+        configMap:
+          name: mastermind-config-features-json
+      {{ if and (hasKey .Values.waldur "openportal") .Values.waldur.openportal.existingSecret.name }}
+      - name: openportal-config
+        secret:
+          secretName: {{ .Values.waldur.openportal.existingSecret.name }}
+      {{ end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+{{- end }}

@@ -68,6 +68,12 @@ spec:
             - name: GLOBAL_DEBUG
               value: "true"
             {{ end }}
+            {{- if .Values.waldur.webShell.enabled }}
+            - name: WALDUR_WEB_SHELL_ENABLED
+              value: "true"
+            - name: WALDUR_WEB_SHELL_URL
+              value: {{ .Values.waldur.webShell.url | default (printf "%s://%s/webshell/" .Values.apiScheme .Values.apiHostname) | quote }}
+            {{- end }}
             {{ if and (hasKey .Values.waldur "openportal") .Values.waldur.openportal.existingSecret.name }}
             - name: OPENPORTAL_CONFIG
               value: "/etc/waldur/openportal/config.toml"

@@ -1,0 +1,162 @@
+suite: web shell
+templates:
+  - templates/deployment-web-shell.yaml
+  - templates/service-web-shell.yaml
+  - templates/ingress-web-shell.yaml
+  - templates/httproute-web-shell.yaml
+  - templates/networkpolicy-web-shell.yaml
+  - templates/deployment-api.yaml
+
+tests:
+  - it: renders no web shell deployment when disabled
+    template: templates/deployment-web-shell.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders no web shell route when disabled
+    template: templates/ingress-web-shell.yaml
+    set:
+      ingress.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: does not configure the API for the web shell when disabled
+    template: templates/deployment-api.yaml
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: WALDUR_WEB_SHELL_ENABLED
+            value: "true"
+
+  - it: refuses to render without waldur.debug
+    template: templates/deployment-web-shell.yaml
+    set:
+      waldur.webShell.enabled: true
+      waldur.debug: false
+    asserts:
+      - failedTemplate:
+          errorPattern: "requires waldur.debug"
+
+  - it: runs waldur web_shell with DEBUG and the public URL
+    template: templates/deployment-web-shell.yaml
+    set:
+      waldur.webShell.enabled: true
+      waldur.debug: true
+      apiScheme: https
+      apiHostname: waldur.example.org
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 1
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value: ["waldur", "web_shell", "--host", "0.0.0.0", "--port", "8090"]
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GLOBAL_DEBUG
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: WALDUR_WEB_SHELL_URL
+            value: "https://waldur.example.org/webshell/"
+
+  - it: uses an explicit URL when set
+    template: templates/deployment-web-shell.yaml
+    set:
+      waldur.webShell.enabled: true
+      waldur.debug: true
+      waldur.webShell.url: "https://shell.example.org/webshell/"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: WALDUR_WEB_SHELL_URL
+            value: "https://shell.example.org/webshell/"
+
+  - it: allows the internal API hostname when localApiHostname is set
+    template: templates/deployment-web-shell.yaml
+    set:
+      waldur.webShell.enabled: true
+      waldur.debug: true
+      apiScheme: https
+      apiHostname: waldur.example.org
+      localApiHostname: waldur-api.internal
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: WALDUR_WEB_SHELL_ALLOWED_HOSTS
+            value: "waldur-api.internal"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: WALDUR_WEB_SHELL_URL
+            value: "https://waldur.example.org/webshell/"
+
+  - it: tells the API where the web shell is
+    template: templates/deployment-api.yaml
+    set:
+      waldur.webShell.enabled: true
+      waldur.debug: true
+      apiScheme: https
+      apiHostname: waldur.example.org
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: WALDUR_WEB_SHELL_ENABLED
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: WALDUR_WEB_SHELL_URL
+            value: "https://waldur.example.org/webshell/"
+
+  - it: targets the web shell port from the service
+    template: templates/service-web-shell.yaml
+    set:
+      waldur.webShell.enabled: true
+      waldur.debug: true
+    asserts:
+      - equal:
+          path: spec.ports[0].targetPort
+          value: 8090
+
+  - it: routes /webshell on the API host behind the admin allowlist
+    template: templates/ingress-web-shell.yaml
+    set:
+      waldur.webShell.enabled: true
+      waldur.debug: true
+      ingress.enabled: true
+      ingress.className: nginx
+      ingress.whitelistSourceRangeAdmin: "10.0.0.0/8"
+      apiHostname: waldur.example.org
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: waldur.example.org
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /webshell
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: waldur-mastermind-web-shell
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/whitelist-source-range"]
+          value: "10.0.0.0/8"
+
+  - it: limits web shell ingress traffic to its port
+    template: templates/networkpolicy-web-shell.yaml
+    set:
+      waldur.webShell.enabled: true
+      waldur.debug: true
+      networkPolicy.enabled: true
+    asserts:
+      - equal:
+          path: spec.ingress[0].ports[0].port
+          value: 8090

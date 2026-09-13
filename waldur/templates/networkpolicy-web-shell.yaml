@@ -1,0 +1,21 @@
+{{ if and .Values.networkPolicy.enabled .Values.waldur.webShell.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: waldur-mastermind-web-shell-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: waldur-mastermind-web-shell
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 8090
+  egress:
+  - to: []
+{{ end }}

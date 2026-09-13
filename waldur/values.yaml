@@ -305,6 +305,15 @@ waldur:
     name: ""
     key: ""
   debug: false
+  # Browser web shell for staff: `waldur shell` in a browser tab, opened from
+  # the homeport user menu. For development and demo deployments only: the
+  # chart refuses to render it unless waldur.debug is true.
+  webShell:
+    enabled: false
+    # Public URL of the web shell page. Defaults to
+    # <apiScheme>://<apiHostname>/webshell/, where the chart routes it.
+    url: ""
+    resources: {}
   mail:
     existingSecret:
       name: ""

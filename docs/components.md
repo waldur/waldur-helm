@@ -303,6 +303,8 @@ sequenceDiagram
 
 - **mastermind-config-permissions-override-yaml:** Permission overrides
 
+- **mastermind-config-custom-roles-yaml:** Custom (non-built-in) role definitions
+
 - **icons-config:** Custom icons and branding
 
 ### Secrets

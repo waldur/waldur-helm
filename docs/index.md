@@ -32,7 +32,7 @@ Outline:
 
 - [White-labeling](whitelabeling.md)
 
-- [Additional settings overrides and feature flags](configuration-overrides.md)
+- [Additional settings overrides, feature flags, and custom roles](configuration-overrides.md)
 
 - [Custom Mastermind templates](mastermind-templates.md)
 

@@ -1,0 +1,46 @@
+suite: custom roles configmap tests
+templates:
+  - templates/config-custom-roles.yaml
+
+tests:
+  - it: should default to an empty role list
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: data["custom-roles.yaml"]
+          value: "[]\n"
+
+  - it: should render a declared custom role
+    set:
+      waldur.customRoles:
+        - role: CUSTOMER.AUDITOR
+          scope: customer
+          description: "Read-only auditor"
+          permissions:
+            - CUSTOMER.LIST_USERS
+            - PROJECT.LIST
+    asserts:
+      - matchRegex:
+          path: data["custom-roles.yaml"]
+          pattern: "role: CUSTOMER\\.AUDITOR"
+      - matchRegex:
+          path: data["custom-roles.yaml"]
+          pattern: "scope: customer"
+      - matchRegex:
+          path: data["custom-roles.yaml"]
+          pattern: "- CUSTOMER\\.LIST_USERS"
+      - matchRegex:
+          path: data["custom-roles.yaml"]
+          pattern: "- PROJECT\\.LIST"
+
+  - it: should reject an invalid scope
+    set:
+      waldur.customRoles:
+        - role: CUSTOMER.AUDITOR
+          scope: not_a_real_scope
+          permissions:
+            - CUSTOMER.LIST_USERS
+    asserts:
+      - failedTemplate:
+          errorMessage: "customRoles: \"CUSTOMER.AUDITOR\" has invalid scope \"not_a_real_scope\" — must be one of: customer, service_provider, call_organizer, project, offering, resource, resource_project, call, proposal"

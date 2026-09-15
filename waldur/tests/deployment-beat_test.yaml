@@ -1,6 +1,7 @@
 suite: beat deployment extension hooks
 templates:
   - templates/deployment-beat.yaml
+  - templates/config-custom-roles.yaml
 
 tests:
   - it: injects beat.extraEnvVars into the beat container only (not init containers)
@@ -14,8 +15,10 @@ tests:
           content:
             name: BEAT_EXTRA
             value: "yes"
+        template: templates/deployment-beat.yaml
       - notContains:
           path: spec.template.spec.initContainers[0].env
           content:
             name: BEAT_EXTRA
           any: true
+        template: templates/deployment-beat.yaml

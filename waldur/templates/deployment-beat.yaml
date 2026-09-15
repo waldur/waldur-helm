@@ -18,10 +18,11 @@ spec:
         {{- with .Values.beat.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with .Values.beat.podAnnotations }}
       annotations:
+        checksum/custom-roles: {{ include (print $.Template.BasePath "/config-custom-roles.yaml") . | sha256sum }}
+        {{- with .Values.beat.podAnnotations }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
     spec:
       {{ if .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -114,6 +115,9 @@ spec:
             - name: config-permissions-override-yaml
               mountPath: /etc/waldur/permissions-override.yaml
               subPath: permissions-override.yaml
+            - name: config-custom-roles-yaml
+              mountPath: /etc/waldur/custom-roles.yaml
+              subPath: custom-roles.yaml
           resources:
             {{- toYaml .Values.apiResources | nindent 12 }}
       {{ end }}
@@ -170,6 +174,9 @@ spec:
               mountPath: /etc/waldur/notifications.json
               subPath: "notifications.json"
             {{ end }}
+            - name: config-custom-roles-yaml
+              mountPath: /etc/waldur/custom-roles.yaml
+              subPath: custom-roles.yaml
             {{- with (include "waldur.extraVolumeMounts" .Values.beat) }}
             {{- . | nindent 12 }}
             {{- end }}
@@ -195,6 +202,9 @@ spec:
       - name: config-permissions-override-yaml
         configMap:
           name: mastermind-config-permissions-override-yaml
+      - name: config-custom-roles-yaml
+        configMap:
+          name: mastermind-config-custom-roles-yaml
       {{ if or .Values.waldur.mastermindTemplating.mastermindTemplatesPath .Values.waldur.mastermindTemplating.mastermindTemplates }}
       - name: waldur-mastermind-template
         configMap:

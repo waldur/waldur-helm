@@ -179,6 +179,13 @@ waldur:
   settingsOverrides:
     SCIM_INBOUND_ENABLED: true
     MARKETPLACE_LANDING_PAGE: "Catalog"
+  customRoles:
+    - role: CUSTOMER.AUDITOR
+      scope: customer
+      description: "Read-only auditor"
+      permissions:
+        - CUSTOMER.LIST_USERS
+        - PROJECT.LIST
   currencyName: "EUR"
   mastermindUrl: "http://waldur.example.com/"
   site:

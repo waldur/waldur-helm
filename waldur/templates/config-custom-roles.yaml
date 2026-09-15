@@ -1,0 +1,13 @@
+{{- $validScopes := list "customer" "service_provider" "call_organizer" "project" "offering" "resource" "resource_project" "call" "proposal" }}
+{{- range .Values.waldur.customRoles }}
+{{- if not (has .scope $validScopes) }}
+{{- fail (printf "customRoles: %q has invalid scope %q — must be one of: %s" .role .scope (join ", " $validScopes)) }}
+{{- end }}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mastermind-config-custom-roles-yaml
+data:
+  custom-roles.yaml: |
+{{ toYaml .Values.waldur.customRoles | indent 4 }}

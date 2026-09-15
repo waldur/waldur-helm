@@ -85,6 +85,13 @@ spec:
             name: waldur-mastermind-api
             port:
               number: 80
+      - path: /scim
+        pathType: Prefix
+        backend:
+          service:
+            name: waldur-mastermind-api
+            port:
+              number: 80
   {{ if .Values.apiExtraHosts }}
   {{- range .Values.apiExtraHosts }}
   - host: {{ . }}
@@ -105,6 +112,13 @@ spec:
             port:
               number: 80
       - path: /health-check
+        pathType: Prefix
+        backend:
+          service:
+            name: waldur-mastermind-api
+            port:
+              number: 80
+      - path: /scim
         pathType: Prefix
         backend:
           service:

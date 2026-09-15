@@ -116,7 +116,7 @@ tests:
           path: spec.parentRefs[0].sectionName
           value: https
 
-  - it: routes /api, /api-auth and /health-check to waldur-mastermind-api
+  - it: routes /api, /api-auth, /health-check and /scim to waldur-mastermind-api
     set:
       gatewayAPI.enabled: true
       gatewayAPI.createGateway: true
@@ -132,6 +132,9 @@ tests:
       - equal:
           path: spec.rules[0].matches[2].path.value
           value: /health-check
+      - equal:
+          path: spec.rules[0].matches[3].path.value
+          value: /scim
       - equal:
           path: spec.rules[0].backendRefs[0].name
           value: waldur-mastermind-api

@@ -36,7 +36,7 @@ data:
     server = "{{ $h.serverName }}:443"
     {{- if .Values.matrixChat.lkJwt.enabled }}
     {{- if not $h.livekitServiceUrl }}
-    {{- fail "matrixChat.homeserver.livekitServiceUrl is required when lkJwt is enabled: it is the lk-jwt base URL the homeserver advertises to Element Call (e.g. https://<serverName> — do NOT append /sfu, Element Call adds /sfu/get itself, so a trailing /sfu yields a 404 on /sfu/sfu/get). An empty value advertises a broken RTC transport, so calls fail to start with no render-time hint." }}
+    {{- fail "matrixChat.homeserver.livekitServiceUrl is required when lkJwt is enabled: it is the lk-jwt base URL the homeserver advertises to Element Call (e.g. https://<serverName> — do NOT append /sfu, the client adds /get_token itself, so a trailing /sfu yields a 404 on /sfu/get_token). An empty value advertises a broken RTC transport, so calls fail to start with no render-time hint." }}
     {{- end }}
 
     # LiveKit SFU endpoint for Element Call / Matrix RTC (MSC4143).

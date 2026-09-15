@@ -229,6 +229,18 @@ tests:
       - equal:
           path: spec.rules[1].backendRefs[0].name
           value: lk-jwt-service
+      - contains:
+          path: spec.rules[1].matches
+          content:
+            path:
+              type: PathPrefix
+              value: /get_token
+      - contains:
+          path: spec.rules[1].matches
+          content:
+            path:
+              type: PathPrefix
+              value: /sfu
       - equal:
           path: spec.rules[2].matches[0].path.value
           value: /rtc

@@ -886,7 +886,7 @@ matrixChat:
     enabled: false
     imageRegistry: docker.io
     imageName: livekit/livekit-server
-    imageTag: "v1.12.0"
+    imageTag: "v1.13.7"
     imageDigest: ""
     # Public wss signaling URL the browser dials (returned to clients by lk-jwt).
     # Bundled LiveKit: reachable via the matrix ingress (e.g. wss://matrix.example.org).
@@ -938,9 +938,9 @@ matrixChat:
     enabled: false
     imageRegistry: ghcr.io
     imageName: element-hq/lk-jwt-service
-    # lk-jwt publishes no semver image tags — only latest / sha-<commit>.
-    imageTag: ""
-    imageDigest: "sha256:29918567e6b7cd920e2853b4cd6848ce01b79947c3d19a9f1ed5b74f0a2a88bf"
+    imageTag: "0.7.0"
+    # Set to pin immutably by digest; takes precedence over imageTag.
+    imageDigest: ""
     # Accept a self-signed homeserver cert. Dev only. Prod uses a real cert.
     insecureSkipVerifyTls: false
     resources: {}
@@ -962,8 +962,8 @@ matrixChat:
     allowFederation: true
     maxRequestSize: 104857600
     # Public lk-jwt base URL advertised to clients, e.g. https://<serverName>.
-    # Do NOT append /sfu — Element Call adds /sfu/get itself, so a trailing
-    # /sfu produces a 404 on /sfu/sfu/get and calls never connect.
+    # Do NOT append /sfu — the client adds /get_token itself, so a trailing
+    # /sfu produces a 404 on /sfu/get_token and calls never connect.
     # Required for calls. Leave empty until lk-jwt-service is deployed.
     livekitServiceUrl: ""
     # Registration token that gates user provisioning. MUST equal the backend's

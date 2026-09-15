@@ -26,7 +26,12 @@ spec:
         - name: matrix-homeserver
           port: {{ $h.clientPort }}
     {{- if .Values.matrixChat.lkJwt.enabled }}
+    # Token exchange: homeport posts to /get_token. /sfu keeps the legacy
+    # /sfu/get reachable for clients that still fall back to it.
     - matches:
+        - path:
+            type: PathPrefix
+            value: /get_token
         - path:
             type: PathPrefix
             value: /sfu

@@ -117,6 +117,75 @@ tests:
           path: spec.rules[0].host
           value: matrix.example.org
 
+  - it: routes lk-jwt's token endpoints on the serverName host
+    # Homeport posts to /get_token. /sfu stays for clients that still fall back to
+    # the legacy /sfu/get. Without /get_token every call's token request 404s.
+    template: templates/ingress-matrix.yaml
+    set:
+      ingress.enabled: true
+      ingress.className: nginx
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.lkJwt.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.livekitServiceUrl: "https://matrix.example.org"
+      matrixChat.livekit.publicUrl: "wss://matrix.example.org"
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+    asserts:
+      - contains:
+          path: spec.rules[0].http.paths
+          content:
+            path: /get_token
+            pathType: Prefix
+            backend:
+              service:
+                name: lk-jwt-service
+                port:
+                  number: 8080
+      - contains:
+          path: spec.rules[0].http.paths
+          content:
+            path: /sfu
+            pathType: Prefix
+            backend:
+              service:
+                name: lk-jwt-service
+                port:
+                  number: 8080
+
+  - it: serves /.well-known/matrix with a path type ingress-nginx accepts
+    # ingress-nginx 1.12+ rejects the whole Ingress when a Prefix or Exact path
+    # contains a dot, taking /_matrix and the call routes down with it.
+    template: templates/ingress-matrix.yaml
+    set:
+      ingress.enabled: true
+      ingress.className: nginx
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.lkJwt.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.clientPort: 6167
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.livekitServiceUrl: "https://matrix.example.org"
+      matrixChat.livekit.publicUrl: "wss://matrix.example.org"
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+    asserts:
+      - contains:
+          path: spec.rules[0].http.paths
+          content:
+            path: /.well-known/matrix
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: matrix-homeserver
+                port:
+                  number: 6167
+
   - it: defines the matrix-chain middleware the matrix ingress references on traefik
     # ingress-matrix points its traefik router at <ns>-matrix-chain; without this
     # template the router references a non-existent middleware and traefik drops
@@ -213,7 +282,7 @@ tests:
       matrixChat.livekit.keys.existingSecret.name: "operator-livekit-creds"
     asserts:
       - failedTemplate:
-          errorMessage: "matrixChat.homeserver.livekitServiceUrl is required when lkJwt is enabled: it is the lk-jwt base URL the homeserver advertises to Element Call (e.g. https://<serverName> — do NOT append /sfu, Element Call adds /sfu/get itself, so a trailing /sfu yields a 404 on /sfu/sfu/get). An empty value advertises a broken RTC transport, so calls fail to start with no render-time hint."
+          errorMessage: "matrixChat.homeserver.livekitServiceUrl is required when lkJwt is enabled: it is the lk-jwt base URL the homeserver advertises to Element Call (e.g. https://<serverName> — do NOT append /sfu, the client adds /get_token itself, so a trailing /sfu yields a 404 on /sfu/get_token). An empty value advertises a broken RTC transport, so calls fail to start with no render-time hint."
 
   - it: allows external media into livekit
     template: templates/networkpolicy-livekit.yaml
@@ -250,8 +319,8 @@ tests:
           value: 6167
 
   - it: admits the ingress controller into lk-jwt
-    # Same trap on /sfu: Element Call fetches its LiveKit JWT from the browser,
-    # so this port is reached through the ingress, never from a namespace peer.
+    # Same trap on the lk-jwt routes: the browser fetches its LiveKit JWT, so this
+    # port is reached through the ingress, never from a namespace peer.
     template: templates/networkpolicy-lk-jwt.yaml
     set:
       matrixChat.networkPolicy.enabled: true

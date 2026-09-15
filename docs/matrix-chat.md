@@ -43,10 +43,8 @@ Images are pinned to specific versions by default — never `latest`:
   own key, **not** `global.imageRegistry`, so pointing `global` at a private
   mirror doesn't rewrite LiveKit to a registry that has no such image. Override
   `livekit.imageRegistry` if you mirror it.
-- **lk-jwt** — `ghcr.io/element-hq/lk-jwt-service` publishes **no semver tags**
-  (only `latest` and `sha-<commit>`), so it is pinned **by digest**
-  (`lkJwt.imageDigest`). Update the digest to upgrade, or set `lkJwt.imageTag` to
-  a `sha-<commit>` tag and clear the digest.
+- **lk-jwt** — `ghcr.io/element-hq/lk-jwt-service`, pinned by tag; `lkJwt.imageDigest`
+  available and takes precedence over the tag.
 
 ## Supported homeserver version
 
@@ -130,6 +128,13 @@ ingress.
    token-exchange step. (`lkJwt.insecureSkipVerifyTls` only relaxes the cert
    check — it does not fix reachability.)
 
+   A call that shows **Could not connect to the call.** usually fails at this
+   token request; check it in the browser's network tab. `404` on
+   `https://<serverName>/get_token` means a chart without the `/get_token`
+   route. `400 Missing room parameter` on `/sfu/get` means a homeport image
+   that still posts to the legacy endpoint, running against lk-jwt 0.6.0 or
+   newer. Upgrade the chart and the homeport image together.
+
 ## Open-registration guard
 
 If `homeserver.allowRegistration` is `true` but no `registrationToken` (or
@@ -204,8 +209,9 @@ exposed — relayed media always rides TLS.
   policies) — set it to ship the matrix/livekit policies without opting the
   rest of the stack into NetworkPolicy. The livekit policy accepts media from
   **anywhere** (external WebRTC). The homeserver and lk-jwt policies accept
-  HTTP only from **in-namespace** pods (i.e. the ingress controller, same
-  assumption as the homeport/API policies). Egress is left open on all three —
+  HTTP from **anywhere** on their service port too, because browser requests
+  reach them through the ingress controller, which runs in its own namespace.
+  Egress is left open on all three —
   federation, OpenID verification, and `/twirp` room creation all need
   outbound reach to `serverName`.
 
@@ -213,7 +219,7 @@ exposed — relayed media always rides TLS.
 
 You can run the Matrix calling stack against an **operator-managed LiveKit SFU**
 instead of the bundled `livekit-server` — the same bring-your-own-backend pattern
-the chart offers for PostgreSQL. Tuwunnel and lk-jwt-service stay bundled, because
+the chart offers for PostgreSQL. Tuwunel and lk-jwt-service stay bundled, because
 lk-jwt is tied to *this* homeserver's federation identity; only the SFU is external.
 
 Why it works: the browser reaches LiveKit client-side via the URL lk-jwt returns
@@ -237,9 +243,9 @@ matrixChat:
   lkJwt:
     enabled: true                               # keep the token broker
   homeserver:
-    enabled: true                               # Tuwunnel stays bundled
+    enabled: true                               # Tuwunel stays bundled
     serverName: matrix.example.org
-    livekitServiceUrl: "https://matrix.example.org/sfu"
+    livekitServiceUrl: "https://matrix.example.org"
 ```
 
 The `existingSecret` must hold the **same** API key and secret configured on your

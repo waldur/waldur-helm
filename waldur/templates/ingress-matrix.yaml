@@ -43,8 +43,11 @@ spec:
   - host: {{ $h.serverName }}
     http:
       paths:
+      # ImplementationSpecific, not Prefix: ingress-nginx 1.12+ rejects the whole
+      # Ingress when a Prefix or Exact path contains a dot (strict-validate-path-type).
+      # Traefik, HAProxy and OpenShift still match it as a prefix.
       - path: /.well-known/matrix
-        pathType: Prefix
+        pathType: ImplementationSpecific
         backend:
           service:
             name: matrix-homeserver
@@ -58,6 +61,15 @@ spec:
             port:
               number: {{ $h.clientPort }}
       {{- if .Values.matrixChat.lkJwt.enabled }}
+      # Token exchange: homeport posts to /get_token. /sfu keeps the legacy
+      # /sfu/get reachable for clients that still fall back to it.
+      - path: /get_token
+        pathType: Prefix
+        backend:
+          service:
+            name: lk-jwt-service
+            port:
+              number: 8080
       - path: /sfu
         pathType: Prefix
         backend:

@@ -1,0 +1,41 @@
+suite: API ingress routes
+templates:
+  - templates/ingress-api.yaml
+
+tests:
+  # /scim/v2/ lives outside /api/; without its own path a SCIM client falls
+  # through to the homeport ingress and gets the SPA instead of the API.
+  - it: routes /scim to waldur-mastermind-api on the API host
+    set:
+      ingress.enabled: true
+    asserts:
+      - contains:
+          path: spec.rules[0].http.paths
+          content:
+            path: /scim
+            pathType: Prefix
+            backend:
+              service:
+                name: waldur-mastermind-api
+                port:
+                  number: 80
+
+  - it: routes /scim on every apiExtraHosts host
+    set:
+      ingress.enabled: true
+      apiExtraHosts:
+        - api-extra.example.com
+    asserts:
+      - equal:
+          path: spec.rules[1].host
+          value: api-extra.example.com
+      - contains:
+          path: spec.rules[1].http.paths
+          content:
+            path: /scim
+            pathType: Prefix
+            backend:
+              service:
+                name: waldur-mastermind-api
+                port:
+                  number: 80

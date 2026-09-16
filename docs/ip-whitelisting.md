@@ -1,6 +1,6 @@
 # Limiting network access to Mastermind APIs
 
-Waldur Helm allows limiting network access to Mastermind API endpoints - i.e. `/api/`, `/api-auth/`, `/admin/` - based on whitelisting the subnets from where access is allowed. To define a list of allowed subnets in CIDR format for the all the API endpoint, please use `ingress.whitelistSourceRange` option in `values.yaml`. Example:
+Waldur Helm allows limiting network access to Mastermind API endpoints - i.e. `/api/`, `/api-auth/`, `/scim/`, `/admin/` - based on whitelisting the subnets from where access is allowed. To define a list of allowed subnets in CIDR format for the all the API endpoint, please use `ingress.whitelistSourceRange` option in `values.yaml`. Example:
 
 ```yaml
 ...

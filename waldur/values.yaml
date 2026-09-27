@@ -389,6 +389,15 @@ waldur:
     # Inert unless a passkey method is present in authMethods above — without
     # one there would be no way to comply.
     enforcedForStaff: false
+  # Daily anonymous usage report to telemetry.waldur.com (deployment type,
+  # user and offering counts, offering types, version, helpdesk backend,
+  # installation date).
+  # Enabled by default; admins can also switch it off under
+  # Administration -> Settings -> Features. Setting this to false disables
+  # it at deploy time, before the first report, and overrides the admin
+  # toggle -- use it for air-gapped or contractually restricted sites.
+  telemetry:
+    enabled: true
   features: []
   # Escape hatch for feature flags (waldur_core.core.models.Feature rows) that
   # aren't covered by the curated toggles in `features` above. Keys are dotted

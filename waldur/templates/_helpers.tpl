@@ -329,6 +329,11 @@ Add environment variables to configure database values and Sentry environment
       key: {{ .Values.waldur.fieldEncryptionKeyFallbacksExistingSecret.key | default "FIELD_ENCRYPTION_KEY_FALLBACKS" }}
 {{ end }}
 
+{{ if not .Values.waldur.telemetry.enabled }}
+- name: WALDUR_TELEMETRY_ENABLED
+  value: "false"
+{{ end }}
+
 - name: POSTGRESQL_HOST
   value: {{ include "waldur.postgresql.host" . }}
 

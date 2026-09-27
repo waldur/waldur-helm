@@ -1,0 +1,22 @@
+suite: telemetry kill switch
+templates:
+  - templates/deployment-worker.yaml
+
+tests:
+  - it: should not set WALDUR_TELEMETRY_ENABLED by default
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: WALDUR_TELEMETRY_ENABLED
+          any: true
+
+  - it: should disable telemetry in the worker when telemetry.enabled is false
+    set:
+      waldur.telemetry.enabled: false
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: WALDUR_TELEMETRY_ENABLED
+            value: "false"

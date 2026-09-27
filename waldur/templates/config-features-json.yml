@@ -64,6 +64,9 @@ data:
       {{ end }}
         "marketplace.import_resources": true,
         "user.notifications": true
+      {{ if and (not .Values.waldur.telemetry.enabled) (not (hasKey .Values.waldur.featureFlags "deployment.send_metrics")) }}
+        ,"deployment.send_metrics": false
+      {{ end }}
       {{ if not (hasKey .Values.waldur.featureFlags "project.estimated_cost") }}
         ,"project.estimated_cost": true
       {{ end }}

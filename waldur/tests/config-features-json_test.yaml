@@ -39,3 +39,17 @@ tests:
       - matchRegex:
           path: data["features.json"]
           pattern: '"invitations\.show_service_accounts": true'
+
+  - it: should leave telemetry to the admin toggle by default
+    asserts:
+      - notMatchRegex:
+          path: data["features.json"]
+          pattern: 'deployment\.send_metrics'
+
+  - it: should switch the telemetry feature off when telemetry is disabled
+    set:
+      waldur.telemetry.enabled: false
+    asserts:
+      - matchRegex:
+          path: data["features.json"]
+          pattern: '"deployment\.send_metrics": false'

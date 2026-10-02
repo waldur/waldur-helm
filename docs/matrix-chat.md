@@ -106,6 +106,33 @@ ingress.
 - No fixed release yet: `matrixChat.enabled=false` removes the homeserver, its
   ingress and the chat UI. The PVC and its history are kept.
 
+## Token lifetimes
+
+Waldur's chat drawer signs in with a refresh token, so its access tokens
+expire and are renewed in the background:
+
+| Tuwunel key | Helm value | Default |
+| --- | --- | --- |
+| `access_token_ttl` | `homeserver.accessTokenTtl` | `300` (5 min) |
+| `refresh_token_ttl` | `homeserver.refreshTokenTtl` | `86400` (24 h) |
+
+Docker Compose sets the same values in `config/matrix/tuwunel.toml.template`.
+
+The refresh lifetime is an idle timeout: each refresh moves the deadline
+forward, so a drawer in use never expires, and a page left silent for a day
+(e.g. on a suspended laptop) starts a new session through Waldur. `0` means the
+refresh token never expires; the access token lifetime must be positive, as
+Tuwunel reads `0` as "expire immediately". When a user starts a session, Waldur
+also signs out that user's chat devices idle for more than 24 hours, so a
+longer refresh lifetime, or `0`, only keeps the devices of users who start no
+other session.
+
+Clients that sign in without a refresh token, such as Element with a password,
+get non-expiring tokens and are unaffected.
+
+Tuwunel reads its configuration only at startup, so restart it after changing
+either value: `kubectl rollout restart statefulset/matrix-homeserver`.
+
 ## Required runtime steps (not automated by the chart)
 
 1. **Backend token match.** `homeserver.registrationToken` must equal the

@@ -674,3 +674,121 @@ tests:
           path: spec.template.spec.containers[0].livenessProbe
       - isNotNull:
           path: spec.template.spec.containers[0].readinessProbe
+
+  - it: renders short-lived access tokens with an idle refresh lifetime by default
+    template: templates/config-tuwunel.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+    asserts:
+      # Under [global] itself: Tuwunel silently drops these keys anywhere else.
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "\\[global\\]\\n(?:[^\\[\\n][^\\n]*\\n|\\n)*access_token_ttl = 300\\n"
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "\\[global\\]\\n(?:[^\\[\\n][^\\n]*\\n|\\n)*refresh_token_ttl = 86400\\n"
+
+  - it: renders overridden token lifetimes
+    template: templates/config-tuwunel.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.accessTokenTtl: 900
+      matrixChat.homeserver.refreshTokenTtl: 43200
+    asserts:
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "(?m)^access_token_ttl = 900$"
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "(?m)^refresh_token_ttl = 43200$"
+
+  - it: accepts lifetimes of a million seconds or more from a values file
+    template: templates/config-tuwunel.yaml
+    values:
+      - values/matrix-month-refresh-ttl.yaml
+    asserts:
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "(?m)^access_token_ttl = 1000000$"
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "(?m)^refresh_token_ttl = 2592000$"
+
+  - it: refuses an access token lifetime Tuwunel would expire at once
+    template: templates/config-tuwunel.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.accessTokenTtl: 0
+    asserts:
+      - failedTemplate:
+          errorPattern: "accessTokenTtl must be a positive whole number of seconds"
+
+  - it: refuses an access token lifetime given as a duration string
+    template: templates/config-tuwunel.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.accessTokenTtl: "5m"
+    asserts:
+      - failedTemplate:
+          errorPattern: "accessTokenTtl must be a positive whole number of seconds"
+
+  - it: refuses a missing access token lifetime
+    template: templates/config-tuwunel.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.accessTokenTtl: null
+    asserts:
+      - failedTemplate:
+          errorPattern: "accessTokenTtl must be a positive whole number of seconds"
+
+  - it: refuses a refresh lifetime that ends before the access token is renewed
+    template: templates/config-tuwunel.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.refreshTokenTtl: 300
+    asserts:
+      - failedTemplate:
+          errorPattern: "refreshTokenTtl must be 0 \\(never expire\\) or longer than accessTokenTtl"
+
+  - it: refuses a refresh lifetime given as a duration string
+    template: templates/config-tuwunel.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.refreshTokenTtl: "1d"
+    asserts:
+      - failedTemplate:
+          errorPattern: "refreshTokenTtl must be 0 \\(never expire\\) or longer than accessTokenTtl"
+
+  - it: accepts a refresh token that never expires
+    template: templates/config-tuwunel.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.refreshTokenTtl: 0
+    asserts:
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "(?m)^refresh_token_ttl = 0$"

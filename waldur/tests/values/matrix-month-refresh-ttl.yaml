@@ -1,0 +1,10 @@
+# Numbers from a values file reach templates as float64, unlike --set, and
+# toString renders a million or more in exponent form (2592000 -> 2.592e+06).
+matrixChat:
+  enabled: true
+  homeserver:
+    enabled: true
+    serverName: "matrix.example.org"
+    registrationToken: "s3cret"
+    accessTokenTtl: 1000000
+    refreshTokenTtl: 2592000

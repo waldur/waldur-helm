@@ -29,6 +29,18 @@ data:
     {{- fail "matrixChat.homeserver: allowRegistration is true but no registrationToken / registrationTokenExistingSecret is set. Set a registration token to gate user provisioning, or set allowRegistration=false. Refusing to render an open, abusable homeserver." }}
     {{- end }}
     max_request_size = {{ int64 $h.maxRequestSize }}
+    {{- /* int64 turns anything it cannot parse into 0, and Tuwunel reads an
+         access_token_ttl of 0 as "expire immediately", so check the raw value.
+         toJson, not toString: values-file numbers are float64, which toString
+         writes as 1e+06 from a million up. */}}
+    {{- if or (not (regexMatch "^[0-9]+$" (trimAll "\"" (toJson $h.accessTokenTtl)))) (eq (int64 $h.accessTokenTtl) 0) }}
+    {{- fail "matrixChat.homeserver.accessTokenTtl must be a positive whole number of seconds (e.g. 300). Tuwunel treats 0 as 'expire immediately', so the chat drawer could never sign in; duration strings such as 5m are not supported." }}
+    {{- end }}
+    {{- if or (not (regexMatch "^[0-9]+$" (trimAll "\"" (toJson $h.refreshTokenTtl)))) (and (ne (int64 $h.refreshTokenTtl) 0) (le (int64 $h.refreshTokenTtl) (int64 $h.accessTokenTtl))) }}
+    {{- fail "matrixChat.homeserver.refreshTokenTtl must be 0 (never expire) or longer than accessTokenTtl, in whole seconds. A refresh token that expires before the access token is renewed makes every renewal fail." }}
+    {{- end }}
+    access_token_ttl = {{ int64 $h.accessTokenTtl }}
+    refresh_token_ttl = {{ int64 $h.refreshTokenTtl }}
     allow_federation = {{ $h.allowFederation }}
 
     [global.well_known]

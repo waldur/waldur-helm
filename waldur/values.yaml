@@ -998,6 +998,18 @@ matrixChat:
     # token via the federation endpoint before issuing a LiveKit JWT.
     allowFederation: true
     maxRequestSize: 104857600
+    # Lifetime in seconds of access tokens issued to clients that ask for a
+    # refresh token, e.g. Waldur's chat drawer. Logins without one, such as
+    # Element in password mode, keep non-expiring tokens and are unaffected.
+    # Must be positive: Tuwunel reads 0 as "expire immediately".
+    accessTokenTtl: 300
+    # Idle lifetime in seconds of those refresh tokens; 0 means never expire.
+    # Each refresh moves the deadline forward, so a drawer in use never expires;
+    # a page left silent this long (e.g. on a suspended laptop) starts a new
+    # session through Waldur. When a user starts a session, Waldur also signs
+    # out that user's chat devices idle for more than 24 hours, so a longer
+    # value only keeps devices of users who start no other session.
+    refreshTokenTtl: 86400
     # Public lk-jwt base URL advertised to clients, e.g. https://<serverName>.
     # Do NOT append /sfu — the client adds /get_token itself, so a trailing
     # /sfu produces a 404 on /sfu/get_token and calls never connect.

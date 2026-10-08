@@ -57,14 +57,15 @@ paths:
 | Helm | `matrixChat.homeserver.imageTag` |
 | Docker Compose | `WALDUR_TUWUNEL_IMAGE_TAG` |
 
-Both are `v1.9.0`. Do not set a version we do not ship, and do not let the two
+Both are `v1.9.3`. Do not set a version we do not ship, and do not let the two
 diverge.
 
 ### Upgrading
 
 Tuwunel migrates its embedded database in place on the first boot of a new
-version, before it opens its port, and logs nothing while it runs. Every minor
-release so far has done this, so read the
+version, before it opens its port. From 1.9.1 a long migration logs its phase and
+progress every fifteen seconds; earlier versions log nothing while it runs. Every
+minor release so far has done this, so read the
 [upstream release notes](https://github.com/matrix-construct/tuwunel/releases)
 before moving in either direction.
 
@@ -80,6 +81,10 @@ before moving in either direction.
 a migrated database and then silently serves stale data from the old stores. A
 successful downgrade boot means nothing. Roll back by restoring the snapshot,
 never by re-pointing the tag at an older image.
+
+From 1.9.2, rooms are created as room version 12 by default. Existing rooms keep
+their version. In a version 12 room the creator, the Waldur bot, has the highest
+power level by definition and can never be listed in the room's power levels.
 
 `serverName` is immutable: it is baked into every user and room ID. From 1.9.0
 the homeserver stamps it into the database and refuses to boot under another

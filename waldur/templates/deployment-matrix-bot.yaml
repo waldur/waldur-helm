@@ -1,0 +1,118 @@
+{{ if and .Values.matrixChat.enabled .Values.matrixChat.bot.enabled }}
+# The Matrix bot: Waldur's encrypted member of every Waldur room. It holds the
+# keys to post into encrypted rooms and answers chat commands.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: waldur-matrix-bot
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+spec:
+  progressDeadlineSeconds: 2400
+  # Exactly one bot: a second refuses to start while the first holds its lease,
+  # so a rolling update would only crash-loop. Recreate stops the old pod, which
+  # releases the lease, before the new one starts.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: waldur-matrix-bot
+  template:
+    metadata:
+      labels:
+        app: waldur-matrix-bot
+        {{ include "waldur.labels" . | nindent 8 }}
+        {{- with .Values.matrixChat.bot.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        checksum/custom-roles: {{ include (print $.Template.BasePath "/config-custom-roles.yaml") . | sha256sum }}
+        {{- with .Values.matrixChat.bot.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{ if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range $i, $val := .Values.imagePullSecrets }}
+        - name: {{ $val }}
+        {{ end -}}
+      {{ end }}
+      {{ if .Values.hostAliases }}
+      hostAliases:
+        {{ toYaml .Values.hostAliases | nindent 8 }}
+      {{ end }}
+      initContainers:
+      {{ if .Values.waldur.initdbEnabled }}
+        - name: check-db-ready
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.initdbImageName }}:{{ template "waldur.postgresql.version" . }}
+          command: ['sh', '-c',
+            'until pg_isready;
+            do echo waiting for database; sleep 2; done;']
+          env:
+            {{- include "waldur.env.initdb" . | nindent 11 }}
+          resources:
+            requests:
+              cpu: 100m
+              memory: 200Mi
+            limits:
+              cpu: 100m
+              memory: 200Mi
+      {{ end }}
+      containers:
+        - name: waldur-matrix-bot
+          {{- if .Values.waldur.imageDigest }}
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}@{{ .Values.waldur.imageDigest }}
+          {{- else }}
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
+          {{- end }}
+          imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" .Values.waldur.imageTag "Values" .Values) }}
+          args:
+            - "matrix-bot"
+          env:
+            {{- include "waldur.credentials" . | nindent 13 }}
+            {{- with (include "waldur.extraEnvVars" .Values.matrixChat.bot) }}
+            {{- . | nindent 13 }}
+            {{- end }}
+          {{- $envFrom := include "waldur.extraEnvFrom" .Values.matrixChat.bot }}
+          {{- if $envFrom }}
+          envFrom:
+            {{- $envFrom | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.matrixChat.bot.resources | nindent 12 }}
+          # Only what Django needs to start: the bot parses content from room
+          # members and has no use for SSH keys or the other service configs.
+          volumeMounts:
+            - name: api-override
+              mountPath: /etc/waldur/override.conf.py
+              subPath: override.conf.py
+            - name: config-custom-roles-yaml
+              mountPath: /etc/waldur/custom-roles.yaml
+              subPath: custom-roles.yaml
+            {{- with (include "waldur.extraVolumeMounts" .Values.matrixChat.bot) }}
+            {{- . | nindent 12 }}
+            {{- end }}
+      volumes:
+      - name: api-override
+        configMap:
+          name: api-override-config
+      - name: config-custom-roles-yaml
+        configMap:
+          name: mastermind-config-custom-roles-yaml
+      {{- with (include "waldur.extraVolumes" .Values.matrixChat.bot) }}
+      {{- . | nindent 6 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+{{ end }}

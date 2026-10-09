@@ -907,6 +907,26 @@ rabbitmq:
 # Matrix chat integration (LiveKit media SFU + Matrix homeserver + lk-jwt).
 matrixChat:
   enabled: false
+  # The Matrix bot (mastermind's `matrix_bot` command): Waldur's encrypted member
+  # of every Waldur room. It answers chat commands and posts everything Waldur
+  # sends as the bot; while it runs, nothing else can. Exactly one replica: its
+  # lease in the database makes a second one refuse to start. Its crypto store
+  # lives in Waldur's database (schema `matrix_bot`), so it needs no volume.
+  bot:
+    enabled: true
+    resources:
+      requests:
+        cpu: 100m
+        memory: 300Mi
+      limits:
+        cpu: 500m
+        memory: 600Mi
+    podLabels: {}
+    podAnnotations: {}
+    extraEnvVars: []
+    extraEnvFrom: []
+    extraVolumes: []
+    extraVolumeMounts: []
   # The only gate for the matrix-chat NetworkPolicies (livekit, lk-jwt,
   # homeserver). Independent of the chart-wide `networkPolicy.enabled`, which
   # gates only the homeport/mastermind-api policies. Set this to ship the

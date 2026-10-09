@@ -1,0 +1,58 @@
+suite: matrix bot deployment
+templates:
+  - templates/deployment-matrix-bot.yaml
+  - templates/config-custom-roles.yaml
+
+tests:
+  - it: is not rendered while matrix chat is off
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: templates/deployment-matrix-bot.yaml
+
+  - it: runs exactly one bot, replaced by Recreate
+    set:
+      matrixChat.enabled: true
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 1
+        template: templates/deployment-matrix-bot.yaml
+      - equal:
+          path: spec.strategy.type
+          value: Recreate
+        template: templates/deployment-matrix-bot.yaml
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value: ["matrix-bot"]
+        template: templates/deployment-matrix-bot.yaml
+
+  - it: can be left out while matrix chat is on
+    set:
+      matrixChat.enabled: true
+      matrixChat.bot.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: templates/deployment-matrix-bot.yaml
+
+  - it: takes the bot's own resources and extra env
+    set:
+      matrixChat.enabled: true
+      matrixChat.bot.resources:
+        limits:
+          memory: 1Gi
+      matrixChat.bot.extraEnvVars:
+        - name: BOT_EXTRA
+          value: "yes"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.memory
+          value: 1Gi
+        template: templates/deployment-matrix-bot.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: BOT_EXTRA
+            value: "yes"
+        template: templates/deployment-matrix-bot.yaml

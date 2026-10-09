@@ -138,6 +138,32 @@ get non-expiring tokens and are unaffected.
 Tuwunel reads its configuration only at startup, so restart it after changing
 either value: `kubectl rollout restart statefulset/matrix-homeserver`.
 
+## The Matrix bot
+
+`matrixChat.bot` deploys mastermind's `matrix_bot` command, Waldur's member of
+every Waldur room. It runs on a Matrix device of its own and holds that
+device's keys, so it is the only process that can post into an encrypted room
+or read the commands sent to it there. While it runs, every message Waldur
+sends as the bot (role, order and staff notices, command replies) goes through
+it. Without it, Waldur posts directly, which works only in rooms that are not
+encrypted.
+
+- **Exactly one replica.** The bot holds a lease in Waldur's database, and a
+  second one refuses to start while the first holds it, so the Deployment uses
+  the `Recreate` strategy: the old pod releases the lease before the new one
+  starts.
+- **No volume.** Its keys live in Waldur's database, in a `matrix_bot`
+  schema, pickled under a key stored encrypted with `FIELD_ENCRYPTION_KEY`.
+  Database backups carry them, and losing that key makes the store unreadable:
+  the bot then refuses to start rather than reset its identity.
+- It needs the appservice registered (step 2 below) and reaches the homeserver
+  at `MATRIX_HOMESERVER_URL`, like the API.
+- **Restoring a database elsewhere** (a staging copy of production, say) copies
+  the bot's identity with it. Disable `matrixChat.bot` there, or drop the copy's
+  `matrix_bot` schema and `matrix_chat_matrixbotidentity` rows, before the bot
+  starts: otherwise a second bot runs as the same device, can read the
+  original's rooms, and corrupts both bots' sessions.
+
 ## Required runtime steps (not automated by the chart)
 
 1. **Backend token match.** `homeserver.registrationToken` must equal the

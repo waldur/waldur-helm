@@ -235,6 +235,11 @@ exposed — relayed media always rides TLS.
   `https://<serverName>` (chat media/images). Without this the browser would block
   the chat client and calls. No action needed — it follows `homeserver.serverName`
   and is a no-op when matrix is disabled.
+- **WebAssembly in the homeport CSP.** `script-src` always includes
+  `'wasm-unsafe-eval'`. Chat is end-to-end encrypted, and the browser runs the
+  encryption as WebAssembly, which it refuses to compile without this source. It
+  allows compiling WebAssembly only, not `eval()` of JavaScript. Without it the
+  chat drawer reports that encryption is unavailable in this browser.
 - **NetworkPolicies.** When `matrixChat.networkPolicy.enabled` is `true`, the chart
   adds a policy per pod. This gate is independent of the chart-wide
   `networkPolicy.enabled` (which only covers the homeport/mastermind-api

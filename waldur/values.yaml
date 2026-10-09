@@ -904,7 +904,8 @@ rabbitmq:
     usernameKey: ""
     passwordKey: ""
 
-# Matrix chat integration (LiveKit media SFU + Matrix homeserver + lk-jwt).
+# Matrix chat integration (LiveKit media SFU + Matrix homeserver). Waldur
+# itself issues the LiveKit call tokens.
 matrixChat:
   enabled: false
   # The Matrix bot (mastermind's `matrix_bot` command): Waldur's encrypted member
@@ -927,37 +928,48 @@ matrixChat:
     extraEnvFrom: []
     extraVolumes: []
     extraVolumeMounts: []
-  # The only gate for the matrix-chat NetworkPolicies (livekit, lk-jwt,
-  # homeserver). Independent of the chart-wide `networkPolicy.enabled`, which
-  # gates only the homeport/mastermind-api policies. Set this to ship the
+  # The only gate for the matrix-chat NetworkPolicies (livekit, homeserver).
+  # Independent of the chart-wide `networkPolicy.enabled`, which gates only
+  # the homeport/mastermind-api policies. Set this to ship the
   # matrix/livekit policies — the LiveKit media rule is what lets Element Call
   # media connect — without opting the rest of the stack into NetworkPolicy.
   networkPolicy:
     enabled: false
   livekit:
     # Deploy the bundled livekit-server SFU. Set to false to use an EXTERNAL,
-    # operator-managed LiveKit instead: keep lkJwt.enabled=true, point publicUrl
-    # at the external wss endpoint, and supply its API key/secret via
-    # keys.existingSecret.name (the chart only creates livekit-secret when this
-    # is true, so an external setup MUST use existingSecret).
+    # operator-managed LiveKit instead: point publicUrl at the external wss
+    # endpoint, and supply its API key/secret via keys.existingSecret.name (the
+    # chart only creates livekit-secret when this is true, so an external setup
+    # MUST use existingSecret).
+    #
+    # Waldur issues the call tokens: the homeserver's .well-known points
+    # Matrix clients at https://<apiHostname>/api/matrix/livekit, and Waldur
+    # gives a token only to joined members of the room. The chart seeds
+    # MATRIX_LIVEKIT_PUBLIC_URL, MATRIX_LIVEKIT_URL, MATRIX_LIVEKIT_KEY and
+    # MATRIX_LIVEKIT_SECRET from these values in the init-whitelabeling job.
     enabled: false
     imageRegistry: docker.io
     imageName: livekit/livekit-server
     imageTag: "v1.13.7"
     imageDigest: ""
-    # Public wss signaling URL the browser dials (returned to clients by lk-jwt).
+    # Public wss signaling URL the browser dials (returned to clients with
+    # their call token). Calls are offered only when this is set.
     # Bundled LiveKit: reachable via the matrix ingress (e.g. wss://matrix.example.org).
     # External LiveKit: the external instance's own wss endpoint.
     # Either way, NOT an in-cluster name.
     publicUrl: ""           # e.g. wss://matrix.example.org
+    # Calls need encrypted transports: the chart refuses to render when
+    # publicUrl is not wss:// or apiScheme is not https, since both carry call
+    # credentials. Set true only for a local or kind cluster without TLS.
+    allowInsecureTransport: false
     resources: {}
     keys:
       apiKey: ""              # set this (chart creates a Secret from it) or use existingSecret
       apiSecret: ""           # set this or use existingSecret
       existingSecret:
         name: ""              # reference your own Secret instead (overrides the inline values)
-        apiKeyKey: "LIVEKIT_API_KEY"        # used by lk-jwt-service
-        apiSecretKey: "LIVEKIT_API_SECRET"  # used by lk-jwt-service
+        apiKeyKey: "LIVEKIT_API_KEY"        # seeded into Waldur, which signs call tokens
+        apiSecretKey: "LIVEKIT_API_SECRET"  # seeded into Waldur, which signs call tokens
         livekitKeysKey: "LIVEKIT_KEYS"      # used by livekit-server ("apikey: secret")
     rtc:
       signalingPort: 7880     # signaling (wss); ClusterIP behind the shared ingress
@@ -990,17 +1002,6 @@ matrixChat:
         existingSecret: ""
         certKey: "tls.crt"
         keyKey: "tls.key"
-  lkJwt:
-    # Element's LiveKit JWT service.
-    enabled: false
-    imageRegistry: ghcr.io
-    imageName: element-hq/lk-jwt-service
-    imageTag: "0.7.0"
-    # Set to pin immutably by digest; takes precedence over imageTag.
-    imageDigest: ""
-    # Accept a self-signed homeserver cert. Dev only. Prod uses a real cert.
-    insecureSkipVerifyTls: false
-    resources: {}
   homeserver:
     # Matrix homeserver. The backend integration was built and tested against Tuwunel.
     enabled: false
@@ -1014,8 +1015,11 @@ matrixChat:
     serverName: ""
     clientPort: 6167
     allowRegistration: true
-    # Federation must stay on: lk-jwt-service verifies the user's Matrix OpenID
-    # token via the federation endpoint before issuing a LiveKit JWT.
+    # Calls do not need federation: Waldur verifies a caller's Matrix OpenID
+    # token at the homeserver's openid/userinfo endpoint on the in-cluster
+    # client port (MATRIX_HOMESERVER_URL), which Tuwunel serves with
+    # federation off too. Turning it off affects only federation with other
+    # homeservers.
     allowFederation: true
     maxRequestSize: 104857600
     # Lifetime in seconds of access tokens issued to clients that ask for a
@@ -1030,11 +1034,6 @@ matrixChat:
     # out that user's chat devices idle for more than 24 hours, so a longer
     # value only keeps devices of users who start no other session.
     refreshTokenTtl: 86400
-    # Public lk-jwt base URL advertised to clients, e.g. https://<serverName>.
-    # Do NOT append /sfu — the client adds /get_token itself, so a trailing
-    # /sfu produces a 404 on /sfu/get_token and calls never connect.
-    # Required for calls. Leave empty until lk-jwt-service is deployed.
-    livekitServiceUrl: ""
     # Registration token that gates user provisioning. MUST equal the backend's
     # MATRIX_USER_REGISTRATION_SECRET.
     registrationToken: ""

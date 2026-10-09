@@ -41,6 +41,9 @@ data:
     {{- end }}
     access_token_ttl = {{ int64 $h.accessTokenTtl }}
     refresh_token_ttl = {{ int64 $h.refreshTokenTtl }}
+    # Calls do not need federation: Waldur checks a caller's OpenID token at
+    # /_matrix/federation/v1/openid/userinfo on the client port, which Tuwunel
+    # serves with federation off too.
     allow_federation = {{ $h.allowFederation }}
     # Media is only ever shown through the chat clients: refuse to be framed,
     # and allow no inline styles in media served as documents (e.g. SVG).
@@ -50,16 +53,15 @@ data:
     [global.well_known]
     client = "{{ .Values.apiScheme }}://{{ $h.serverName }}"
     server = "{{ $h.serverName }}:443"
-    {{- if .Values.matrixChat.lkJwt.enabled }}
-    {{- if not $h.livekitServiceUrl }}
-    {{- fail "matrixChat.homeserver.livekitServiceUrl is required when lkJwt is enabled: it is the lk-jwt base URL the homeserver advertises to Element Call (e.g. https://<serverName> — do NOT append /sfu, the client adds /get_token itself, so a trailing /sfu yields a 404 on /sfu/get_token). An empty value advertises a broken RTC transport, so calls fail to start with no render-time hint." }}
-    {{- end }}
+    {{- if eq (include "waldur.matrixCallsEnabled" .) "true" }}
 
-    # LiveKit SFU endpoint for Element Call / Matrix RTC (MSC4143).
-    # Advertised only when lk-jwt-service is deployed — the homeserver must not
-    # announce a call capability that has no SFU broker behind it.
+    # MatrixRTC focus (MSC4143), served in .well-known/matrix/client as
+    # org.matrix.msc4143.rtc_foci. Element and Waldur's chat drawer discover
+    # calls here and ask Waldur's API for a LiveKit token, which it issues only
+    # to joined members of the room. Advertised only when LiveKit is configured,
+    # so the homeserver never announces calls that cannot connect.
     [[global.well_known.rtc_transports]]
     type = "livekit"
-    livekit_service_url = "{{ $h.livekitServiceUrl }}"
+    livekit_service_url = "{{ include "waldur.matrixLivekitServiceUrl" . }}"
     {{- end }}
 {{- end }}

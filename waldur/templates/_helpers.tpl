@@ -634,8 +634,8 @@ Whether the traefik matrix-chain middleware has any member.
 
 Unlike every other chain in the chart, matrix-chain's members are *all*
 optional — the https redirect and the IP allow list, nothing else (the
-homeserver, lk-jwt and LiveKit emit their own CORS headers, so no header
-middleware is attached). Once the redirect became conditional, a plain-http
+homeserver and LiveKit emit their own CORS headers, so no header middleware is
+attached). Once the redirect became conditional, a plain-http
 deployment with no whitelistSourceRange would render `middlewares:` with an
 empty list, which Traefik rejects. So the chain object and the ingress
 annotation that references it are both gated on this.
@@ -645,5 +645,57 @@ annotation that references it are both gated on this.
 true
 {{- else -}}
 false
+{{- end -}}
+{{- end -}}
+
+{{/*
+Whether Matrix calls are configured: chat is on and LiveKit has a public
+signaling URL (bundled or external). Gates the homeserver's RTC focus and the
+LiveKit settings seeded into Waldur. Returns "true" or "false".
+
+Calls carry bearer credentials in both directions: clients post their Matrix
+OpenID token to Waldur's call token API (<apiScheme>://<apiHostname>), and get
+back a LiveKit token they present on the signalling websocket (publicUrl). So
+when calls are configured the render fails unless both transports are
+encrypted — apiScheme "https" and a wss:// publicUrl — or
+matrixChat.livekit.allowInsecureTransport opts out for a local or kind cluster.
+*/}}
+{{- define "waldur.matrixCallsEnabled" -}}
+{{- if and .Values.matrixChat.enabled .Values.matrixChat.livekit.publicUrl -}}
+{{- if not .Values.matrixChat.livekit.allowInsecureTransport -}}
+{{- if not (hasPrefix "wss://" .Values.matrixChat.livekit.publicUrl) -}}
+{{- fail (printf "matrixChat.livekit.publicUrl must be a wss:// URL, got %q: clients send their LiveKit call token on it. Set matrixChat.livekit.allowInsecureTransport=true to allow plaintext on a local or test cluster." .Values.matrixChat.livekit.publicUrl) -}}
+{{- end -}}
+{{- if ne .Values.apiScheme "https" -}}
+{{- fail (printf "Matrix calls need apiScheme \"https\", got %q: clients post their Matrix OpenID token to the call token API at <apiScheme>://<apiHostname>/api/matrix/livekit. Set matrixChat.livekit.allowInsecureTransport=true to allow plaintext on a local or test cluster." .Values.apiScheme) -}}
+{{- end -}}
+{{- end -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end -}}
+
+{{/*
+The call token API that Matrix clients use, served by Waldur's API. The
+homeserver advertises it as the `livekit_service_url` of its RTC focus in
+`.well-known/matrix/client`; Element Call and Waldur's chat drawer post to
+<this>/get_token (and the legacy <this>/sfu/get) to get a LiveKit token.
+*/}}
+{{- define "waldur.matrixLivekitServiceUrl" -}}
+{{- printf "%s://%s/api/matrix/livekit" .Values.apiScheme .Values.apiHostname -}}
+{{- end -}}
+
+{{/*
+The LiveKit URL Waldur's backend calls (Twirp room API): the bundled server's
+in-cluster Service, or the external server's public URL as http(s). Dotted,
+because Waldur's URL settings reject single-label hostnames.
+*/}}
+{{- define "waldur.matrixLivekitInternalUrl" -}}
+{{- $lk := .Values.matrixChat.livekit -}}
+{{- if $lk.enabled -}}
+{{- printf "http://livekit-signaling.%s.svc:%v" .Release.Namespace $lk.rtc.signalingPort -}}
+{{- else -}}
+{{- $lk.publicUrl | replace "wss://" "https://" | replace "ws://" "http://" -}}
 {{- end -}}
 {{- end -}}

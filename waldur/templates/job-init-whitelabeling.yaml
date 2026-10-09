@@ -91,6 +91,49 @@ spec:
               subPath: override.conf.py
           resources:
             {{- toYaml .Values.apiResources | nindent 12 }}
+        {{- if eq (include "waldur.matrixCallsEnabled" .) "true" }}
+        {{- $k := .Values.matrixChat.livekit.keys }}
+        {{- if and (not .Values.matrixChat.livekit.enabled) (not $k.existingSecret.name) }}
+        {{- fail "matrixChat.livekit.publicUrl points at an external LiveKit (livekit.enabled=false), but matrixChat.livekit.keys.existingSecret.name is unset. Waldur signs call tokens with that LiveKit's API key and secret, and the chart creates livekit-secret only for the bundled server. Point keys.existingSecret.name at a Secret holding your external LiveKit's API key/secret." }}
+        {{- end }}
+        {{/*
+          Waldur issues call tokens itself, signed with LiveKit's API key and
+          secret, so it needs the same pair LiveKit has. They come from the
+          LiveKit Secret here rather than through a ConfigMap like the rest of
+          the seeded settings; the URLs are in marketplace.yaml.
+        */}}
+        - name: seed-livekit-credentials
+          {{- if .Values.waldur.imageDigest }}
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}@{{ .Values.waldur.imageDigest }}
+          {{- else }}
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
+          {{- end }}
+          imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" .Values.waldur.imageTag "Values" .Values) }}
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              python3 -c 'import json, os; print(json.dumps({"MATRIX_LIVEKIT_KEY": os.environ["LIVEKIT_KEY"], "MATRIX_LIVEKIT_SECRET": os.environ["LIVEKIT_SECRET"]}))' \
+                | waldur override_constance_settings /dev/stdin
+          env:
+            {{- include "waldur.credentials" . | nindent 12 }}
+            - name: LIVEKIT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $k.existingSecret.name | default "livekit-secret" }}
+                  key: {{ $k.existingSecret.apiKeyKey | default "LIVEKIT_API_KEY" }}
+            - name: LIVEKIT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $k.existingSecret.name | default "livekit-secret" }}
+                  key: {{ $k.existingSecret.apiSecretKey | default "LIVEKIT_API_SECRET" }}
+          volumeMounts:
+            - name: api-override
+              mountPath: /etc/waldur/override.conf.py
+              subPath: override.conf.py
+          resources:
+            {{- toYaml .Values.apiResources | nindent 12 }}
+        {{- end }}
       {{ end }}
       containers:
         - name: waldur-mastermind-whitelabeling-init

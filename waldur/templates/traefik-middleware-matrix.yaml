@@ -1,7 +1,7 @@
 {{- if and .Values.ingress.enabled (eq .Values.ingress.className "traefik") .Values.matrixChat.enabled .Values.matrixChat.homeserver.enabled }}
 {{/*
   matrix-ingress references the <namespace>-matrix-chain middleware. No CSP/CORS
-  middleware here on purpose: the homeserver, lk-jwt and LiveKit each emit their
+  middleware here on purpose: the homeserver and LiveKit each emit their
   own CORS headers (the Matrix spec requires Access-Control-Allow-Origin: * from
   the homeserver), so injecting homeport's headers would corrupt the API responses.
 */}}

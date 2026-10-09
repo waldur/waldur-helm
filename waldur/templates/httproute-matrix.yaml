@@ -25,37 +25,15 @@ spec:
       backendRefs:
         - name: matrix-homeserver
           port: {{ $h.clientPort }}
-    {{- if .Values.matrixChat.lkJwt.enabled }}
-    # Token exchange: homeport posts to /get_token. /sfu keeps the legacy
-    # /sfu/get reachable for clients that still fall back to it.
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /get_token
-        - path:
-            type: PathPrefix
-            value: /sfu
-      backendRefs:
-        - name: lk-jwt-service
-          port: 8080
-    {{- end }}
     {{- if .Values.matrixChat.livekit.enabled }}
     # LiveKit signaling websocket (media stays on the livekit-rtc LoadBalancer).
-    # The browser LiveKit SDK dials publicUrl + /rtc.
+    # The browser LiveKit SDK dials publicUrl + /rtc. LiveKit's RoomService
+    # (Twirp) admin API is deliberately not routed: Waldur's backend calls it
+    # on the in-cluster Service the chart seeds as MATRIX_LIVEKIT_URL.
     - matches:
         - path:
             type: PathPrefix
             value: /rtc
-      backendRefs:
-        - name: livekit-signaling
-          port: {{ .Values.matrixChat.livekit.rtc.signalingPort }}
-    # LiveKit RoomService (Twirp) API. lk-jwt-service calls publicUrl + /twirp
-    # to create the room before issuing a JWT; without this route room
-    # creation 404s and calls never start.
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /twirp
       backendRefs:
         - name: livekit-signaling
           port: {{ .Values.matrixChat.livekit.rtc.signalingPort }}

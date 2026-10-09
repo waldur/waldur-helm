@@ -42,6 +42,10 @@ data:
     access_token_ttl = {{ int64 $h.accessTokenTtl }}
     refresh_token_ttl = {{ int64 $h.refreshTokenTtl }}
     allow_federation = {{ $h.allowFederation }}
+    # Media is only ever shown through the chat clients: refuse to be framed,
+    # and allow no inline styles in media served as documents (e.g. SVG).
+    media_deny_framing = true
+    media_deny_inline_styles = true
 
     [global.well_known]
     client = "{{ .Values.apiScheme }}://{{ $h.serverName }}"

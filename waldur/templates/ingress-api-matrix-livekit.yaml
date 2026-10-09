@@ -1,0 +1,52 @@
+{{- if and .Values.ingress.enabled .Values.matrixChat.enabled (eq .Values.ingress.className "nginx") }}
+{{/*
+  The call token API that Matrix clients use (Element on any origin, and
+  Waldur's chat drawer), on its own Ingress so it is served without the API
+  ingress's enable-cors. ingress-nginx's CORS answers preflights itself and
+  replaces the response's Access-Control-Allow-Origin with the caller's origin
+  plus Allow-Credentials; Waldur answers these paths with
+  Access-Control-Allow-Origin: * and no credentials, and that is what must
+  reach the browser. ingress-nginx routes the longer prefix here.
+
+  Traefik needs no such split: its api-cors middleware already answers with
+  Access-Control-Allow-Origin: * and no credentials. So does HAProxy's
+  cors-enable, whose allowed origin defaults to *.
+
+  No cert-manager annotation: api-ingress owns the certificate for these hosts,
+  and this Ingress only references the same Secret.
+*/}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-matrix-livekit-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "{{ include "waldur.sslRedirect" (dict "scheme" .Values.apiScheme "Values" .Values) }}"
+    {{- if .Values.ingress.whitelistSourceRange }}
+    nginx.ingress.kubernetes.io/whitelist-source-range: "{{ .Values.ingress.whitelistSourceRange }}"
+    {{- end }}
+    {{- include "waldur.ingressAnnotations" . }}
+spec:
+  ingressClassName: {{ .Values.ingress.className | quote }}
+  rules:
+  {{- range (prepend .Values.apiExtraHosts (.Values.localApiHostname | default .Values.apiHostname)) }}
+  - host: {{ . }}
+    http:
+      paths:
+      - path: /api/matrix/livekit
+        pathType: Prefix
+        backend:
+          service:
+            name: waldur-mastermind-api
+            port:
+              number: 80
+  {{- end }}
+  {{- if and .Values.ingress.tls.enabled (.Values.ingress.tls.source | ne "cluster") }}
+  tls:
+  - hosts:
+    - {{ .Values.apiHostname }}
+    {{- range .Values.apiExtraHosts }}
+    - {{ . }}
+    {{- end }}
+    secretName: {{ .Values.ingress.tls.customMastermindSecretName | default "api-certificate" | quote }}
+  {{- end }}
+{{- end }}

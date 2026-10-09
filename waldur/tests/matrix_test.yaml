@@ -1,12 +1,13 @@
 suite: matrix chat stack
 templates:
-  - templates/deployment-lk-jwt.yaml
   - templates/ingress-matrix.yaml
+  - templates/ingress-api-matrix-livekit.yaml
+  - templates/config-marketplace.yaml
+  - templates/job-init-whitelabeling.yaml
   - templates/config-tuwunel.yaml
   - templates/config-livekit.yaml
   - templates/networkpolicy-livekit.yaml
   - templates/networkpolicy-matrix-homeserver.yaml
-  - templates/networkpolicy-lk-jwt.yaml
   - templates/networkpolicy-homeport.yaml
   - templates/networkpolicy-mastermind-api.yaml
   - templates/secret-livekit.yaml
@@ -16,76 +17,112 @@ templates:
   - templates/statefulset-matrix-homeserver.yaml
 
 tests:
-  - it: does not render lk-jwt when matrixChat disabled
-    template: templates/deployment-lk-jwt.yaml
+  - it: seeds the LiveKit URLs into Waldur when calls are configured
+    template: templates/config-marketplace.yaml
     set:
-      matrixChat.enabled: false
-      matrixChat.lkJwt.enabled: true
-    asserts:
-      - hasDocuments:
-          count: 0
-
-  - it: wires lk-jwt to the public signaling URL and homeserver
-    template: templates/deployment-lk-jwt.yaml
-    set:
+      apiScheme: https
       matrixChat.enabled: true
-      matrixChat.lkJwt.enabled: true
-      # Bundled livekit (the default deployment): satisfies lk-jwt's secret-source
-      # guard and supplies secret-livekit's keys, both co-rendered per whole-chart run.
       matrixChat.livekit.enabled: true
       matrixChat.livekit.keys.apiKey: "devkey"
       matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
       matrixChat.livekit.publicUrl: "wss://matrix.example.org"
-      matrixChat.homeserver.serverName: "matrix.example.org"
     asserts:
-      - contains:
-          path: spec.template.spec.containers[0].env
-          content:
-            name: LIVEKIT_URL
-            value: "wss://matrix.example.org"
-      - contains:
-          path: spec.template.spec.containers[0].env
-          content:
-            name: LIVEKIT_FULL_ACCESS_HOMESERVERS
-            value: "matrix.example.org"
+      - matchRegex:
+          path: data["marketplace.yaml"]
+          pattern: 'MATRIX_LIVEKIT_PUBLIC_URL: "wss://matrix.example.org"'
+      # Waldur's backend reaches the bundled LiveKit in-cluster, on a dotted
+      # name: its URL settings reject single-label hostnames.
+      - matchRegex:
+          path: data["marketplace.yaml"]
+          pattern: 'MATRIX_LIVEKIT_URL: "http://livekit-signaling\.NAMESPACE\.svc:7880"'
 
-  - it: refuses external livekit (lk-jwt on, bundled livekit off) without an existingSecret
-    template: templates/deployment-lk-jwt.yaml
+  - it: points Waldur's backend at an external LiveKit's public URL
+    template: templates/config-marketplace.yaml
     set:
+      apiScheme: https
       matrixChat.enabled: true
-      matrixChat.lkJwt.enabled: true
-      matrixChat.livekit.enabled: false
-      matrixChat.livekit.publicUrl: "wss://livekit.operator.example.org"
-      matrixChat.homeserver.serverName: "matrix.example.org"
-    asserts:
-      - failedTemplate:
-          errorMessage: "matrixChat.lkJwt is enabled with matrixChat.livekit.enabled=false (external LiveKit), but matrixChat.livekit.keys.existingSecret.name is unset. The chart only creates the livekit-secret when it deploys the bundled server, so lk-jwt-service would reference a non-existent Secret and crashloop. Point keys.existingSecret.name at a Secret holding your external LiveKit's API key/secret."
-
-  - it: wires lk-jwt to an external livekit via existingSecret when bundled livekit is off
-    template: templates/deployment-lk-jwt.yaml
-    set:
-      matrixChat.enabled: true
-      matrixChat.lkJwt.enabled: true
       matrixChat.livekit.enabled: false
       matrixChat.livekit.publicUrl: "wss://livekit.operator.example.org"
       matrixChat.livekit.keys.existingSecret.name: "operator-livekit-creds"
-      matrixChat.homeserver.serverName: "matrix.example.org"
     asserts:
+      - matchRegex:
+          path: data["marketplace.yaml"]
+          pattern: 'MATRIX_LIVEKIT_URL: "https://livekit.operator.example.org"'
+
+  - it: lets settingsOverrides replace the seeded LiveKit URL
+    template: templates/config-marketplace.yaml
+    set:
+      apiScheme: https
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+      matrixChat.livekit.publicUrl: "wss://matrix.example.org"
+      waldur.settingsOverrides:
+        MATRIX_LIVEKIT_PUBLIC_URL: "wss://calls.example.org"
+    asserts:
+      - notMatchRegex:
+          path: data["marketplace.yaml"]
+          pattern: 'wss://matrix\.example\.org'
+      - matchRegex:
+          path: data["marketplace.yaml"]
+          pattern: 'MATRIX_LIVEKIT_PUBLIC_URL:\s+wss://calls\.example\.org'
+
+  - it: seeds no LiveKit settings without a public LiveKit URL
+    template: templates/config-marketplace.yaml
+    set:
+      matrixChat.enabled: true
+    asserts:
+      - notMatchRegex:
+          path: data["marketplace.yaml"]
+          pattern: "MATRIX_LIVEKIT"
+
+  - it: seeds Waldur's LiveKit key and secret from the bundled LiveKit Secret
+    # Waldur signs call tokens, so it needs the pair LiveKit verifies them with.
+    # They come from the Secret, never from a ConfigMap.
+    template: templates/job-init-whitelabeling.yaml
+    set:
+      apiScheme: https
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+      matrixChat.livekit.publicUrl: "wss://matrix.example.org"
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[1].name
+          value: seed-livekit-credentials
+      - matchRegex:
+          path: spec.template.spec.initContainers[1].command[2]
+          pattern: "(?s)MATRIX_LIVEKIT_SECRET.*waldur override_constance_settings /dev/stdin"
       - contains:
-          path: spec.template.spec.containers[0].env
-          content:
-            name: LIVEKIT_URL
-            value: "wss://livekit.operator.example.org"
-      - contains:
-          path: spec.template.spec.containers[0].env
+          path: spec.template.spec.initContainers[1].env
           content:
             name: LIVEKIT_KEY
             valueFrom:
               secretKeyRef:
-                name: operator-livekit-creds
+                name: livekit-secret
                 key: LIVEKIT_API_KEY
       - contains:
-          path: spec.template.spec.containers[0].env
+          path: spec.template.spec.initContainers[1].env
+          content:
+            name: LIVEKIT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: livekit-secret
+                key: LIVEKIT_API_SECRET
+
+  - it: seeds an external LiveKit's key and secret from its existingSecret
+    template: templates/job-init-whitelabeling.yaml
+    set:
+      apiScheme: https
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: false
+      matrixChat.livekit.publicUrl: "wss://livekit.operator.example.org"
+      matrixChat.livekit.keys.existingSecret.name: "operator-livekit-creds"
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[1].env
           content:
             name: LIVEKIT_SECRET
             valueFrom:
@@ -93,22 +130,41 @@ tests:
                 name: operator-livekit-creds
                 key: LIVEKIT_API_SECRET
 
+  - it: refuses an external LiveKit without an existingSecret
+    template: templates/job-init-whitelabeling.yaml
+    set:
+      apiScheme: https
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: false
+      matrixChat.livekit.publicUrl: "wss://livekit.operator.example.org"
+    asserts:
+      - failedTemplate:
+          errorMessage: "matrixChat.livekit.publicUrl points at an external LiveKit (livekit.enabled=false), but matrixChat.livekit.keys.existingSecret.name is unset. Waldur signs call tokens with that LiveKit's API key and secret, and the chart creates livekit-secret only for the bundled server. Point keys.existingSecret.name at a Secret holding your external LiveKit's API key/secret."
+
+  - it: does not seed LiveKit credentials when calls are not configured
+    template: templates/job-init-whitelabeling.yaml
+    set:
+      matrixChat.enabled: true
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.initContainers
+          count: 1
+
   - it: routes matrix paths on the serverName host
     template: templates/ingress-matrix.yaml
     set:
+      apiScheme: https
       ingress.enabled: true
       ingress.className: nginx
       matrixChat.enabled: true
       matrixChat.homeserver.enabled: true
-      matrixChat.lkJwt.enabled: true
       matrixChat.livekit.enabled: true
       matrixChat.homeserver.serverName: "matrix.example.org"
       # helm-unittest renders the whole chart per test, so every guarded template
-      # must get valid config: a registration token for config-tuwunel, livekit
-      # keys for secret-livekit, and publicUrl for deployment-lk-jwt, or their
-      # fail-closed guards abort the render.
+      # must get valid config: a registration token for config-tuwunel and
+      # livekit keys for secret-livekit, or their fail-closed guards abort the
+      # render.
       matrixChat.homeserver.registrationToken: "s3cret"
-      matrixChat.homeserver.livekitServiceUrl: "https://matrix.example.org"
       matrixChat.livekit.publicUrl: "wss://matrix.example.org"
       matrixChat.livekit.keys.apiKey: "devkey"
       matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
@@ -117,60 +173,99 @@ tests:
           path: spec.rules[0].host
           value: matrix.example.org
 
-  - it: routes lk-jwt's token endpoints on the serverName host
-    # Homeport posts to /get_token. /sfu stays for clients that still fall back to
-    # the legacy /sfu/get. Without /get_token every call's token request 404s.
+  - it: routes no token endpoints to lk-jwt-service on the serverName host
+    # Waldur serves the call token API under the API host; the homeserver's
+    # host keeps only the Matrix and LiveKit routes.
     template: templates/ingress-matrix.yaml
     set:
+      apiScheme: https
       ingress.enabled: true
       ingress.className: nginx
       matrixChat.enabled: true
       matrixChat.homeserver.enabled: true
-      matrixChat.lkJwt.enabled: true
       matrixChat.livekit.enabled: true
       matrixChat.homeserver.serverName: "matrix.example.org"
       matrixChat.homeserver.registrationToken: "s3cret"
-      matrixChat.homeserver.livekitServiceUrl: "https://matrix.example.org"
       matrixChat.livekit.publicUrl: "wss://matrix.example.org"
       matrixChat.livekit.keys.apiKey: "devkey"
       matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
     asserts:
+      - notMatchRegex:
+          path: spec.rules[0].http.paths[*].path
+          pattern: "^/(get_token|sfu)$"
+      - notMatchRegex:
+          path: spec.rules[0].http.paths[*].backend.service.name
+          pattern: "lk-jwt"
+      # LiveKit's Twirp admin API is reached in-cluster, never publicly.
+      - notMatchRegex:
+          path: spec.rules[0].http.paths[*].path
+          pattern: "^/twirp"
       - contains:
           path: spec.rules[0].http.paths
           content:
-            path: /get_token
+            path: /rtc
             pathType: Prefix
             backend:
               service:
-                name: lk-jwt-service
+                name: livekit-signaling
                 port:
-                  number: 8080
-      - contains:
-          path: spec.rules[0].http.paths
-          content:
-            path: /sfu
+                  number: 7880
+
+  - it: serves the call token API on the API hosts without nginx's CORS
+    # ingress-nginx's enable-cors would replace Waldur's
+    # Access-Control-Allow-Origin: * with the caller's origin plus credentials.
+    template: templates/ingress-api-matrix-livekit.yaml
+    set:
+      ingress.enabled: true
+      ingress.className: nginx
+      apiHostname: api.example.org
+      apiExtraHosts:
+        - api2.example.org
+      matrixChat.enabled: true
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: api.example.org
+      - equal:
+          path: spec.rules[1].host
+          value: api2.example.org
+      - equal:
+          path: spec.rules[0].http.paths[0]
+          value:
+            path: /api/matrix/livekit
             pathType: Prefix
             backend:
               service:
-                name: lk-jwt-service
+                name: waldur-mastermind-api
                 port:
-                  number: 8080
+                  number: 80
+      - notExists:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/enable-cors"]
+
+  - it: leaves the call token API to the API ingress on traefik
+    template: templates/ingress-api-matrix-livekit.yaml
+    set:
+      ingress.enabled: true
+      ingress.className: traefik
+      matrixChat.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
 
   - it: serves /.well-known/matrix with a path type ingress-nginx accepts
     # ingress-nginx 1.12+ rejects the whole Ingress when a Prefix or Exact path
     # contains a dot, taking /_matrix and the call routes down with it.
     template: templates/ingress-matrix.yaml
     set:
+      apiScheme: https
       ingress.enabled: true
       ingress.className: nginx
       matrixChat.enabled: true
       matrixChat.homeserver.enabled: true
-      matrixChat.lkJwt.enabled: true
       matrixChat.livekit.enabled: true
       matrixChat.homeserver.serverName: "matrix.example.org"
       matrixChat.homeserver.clientPort: 6167
       matrixChat.homeserver.registrationToken: "s3cret"
-      matrixChat.homeserver.livekitServiceUrl: "https://matrix.example.org"
       matrixChat.livekit.publicUrl: "wss://matrix.example.org"
       matrixChat.livekit.keys.apiKey: "devkey"
       matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
@@ -192,6 +287,7 @@ tests:
     # the matrix routes while helm install still reports success.
     template: templates/traefik-middleware-matrix.yaml
     set:
+      apiScheme: https
       ingress.enabled: true
       ingress.className: traefik
       # Both chain members are conditional. TLS on keeps matrix-redirect-https,
@@ -202,11 +298,9 @@ tests:
       ingress.whitelistSourceRange: "10.0.0.0/8"
       matrixChat.enabled: true
       matrixChat.homeserver.enabled: true
-      matrixChat.lkJwt.enabled: true
       matrixChat.livekit.enabled: true
       matrixChat.homeserver.serverName: "matrix.example.org"
       matrixChat.homeserver.registrationToken: "s3cret"
-      matrixChat.homeserver.livekitServiceUrl: "https://matrix.example.org"
       matrixChat.livekit.publicUrl: "wss://matrix.example.org"
       matrixChat.livekit.keys.apiKey: "devkey"
       matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
@@ -237,12 +331,11 @@ tests:
       - failedTemplate:
           errorMessage: "matrixChat.homeserver: allowRegistration is true but no registrationToken / registrationTokenExistingSecret is set. Set a registration token to gate user provisioning, or set allowRegistration=false. Refusing to render an open, abusable homeserver."
 
-  - it: does not advertise an RTC transport when lk-jwt is not deployed
+  - it: does not advertise an RTC focus without a public LiveKit URL
     template: templates/config-tuwunel.yaml
     set:
       matrixChat.enabled: true
       matrixChat.homeserver.enabled: true
-      matrixChat.lkJwt.enabled: false
       matrixChat.homeserver.serverName: "matrix.example.org"
       matrixChat.homeserver.registrationToken: "s3cret"
     asserts:
@@ -250,39 +343,44 @@ tests:
           path: data["tuwunel.toml"]
           pattern: "rtc_transports"
 
-  - it: advertises the RTC transport when lk-jwt is deployed
+  - it: points the .well-known RTC focus at Waldur's call token API
+    # Element and the chat drawer read org.matrix.msc4143.rtc_foci from
+    # .well-known/matrix/client and post to <livekit_service_url>/get_token.
     template: templates/config-tuwunel.yaml
     set:
+      apiScheme: https
+      apiHostname: waldur-api.example.org
       matrixChat.enabled: true
       matrixChat.homeserver.enabled: true
-      matrixChat.lkJwt.enabled: true
       matrixChat.homeserver.serverName: "matrix.example.org"
       matrixChat.homeserver.registrationToken: "s3cret"
-      matrixChat.homeserver.livekitServiceUrl: "https://matrix.example.org"
-      # lk-jwt co-renders: give it a publicUrl and an external secret source so its
-      # own guards don't abort the whole-chart render before config-tuwunel is reached.
       matrixChat.livekit.publicUrl: "wss://matrix.example.org"
       matrixChat.livekit.keys.existingSecret.name: "operator-livekit-creds"
     asserts:
       - matchRegex:
           path: data["tuwunel.toml"]
-          pattern: "livekit_service_url = \"https://matrix.example.org\""
+          pattern: '\[\[global\.well_known\.rtc_transports\]\]\s+type = "livekit"\s+livekit_service_url = "https://waldur-api\.example\.org/api/matrix/livekit"'
 
-  - it: refuses to advertise an empty RTC transport when lk-jwt is deployed without a service URL
+  - it: ignores a leftover lk-jwt service URL from older values
     template: templates/config-tuwunel.yaml
     set:
+      apiScheme: https
+      apiHostname: waldur-api.example.org
       matrixChat.enabled: true
       matrixChat.homeserver.enabled: true
-      matrixChat.lkJwt.enabled: true
       matrixChat.homeserver.serverName: "matrix.example.org"
       matrixChat.homeserver.registrationToken: "s3cret"
-      # Satisfy lk-jwt's guards so the only render failure is config-tuwunel's missing
-      # livekitServiceUrl — otherwise lk-jwt aborts first and this assert sees no failed doc.
+      matrixChat.homeserver.livekitServiceUrl: "https://matrix.example.org"
+      matrixChat.lkJwt.enabled: true
       matrixChat.livekit.publicUrl: "wss://matrix.example.org"
       matrixChat.livekit.keys.existingSecret.name: "operator-livekit-creds"
     asserts:
-      - failedTemplate:
-          errorMessage: "matrixChat.homeserver.livekitServiceUrl is required when lkJwt is enabled: it is the lk-jwt base URL the homeserver advertises to Element Call (e.g. https://<serverName> — do NOT append /sfu, the client adds /get_token itself, so a trailing /sfu yields a 404 on /sfu/get_token). An empty value advertises a broken RTC transport, so calls fail to start with no render-time hint."
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: 'livekit_service_url = "https://waldur-api\.example\.org/api/matrix/livekit"'
+      - notMatchRegex:
+          path: data["tuwunel.toml"]
+          pattern: 'livekit_service_url = "https://matrix\.example\.org"'
 
   - it: allows external media into livekit
     template: templates/networkpolicy-livekit.yaml
@@ -317,30 +415,6 @@ tests:
       - equal:
           path: spec.ingress[0].ports[0].port
           value: 6167
-
-  - it: admits the ingress controller into lk-jwt
-    # Same trap on the lk-jwt routes: the browser fetches its LiveKit JWT, so this
-    # port is reached through the ingress, never from a namespace peer.
-    template: templates/networkpolicy-lk-jwt.yaml
-    set:
-      matrixChat.networkPolicy.enabled: true
-      matrixChat.enabled: true
-      matrixChat.lkJwt.enabled: true
-      matrixChat.homeserver.enabled: true
-      matrixChat.homeserver.serverName: "matrix.example.org"
-      matrixChat.homeserver.registrationToken: "s3cret"
-      matrixChat.homeserver.livekitServiceUrl: "https://matrix.example.org"
-      matrixChat.livekit.enabled: true
-      matrixChat.livekit.publicUrl: "wss://matrix.example.org"
-      matrixChat.livekit.keys.apiKey: "devkey"
-      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
-    asserts:
-      - equal:
-          path: spec.ingress[0].from
-          value: []
-      - equal:
-          path: spec.ingress[0].ports[0].port
-          value: 8080
 
   - it: renders the livekit policy from its own flag while the global gate is off
     # The decoupling: matrixChat.networkPolicy turns the matrix/livekit policies on
@@ -446,7 +520,7 @@ tests:
       matrixChat.livekit.enabled: true
     asserts:
       - failedTemplate:
-          errorMessage: "matrixChat.livekit is enabled but no API credentials are set. livekit-server would start with no signing key and lk-jwt-service would reference a non-existent Secret, so calls fail at runtime with no render-time hint. Set keys.apiKey + keys.apiSecret, or point keys.existingSecret.name at your own Secret."
+          errorMessage: "matrixChat.livekit is enabled but no API credentials are set. livekit-server would start with no signing key and Waldur could not sign call tokens, so calls fail at runtime with no render-time hint. Set keys.apiKey + keys.apiSecret, or point keys.existingSecret.name at your own Secret."
 
   - it: injects the matrix homeserver into the homeport CSP when enabled
     template: templates/ingress-homeport.yaml
@@ -792,3 +866,48 @@ tests:
       - matchRegex:
           path: data["tuwunel.toml"]
           pattern: "(?m)^refresh_token_ttl = 0$"
+
+  - it: refuses a plaintext ws:// LiveKit URL for calls
+    template: templates/job-init-whitelabeling.yaml
+    set:
+      apiScheme: https
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+      matrixChat.livekit.publicUrl: "ws://matrix.example.org"
+    asserts:
+      - failedTemplate:
+          errorPattern: "matrixChat.livekit.publicUrl must be a wss:// URL"
+
+  - it: refuses a plaintext call token API
+    template: templates/job-init-whitelabeling.yaml
+    set:
+      apiScheme: http
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+      matrixChat.livekit.publicUrl: "wss://matrix.example.org"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'Matrix calls need apiScheme "https"'
+
+  - it: allows plaintext call transports when explicitly opted in
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: http
+      apiHostname: waldur.local
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.local"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+      matrixChat.livekit.publicUrl: "ws://matrix.local"
+      matrixChat.livekit.allowInsecureTransport: true
+    asserts:
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: 'livekit_service_url = "http://waldur\.local/api/matrix/livekit"'

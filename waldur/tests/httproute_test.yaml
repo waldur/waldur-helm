@@ -209,13 +209,12 @@ tests:
           path: spec.rules[0].filters[0].urlRewrite.path.replacePrefixMatch
           value: /
 
-  - it: routes matrix paths to their respective backends when livekit and lkJwt are enabled
+  - it: routes matrix paths to their respective backends when livekit is enabled
     set:
       matrixChat.enabled: true
       matrixChat.homeserver.enabled: true
       matrixChat.homeserver.serverName: matrix.example.com
       matrixChat.homeserver.clientPort: 6167
-      matrixChat.lkJwt.enabled: true
       matrixChat.livekit.enabled: true
       matrixChat.livekit.rtc.signalingPort: 7880
       gatewayAPI.enabled: true
@@ -229,27 +228,17 @@ tests:
       - equal:
           path: spec.rules[0].backendRefs[0].name
           value: matrix-homeserver
+      # Waldur's API serves the call token API; nothing routes to lk-jwt-service.
+      # LiveKit's Twirp admin API stays in-cluster, so only /rtc is routed.
+      - lengthEqual:
+          path: spec.rules
+          count: 2
       - equal:
-          path: spec.rules[1].backendRefs[0].name
-          value: lk-jwt-service
-      - contains:
-          path: spec.rules[1].matches
-          content:
-            path:
-              type: PathPrefix
-              value: /get_token
-      - contains:
-          path: spec.rules[1].matches
-          content:
-            path:
-              type: PathPrefix
-              value: /sfu
-      - equal:
-          path: spec.rules[2].matches[0].path.value
+          path: spec.rules[1].matches[0].path.value
           value: /rtc
       - equal:
-          path: spec.rules[3].matches[0].path.value
-          value: /twirp
+          path: spec.rules[1].backendRefs[0].name
+          value: livekit-signaling
 
   - it: omits the matrix HTTPRoute when matrixChat is disabled
     set:

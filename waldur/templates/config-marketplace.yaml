@@ -23,6 +23,19 @@ data:
 {{ toYaml .Values.waldur.marketplace.countries | indent 6 }}
     {{ end }}
 
+    {{ if eq (include "waldur.matrixCallsEnabled" .) "true" }}
+    # Matrix calls: the public wss URL browsers dial, and the URL Waldur's
+    # backend calls LiveKit on. Waldur issues call tokens itself (see
+    # matrixChat in values.yaml); its key and secret are seeded from the
+    # LiveKit Secret by the init-whitelabeling job, not from this ConfigMap.
+    {{- if not (hasKey .Values.waldur.settingsOverrides "MATRIX_LIVEKIT_PUBLIC_URL") }}
+    MATRIX_LIVEKIT_PUBLIC_URL: {{ .Values.matrixChat.livekit.publicUrl | quote }}
+    {{- end }}
+    {{- if not (hasKey .Values.waldur.settingsOverrides "MATRIX_LIVEKIT_URL") }}
+    MATRIX_LIVEKIT_URL: {{ include "waldur.matrixLivekitInternalUrl" . | quote }}
+    {{- end }}
+    {{ end }}
+
     {{ if .Values.waldur.settingsOverrides }}
     # Arbitrary runtime setting overrides not covered by a dedicated value
     # above (see waldur.settingsOverrides in values.yaml).

@@ -51,6 +51,72 @@ data:
     # /_matrix/federation/v1/openid/userinfo on the client port, which Tuwunel
     # serves with federation off too.
     allow_federation = {{ $h.allowFederation }}
+    login_with_password = {{ $h.loginWithPassword }}
+    {{- if $h.sso.enabled }}
+    {{- if not $h.sso.issuerUrl }}
+    {{- fail "matrixChat.homeserver.sso.issuerUrl is required when sso is enabled, e.g. https://keycloak.example.org/realms/waldur." }}
+    {{- end }}
+    {{- if not $h.sso.clientId }}
+    {{- fail "matrixChat.homeserver.sso.clientId is required when sso is enabled: the client registered for the homeserver at the IdP." }}
+    {{- end }}
+    {{- if and (not $h.sso.clientSecret) (not $h.sso.clientSecretExistingSecret.name) }}
+    {{- fail "matrixChat.homeserver.sso.clientSecret (or clientSecretExistingSecret.name) is required when sso is enabled." }}
+    {{- end }}
+    {{- if and (dig "setup" "enabled" false .Values.matrixChat) (not $h.sso.waldurRegistrationMethod) }}
+    {{- fail "matrixChat.homeserver.sso.waldurRegistrationMethod is required when sso is enabled under matrixChat.setup: Waldur gives a Matrix account only to users of that identity provider, so with it empty nobody gets one. Set it to the provider's name in Waldur, e.g. keycloak." }}
+    {{- end }}
+    {{- if and $h.sso.waldurRegistrationMethod (not (regexMatch "^[A-Za-z0-9._-]+$" (toString $h.sso.waldurRegistrationMethod))) }}
+    {{- fail (printf "matrixChat.homeserver.sso.waldurRegistrationMethod must be a Waldur registration method such as keycloak (letters, digits, '.', '_' and '-'), got %q." (toString $h.sso.waldurRegistrationMethod)) }}
+    {{- end }}
+    {{- /* A trusted provider signs in to any existing account named like the
+         claim, so open registration would let anyone holding the
+         registration token create @bob first and receive bob's SSO login.
+         Waldur provisions accounts through its appservice, which works with
+         registration closed. */}}
+    {{- if $h.allowRegistration }}
+    {{- fail "matrixChat.homeserver.sso cannot be combined with allowRegistration: true. With a trusted provider, anyone holding the registration token could register an account named like another user's claim and receive that user's SSO login. Set allowRegistration: false; Waldur provisions accounts through its appservice." }}
+    {{- end }}
+    {{- if ne .Values.apiScheme "https" }}
+    {{- fail "matrixChat.homeserver.sso needs apiScheme https: Tuwunel's single sign-on cookie is Secure, so browsers drop it over http and every SSO login fails." }}
+    {{- end }}
+    {{- /* --set userIdClaims=sub yields a string, which Tuwunel refuses at
+         startup; an empty list lets any claim through, preferred_username
+         first, which a trusted provider turns into an account takeover. */}}
+    {{- if or (not (kindIs "slice" $h.sso.userIdClaims)) (empty $h.sso.userIdClaims) }}
+    {{- fail "matrixChat.homeserver.sso.userIdClaims must be a non-empty list, e.g. [\"sub\"]; with --set write it as {sub}." }}
+    {{- end }}
+    {{- /* Tuwunel takes only the local part of email, so alice@a.org and
+         alice@b.org become the same account. */}}
+    {{- if and (has "email" $h.sso.userIdClaims) (ne (toString $h.sso.allowEmailClaim) "true") }}
+    {{- fail "matrixChat.homeserver.sso.userIdClaims contains email, of which Tuwunel uses only the local part: alice@a.org and alice@b.org would sign in to the same account. Use another claim, or set sso.allowEmailClaim: true if the IdP only issues addresses of one domain." }}
+    {{- end }}
+    {{- range $h.sso.userIdClaims }}
+    {{- if not (has . (list "sub" "preferred_username" "username" "nickname" "email" "login")) }}
+    {{- fail (printf "matrixChat.homeserver.sso.userIdClaims: %v is not a claim Tuwunel reads; use sub, preferred_username, username, nickname, email or login." .) }}
+    {{- end }}
+    {{- end }}
+    {{- if not (kindIs "slice" $h.sso.forbiddenUsernames) }}
+    {{- fail "matrixChat.homeserver.sso.forbiddenUsernames must be a list of patterns, e.g. [\"^matrix-admin$\"]; with --set write it as {^matrix-admin$}." }}
+    {{- end }}
+    {{- /* registration lets SSO create an account Waldur has not provisioned
+         yet, and trusted signs in to any account named like the claim, so
+         together the first SSO login of a name takes the account Waldur would
+         later provision for that user, and keeps it. */}}
+    {{- if and $h.sso.trusted $h.sso.registration (not $h.sso.allowRegistrationWhenTrusted) }}
+    {{- fail "matrixChat.homeserver.sso.registration=true with sso.trusted=true lets single sign-on create an account before Waldur provisions it, and a trusted provider then signs anyone whose claim matches into it. Keep registration false, or set sso.allowRegistrationWhenTrusted=true if the claim is one only the identity provider assigns and accounts created this way are intended." }}
+    {{- end }}
+    {{- /* The bot holds power level 100 in every Waldur room and
+         waldur-bootstrap is the homeserver admin automatic registration
+         creates; a trusted provider would sign an IdP user named like either
+         into it. Always reserved, whatever the list in values says. */}}
+    {{- $forbidden := list (printf "^%s$" (regexQuoteMeta (include "waldur.matrixBotLocalpart" .))) "^waldur-bootstrap$" }}
+    {{- range $h.sso.forbiddenUsernames }}
+    {{- $forbidden = append $forbidden . }}
+    {{- end }}
+    # A trusted identity provider signs in to any existing account whose name
+    # matches the claim; SSO never signs in to these.
+    forbidden_usernames = {{ $forbidden | uniq | toJson }}
+    {{- end }}
     # Media is only ever shown through the chat clients: refuse to be framed,
     # and allow no inline styles in media served as documents (e.g. SVG).
     media_deny_framing = true
@@ -69,5 +135,24 @@ data:
     [[global.well_known.rtc_transports]]
     type = "livekit"
     livekit_service_url = "{{ include "waldur.matrixLivekitServiceUrl" . }}"
+    {{- end }}
+    {{- if $h.sso.enabled }}
+
+    # Single sign-on for Matrix clients. Waldur provisions accounts outside SSO,
+    # so an untrusted provider would refuse every one of them; trusted signs in to
+    # any existing account matching the claim instead. Without registration or
+    # fallbacks, a claim that matches no account is refused, never given a new one.
+    [[global.identity_provider]]
+    brand = {{ $h.sso.brand | quote }}
+    name = {{ $h.sso.name | quote }}
+    client_id = {{ $h.sso.clientId | quote }}
+    client_secret_file = "/etc/tuwunel-sso/client_secret"
+    issuer_url = {{ $h.sso.issuerUrl | quote }}
+    {{- /* urlquery writes a space as "+", which a path reads literally. */}}
+    callback_url = {{ printf "%s://%s/_matrix/client/unstable/login/sso/callback/%s" .Values.apiScheme $h.serverName ($h.sso.clientId | urlquery | replace "+" "%20") | quote }}
+    userid_claims = {{ toJson $h.sso.userIdClaims }}
+    trusted = {{ $h.sso.trusted }}
+    unique_id_fallbacks = false
+    registration = {{ $h.sso.registration }}
     {{- end }}
 {{- end }}

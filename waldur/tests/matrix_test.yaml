@@ -5,6 +5,7 @@ templates:
   - templates/config-marketplace.yaml
   - templates/job-init-whitelabeling.yaml
   - templates/config-tuwunel.yaml
+  - templates/secret-matrix-homeserver-sso.yaml
   - templates/config-livekit.yaml
   - templates/networkpolicy-livekit.yaml
   - templates/networkpolicy-matrix-homeserver.yaml
@@ -1083,6 +1084,549 @@ tests:
           path: data["tuwunel.toml"]
           pattern: "(?m)^refresh_token_ttl = 0$"
 
+  - it: restarts the homeserver when its configuration changes
+    # Tuwunel reads tuwunel.toml only at startup, so without a pod-template
+    # change a new loginWithPassword or SSO value would wait for a restart.
+    template: templates/statefulset-matrix-homeserver.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+    asserts:
+      - matchRegex:
+          path: spec.template.metadata.annotations["checksum/config"]
+          pattern: "^[0-9a-f]{64}$"
+
+  - it: keeps password login and no single sign-on by default
+    template: templates/config-tuwunel.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+    asserts:
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "(?m)^login_with_password = true$"
+      - notMatchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "identity_provider"
+      - notMatchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "forbidden_usernames"
+
+  - it: turns password login off
+    template: templates/config-tuwunel.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.loginWithPassword: false
+    asserts:
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "(?m)^login_with_password = false$"
+
+  - it: configures single sign-on so it lands in the account Waldur provisioned
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+    asserts:
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "(?m)^\\[\\[global\\.identity_provider\\]\\]$"
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "(?m)^issuer_url = \"https://idp.example.org/realms/waldur\"$"
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "(?m)^callback_url = \"https://matrix.example.org/_matrix/client/unstable/login/sso/callback/tuwunel\"$"
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "(?m)^userid_claims = \\[\"sub\"\\]$"
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "(?m)^trusted = true$"
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "(?m)^unique_id_fallbacks = false$"
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "(?m)^registration = false$"
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "(?m)^client_secret_file = \"/etc/tuwunel-sso/client_secret\"$"
+
+  - it: splits the single sign-on brand from the button label
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+      matrixChat.homeserver.sso.name: "Example SSO"
+    asserts:
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: '(?m)^brand = "keycloak"$'
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: '(?m)^name = "Example SSO"$'
+
+  - it: renders forbidden usernames in the global table, before the subtables
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+    asserts:
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: '(?m)^forbidden_usernames = \["\^waldur-bot\$","\^waldur-bootstrap\$"\]$'
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          # No table header between [global] and the key, so TOML reads it
+          # as global.forbidden_usernames, not as part of a subtable.
+          pattern: '^\[global\]\n(?:[^\[\n][^\n]*\n|\n)*forbidden_usernames = [^\n]*\n(?:[^\[\n][^\n]*\n|\n)*\[global\.well_known\]'
+
+  - it: adds extra forbidden usernames after the reserved ones
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+      matrixChat.homeserver.sso.forbiddenUsernames: ["^admin$"]
+    asserts:
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: '(?m)^forbidden_usernames = \["\^waldur-bot\$","\^waldur-bootstrap\$","\^admin\$"\]$'
+
+  - it: keeps the bot and the bootstrap admin reserved whatever the list says
+    # The list in values adds to the reserved names; replacing it must not
+    # open the bot's power-level-100 account to an IdP user named waldur-bot.
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+      matrixChat.homeserver.sso.forbiddenUsernames: ["^admin$", "^waldur-bot$"]
+    asserts:
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: '(?m)^forbidden_usernames = \["\^waldur-bot\$","\^waldur-bootstrap\$","\^admin\$"\]$'
+
+  - it: reserves the bot localpart Waldur is configured with
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+      waldur.settingsOverrides:
+        MATRIX_APPSERVICE_SENDER_LOCALPART: "chat.bot"
+    asserts:
+      # Quoted, so the dot matches only a dot.
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: '(?m)^forbidden_usernames = \["\^chat\\\\\.bot\$","\^waldur-bootstrap\$"\]$'
+
+  - it: refuses SSO registration with a trusted provider
+    # SSO would create the account before Waldur provisions it, and a trusted
+    # provider signs whoever has a matching claim into it.
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+      matrixChat.homeserver.sso.registration: true
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso\.registration=true with sso\.trusted=true'
+
+  - it: allows SSO registration with a trusted provider when explicitly opted in
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+      matrixChat.homeserver.sso.registration: true
+      matrixChat.homeserver.sso.allowRegistrationWhenTrusted: true
+    asserts:
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "(?m)^registration = true$"
+
+  - it: allows SSO registration with an untrusted provider
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+      matrixChat.homeserver.sso.registration: true
+      matrixChat.homeserver.sso.trusted: false
+    asserts:
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "(?m)^registration = true$"
+
+  - it: escapes quotes in the single sign-on label and client ID
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: 'tu"wunel'
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+      matrixChat.homeserver.sso.name: 'Example "SSO"'
+    asserts:
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: '(?m)^name = "Example \\"SSO\\""$'
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: '(?m)^client_id = "tu\\"wunel"$'
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: '(?m)^callback_url = "https://matrix\.example\.org/_matrix/client/unstable/login/sso/callback/tu%22wunel"$'
+
+  - it: keeps the single sign-on client secret out of the config map
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+    asserts:
+      - notMatchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "sso-s3cret"
+
+  - it: stores the single sign-on client secret in a chart-managed secret
+    template: templates/secret-matrix-homeserver-sso.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+    asserts:
+      - equal:
+          path: stringData.client_secret
+          value: "sso-s3cret"
+
+  - it: mounts the chart-managed single sign-on client secret as a file
+    template: templates/statefulset-matrix-homeserver.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: sso-client-secret
+            mountPath: /etc/tuwunel-sso
+            readOnly: true
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: sso-client-secret
+            secret:
+              secretName: matrix-homeserver-sso-secret
+              items:
+                - key: client_secret
+                  path: client_secret
+
+  - it: mounts an existing single sign-on client secret instead of creating one
+    template: templates/statefulset-matrix-homeserver.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecretExistingSecret.name: "operator-sso"
+      matrixChat.homeserver.sso.clientSecretExistingSecret.key: "secret"
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: sso-client-secret
+            secret:
+              secretName: operator-sso
+              items:
+                - key: secret
+                  path: client_secret
+
+  - it: creates no secret when an existing one is referenced
+    template: templates/secret-matrix-homeserver-sso.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecretExistingSecret.name: "operator-sso"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: refuses single sign-on without an issuer
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'matrixChat\.homeserver\.sso\.issuerUrl is required'
+
+  - it: refuses single sign-on without a client ID
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'matrixChat\.homeserver\.sso\.clientId is required'
+
+  - it: refuses single sign-on without a client secret
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'matrixChat\.homeserver\.sso\.clientSecret \(or clientSecretExistingSecret\.name\) is required'
+
+  - it: refuses single sign-on over http
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "http"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'matrixChat\.homeserver\.sso needs apiScheme https'
+
+  - it: refuses user ID claims given as a single string
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+      matrixChat.homeserver.sso.userIdClaims: "sub"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'matrixChat\.homeserver\.sso\.userIdClaims must be a non-empty list'
+
+  - it: refuses an empty list of user ID claims
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+      matrixChat.homeserver.sso.userIdClaims: []
+    asserts:
+      - failedTemplate:
+          errorPattern: 'matrixChat\.homeserver\.sso\.userIdClaims must be a non-empty list'
+
+  - it: refuses a user ID claim Tuwunel does not read
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+      matrixChat.homeserver.sso.userIdClaims: ["sub", "voperson_id"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'userIdClaims: voperson_id is not a claim Tuwunel reads'
+
+  - it: refuses forbidden usernames given as a single string
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+      matrixChat.homeserver.sso.forbiddenUsernames: "^waldur-bot$"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'matrixChat\.homeserver\.sso\.forbiddenUsernames must be a list'
+
   - it: refuses a plaintext ws:// LiveKit URL for calls
     template: templates/job-init-whitelabeling.yaml
     set:
@@ -1127,3 +1671,222 @@ tests:
       - matchRegex:
           path: data["tuwunel.toml"]
           pattern: 'livekit_service_url = "http://waldur\.local/api/matrix/livekit"'
+
+  - it: refuses single sign-on together with open registration
+    # With a trusted provider, anyone holding the registration token could
+    # register @bob first and receive bob's SSO login.
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.allowRegistration: true
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'matrixChat\.homeserver\.sso cannot be combined with allowRegistration: true'
+
+  - it: refuses the email claim without an explicit opt-in
+    # Tuwunel uses the local part, so alice@a.org and alice@b.org collide.
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+      matrixChat.homeserver.sso.userIdClaims: ["email"]
+    asserts:
+      - failedTemplate:
+          errorPattern: 'userIdClaims contains email, of which Tuwunel uses only the local part'
+
+  - it: renders the email claim when it is explicitly allowed
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+      matrixChat.homeserver.sso.userIdClaims: ["email"]
+      matrixChat.homeserver.sso.allowEmailClaim: true
+    asserts:
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: '(?m)^userid_claims = \["email"\]$'
+
+  - it: escapes a space in the client ID of the callback URL as %20
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "matrix home/server+1"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+    asserts:
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: '(?m)^callback_url = "https://matrix\.example\.org/_matrix/client/unstable/login/sso/callback/matrix%20home%2Fserver%2B1"$'
+
+  # The next three render the same values but for the secrets, or for one
+  # non-secret value. The pinned hash changes whenever a homeserver value is
+  # added to values.yaml; update it then, and keep the first two equal.
+  - it: leaves the single sign-on client secret and registration token out of the config checksum
+    template: templates/statefulset-matrix-homeserver.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["checksum/config"]
+          value: "4b3561559c6538e217dbcf75d4561814d7327de49311a3b84f2ba3ec5a420e36"
+
+  - it: keeps the config checksum when only the secrets change
+    template: templates/statefulset-matrix-homeserver.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "another-s3cret"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "another-sso-s3cret"
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations["checksum/config"]
+          value: "4b3561559c6538e217dbcf75d4561814d7327de49311a3b84f2ba3ec5a420e36"
+
+  - it: changes the config checksum when a non-secret single sign-on value changes
+    template: templates/statefulset-matrix-homeserver.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "another-client"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+    asserts:
+      - notEqual:
+          path: spec.template.metadata.annotations["checksum/config"]
+          value: "4b3561559c6538e217dbcf75d4561814d7327de49311a3b84f2ba3ec5a420e36"
+
+  - it: refuses the email claim when the opt-in is the string "false"
+    # --set-string yields "false", a non-empty string that a bare truthiness
+    # check would read as true.
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+      matrixChat.homeserver.sso.userIdClaims: ["email"]
+      matrixChat.homeserver.sso.allowEmailClaim: "false"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'userIdClaims contains email, of which Tuwunel uses only the local part'
+
+  - it: refuses single sign-on under setup without Waldur's registration method
+    # Waldur would then give no user a Matrix account.
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+      matrixChat.setup.enabled: true
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso\.waldurRegistrationMethod is required'
+
+  - it: renders single sign-on under setup with Waldur's registration method
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+      matrixChat.setup.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+    asserts:
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: "(?m)^\\[\\[global\\.identity_provider\\]\\]$"
+
+  - it: refuses a registration method that is not a Waldur registration method
+    template: templates/config-tuwunel.yaml
+    set:
+      apiScheme: "https"
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.issuerUrl: "https://idp.example.org/realms/waldur"
+      matrixChat.homeserver.sso.clientId: "tuwunel"
+      matrixChat.homeserver.sso.clientSecret: "sso-s3cret"
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "key cloak"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'sso\.waldurRegistrationMethod must be a Waldur registration method'

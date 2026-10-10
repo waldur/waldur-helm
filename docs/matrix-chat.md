@@ -467,16 +467,94 @@ The refresh lifetime is an idle timeout: each refresh moves the deadline
 forward, so a drawer in use never expires, and a page left silent for a day
 (e.g. on a suspended laptop) starts a new session through Waldur. `0` means the
 refresh token never expires; the access token lifetime must be positive, as
-Tuwunel reads `0` as "expire immediately". When a user starts a session, Waldur
-also signs out that user's chat devices idle for more than 24 hours, so a
-longer refresh lifetime, or `0`, only keeps the devices of users who start no
-other session.
+Tuwunel reads `0` as "expire immediately". Waldur also signs out its chat
+devices idle for more than 24 hours, when a user starts a session and in a
+daily job, so a refresh lifetime longer than a day, or `0`, does not keep an
+idle drawer alive much beyond a day.
 
 Clients that sign in without a refresh token, such as Element with a password,
 get non-expiring tokens and are unaffected.
 
-Tuwunel reads its configuration only at startup, so restart it after changing
-either value: `kubectl rollout restart statefulset/matrix-homeserver`.
+Tuwunel reads its configuration only at startup. The homeserver pod carries a
+checksum of the `homeserver` values, so a `helm upgrade` that changes any of
+them restarts it. Secrets are not tracked, so that the annotation cannot be
+used to test guesses at them: after changing `registrationToken`,
+`sso.clientSecret` or a Secret you manage yourself, run
+`kubectl rollout restart statefulset/matrix-homeserver`.
+
+## Single sign-on for Matrix clients
+
+With Waldur's `MATRIX_EXTERNAL_LOGIN_METHOD` set to `oidc`, users sign in to
+Element or another Matrix client through the same identity provider (IdP) as
+Waldur, into the account Waldur provisioned for them.
+[Single sign-on for Matrix clients](https://docs.waldur.com/latest/developer-guide/admin-guide/matrix-sso/)
+explains how the accounts line up and why the homeserver is configured this
+way; this section covers the chart.
+
+Waldur needs `MATRIX_EXTERNAL_LOGIN_METHOD` set to `oidc`, and
+`MATRIX_SSO_REGISTRATION_METHOD` set to the name in Waldur of the identity
+provider the homeserver signs in through (`keycloak`, say). Waldur gives a
+Matrix account only to users who signed in to Waldur through that provider, so
+while it is blank nobody gets one. With `matrixChat.setup` on (the default),
+set `sso.waldurRegistrationMethod` and the wiring Job seeds both on every sync;
+the chart refuses to render SSO without it. With setup off, set them yourself:
+
+```yaml
+waldur:
+  settingsOverrides:
+    MATRIX_EXTERNAL_LOGIN_METHOD: oidc
+    MATRIX_SSO_REGISTRATION_METHOD: keycloak
+```
+
+Then configure the homeserver:
+
+```yaml
+matrixChat:
+  homeserver:
+    allowRegistration: false
+    loginWithPassword: false
+    sso:
+      enabled: true
+      brand: "keycloak"
+      name: "Example SSO"
+      issuerUrl: "https://keycloak.example.org/realms/waldur"
+      clientId: "matrix-homeserver"
+      clientSecretExistingSecret:
+        name: "matrix-sso"
+        key: "client_secret"
+      waldurRegistrationMethod: "keycloak"
+      forbiddenUsernames:
+        - "^admin$"
+```
+
+Register `matrix-homeserver` at the IdP with the redirect URI
+`https://<serverName>/_matrix/client/unstable/login/sso/callback/matrix-homeserver`.
+The client secret reaches the homeserver as a file from a Secret (the chart's
+own `matrix-homeserver-sso-secret` when `sso.clientSecret` is set), never
+through the ConfigMap. After changing a client secret, run
+`kubectl rollout restart statefulset/matrix-homeserver`; changes to the other
+chart values restart it on their own. The chart refuses to render SSO without
+`issuerUrl`, `clientId` and a client secret, or unless `apiScheme` is `https`:
+Tuwunel's SSO cookie is `Secure`.
+
+The chart also refuses SSO together with `allowRegistration: true`. A trusted
+provider signs a user in to any existing account named like their claim, so
+anyone holding the registration token could register `@bob` first and receive
+bob's SSO login. Waldur provisions accounts through its appservice, which works
+with registration closed; create any homeserver admin before closing it.
+
+The defaults make SSO sign in to the account Waldur provisioned, or refuse:
+
+| Value | Default | Tuwunel key and chart checks |
+| --- | --- | --- |
+| `sso.brand`, `sso.name` | `keycloak`, `Single sign-on` | `brand`, the IdP software, and `name`, the label on the clients' sign-in button. |
+| `sso.userIdClaims` | `["sub"]` | `userid_claims`. A non-empty list of `sub`, `preferred_username`, `username`, `nickname`, `email` or `login`; the chart refuses anything else. Must be the claim Waldur's identity provider uses as `user_claim`, with its `user_field` left at `username` and `MATRIX_USER_ID_FORMAT=username`. |
+| `sso.allowEmailClaim` | `false` | Opt-in for `email` in `userIdClaims`, which the chart refuses otherwise: Tuwunel uses only the local part of the address, so `alice@a.org` and `alice@b.org` sign in to the same account. Set `true` only if the IdP issues addresses of a single domain. |
+| `sso.waldurRegistrationMethod` | `""` | Not a Tuwunel key: Waldur's `MATRIX_SSO_REGISTRATION_METHOD`, the name in Waldur of this identity provider. With `matrixChat.setup` on, the wiring Job seeds it and `MATRIX_EXTERNAL_LOGIN_METHOD: oidc`, and the chart refuses SSO without it. |
+| `sso.trusted` | `true` | `trusted`. Signs in to any existing account named like the claim, so keep `sub` unless the IdP controls usernames. With `false`, Tuwunel refuses every account Waldur provisioned. |
+| `sso.registration` | `false` | `registration`. SSO creates no accounts; it only signs in to existing ones. With `trusted`, the chart refuses `true` unless `sso.allowRegistrationWhenTrusted` is also `true`: SSO would create an account before Waldur provisions it, and a trusted provider then signs anyone whose claim matches into it. |
+| `sso.forbiddenUsernames` | `[]` | `forbidden_usernames`: anchored patterns SSO never signs in to and Tuwunel refuses to register, so create an admin before you list it. The chart always puts the bot's localpart and `waldur-bootstrap`, reserved for the bootstrap admin that automatic registration creates, ahead of the list, so list only the other homeserver admins, such as `admin` above. The bot's localpart is `MATRIX_APPSERVICE_SENDER_LOCALPART` from `waldur.settingsOverrides`, else `waldur-bot`; if you changed it in Waldur's settings instead, list it here too. |
+| `loginWithPassword` | `true` | `login_with_password`. Set `false` with SSO so clients show no password form. Waldur's drawer is unaffected, but an admin created with a password can then no longer sign in to a client either, so re-registering the appservice after a token rotation needs a homeserver admin's access token, or `true` again for the rotation. |
 
 ## Password mode for Matrix clients
 

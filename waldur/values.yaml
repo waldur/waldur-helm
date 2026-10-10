@@ -1081,6 +1081,9 @@ matrixChat:
     # IMMUTABLE once the homeserver has data. Set it to your real domain.
     serverName: ""
     clientPort: 6167
+    # Must be false with sso.enabled: the chart refuses to render both, as a
+    # trusted SSO provider would sign a user in to an account someone else
+    # registered under their name. Waldur provisions through its appservice.
     allowRegistration: true
     # Calls do not need federation: Waldur verifies a caller's Matrix OpenID
     # token at the homeserver's openid/userinfo endpoint on the in-cluster
@@ -1097,9 +1100,9 @@ matrixChat:
     # Idle lifetime in seconds of those refresh tokens; 0 means never expire.
     # Each refresh moves the deadline forward, so a drawer in use never expires;
     # a page left silent this long (e.g. on a suspended laptop) starts a new
-    # session through Waldur. When a user starts a session, Waldur also signs
-    # out that user's chat devices idle for more than 24 hours, so a longer
-    # value only keeps devices of users who start no other session.
+    # session through Waldur. Waldur also signs out its chat devices idle for
+    # more than 24 hours, when a user starts a session and in a daily job, so a
+    # longer value, or 0, does not keep an idle drawer alive much beyond a day.
     refreshTokenTtl: 86400
     # Registration token that gates account registration, and the registration
     # shared secret admins are registered with. MUST equal the backend's
@@ -1110,6 +1113,77 @@ matrixChat:
     registrationTokenExistingSecret:
       name: ""
       key: "registration_token"
+    # Let Matrix clients sign in with a password. Set false for
+    # MATRIX_EXTERNAL_LOGIN_METHOD none or oidc: clients then have no password
+    # form. Waldur's chat drawer is unaffected; it signs in through the appservice.
+    # Admins cannot sign in with a password either, so re-registering the
+    # appservice after a token rotation then needs an admin's access token.
+    loginWithPassword: true
+    # Single sign-on for Matrix clients (MATRIX_EXTERNAL_LOGIN_METHOD=oidc):
+    # Element and others sign in through the same IdP as Waldur, into the account
+    # Waldur provisioned. Register a client at the IdP with the redirect URI
+    # https://<serverName>/_matrix/client/unstable/login/sso/callback/<clientId>.
+    # Needs apiScheme https: Tuwunel's SSO cookie is Secure.
+    sso:
+      enabled: false
+      # The IdP software, e.g. keycloak, gitlab or github; Tuwunel applies
+      # provider-specific workarounds by it.
+      brand: "keycloak"
+      # Label on the clients' sign-in button.
+      name: "Single sign-on"
+      # e.g. https://keycloak.example.org/realms/waldur
+      issuerUrl: ""
+      clientId: ""
+      # Set this (the chart creates a Secret) or use clientSecretExistingSecret.
+      # Either way the homeserver reads it from a file, never from the ConfigMap.
+      clientSecret: ""
+      clientSecretExistingSecret:
+        name: ""
+        key: "client_secret"
+      # Waldur's registration method of the users who sign in to Waldur through
+      # this same identity provider, i.e. that provider's name in Waldur (e.g.
+      # keycloak, eduteams). Waldur gives a Matrix account only to those users.
+      # With matrixChat.setup on, the wiring Job seeds it as
+      # MATRIX_SSO_REGISTRATION_METHOD, together with
+      # MATRIX_EXTERNAL_LOGIN_METHOD=oidc, and the chart refuses to render SSO
+      # without it. With setup off, set both in waldur.settingsOverrides.
+      waldurRegistrationMethod: ""
+      # Claims that become the Matrix localpart. Tuwunel reads only sub,
+      # preferred_username, username, nickname, email (its local part) and login
+      # (GitHub). Use the claim Waldur's identity provider uses as user_claim,
+      # with its user_field set to username and MATRIX_USER_ID_FORMAT=username,
+      # so both sides derive the same Matrix ID.
+      userIdClaims:
+        - sub
+      # The chart refuses email in userIdClaims unless this is true: Tuwunel
+      # uses only the local part of the address, so alice@a.org and
+      # alice@b.org would sign in to the same account. Set true only if the
+      # IdP issues addresses of a single domain.
+      allowEmailClaim: false
+      # Sign in to any existing account whose name matches the claim, not only
+      # the ones Waldur provisioned, so the claim must be one users cannot
+      # choose: keep sub unless the IdP controls usernames. With false, Tuwunel
+      # refuses every account it did not create through SSO, which is every
+      # account Waldur provisioned. Use true only for an IdP you control.
+      trusted: true
+      # Let SSO create accounts Waldur has not provisioned. With false, SSO only
+      # signs in to existing accounts; Waldur provisions one when a user opens
+      # its chat or is added to a project room. Together with trusted, the
+      # first SSO login of a name would create the account Waldur later
+      # provisions for that user, so the chart refuses that combination unless
+      # allowRegistrationWhenTrusted is also set.
+      registration: false
+      allowRegistrationWhenTrusted: false
+      # Further anchored patterns of usernames SSO never signs in to (Tuwunel's
+      # forbidden_usernames, which also refuses to register them, so create an
+      # admin before you list it). A trusted provider signs a user in to any
+      # existing account named like their claim, so list every homeserver admin
+      # here. The chart always reserves the appservice bot's localpart
+      # (MATRIX_APPSERVICE_SENDER_LOCALPART from waldur.settingsOverrides, else
+      # waldur-bot) and waldur-bootstrap, the bootstrap admin that automatic
+      # registration creates, ahead of this list. A bot localpart changed in
+      # Waldur's settings rather than here has to be listed too.
+      forbiddenUsernames: []
     persistence:
       enabled: true
       size: 10Gi

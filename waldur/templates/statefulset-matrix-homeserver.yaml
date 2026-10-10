@@ -26,6 +26,14 @@ spec:
       labels:
         app: matrix-homeserver
         {{ include "waldur.labels" . | nindent 8 }}
+      annotations:
+        # Tuwunel reads its configuration only at startup. Hashing the values
+        # config-tuwunel.yaml reads, not the rendered ConfigMap, keeps its
+        # render errors reported there. Secret values are left out: anyone who
+        # can read the pod could test guesses against an unsalted hash of them.
+        # A changed secret therefore needs a rollout restart.
+        # sso.waldurRegistrationMethod is Waldur's setting, not the homeserver's.
+        checksum/config: {{ toJson (list .Values.apiScheme .Values.apiHostname (omit $h "registrationToken" "sso") (omit $h.sso "clientSecret" "waldurRegistrationMethod") .Values.matrixChat.livekit.publicUrl .Values.matrixChat.livekit.allowInsecureTransport (include "waldur.matrixBotLocalpart" .)) | sha256sum }}
     spec:
       {{ if .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -136,6 +144,11 @@ spec:
               mountPath: /etc/tuwunel
             - name: data
               mountPath: /var/lib/tuwunel
+            {{- if $h.sso.enabled }}
+            - name: sso-client-secret
+              mountPath: /etc/tuwunel-sso
+              readOnly: true
+            {{- end }}
       volumes:
         - name: config
           configMap:
@@ -143,6 +156,14 @@ spec:
         # Written by render-config, read by the homeserver.
         - name: rendered-config
           emptyDir: {}
+        {{- if $h.sso.enabled }}
+        - name: sso-client-secret
+          secret:
+            secretName: {{ $h.sso.clientSecretExistingSecret.name | default "matrix-homeserver-sso-secret" }}
+            items:
+              - key: {{ $h.sso.clientSecretExistingSecret.key | default "client_secret" }}
+                path: client_secret
+        {{- end }}
         {{- if not $h.persistence.enabled }}
         - name: data
           emptyDir: {}

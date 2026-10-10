@@ -1,0 +1,14 @@
+# Kept apart from servicemonitor-metrics-exporter_test.yaml, which declares the
+# ServiceMonitor CRD for the whole suite; the CRD guard needs it absent.
+suite: metrics exporter ServiceMonitor guards
+templates:
+  - templates/servicemonitor-metrics-exporter.yaml
+
+tests:
+  - it: fails when the cluster has no ServiceMonitor CRD
+    set:
+      waldur.metricsExporter.enabled: true
+      waldur.metricsExporter.serviceMonitor.enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "waldur.metricsExporter.serviceMonitor.enabled is true, but the cluster does not serve monitoring.coreos.com/v1 ServiceMonitor. It comes with the Prometheus Operator (for example kube-prometheus-stack); install that first, or scrape the exporter Service through its prometheus.io annotations instead."

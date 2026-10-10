@@ -1,0 +1,19 @@
+{{- if and .Values.matrixChat.enabled .Values.matrixChat.prometheusRule.enabled }}
+{{- if not .Values.waldur.metricsExporter.enabled }}
+{{- fail "matrixChat.prometheusRule.enabled needs waldur.metricsExporter.enabled: the rules read the waldur_matrix_* metrics the exporter publishes, so without it none of them can ever fire. Enable the exporter, with a support or staff user's token in waldur.supportToken." }}
+{{- end }}
+{{- if not (.Capabilities.APIVersions.Has "monitoring.coreos.com/v1/PrometheusRule") }}
+{{- fail "matrixChat.prometheusRule.enabled is true, but the cluster does not serve monitoring.coreos.com/v1 PrometheusRule. It comes with the Prometheus Operator (for example kube-prometheus-stack); install that first, or leave the rules off and load docs/matrix-chat.md's rules into your Prometheus yourself." }}
+{{- end }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: waldur-matrix-chat
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+{{- with .Values.matrixChat.prometheusRule.labels }}
+{{ toYaml . | indent 4 }}
+{{- end }}
+spec:
+{{ .Files.Get "files/matrix-chat-alerts.yaml" | indent 2 }}
+{{- end }}

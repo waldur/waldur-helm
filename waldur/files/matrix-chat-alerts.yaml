@@ -1,0 +1,135 @@
+# Prometheus rules for the Matrix chat health metrics of
+# waldur-prometheus-exporter. The chart includes this file verbatim as the
+# PrometheusRule spec, so Prometheus, not Helm, expands the {{ $value }}
+# templates. waldur-docker-compose publishes the same rules in
+# docs/matrix-chat-add-on.md: change both together.
+groups:
+  - name: waldur-matrix-chat
+    rules:
+      # One series per Waldur, not per scrape target. On Kubernetes, where a
+      # target has a namespace label, a Waldur is a namespace and job: a
+      # replaced exporter pod is a new target, with another instance and other
+      # pod, node or chart version labels. Held per target, its predecessor's
+      # last value would stay beside the new pod's live one for 20 minutes,
+      # firing for a check that has recovered, and an alert would resolve and
+      # start over under the new labels. Elsewhere a target is a Waldur and
+      # keeps its labels, so several Waldurs in one job stay apart.
+      - record: waldur_matrix_check_passed:per_waldur
+        expr: >-
+          min by (namespace, job, check) (waldur_matrix_check_passed{namespace!=""})
+          or
+          waldur_matrix_check_passed{namespace=""}
+      - record: waldur_matrix_rooms:per_waldur
+        expr: >-
+          max by (namespace, job, state) (waldur_matrix_rooms{namespace!=""})
+          or
+          waldur_matrix_rooms{namespace=""}
+      # The exporter drops every check and room series when a diagnostics
+      # call fails, and Prometheus drops them while the exporter is down or
+      # restarting. Holding the last value for 20 minutes keeps that from
+      # resolving an alert or restarting its "for"; DiagnosticsDown and
+      # MetricsMissing fire before the hold runs out.
+      - record: waldur_matrix_check_passed:last20m
+        expr: >-
+          waldur_matrix_check_passed:per_waldur
+          or
+          last_over_time(waldur_matrix_check_passed:per_waldur[20m])
+      - record: waldur_matrix_rooms:last20m
+        expr: >-
+          waldur_matrix_rooms:per_waldur
+          or
+          last_over_time(waldur_matrix_rooms:per_waldur[20m])
+      - alert: WaldurMatrixMetricsMissing
+        expr: absent(waldur_matrix_diagnostics_up)
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: No Matrix chat metrics from the Waldur metrics exporter
+          description: >-
+            Prometheus has no waldur_matrix_diagnostics_up series: the metrics
+            exporter is down, is not scraped, or is a version without Matrix
+            metrics. None of the other Matrix chat alerts can fire until it is.
+      - alert: WaldurMatrixDiagnosticsDown
+        expr: waldur_matrix_diagnostics_up == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: The metrics exporter cannot read Waldur's Matrix diagnostics
+          description: >-
+            GET /api/admin/matrix/diagnostics/ has failed for 10 minutes, so the
+            Matrix chat checks are not updated. The exporter's token must belong
+            to a support or staff user: a 403 means it belongs to neither, or
+            that Waldur is too old to let support users read diagnostics.
+      # Diagnostics answers for a Waldur without Matrix chat too, with these
+      # checks failing. This alert and BotNotRunning stay quiet where no
+      # homeserver URL is set, so such a Waldur on the same Prometheus does not
+      # raise them; the sign-in and ping alerts are quiet there already.
+      - alert: WaldurMatrixHomeserverUnreachable
+        expr: >-
+          waldur_matrix_check_passed:last20m{check="homeserver_reachable"} == 0
+          unless ignoring(check)
+          waldur_matrix_check_passed:last20m{check="homeserver_configured"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: Waldur cannot reach the Matrix homeserver
+          description: >-
+            Waldur's backend has not reached the homeserver at
+            MATRIX_HOMESERVER_URL for 5 minutes, so chat is down for everyone.
+            The bot sign-in and appservice ping alerts stay quiet while it
+            fires: both checks fail with it.
+      - alert: WaldurMatrixBotNotRunning
+        expr: >-
+          waldur_matrix_check_passed:last20m{check="bot_running"} == 0
+          unless ignoring(check)
+          waldur_matrix_check_passed:last20m{check="homeserver_configured"} == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: The Matrix bot is not running
+          description: >-
+            No matrix_bot process has held the bot's lease for 10 minutes.
+            Messages Waldur posts in rooms wait in the outbox and chat commands
+            get no answer until the bot runs again.
+      - alert: WaldurMatrixBotSignInFailing
+        expr: >-
+          waldur_matrix_check_passed:last20m{check="bot_whoami"} == 0
+          unless ignoring(check)
+          waldur_matrix_check_passed:last20m{check="homeserver_reachable"} == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: The homeserver does not accept Waldur's appservice token
+          description: >-
+            The homeserver has rejected the bot's whoami call for 10 minutes:
+            the appservice is not registered, or is registered with other
+            tokens. Waldur cannot create rooms or accounts until it is fixed.
+      - alert: WaldurMatrixAppservicePingFailing
+        expr: >-
+          waldur_matrix_check_passed:last20m{check="appservice_ping"} == 0
+          unless ignoring(check)
+          waldur_matrix_check_passed:last20m{check="bot_whoami"} == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: The homeserver cannot reach Waldur's appservice endpoint
+          description: >-
+            The appservice ping has failed for 10 minutes. The homeserver
+            cannot deliver room events to Waldur, so membership and messages
+            Waldur reacts to are not processed.
+      - alert: WaldurMatrixRoomsErred
+        expr: waldur_matrix_rooms:last20m{state="error"} > 0
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: Matrix rooms are stuck in the error state
+          description: >-
+            {{ $value }} Matrix room(s) have been in the error state for
+            30 minutes. Waldur does not retry them on its own.

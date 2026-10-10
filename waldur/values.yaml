@@ -721,6 +721,16 @@ waldur:
     includeAnnotations: true
     imageName: "opennode/waldur-prometheus-exporter"
     imageDigest: ""  # Optional: if set, uses unique docker image hash, priority over tag
+    # A ServiceMonitor for the Prometheus Operator, which ignores the
+    # prometheus.io annotations above. Needs the monitoring.coreos.com CRDs.
+    serviceMonitor:
+      enabled: false
+      # The exporter refreshes its values every 120 s, so scraping more often
+      # only reads the same values again.
+      interval: 60s
+      # Labels your Prometheus selects ServiceMonitors by; kube-prometheus-stack
+      # wants release: <its release name>.
+      labels: {}
   uvkEverypay:
     existingSecret:
       name:
@@ -937,6 +947,14 @@ matrixChat:
   # media connect — without opting the rest of the stack into NetworkPolicy.
   networkPolicy:
     enabled: false
+  # Chat health alerts, as a Prometheus Operator PrometheusRule. They read the
+  # waldur_matrix_* metrics of waldur.metricsExporter, whose token must belong
+  # to a support or staff user. See docs/matrix-chat.md, "Monitoring".
+  prometheusRule:
+    enabled: false
+    # Labels your Prometheus selects rules by; kube-prometheus-stack wants
+    # release: <its release name>.
+    labels: {}
   # Zero-touch setup. The appservice token is a shared secret between two
   # programs — Waldur and the homeserver — so the deployment mints it once and
   # hands the same value to both, the way a database password is handled. With

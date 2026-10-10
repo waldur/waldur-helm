@@ -126,9 +126,9 @@ succeeds and all three pods report Ready. But every client connection is
 load-balanced onto an arbitrary node, and the nodes share no state, so:
 
 - a queue declared on one node does not exist on the others;
-- `celery inspect ping` — the worker's startup, liveness and readiness probe —
-  usually lands on a node without the worker's pidbox queue and returns
-  `Error: No nodes replied within time constraint`, so the worker fails its probes
+- the worker's ping probe (its startup, liveness and readiness probe) usually
+  lands on a node without the worker's pidbox queue and reports
+  `celery@<pod> did not reply to ping within 10s`, so the worker fails its probes
   and is killed and restarted while logging `celery@… ready.`;
 - published tasks strand on whichever node the publisher happened to reach,
   leaving durable queues with messages and `consumers=0`;

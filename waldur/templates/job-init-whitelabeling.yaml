@@ -100,8 +100,10 @@ spec:
           Waldur issues call tokens itself, signed with LiveKit's API key and
           secret, so it needs the same pair LiveKit has. They come from the
           LiveKit Secret here rather than through a ConfigMap like the rest of
-          the seeded settings; the URLs are in marketplace.yaml.
+          the seeded settings; the URLs are in marketplace.yaml. With
+          matrixChat.setup on, the Matrix wiring Job seeds all four instead.
         */}}
+        {{- if not .Values.matrixChat.setup.enabled }}
         - name: seed-livekit-credentials
           {{- if .Values.waldur.imageDigest }}
           image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}@{{ .Values.waldur.imageDigest }}
@@ -133,6 +135,7 @@ spec:
               subPath: override.conf.py
           resources:
             {{- toYaml .Values.apiResources | nindent 12 }}
+        {{- end }}
         {{- end }}
       {{ end }}
       containers:

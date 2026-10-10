@@ -75,9 +75,27 @@ Run linter:
   image: $HELM_TEST_IMAGE
   script:
     - export KUBECONFIG=${K8S_CONFIG_WALDUR_HELM_TEST}
-    - helm uninstall waldur || true
+    - helm uninstall waldur --wait || true
     - kubectl delete job waldur-mastermind-init-whitelabeling-job || true
     - kubectl delete pvc -l app.kubernetes.io/instance=waldur --ignore-not-found
+    # Matrix setup supports fresh installs only, so every run starts from no
+    # Matrix state: its generated Secret, which Helm never owns, the
+    # homeserver's volume, which the StatefulSet's claim template leaves
+    # unlabelled, and the Matrix settings and bot identity that the shared
+    # external database keeps between runs. Otherwise the wiring Job finds
+    # appservice tokens it did not seed and refuses, as it should.
+    - kubectl delete secret matrix-appservice-secret --ignore-not-found
+    - kubectl delete pvc data-matrix-homeserver-0 --ignore-not-found
+    - |
+      PG=$(kubectl get pod -l cluster-name=waldur-testing-postgres,spilo-role=master -o name)
+      kubectl exec "$PG" -c postgres -- psql -U postgres -d waldur -v ON_ERROR_STOP=1 -c "
+        DELETE FROM constance_constance WHERE key LIKE 'MATRIX\_%';
+        DROP SCHEMA IF EXISTS matrix_bot CASCADE;
+        DO \$\$ BEGIN
+          IF to_regclass('matrix_chat_matrixbotidentity') IS NOT NULL THEN
+            DELETE FROM matrix_chat_matrixbotidentity;
+          END IF;
+        END \$\$;"
 
 Validate release installation (dry-run):
   extends: .Test template
@@ -109,6 +127,9 @@ Test release installation and readiness:
         - waldur/**/*
   script:
     - set -xv
+    # Cleanup and install run as one job, so the resource group keeps another
+    # pipeline from installing or cleaning up in between.
+    - !reference [.Cleanup template, script]
     # The chart's test values run against an operator-managed broker
     # (rabbitmq.enabled=false, rabbitmq.host=rabbitmq-waldur-test), so the
     # cluster has to exist before `helm install --wait` -- otherwise the
@@ -234,14 +255,6 @@ Validate bundled dependencies (dry-run):
           echo "ERROR: port ${PORT} missing from the bundled render"; exit 1; }
       done
       echo "bundled dependencies render with the expected services and ports."
-
-Cleanup previous test deployment:
-  extends: .Cleanup template
-  resource_group: waldur-helm-test
-  stage: .pre
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH == "master" && $CI_PIPELINE_SOURCE == "schedule"'
 
 Publish new chart version and update docs on github:
   image:

@@ -1,0 +1,858 @@
+suite: matrix zero-touch setup
+templates:
+  - templates/validate-matrix.yaml
+  - templates/rbac-matrix-init.yaml
+  - templates/rbac-livekit.yaml
+  - templates/deployment-livekit.yaml
+  - templates/job-init-matrix-wire.yaml
+  - templates/job-init-matrix-secrets.yaml
+  - templates/statefulset-matrix-homeserver.yaml
+  - templates/networkpolicy-mastermind-api.yaml
+
+tests:
+  # --- A second registration token next to setup ----------------------------
+  #
+  # With setup on, the registration token comes from the setup Secret and is
+  # handed to both sides together. A value here would be a second source that
+  # drifts, so the render stops instead.
+
+  - it: refuses a registration token Secret next to setup
+    template: templates/validate-matrix.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationTokenExistingSecret.name: "matrix-registration"
+    asserts:
+      - failedTemplate:
+          errorPattern: "registrationTokenExistingSecret.name is set while matrixChat.setup.enabled=true.*Remove it, or set matrixChat.setup.enabled=false"
+
+  - it: refuses a settings override of a setting the wiring Job seeds
+    # One source per setting: the wiring Job runs after the whitelabeling Job
+    # and would overwrite the override on every sync.
+    template: templates/validate-matrix.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      waldur.settingsOverrides:
+        MATRIX_APPSERVICE_AS_TOKEN: "hand-picked"
+    asserts:
+      - failedTemplate:
+          errorPattern: "waldur.settingsOverrides sets MATRIX_APPSERVICE_AS_TOKEN while matrixChat.setup.enabled=true"
+
+  - it: refuses a settings override of the LiveKit key with setup on
+    template: templates/validate-matrix.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      waldur.settingsOverrides:
+        MATRIX_LIVEKIT_KEY: "hand-picked"
+    asserts:
+      - failedTemplate:
+          errorPattern: "waldur.settingsOverrides sets MATRIX_LIVEKIT_KEY while matrixChat.setup.enabled=true"
+
+  - it: seeds the single sign-on login settings from the wiring Job
+    template: templates/job-init-matrix-wire.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.sso.enabled: true
+      matrixChat.homeserver.sso.waldurRegistrationMethod: "keycloak"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MATRIX_EXTERNAL_LOGIN_METHOD
+            value: "oidc"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MATRIX_SSO_REGISTRATION_METHOD
+            value: "keycloak"
+
+  - it: leaves the login method alone without single sign-on
+    # An administrator's choice of login method then stands.
+    template: templates/job-init-matrix-wire.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MATRIX_EXTERNAL_LOGIN_METHOD
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MATRIX_SSO_REGISTRATION_METHOD
+          any: true
+
+  - it: refuses a login method override while the wiring Job seeds it
+    template: templates/validate-matrix.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.sso.enabled: true
+      waldur.settingsOverrides:
+        MATRIX_SSO_REGISTRATION_METHOD: "keycloak"
+    asserts:
+      - failedTemplate:
+          errorPattern: "waldur.settingsOverrides sets MATRIX_SSO_REGISTRATION_METHOD while matrixChat.setup and homeserver single sign-on are on"
+
+  - it: allows a settings override of a Matrix setting with setup off
+    template: templates/validate-matrix.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.setup.enabled: false
+      waldur.settingsOverrides:
+        MATRIX_HOMESERVER_URL: "http://matrix-homeserver.waldur.svc:6167"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: hands a MATRIX_ENABLED override to the wiring Job too
+    # Otherwise the first seeding switches chat on right after the
+    # whitelabeling Job applied the override.
+    template: templates/job-init-matrix-wire.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      waldur.settingsOverrides:
+        MATRIX_ENABLED: false
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MATRIX_ENABLED
+            value: "false"
+
+  - it: refuses a registration token Secret even next to a setup existingSecret
+    template: templates/validate-matrix.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationTokenExistingSecret.name: "matrix-registration"
+      matrixChat.setup.existingSecret.name: "matrix-tokens"
+    asserts:
+      - failedTemplate:
+          errorPattern: "registrationTokenExistingSecret.name is set while matrixChat.setup.enabled=true.*Remove it, or set matrixChat.setup.enabled=false"
+
+  - it: refuses an inline registration token next to setup
+    template: templates/validate-matrix.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "hand-picked"
+    asserts:
+      - failedTemplate:
+          errorPattern: "registrationToken is set while matrixChat.setup.enabled=true.*Remove it, or set matrixChat.setup.enabled=false"
+
+  - it: refuses an inline registration token even next to a setup existingSecret
+    template: templates/validate-matrix.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "hand-picked"
+      matrixChat.setup.existingSecret.name: "matrix-tokens"
+    asserts:
+      - failedTemplate:
+          errorPattern: "registrationToken is set while matrixChat.setup.enabled=true.*Remove it, or set matrixChat.setup.enabled=false"
+
+  - it: keeps a hand-managed registration token with setup off
+    template: templates/validate-matrix.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationTokenExistingSecret.name: "matrix-registration"
+      matrixChat.setup.enabled: false
+      # Discovery is part of setup; pin the address instead.
+      matrixChat.livekit.rtc.autoDiscoverNodeIp: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  # --- RBAC ------------------------------------------------------------------
+  #
+  # LiveKit is the internet-facing SFU; nothing in its pod may hold a token
+  # that reaches beyond the one Service it reads. matrix-init keeps only what
+  # the two Jobs touch, by name wherever the verb allows it.
+
+  - it: gives LiveKit node-IP discovery its own ServiceAccount
+    template: templates/deployment-livekit.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: livekit-node-ip
+      - equal:
+          path: spec.template.spec.automountServiceAccountToken
+          value: false
+
+  - it: mounts the API token into the node-IP initContainer only
+    template: templates/deployment-livekit.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[0].volumeMounts
+          content:
+            name: kube-api-access
+            mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+            readOnly: true
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: kube-api-access
+          any: true
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: kube-api-access
+            projected:
+              sources:
+                - serviceAccountToken:
+                    path: token
+                    expirationSeconds: 3607
+                - configMap:
+                    name: kube-root-ca.crt
+                    items:
+                      - key: ca.crt
+                        path: ca.crt
+                - downwardAPI:
+                    items:
+                      - path: namespace
+                        fieldRef:
+                          fieldPath: metadata.namespace
+
+  - it: keeps the API token out of LiveKit when the address is pinned
+    template: templates/deployment-livekit.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+      matrixChat.livekit.rtc.autoDiscoverNodeIp: false
+      matrixChat.livekit.rtc.nodeIp: "203.0.113.10"
+    asserts:
+      - notExists:
+          path: spec.template.spec.serviceAccountName
+      - equal:
+          path: spec.template.spec.automountServiceAccountToken
+          value: false
+      - notExists:
+          path: spec.template.spec.initContainers
+
+  - it: lets the LiveKit ServiceAccount read the livekit-rtc Service and nothing else
+    template: templates/rbac-livekit.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+    asserts:
+      - hasDocuments:
+          count: 3
+      - equal:
+          path: automountServiceAccountToken
+          value: false
+        documentSelector:
+          path: kind
+          value: ServiceAccount
+      - equal:
+          path: rules
+          value:
+            - apiGroups: [""]
+              resources: ["services"]
+              resourceNames: ["livekit-rtc"]
+              verbs: ["get"]
+        documentSelector:
+          path: kind
+          value: Role
+      - equal:
+          path: subjects
+          value:
+            - kind: ServiceAccount
+              name: livekit-node-ip
+              namespace: NAMESPACE
+        documentSelector:
+          path: kind
+          value: RoleBinding
+      # Ordinary resources, not hooks: the matrix-init hook objects are deleted
+      # and recreated on every upgrade, and a LiveKit pod admitted in that
+      # window would be rejected for a missing ServiceAccount.
+      - notExists:
+          path: metadata.annotations["helm.sh/hook"]
+        documentSelector:
+          path: kind
+          value: Role
+
+  - it: renders no LiveKit RBAC when the address is pinned
+    template: templates/rbac-livekit.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+      matrixChat.livekit.rtc.autoDiscoverNodeIp: false
+      matrixChat.livekit.rtc.nodeIp: "203.0.113.10"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: scopes matrix-init to the setup Secret by name
+    template: templates/rbac-matrix-init.yaml
+    release:
+      namespace: waldur
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+    asserts:
+      # `create` cannot be scoped by name -- the API server authorizes it
+      # before the object has one -- so it is a rule of its own.
+      - hasDocuments:
+          count: 3
+      - equal:
+          path: rules
+          value:
+            - apiGroups: [""]
+              resources: ["secrets"]
+              resourceNames: ["matrix-appservice-secret"]
+              verbs: ["get"]
+            - apiGroups: [""]
+              resources: ["secrets"]
+              verbs: ["create"]
+        documentIndex: 1
+
+  - it: renders no matrix-init RBAC with a Secret of your own
+    template: templates/rbac-matrix-init.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.setup.existingSecret.name: "operator-matrix"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: gives the wiring Job no API token
+    # It reads the Secret through secretKeyRef; only the secrets Job needs
+    # the API.
+    template: templates/job-init-matrix-wire.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+    asserts:
+      - equal:
+          path: spec.template.spec.automountServiceAccountToken
+          value: false
+      - isNull:
+          path: spec.template.spec.serviceAccountName
+
+  - it: bounds node-IP discovery and has no STUN fallback to pass down
+    template: templates/deployment-livekit.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[0].env
+          content:
+            name: NODE_IP_DISCOVERY_TIMEOUT
+            value: "300"
+      # Falling back to STUN is what this initContainer exists to prevent: it
+      # picks the wrong address behind a cluster LoadBalancer, and calls then
+      # connect with no media. At the deadline it exits and is retried instead.
+      - notContains:
+          path: spec.template.spec.initContainers[0].env
+          content:
+            name: USE_EXTERNAL_IP
+          any: true
+
+  # --- Wiring Job ------------------------------------------------------------
+
+  - it: registers the appservice by default
+    template: templates/job-init-matrix-wire.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+    asserts:
+      # Off by default would leave a fresh install without working chat until
+      # someone registered the appservice by hand.
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: REGISTER_APPSERVICE
+            value: "true"
+
+  - it: offers the registration an admin token from the setup Secret if one is there
+    template: templates/job-init-matrix-wire.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+    asserts:
+      # Optional and never minted: it exists only when an operator adds it,
+      # for the one upgrade that registers rotated tokens without a
+      # bootstrap password.
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MATRIX_ADMIN_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: matrix-appservice-secret
+                key: admin_token
+                optional: true
+
+  - it: reads the admin token under the key an existing Secret uses
+    template: templates/job-init-matrix-wire.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.setup.existingSecret.name: "vault-matrix"
+      matrixChat.setup.existingSecret.adminTokenKey: "hs-admin-token"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MATRIX_ADMIN_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: vault-matrix
+                key: hs-admin-token
+                optional: true
+
+  - it: never overwrites tokens the deployment did not seed
+    template: templates/job-init-matrix-wire.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+    asserts:
+      # init_matrix_settings refuses tokens it did not seed, and nothing in the
+      # chart asks it to overwrite them.
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ADOPT_TOKENS
+          any: true
+
+  - it: bounds the wait for the homeserver before registering
+    template: templates/job-init-matrix-wire.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.setup.homeserverWaitTimeout: 1800
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOMESERVER_WAIT_TIMEOUT
+            value: "1800"
+
+  # --- Remaining render guards ----------------------------------------------
+
+  - it: refuses Matrix chat without the bundled homeserver
+    template: templates/validate-matrix.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: false
+    asserts:
+      - failedTemplate:
+          errorPattern: "matrixChat.enabled=true with matrixChat.homeserver.enabled=false"
+
+  - it: refuses setup without initdb, which the Constance seeding needs
+    template: templates/validate-matrix.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      waldur.initdbEnabled: false
+    asserts:
+      - failedTemplate:
+          errorPattern: "matrixChat.setup.enabled=true requires waldur.initdbEnabled=true"
+
+  - it: allows node-IP discovery with setup off
+    # Discovery runs matrix-init from the mastermind image under LiveKit's own
+    # ServiceAccount, so nothing it needs is part of the setup path.
+    template: templates/validate-matrix.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      # Keeps the open-registration guard in config-tuwunel out of the way.
+      matrixChat.homeserver.allowRegistration: false
+      matrixChat.setup.enabled: false
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: runs node-IP discovery from the mastermind image
+    template: templates/deployment-livekit.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].command
+          value: [matrix-init, livekit]
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: matrix-init-script
+          any: true
+
+  - it: refuses a pinned node IP while discovery is on
+    template: templates/validate-matrix.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+      matrixChat.livekit.rtc.nodeIp: "203.0.113.10"
+    asserts:
+      - failedTemplate:
+          errorPattern: "rtc.nodeIp is set while rtc.autoDiscoverNodeIp is true"
+
+  - it: refuses LiveKit with neither discovery nor a pinned node IP
+    template: templates/validate-matrix.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+      matrixChat.livekit.rtc.autoDiscoverNodeIp: false
+    asserts:
+      - failedTemplate:
+          errorPattern: "has neither autoDiscoverNodeIp nor an explicit nodeIp"
+
+  # --- Secrets Job and the homeserver's token ---------------------------------
+
+  - it: mints the setup Secret when no existingSecret is named
+    template: templates/job-init-matrix-secrets.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SECRET_NAME
+            value: matrix-appservice-secret
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: [matrix-init, secrets]
+      - notExists:
+          path: spec.template.spec.volumes
+
+  - it: wires Constance with matrix-init from the mastermind image
+    template: templates/job-init-matrix-wire.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].command[2]
+          pattern: '^matrix-init wire '
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: matrix-init-script
+          any: true
+
+  - it: generates nothing when an existingSecret is named
+    template: templates/job-init-matrix-secrets.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.setup.existingSecret.name: "vault-matrix"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: gives the homeserver the registration token from the setup Secret
+    template: templates/statefulset-matrix-homeserver.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: TUWUNEL_REGISTRATION_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: matrix-appservice-secret
+                key: registration_token
+
+  - it: reads the registration token under the key an existing Secret uses
+    template: templates/statefulset-matrix-homeserver.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.setup.existingSecret.name: "vault-matrix"
+      matrixChat.setup.existingSecret.registrationTokenKey: "reg-token"
+    asserts:
+      # The same name and key the wiring Job seeds into Constance, so both
+      # sides read one value.
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: TUWUNEL_REGISTRATION_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: vault-matrix
+                key: reg-token
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MATRIX_USER_REGISTRATION_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: vault-matrix
+                key: reg-token
+        template: templates/job-init-matrix-wire.yaml
+
+  # --- Bootstrap admin ------------------------------------------------------
+  #
+  # No account becomes an admin by being the first one. The wiring Job creates
+  # the bootstrap admin through the shared-secret registration API instead,
+  # keyed by the registration token the homeserver also takes as its shared
+  # secret.
+
+  - it: makes the registration token the homeserver's shared secret
+    template: templates/statefulset-matrix-homeserver.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: TUWUNEL_REGISTRATION_SHARED_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: matrix-appservice-secret
+                key: registration_token
+
+  - it: reads the shared secret under the key an existing Secret uses
+    template: templates/statefulset-matrix-homeserver.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.setup.existingSecret.name: "vault-matrix"
+      matrixChat.setup.existingSecret.registrationTokenKey: "reg-token"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: TUWUNEL_REGISTRATION_SHARED_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: vault-matrix
+                key: reg-token
+
+  - it: keeps the shared secret on the hand-managed registration token with setup off
+    # Without the first-user rule, the shared-secret API is how an operator
+    # who manages the tokens by hand creates an admin.
+    template: templates/statefulset-matrix-homeserver.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationTokenExistingSecret.name: "matrix-registration"
+      matrixChat.setup.enabled: false
+      matrixChat.livekit.rtc.autoDiscoverNodeIp: false
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: TUWUNEL_REGISTRATION_SHARED_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: matrix-registration
+                key: registration_token
+
+  # --- API reachability under NetworkPolicy ----------------------------------
+
+  - it: admits same-namespace pods on the port the API pod listens on
+    template: templates/networkpolicy-mastermind-api.yaml
+    set:
+      networkPolicy.enabled: true
+    asserts:
+      # NetworkPolicy ports match the pod's port, after the Service has mapped
+      # 80 to targetPort 8080. A rule on 80/443 matches nothing gunicorn
+      # serves, so the homeserver's appservice transactions and pings to
+      # http://waldur-mastermind-api.<ns>.svc were dropped.
+      - equal:
+          path: spec.ingress
+          value:
+            - from:
+                - podSelector: {}
+              ports:
+                - protocol: TCP
+                  port: 8080
+
+  # --- Upgrading a release that already runs Matrix chat --------------------
+
+  - it: refuses to turn setup on for a running homeserver without its Secret
+    # New tokens would match neither the homeserver's data nor Waldur.
+    template: templates/validate-matrix.yaml
+    release:
+      upgrade: true
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+    kubernetesProvider:
+      scheme:
+        "apps/v1/StatefulSet":
+          gvr:
+            group: "apps"
+            version: "v1"
+            resource: "statefulsets"
+          namespaced: true
+        "v1/Secret":
+          gvr:
+            version: "v1"
+            resource: "secrets"
+          namespaced: true
+      objects:
+        - kind: StatefulSet
+          apiVersion: apps/v1
+          metadata:
+            name: matrix-homeserver
+            namespace: NAMESPACE
+    asserts:
+      - failedTemplate:
+          errorPattern: "homeserver already runs, and Secret matrix-appservice-secret does not exist.*Migrating an existing deployment"
+
+  - it: upgrades a running homeserver once its Secret exists
+    template: templates/validate-matrix.yaml
+    release:
+      upgrade: true
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+    kubernetesProvider:
+      scheme:
+        "apps/v1/StatefulSet":
+          gvr:
+            group: "apps"
+            version: "v1"
+            resource: "statefulsets"
+          namespaced: true
+        "v1/Secret":
+          gvr:
+            version: "v1"
+            resource: "secrets"
+          namespaced: true
+      objects:
+        - kind: StatefulSet
+          apiVersion: apps/v1
+          metadata:
+            name: matrix-homeserver
+            namespace: NAMESPACE
+        - kind: Secret
+          apiVersion: v1
+          metadata:
+            name: matrix-appservice-secret
+            namespace: NAMESPACE
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: does not check for the Secret on a first install
+    template: templates/validate-matrix.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+    kubernetesProvider:
+      scheme:
+        "apps/v1/StatefulSet":
+          gvr:
+            group: "apps"
+            version: "v1"
+            resource: "statefulsets"
+          namespaced: true
+      objects:
+        - kind: StatefulSet
+          apiVersion: apps/v1
+          metadata:
+            name: matrix-homeserver
+            namespace: NAMESPACE
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: points a failed wiring at the migration guide
+    template: templates/job-init-matrix-wire.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].command[2]
+          pattern: '(?s)^matrix-init wire && exit 0\n.*Migrating an existing deployment'

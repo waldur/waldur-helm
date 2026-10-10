@@ -1,0 +1,81 @@
+{{- if and .Values.matrixChat.enabled .Values.matrixChat.setup.enabled (not .Values.matrixChat.setup.existingSecret.name) }}
+{{- $s := .Values.matrixChat.setup }}
+# RBAC for the Matrix zero-touch secrets Job. Not rendered with
+# setup.existingSecret, when nothing is generated, and the wiring Job runs
+# with no API token at all.
+#
+# Why the Job needs the API at all: the appservice tokens are a shared secret
+# between two programs (Waldur and the homeserver), so the deployment — not a
+# human with a wizard — has to mint them once and hand the same value to both
+# sides. Generating them in a template with `randAlphaNum` guarded by `lookup`
+# is the usual Helm idiom and is WRONG here: this chart ships
+# applicationset.yaml, so production runs on ArgoCD, where `lookup` returns
+# empty during server-side dry-run and diff rendering. ArgoCD would then see a
+# fresh random token on every diff, report permanent drift, and rotate the token
+# on an unrelated sync — which is exactly the silent M_UNKNOWN_TOKEN failure
+# this whole effort exists to remove. The chart uses `lookup` only in
+# validate-matrix.yaml, for a check that does nothing where lookup answers empty.
+#
+# So the Job reads/creates the Secret through the API at sync time, against a
+# real API server. Scope is one namespace and the specific objects the Job
+# touches; no cluster-scoped rights.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: matrix-init
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install, pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: matrix-init
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install, pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+rules:
+  # get + create only, deliberately: no `update` and no `delete`, so a buggy or
+  # re-run Job structurally cannot rotate a live appservice token. Reuse of an
+  # existing Secret is the only path once one exists. `get` is limited to the
+  # setup Secret by name; `create` cannot be, because the API server authorizes
+  # it before the object has a name to match.
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: [{{ $s.secretName | quote }}]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: matrix-init
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install, pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: matrix-init
+subjects:
+  - kind: ServiceAccount
+    name: matrix-init
+    namespace: {{ .Release.Namespace }}
+{{- end }}

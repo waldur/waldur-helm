@@ -29,13 +29,19 @@ data:
       # Single UDP mux port so the LoadBalancer needs to forward exactly one
       # UDP port instead of a 10k-port range.
       udp_port: {{ $lk.rtc.udpPort }}
-      {{- if $lk.rtc.nodeIp }}
-      # Explicit advertised IP: skip STUN auto-discovery, which picks the wrong
-      # address behind a cluster LoadBalancer / NAT.
+      {{- if $lk.rtc.autoDiscoverNodeIp }}
+      # Placeholder, substituted at pod start by the livekit-config-render
+      # initContainer from the livekit-rtc Service's assigned LoadBalancer
+      # address. The address does not exist until the Service is admitted, so it
+      # cannot be a template value — this is what the chart used to ask the
+      # operator to copy back into rtc.nodeIp by hand after every install.
+      @@NODE_IP_BLOCK@@
+      {{- else }}
+      # Explicit advertised IP (validate-matrix.yaml refuses neither): skip STUN
+      # auto-discovery, which picks the wrong address behind a cluster
+      # LoadBalancer / NAT.
       use_external_ip: false
       node_ip: {{ $lk.rtc.nodeIp | quote }}
-      {{- else }}
-      use_external_ip: {{ $lk.rtc.useExternalIp }}
       {{- end }}
     {{- if $lk.turn.enabled }}
     turn:

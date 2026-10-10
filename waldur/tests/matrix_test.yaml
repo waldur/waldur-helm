@@ -15,13 +15,15 @@ templates:
   - templates/ingress-homeport.yaml
   - templates/traefik-middleware-matrix.yaml
   - templates/statefulset-matrix-homeserver.yaml
+  - templates/job-init-matrix-wire.yaml
 
 tests:
-  - it: seeds the LiveKit URLs into Waldur when calls are configured
+  - it: seeds the LiveKit URLs into Waldur when calls are configured with setup off
     template: templates/config-marketplace.yaml
     set:
       apiScheme: https
       matrixChat.enabled: true
+      matrixChat.setup.enabled: false
       matrixChat.livekit.enabled: true
       matrixChat.livekit.keys.apiKey: "devkey"
       matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
@@ -36,11 +38,12 @@ tests:
           path: data["marketplace.yaml"]
           pattern: 'MATRIX_LIVEKIT_URL: "http://livekit-signaling\.NAMESPACE\.svc:7880"'
 
-  - it: points Waldur's backend at an external LiveKit's public URL
+  - it: points Waldur's backend at an external LiveKit's public URL with setup off
     template: templates/config-marketplace.yaml
     set:
       apiScheme: https
       matrixChat.enabled: true
+      matrixChat.setup.enabled: false
       matrixChat.livekit.enabled: false
       matrixChat.livekit.publicUrl: "wss://livekit.operator.example.org"
       matrixChat.livekit.keys.existingSecret.name: "operator-livekit-creds"
@@ -77,13 +80,14 @@ tests:
           path: data["marketplace.yaml"]
           pattern: "MATRIX_LIVEKIT"
 
-  - it: seeds Waldur's LiveKit key and secret from the bundled LiveKit Secret
+  - it: seeds Waldur's LiveKit key and secret from the bundled LiveKit Secret with setup off
     # Waldur signs call tokens, so it needs the pair LiveKit verifies them with.
     # They come from the Secret, never from a ConfigMap.
     template: templates/job-init-whitelabeling.yaml
     set:
       apiScheme: https
       matrixChat.enabled: true
+      matrixChat.setup.enabled: false
       matrixChat.livekit.enabled: true
       matrixChat.livekit.keys.apiKey: "devkey"
       matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
@@ -112,11 +116,12 @@ tests:
                 name: livekit-secret
                 key: LIVEKIT_API_SECRET
 
-  - it: seeds an external LiveKit's key and secret from its existingSecret
+  - it: seeds an external LiveKit's key and secret from its existingSecret with setup off
     template: templates/job-init-whitelabeling.yaml
     set:
       apiScheme: https
       matrixChat.enabled: true
+      matrixChat.setup.enabled: false
       matrixChat.livekit.enabled: false
       matrixChat.livekit.publicUrl: "wss://livekit.operator.example.org"
       matrixChat.livekit.keys.existingSecret.name: "operator-livekit-creds"
@@ -130,6 +135,121 @@ tests:
                 name: operator-livekit-creds
                 key: LIVEKIT_API_SECRET
 
+
+  - it: seeds all four LiveKit settings from the wiring Job with setup on
+    # One writer per setting: init_matrix_settings validates them and fails
+    # loudly, where override_constance_settings drops a bad value and exits 0.
+    template: templates/job-init-matrix-wire.yaml
+    set:
+      apiScheme: https
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+      matrixChat.livekit.publicUrl: "wss://matrix.example.org"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MATRIX_LIVEKIT_PUBLIC_URL
+            value: "wss://matrix.example.org"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MATRIX_LIVEKIT_URL
+            value: "http://livekit-signaling.NAMESPACE.svc:7880"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MATRIX_LIVEKIT_KEY
+            valueFrom:
+              secretKeyRef:
+                name: livekit-secret
+                key: LIVEKIT_API_KEY
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MATRIX_LIVEKIT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: livekit-secret
+                key: LIVEKIT_API_SECRET
+
+  - it: seeds an external LiveKit from the wiring Job with setup on
+    template: templates/job-init-matrix-wire.yaml
+    set:
+      apiScheme: https
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.livekit.enabled: false
+      matrixChat.livekit.publicUrl: "wss://livekit.operator.example.org"
+      matrixChat.livekit.keys.existingSecret.name: "operator-livekit-creds"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MATRIX_LIVEKIT_URL
+            value: "https://livekit.operator.example.org"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MATRIX_LIVEKIT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: operator-livekit-creds
+                key: LIVEKIT_API_SECRET
+
+  - it: lets a settings override of a LiveKit URL win with setup on
+    template: templates/job-init-matrix-wire.yaml
+    set:
+      apiScheme: https
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.livekit.enabled: false
+      matrixChat.livekit.publicUrl: "wss://livekit.operator.example.org"
+      matrixChat.livekit.keys.existingSecret.name: "operator-livekit-creds"
+      waldur.settingsOverrides:
+        MATRIX_LIVEKIT_URL: "http://livekit.internal.example.org:7880"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MATRIX_LIVEKIT_URL
+            value: "http://livekit.internal.example.org:7880"
+
+  - it: leaves LiveKit out of the whitelabeling Job with setup on
+    template: templates/job-init-whitelabeling.yaml
+    set:
+      apiScheme: https
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+      matrixChat.livekit.publicUrl: "wss://matrix.example.org"
+    asserts:
+      - notContains:
+          path: spec.template.spec.initContainers
+          content:
+            name: seed-livekit-credentials
+          any: true
+
+  - it: leaves the LiveKit URLs out of marketplace.yaml with setup on
+    template: templates/config-marketplace.yaml
+    set:
+      apiScheme: https
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+      matrixChat.livekit.publicUrl: "wss://matrix.example.org"
+    asserts:
+      - notMatchRegex:
+          path: data["marketplace.yaml"]
+          pattern: "MATRIX_LIVEKIT"
   - it: refuses an external LiveKit without an existingSecret
     template: templates/job-init-whitelabeling.yaml
     set:
@@ -327,9 +447,25 @@ tests:
       matrixChat.homeserver.enabled: true
       matrixChat.homeserver.serverName: "matrix.example.org"
       matrixChat.homeserver.allowRegistration: true
+      # Only reachable with setup off: the setup Job always generates a
+      # registration token, so with it on the guard cannot trip.
+      matrixChat.setup.enabled: false
     asserts:
       - failedTemplate:
           errorMessage: "matrixChat.homeserver: allowRegistration is true but no registrationToken / registrationTokenExistingSecret is set. Set a registration token to gate user provisioning, or set allowRegistration=false. Refusing to render an open, abusable homeserver."
+
+  - it: makes no account an admin for being the first one
+    # Waldur registers an account for whoever opens the chat first, so the
+    # first-user rule could hand a user the homeserver's admin room.
+    template: templates/config-tuwunel.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+    asserts:
+      - matchRegex:
+          path: data["tuwunel.toml"]
+          pattern: '(?m)^grant_admin_to_first_user = false$'
 
   - it: does not advertise an RTC focus without a public LiveKit URL
     template: templates/config-tuwunel.yaml
@@ -485,6 +621,9 @@ tests:
       matrixChat.enabled: true
       matrixChat.livekit.enabled: true
       matrixChat.livekit.rtc.udpPort: 7882
+      # Discovery defaults on and takes precedence; this case is the explicit
+      # pin, so turn it off. The discovery path is asserted separately below.
+      matrixChat.livekit.rtc.autoDiscoverNodeIp: false
       matrixChat.livekit.rtc.nodeIp: "203.0.113.10"
       # secret-livekit also renders here — supply keys so its guard doesn't abort.
       matrixChat.livekit.keys.apiKey: "devkey"
@@ -748,6 +887,83 @@ tests:
           path: spec.template.spec.containers[0].livenessProbe
       - isNotNull:
           path: spec.template.spec.containers[0].readinessProbe
+
+  - it: leaves the node_ip placeholder for the initContainer when discovering
+    template: templates/config-livekit.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.rtc.autoDiscoverNodeIp: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+    asserts:
+      # The placeholder is what the livekit-config-render initContainer
+      # substitutes at pod start. A rendered node_ip here would mean the
+      # template resolved an address it cannot know yet.
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "@@NODE_IP_BLOCK@@"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "node_ip:"
+
+  - it: touches no Deployment from the wiring Job
+    # Waldur issues call tokens, so there is no lk-jwt-service to alias.
+    template: templates/job-init-matrix-wire.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.setup.enabled: true
+      waldur.initdbEnabled: true
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LK_JWT_ALIAS_TARGET
+            value: ""
+
+  - it: hands the bootstrap password to the registration from the setup Secret
+    template: templates/job-init-matrix-wire.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.setup.enabled: true
+      waldur.initdbEnabled: true
+    asserts:
+      # Optional, so a Secret minted before the key existed still deploys; the
+      # registration then only needs it when the tokens are rotated.
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MATRIX_BOOTSTRAP_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: matrix-appservice-secret
+                key: bootstrap_password
+                optional: true
+
+  - it: reads the bootstrap password under the key an existing Secret uses
+    template: templates/job-init-matrix-wire.yaml
+    set:
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.setup.enabled: true
+      matrixChat.setup.existingSecret.name: "vault-matrix"
+      matrixChat.setup.existingSecret.bootstrapPasswordKey: "admin-password"
+      waldur.initdbEnabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MATRIX_BOOTSTRAP_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: vault-matrix
+                key: admin-password
+                optional: true
 
   - it: renders short-lived access tokens with an idle refresh lifetime by default
     template: templates/config-tuwunel.yaml

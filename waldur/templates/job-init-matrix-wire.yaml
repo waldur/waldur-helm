@@ -1,0 +1,197 @@
+{{- if and .Values.matrixChat.enabled .Values.matrixChat.setup.enabled .Values.waldur.initdbEnabled }}
+{{- $s := .Values.matrixChat.setup }}
+{{- $h := .Values.matrixChat.homeserver }}
+{{- $secretName := $s.existingSecret.name | default $s.secretName }}
+# Phase 2 of zero-touch Matrix setup: hand the tokens to the other side.
+#
+# The appservice as_token is a shared secret between two programs. Phase 1 gave
+# it to the homeserver (which mounts the Secret directly); this Job gives the
+# same value to Waldur by writing it into Constance — the same
+# `override_constance_settings` mechanism job-init-whitelabeling.yaml already
+# uses for six other settings. Nothing is typed twice, and the operator is never
+# asked for a homeserver URL, domain, or registration secret that the deployment
+# itself chose.
+#
+# post-install/PostSync because Constance is database-backed: this needs a
+# migrated database, which is the same reason the whitelabeling Job runs here.
+# Weight 2 puts it after that Job (weight 1), and that ordering is the whole
+# wait for migrations: the whitelabeling Job blocks on `migrate --check` in its
+# initContainer, so this one never starts on an unmigrated schema. The
+# homeserver gets a wait of its own in the script, before registration.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: matrix-init-wire
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+  annotations:
+    "helm.sh/hook": post-install, post-upgrade
+    "helm.sh/hook-weight": "2"
+    "helm.sh/hook-delete-policy": before-hook-creation
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        {{ include "waldur.labels" . | nindent 8 }}
+    spec:
+      # Only the secrets Job talks to the Kubernetes API. This one reads the
+      # Secret through secretKeyRef and talks to the database and the
+      # homeserver, so it gets no API token at all.
+      automountServiceAccountToken: false
+      {{ if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range $i, $val := .Values.imagePullSecrets }}
+        - name: {{ $val }}
+        {{ end -}}
+      {{ end }}
+      containers:
+        - name: matrix-init-wire
+          {{- if .Values.waldur.imageDigest }}
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}@{{ .Values.waldur.imageDigest }}
+          {{- else }}
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
+          {{- end }}
+          imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" .Values.waldur.imageTag "Values" .Values) }}
+          # matrix-init ships in the mastermind image (/usr/local/bin).
+          # On failure, point at the migration guide: the usual cause on an
+          # upgrade is a deployment whose tokens the Setup wizard configured.
+          command:
+            - /bin/sh
+            - -c
+            - |
+              matrix-init wire && exit 0
+              rc=$?
+              echo "matrix-init: the wiring failed. If this release ran Matrix chat before matrixChat.setup was turned on, see docs/matrix-chat.md, \"Migrating an existing deployment\"." >&2
+              exit $rc
+          # Names match mastermind's `init_matrix_settings` env contract
+          # exactly; the command reads them directly, so renaming one here
+          # silently drops a setting. waldur-docker-compose sets the same set.
+          env:
+            {{- include "waldur.credentials" . | nindent 12 }}
+            # Bot HTTP calls stay inside the cluster; browsers reach the
+            # homeserver through the matrix ingress. Django's URLValidator
+            # rejects single-label hostnames, so the internal URL uses the
+            # fully-qualified Service name rather than `matrix-homeserver`.
+            - name: MATRIX_HOMESERVER_URL
+              value: "http://matrix-homeserver.{{ .Release.Namespace }}.svc:{{ $h.clientPort }}"
+            - name: MATRIX_HOMESERVER_PUBLIC_URL
+              value: "{{ .Values.apiScheme }}://{{ $h.serverName }}"
+            - name: MATRIX_HOMESERVER_DOMAIN
+              value: {{ $h.serverName | quote }}
+            - name: MATRIX_APPSERVICE_SENDER_LOCALPART
+              value: {{ $s.botLocalpart | quote }}
+            {{- if hasKey .Values.waldur.settingsOverrides "MATRIX_ENABLED" }}
+            # Without it the command switches chat on at the first seeding,
+            # which would undo an override the whitelabeling Job has just
+            # applied; with it both Jobs write the same value.
+            - name: MATRIX_ENABLED
+              value: {{ index .Values.waldur.settingsOverrides "MATRIX_ENABLED" | toString | quote }}
+            {{- end }}
+            {{- $sso := dig "sso" (dict) $h }}
+            {{- if dig "enabled" false $sso }}
+            # Homeserver single sign-on: Waldur offers it to Matrix clients and
+            # gives an account only to users of the identity provider the
+            # homeserver signs in through. Reasserted on every sync while SSO
+            # is on; without SSO neither is passed, so an administrator's
+            # choice of login method stands.
+            - name: MATRIX_EXTERNAL_LOGIN_METHOD
+              value: "oidc"
+            - name: MATRIX_SSO_REGISTRATION_METHOD
+              value: {{ dig "waldurRegistrationMethod" "" $sso | toString | quote }}
+            {{- end }}
+            - name: REGISTER_APPSERVICE
+              value: {{ $s.registerAppservice | quote }}
+            - name: HOMESERVER_WAIT_TIMEOUT
+              value: {{ $s.homeserverWaitTimeout | default 900 | int | quote }}
+            # Where the homeserver delivers appservice transactions. In-cluster,
+            # so it is the API Service rather than the public ingress; the
+            # fully-qualified Service name again because Django's URLValidator
+            # rejects single-label hostnames.
+            - name: WALDUR_API_URL
+              value: "http://waldur-mastermind-api.{{ .Release.Namespace }}.svc"
+            {{- if eq (include "waldur.matrixCallsEnabled" .) "true" }}
+            {{- $k := .Values.matrixChat.livekit.keys }}
+            {{- $o := .Values.waldur.settingsOverrides }}
+            # Calls: the URL browsers dial, the URL Waldur calls LiveKit on,
+            # and the key pair Waldur signs call tokens with, from the LiveKit
+            # Secret. A settingsOverrides entry for either URL wins, as it does
+            # without setup; the whitelabeling Job then writes the same value.
+            - name: MATRIX_LIVEKIT_PUBLIC_URL
+              value: {{ (hasKey $o "MATRIX_LIVEKIT_PUBLIC_URL" | ternary (index $o "MATRIX_LIVEKIT_PUBLIC_URL") .Values.matrixChat.livekit.publicUrl) | toString | quote }}
+            - name: MATRIX_LIVEKIT_URL
+              value: {{ (hasKey $o "MATRIX_LIVEKIT_URL" | ternary (index $o "MATRIX_LIVEKIT_URL") (include "waldur.matrixLivekitInternalUrl" .)) | toString | quote }}
+            - name: MATRIX_LIVEKIT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $k.existingSecret.name | default "livekit-secret" }}
+                  key: {{ $k.existingSecret.apiKeyKey | default "LIVEKIT_API_KEY" }}
+            - name: MATRIX_LIVEKIT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $k.existingSecret.name | default "livekit-secret" }}
+                  key: {{ $k.existingSecret.apiSecretKey | default "LIVEKIT_API_SECRET" }}
+            {{- end }}
+            - name: MATRIX_APPSERVICE_AS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: {{ $s.existingSecret.asTokenKey | default "as_token" }}
+            - name: MATRIX_APPSERVICE_HS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: {{ $s.existingSecret.hsTokenKey | default "hs_token" }}
+            - name: MATRIX_USER_REGISTRATION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: {{ $s.existingSecret.registrationTokenKey | default "registration_token" }}
+            # Lets register_matrix_appservice log back in as the bootstrap admin,
+            # which re-registering rotated tokens needs. Read straight from the
+            # Secret: init_matrix_settings ignores it, so it never reaches the
+            # database.
+            - name: MATRIX_BOOTSTRAP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: {{ $s.existingSecret.bootstrapPasswordKey | default "bootstrap_password" }}
+                  optional: true
+            # A homeserver admin's access token, used ahead of the bootstrap
+            # password: for a change the bootstrap admin cannot make, such as a
+            # rotation with password login off, or a Secret without
+            # bootstrap_password. Never minted by the chart: an operator adds it
+            # to the Secret for the sync that needs it. No more exposure than
+            # bootstrap_password, which is an admin credential too.
+            - name: MATRIX_ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: {{ $s.existingSecret.adminTokenKey | default "admin_token" }}
+                  optional: true
+          volumeMounts:
+            - name: api-override
+              mountPath: /etc/waldur/override.conf.py
+              subPath: override.conf.py
+          resources:
+            {{- toYaml .Values.apiResources | nindent 12 }}
+      volumes:
+        - name: api-override
+          configMap:
+            name: api-override-config
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      restartPolicy: "Never"
+{{- end }}

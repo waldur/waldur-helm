@@ -1,0 +1,48 @@
+{{- if and .Values.matrixChat.enabled .Values.matrixChat.livekit.enabled .Values.matrixChat.livekit.rtc.autoDiscoverNodeIp }}
+# Identity for LiveKit's node-IP discovery initContainer.
+#
+# LiveKit is the internet-facing SFU, so its pod must not borrow matrix-init's
+# ServiceAccount: that one can read and create the setup Secret, and a
+# compromised media server holding it could take the appservice tokens. This
+# ServiceAccount can read the livekit-rtc Service and nothing else, and only the
+# initContainer gets its token (deployment-livekit.yaml turns automount off and
+# mounts a projected token there alone).
+#
+# Ordinary resources rather than hooks: matrix-init's objects are hooks with
+# before-hook-creation, deleted and recreated on every upgrade, and a LiveKit pod
+# admitted in that window would be rejected for a missing ServiceAccount.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: livekit-node-ip
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: livekit-node-ip
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["services"]
+    resourceNames: ["livekit-rtc"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: livekit-node-ip
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: livekit-node-ip
+subjects:
+  - kind: ServiceAccount
+    name: livekit-node-ip
+    namespace: {{ .Release.Namespace }}
+{{- end }}

@@ -70,6 +70,9 @@ data:
       {{ if not (hasKey .Values.waldur.featureFlags "project.estimated_cost") }}
         ,"project.estimated_cost": true
       {{ end }}
+      {{ if and .Values.matrixChat.enabled (not (hasKey .Values.waldur.featureFlags "project.show_matrix_chat")) }}
+        ,"project.show_matrix_chat": true
+      {{ end }}
       {{- range $key, $value := .Values.waldur.featureFlags }}
         ,"{{ $key }}": {{ $value | toJson }}
       {{- end }}

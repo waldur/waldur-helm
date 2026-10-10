@@ -22,6 +22,48 @@ spec:
         - name: {{ $val }}
         {{ end -}}
       {{ end }}
+      # LiveKit itself never calls the API. Only the discovery initContainer
+      # does, and it gets a projected token of its own below.
+      automountServiceAccountToken: false
+      {{- if .Values.matrixChat.livekit.rtc.autoDiscoverNodeIp }}
+      serviceAccountName: livekit-node-ip
+      initContainers:
+        # Resolve the livekit-rtc LoadBalancer's external address and bake it
+        # into the config as node_ip, so LiveKit advertises a reachable ICE
+        # candidate. Doing it here rather than in a one-shot Job means it is
+        # re-resolved on every pod start, so a LoadBalancer that is
+        # reprovisioned with a different address self-heals on restart instead
+        # of leaving calls that connect and then carry no media.
+        #
+        # It waits for the address up to the deadline and then exits non-zero,
+        # so the kubelet retries it; there is deliberately no STUN fallback,
+        # because STUN picks the wrong address behind a cluster LoadBalancer.
+        - name: livekit-config-render
+          {{- if .Values.waldur.imageDigest }}
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}@{{ .Values.waldur.imageDigest }}
+          {{- else }}
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
+          {{- end }}
+          imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" .Values.waldur.imageTag "Values" .Values) }}
+          # matrix-init ships in the mastermind image (/usr/local/bin).
+          command:
+            - matrix-init
+            - livekit
+          env:
+            - name: NODE_IP_DISCOVERY_TIMEOUT
+              value: "300"
+          volumeMounts:
+            # The path the script reads, and the one automount would use.
+            - name: kube-api-access
+              mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+              readOnly: true
+            - name: config-template
+              mountPath: /etc/livekit-template
+            - name: config
+              mountPath: /etc/livekit
+          resources:
+            {{- toYaml .Values.matrixChat.livekit.resources | nindent 12 }}
+      {{- end }}
       containers:
         - name: livekit
           {{- $lkRegistry := .Values.matrixChat.livekit.imageRegistry | default .Values.global.imageRegistry }}
@@ -95,9 +137,37 @@ spec:
               readOnly: true
             {{- end }}
       volumes:
+        {{- if .Values.matrixChat.livekit.rtc.autoDiscoverNodeIp }}
+        # The ConfigMap is the template; the rendered file livekit actually
+        # reads is written by the initContainer into this emptyDir.
+        - name: config-template
+          configMap:
+            name: livekit-config
+        - name: config
+          emptyDir: {}
+        # What automount would project, mounted into the initContainer alone so
+        # the media server never holds an API token.
+        - name: kube-api-access
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: token
+                  expirationSeconds: 3607
+              - configMap:
+                  name: kube-root-ca.crt
+                  items:
+                    - key: ca.crt
+                      path: ca.crt
+              - downwardAPI:
+                  items:
+                    - path: namespace
+                      fieldRef:
+                        fieldPath: metadata.namespace
+        {{- else }}
         - name: config
           configMap:
             name: livekit-config
+        {{- end }}
         {{- if .Values.matrixChat.livekit.turn.enabled }}
         {{- $turn := .Values.matrixChat.livekit.turn }}
         - name: turn-tls

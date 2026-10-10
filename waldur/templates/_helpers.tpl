@@ -699,3 +699,13 @@ because Waldur's URL settings reject single-label hostnames.
 {{- $lk.publicUrl | replace "wss://" "https://" | replace "ws://" "http://" -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+The appservice bot's Matrix localpart: MATRIX_APPSERVICE_SENDER_LOCALPART from
+waldur.settingsOverrides, else matrixChat.setup.botLocalpart where the chart
+has one, else Waldur's default. A value changed only in Waldur's settings is
+invisible here.
+*/}}
+{{- define "waldur.matrixBotLocalpart" -}}
+{{- index .Values.waldur.settingsOverrides "MATRIX_APPSERVICE_SENDER_LOCALPART" | default (dig "setup" "botLocalpart" "waldur-bot" .Values.matrixChat) -}}
+{{- end -}}

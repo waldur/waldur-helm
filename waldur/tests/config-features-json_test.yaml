@@ -53,3 +53,32 @@ tests:
       - matchRegex:
           path: data["features.json"]
           pattern: '"deployment\.send_metrics": false'
+
+  - it: should show the project chat when Matrix chat is enabled
+    # Without it there is no chat drawer, no project chat tab and no Matrix
+    # admin page after an install that turned Matrix chat on.
+    set:
+      matrixChat.enabled: true
+    asserts:
+      - matchRegex:
+          path: data["features.json"]
+          pattern: '"project\.show_matrix_chat": true'
+
+  - it: should leave the project chat flag alone without Matrix chat
+    asserts:
+      - notMatchRegex:
+          path: data["features.json"]
+          pattern: 'project\.show_matrix_chat'
+
+  - it: should let featureFlags hide the project chat with Matrix chat enabled
+    set:
+      matrixChat.enabled: true
+      waldur.featureFlags:
+        project.show_matrix_chat: false
+    asserts:
+      - matchRegex:
+          path: data["features.json"]
+          pattern: '"project\.show_matrix_chat": false'
+      - notMatchRegex:
+          path: data["features.json"]
+          pattern: '"project\.show_matrix_chat": true'

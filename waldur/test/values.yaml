@@ -695,13 +695,23 @@ matrixChat:
       # Public LB IP assigned by Cilium from the label above. STUN auto-discovery
       # returns the cluster egress NAT (wrong for inbound), so advertise it
       # explicitly; otherwise calls connect but carry no audio/video.
+      #
+      # Pinned rather than auto-discovered: discovery reads the Service's
+      # assigned address at pod start, which exercises the happy path but would
+      # make the CI deployment depend on LB-IPAM having settled first. Only the
+      # rendered side of discovery is unit-tested (the config placeholder and
+      # the initContainer, in tests/); the runtime lookup in
+      # matrix-init (in the mastermind image) has no test in this repo.
+      autoDiscoverNodeIp: false
       nodeIp: "193.40.46.193"
     turn:
       enabled: false
   homeserver:
     enabled: true
     serverName: "helm-testing.waldur.com"
-    registrationToken: "helmtest-registration-token"
+    # No registrationToken: with matrixChat.setup.enabled (the default) the
+    # matrix-init Job mints it and hands the same value to both the homeserver
+    # and the backend, so a hand-picked one here is refused at render time.
 
 global:
   imageRegistry: "registry.hpc.ut.ee/mirror"

@@ -117,6 +117,11 @@ Upgrade Waldur dependencies and release:
   helm upgrade waldur waldur/
 ```
 
+Upgrading a release that already runs Matrix chat (`matrixChat.enabled`) to
+a chart with `matrixChat.setup`: create the setup Secret from the current
+tokens first, as "Migrating an existing deployment" in
+[docs/matrix-chat.md](docs/matrix-chat.md) describes. Without it, the upgrade refuses to render.
+
 Restart deployments to apply configmaps changes:
 
 ```bash

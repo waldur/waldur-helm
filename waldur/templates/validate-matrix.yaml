@@ -1,0 +1,65 @@
+{{- /*
+Cross-cutting Matrix render guards.
+
+Renders no object. It exists because the interesting misconfigurations are the
+ones where a *component is absent*, which the component's own template cannot
+catch — a template guarded on `homeserver.enabled` never runs when the
+homeserver is off. The chart already turns six other silent runtime failures
+into render errors this way; these are the Matrix ones.
+*/ -}}
+{{- if .Values.matrixChat.enabled }}
+{{- $m := .Values.matrixChat }}
+
+{{- if not $m.homeserver.enabled }}
+{{- fail "matrixChat.enabled=true with matrixChat.homeserver.enabled=false. The homeserver is a bundled component, not an operator-supplied one: the appservice is a root account over the whole @.*:<domain> namespace, so pointing Waldur at a homeserver someone else runs is unsafe by design and is not supported. Today this combination renders cleanly and produces a deployment with no homeserver, no matrix ingress, and no chat host in the homeport CSP — chat that fails at runtime with no hint. Set matrixChat.homeserver.enabled=true, or matrixChat.enabled=false." }}
+{{- end }}
+
+{{- if $m.setup.enabled }}
+{{- $remove := "Remove it, or set matrixChat.setup.enabled=false to manage the tokens by hand. Upgrading a deployment that already runs Matrix chat: see docs/matrix-chat.md, \"Migrating an existing deployment\"." }}
+{{- if $m.homeserver.registrationTokenExistingSecret.name }}
+{{- fail (printf "matrixChat.homeserver.registrationTokenExistingSecret.name is set while matrixChat.setup.enabled=true. Under zero-touch setup the registration token lives in the setup Secret next to the appservice tokens, because all three are handed to the homeserver and to Waldur together; a second source is a second value that drifts. %s" $remove) }}
+{{- end }}
+{{- if $m.homeserver.registrationToken }}
+{{- fail (printf "matrixChat.homeserver.registrationToken is set while matrixChat.setup.enabled=true. Zero-touch setup takes the registration token from the setup Secret and seeds the same value into the backend's MATRIX_USER_REGISTRATION_SECRET, so a value here would be ignored — the kind of silent mismatch this setup path exists to remove. %s" $remove) }}
+{{- end }}
+{{- /* An upgrade that turns setup on for a homeserver the chart already runs,
+with no setup Secret yet, would mint new tokens: the homeserver would get a new
+registration token while Waldur keeps the old one, and the wiring Job would
+refuse the hand-configured appservice tokens. The Secret has to be created from
+the current tokens first. lookup answers only against a live cluster (helm
+install/upgrade), and returns nothing under helm template, a dry run or ArgoCD,
+which renders this check a no-op there rather than a false alarm. */ -}}
+{{- if and .Release.IsUpgrade (not $m.setup.existingSecret.name) }}
+{{- if and (not (lookup "v1" "Secret" .Release.Namespace $m.setup.secretName)) (lookup "apps/v1" "StatefulSet" .Release.Namespace "matrix-homeserver") }}
+{{- fail (printf "matrixChat.setup.enabled=true on a release whose homeserver already runs, and Secret %s does not exist. The setup Jobs would mint new tokens that neither the homeserver's data nor Waldur's settings match. Create the Secret from the current tokens first, or point setup.existingSecret at one: see %s." $m.setup.secretName "docs/matrix-chat.md, \"Migrating an existing deployment\"") }}
+{{- end }}
+{{- end }}
+{{- /* The wiring Job seeds these on every sync, after the whitelabeling Job
+applies waldur.settingsOverrides, so an override would be written and then
+overwritten on each upgrade: two sources for one setting. */ -}}
+{{- range $key := list "MATRIX_HOMESERVER_URL" "MATRIX_HOMESERVER_PUBLIC_URL" "MATRIX_HOMESERVER_DOMAIN" "MATRIX_APPSERVICE_SENDER_LOCALPART" "MATRIX_APPSERVICE_AS_TOKEN" "MATRIX_APPSERVICE_HS_TOKEN" "MATRIX_USER_REGISTRATION_SECRET" "MATRIX_TOKENS_MANAGED_BY" "MATRIX_LIVEKIT_KEY" "MATRIX_LIVEKIT_SECRET" }}
+{{- if hasKey $.Values.waldur.settingsOverrides $key }}
+{{- fail (printf "waldur.settingsOverrides sets %s while matrixChat.setup.enabled=true. The setup wiring Job seeds that setting from the chart's Matrix values and the setup Secret on every sync, so the override would be overwritten each time. Remove it from settingsOverrides, or set matrixChat.setup.enabled=false to manage the Matrix settings by hand." $key) }}
+{{- end }}
+{{- end }}
+{{- if dig "sso" "enabled" false $m.homeserver }}
+{{- range $key := list "MATRIX_EXTERNAL_LOGIN_METHOD" "MATRIX_SSO_REGISTRATION_METHOD" }}
+{{- if hasKey $.Values.waldur.settingsOverrides $key }}
+{{- fail (printf "waldur.settingsOverrides sets %s while matrixChat.setup and homeserver single sign-on are on. The setup wiring Job seeds it from matrixChat.homeserver.sso on every sync. Remove it from settingsOverrides." $key) }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- if not .Values.waldur.initdbEnabled }}
+{{- fail "matrixChat.setup.enabled=true requires waldur.initdbEnabled=true. Seeding Constance needs a migrated database, so the wiring Job runs in the same post-install phase as the whitelabeling Job, which initdbEnabled gates. With initdb off the tokens would be generated and given to the homeserver but never given to Waldur — the exact half-configured state that surfaces later as M_UNKNOWN_TOKEN." }}
+{{- end }}
+{{- end }}
+
+{{- if and $m.livekit.enabled $m.livekit.rtc.nodeIp $m.livekit.rtc.autoDiscoverNodeIp }}
+{{- fail "matrixChat.livekit.rtc.nodeIp is set while rtc.autoDiscoverNodeIp is true. Pick one: auto-discovery reads the livekit-rtc LoadBalancer's assigned address at pod start, an explicit nodeIp pins it. Leaving both on hides which one is in effect. Clear nodeIp, or set autoDiscoverNodeIp=false." }}
+{{- end }}
+
+{{- if and $m.livekit.enabled (not $m.livekit.rtc.autoDiscoverNodeIp) (not $m.livekit.rtc.nodeIp) }}
+{{- fail "matrixChat.livekit.rtc has neither autoDiscoverNodeIp nor an explicit nodeIp. LiveKit would fall back to STUN discovery, which picks the wrong address behind a cluster LoadBalancer — calls then connect and carry no audio or video, with nothing in any log pointing at the address. Leave autoDiscoverNodeIp=true, or set nodeIp to the livekit-rtc external IP." }}
+{{- end }}
+
+{{- end }}

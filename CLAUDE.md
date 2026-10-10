@@ -93,8 +93,7 @@ CI pulls templates from `waldur/waldur-pipelines`. Jobs:
 |---|---|---|
 | `Run linter` | MRs, master, tags | `helm dep update` + `helm lint` (twice: default & test values) + `helm unittest`, then renders templates and `py_compile`s the rendered override config |
 | `Validate release installation (dry-run)` | MRs, master, tags | `helm install --dry-run --debug` against the test k8s cluster |
-| `Test release installation and readiness` | MRs / scheduled / triggered, when `waldur/**` changed | Real `helm install --wait --timeout 20m0s` on the test cluster, then `helm list` |
-| `Cleanup previous test deployment` | pre-stage | `helm uninstall` + delete leftover jobs/PVCs to keep the test cluster healthy |
+| `Test release installation and readiness` | MRs / scheduled / triggered, when `waldur/**` changed | Cleans up the previous test release and its Matrix state (`helm uninstall --wait`, leftover jobs/PVCs, the Matrix setup Secret and settings), then a real `helm install --wait --timeout 20m0s` on the test cluster, then `helm list`; one job, so the `waldur-helm-test` resource group keeps pipelines from interleaving |
 | `Publish new chart version and update docs on github` | on tag | Packages the chart, pushes to the `gh-pages` branch (the `waldur.github.io/waldur-helm/` index) |
 | `Check for deprecated Kubernetes resources` | periodic | Catches drift against current k8s APIs |
 

@@ -907,6 +907,8 @@ rabbitmq:
 # Matrix chat integration (LiveKit media SFU + Matrix homeserver). Waldur
 # itself issues the LiveKit call tokens.
 matrixChat:
+  # Also turns on the project.show_matrix_chat feature flag, unless
+  # waldur.featureFlags sets it.
   enabled: false
   # The Matrix bot (mastermind's `matrix_bot` command): Waldur's encrypted member
   # of every Waldur room. It answers chat commands and posts everything Waldur
@@ -935,6 +937,62 @@ matrixChat:
   # media connect — without opting the rest of the stack into NetworkPolicy.
   networkPolicy:
     enabled: false
+  # Zero-touch setup. The appservice token is a shared secret between two
+  # programs — Waldur and the homeserver — so the deployment mints it once and
+  # hands the same value to both, the way a database password is handled. With
+  # this on, the Setup wizard is not part of installing Matrix chat: the
+  # operator is never asked for a homeserver URL, domain, or registration
+  # secret that the chart itself chose, and nothing is typed into two places.
+  setup:
+    enabled: true
+    # Secret the init Job generates (and reuses forever after). The Job creates
+    # it through the API, so Helm never owns it and `helm uninstall` leaves it
+    # (ArgoCD does not prune it either) — losing these tokens while the
+    # homeserver's data volume survives means losing the ability to talk to
+    # your own chat history.
+    secretName: matrix-appservice-secret
+    # Bot account localpart; becomes @<localpart>:<serverName>.
+    botLocalpart: waldur-bot
+    # Automate `!admin appservices register` instead of leaving it as a
+    # hand-typed admin-room command. Requires the `register_matrix_appservice`
+    # command in the mastermind image; against an older image the wiring Job
+    # skips registration with a warning in its log, so the chart upgrade itself
+    # still succeeds.
+    #
+    # On a new homeserver it creates a bootstrap admin, @waldur-bootstrap,
+    # through the shared-secret registration API, keyed by the registration
+    # token, with the bootstrap password from the Secret; later runs sign in as
+    # it with that password. It signs the bootstrap session out when done. No
+    # account becomes an admin by being the first one.
+    # Re-runs replace the homeserver's registration only when it differs from
+    # Waldur's, after a token rotation say, and otherwise change nothing.
+    #
+    # Off: the appservice has to be registered by hand, and every token
+    # rotation needs that again (docs/matrix-chat.md, "Rotating the tokens").
+    registerAppservice: true
+    # Seconds the wiring Job waits for the homeserver to answer before it
+    # registers the appservice. Tuwunel migrates its database silently on the
+    # first boot of a new version, and the StatefulSet may be restarting on the
+    # very upgrade that runs the Job. Under plain Helm the hook is also bounded
+    # by `helm upgrade --timeout` (5m by default); ArgoCD has no such limit.
+    homeserverWaitTimeout: 900
+    # Supply the tokens yourself (Vault, Sealed Secrets, ESO) instead of
+    # having the Job generate them. When set, nothing is generated and the
+    # referenced Secret is read as-is.
+    #
+    # registerAppservice needs admin rights on the homeserver to register or
+    # replace the registration. It uses a homeserver admin's access token from
+    # the optional admin token key when the Secret has one, and the bootstrap
+    # password otherwise, so include a bootstrap password. The chart never
+    # mints an admin token: add it for the sync that needs it and remove it
+    # afterwards, since a revoked one left there makes the next change fail.
+    existingSecret:
+      name: ""
+      asTokenKey: "as_token"
+      hsTokenKey: "hs_token"
+      registrationTokenKey: "registration_token"
+      bootstrapPasswordKey: "bootstrap_password"
+      adminTokenKey: "admin_token"
   livekit:
     # Deploy the bundled livekit-server SFU. Set to false to use an EXTERNAL,
     # operator-managed LiveKit instead: point publicUrl at the external wss
@@ -975,9 +1033,18 @@ matrixChat:
       signalingPort: 7880     # signaling (wss); ClusterIP behind the shared ingress
       udpPort: 7882           # WebRTC media, primary; LoadBalancer, never ingress
       tcpPort: 7881           # WebRTC media, fallback
-      # Set to the LiveKit node's public IP so it advertises a reachable address in
-      # ICE candidates; otherwise calls connect but carry no audio/video.
-      useExternalIp: true
+      # Read the livekit-rtc LoadBalancer's assigned external address at pod
+      # start and advertise it as node_ip. Replaces the post-install step of
+      # copying that address back into nodeIp by hand — and being re-resolved on
+      # every restart, it survives a reprovisioned LoadBalancer. A LoadBalancer
+      # that reports a hostname is resolved to its address. The pod waits for
+      # the address (up to 5 minutes per attempt, then retried by the kubelet)
+      # rather than falling back to STUN. Runs matrix-init from the mastermind
+      # image, so it needs an image that has it.
+      autoDiscoverNodeIp: true
+      # Fallback when autoDiscoverNodeIp is false: the LiveKit node's public IP,
+      # so it advertises a reachable address in ICE candidates; otherwise calls
+      # connect but carry no audio/video. Mutually exclusive with discovery.
       nodeIp: ""
       # Extra labels merged onto the livekit-rtc LoadBalancer Service. Empty by
       # default; some bare-metal LB controllers select the public vs internal IP
@@ -1034,8 +1101,11 @@ matrixChat:
     # out that user's chat devices idle for more than 24 hours, so a longer
     # value only keeps devices of users who start no other session.
     refreshTokenTtl: 86400
-    # Registration token that gates user provisioning. MUST equal the backend's
-    # MATRIX_USER_REGISTRATION_SECRET.
+    # Registration token that gates account registration, and the registration
+    # shared secret admins are registered with. MUST equal the backend's
+    # MATRIX_USER_REGISTRATION_SECRET. Only for setup.enabled=false: with setup
+    # on, the token comes from the setup Secret and setting either of these is a
+    # render error.
     registrationToken: ""
     registrationTokenExistingSecret:
       name: ""

@@ -4,7 +4,8 @@
 {{- fail "matrixChat.homeserver.serverName is required when the homeserver is enabled. It is baked into every user/room ID and is the ingress host; rendering with an empty serverName produces a broken homeserver, a catch-all ingress, and a homeport CSP that silently omits the chat host. Set it to your real domain (e.g. matrix.example.org)." }}
 {{- end }}
 # Tuwunel (Matrix homeserver) configuration. Non-secret config only — the
-# registration token is injected as an env override from a Secret, not baked here.
+# registration token, which is also the registration shared secret, is injected
+# as an env override from a Secret, not baked here.
 #
 # This renders a *template*, not the final config: @LISTEN_ADDRESSES@ is resolved
 # by the render-config initContainer in statefulset-matrix-homeserver.yaml at pod
@@ -25,9 +26,14 @@ data:
     address = @LISTEN_ADDRESSES@
     port = [{{ $h.clientPort }}]
     allow_registration = {{ $h.allowRegistration }}
-    {{- if and $h.allowRegistration (not $h.registrationToken) (not $h.registrationTokenExistingSecret.name) }}
+    {{- if and $h.allowRegistration (not .Values.matrixChat.setup.enabled) (not $h.registrationToken) (not $h.registrationTokenExistingSecret.name) }}
     {{- fail "matrixChat.homeserver: allowRegistration is true but no registrationToken / registrationTokenExistingSecret is set. Set a registration token to gate user provisioning, or set allowRegistration=false. Refusing to render an open, abusable homeserver." }}
     {{- end }}
+    # Waldur registers an account for whoever opens the chat first, so the
+    # first account must not become an admin. Admins are registered through
+    # the shared-secret API, with registration_shared_secret set from the
+    # registration token Secret (an env override, so not here).
+    grant_admin_to_first_user = false
     max_request_size = {{ int64 $h.maxRequestSize }}
     {{- /* int64 turns anything it cannot parse into 0, and Tuwunel reads an
          access_token_ttl of 0 as "expire immediately", so check the raw value.

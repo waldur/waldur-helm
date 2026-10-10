@@ -82,12 +82,28 @@ spec:
           env:
             - name: TUWUNEL_CONFIG
               value: /etc/tuwunel/tuwunel.toml
-            {{- if or $h.registrationTokenExistingSecret.name $h.registrationToken }}
-            - name: TUWUNEL_REGISTRATION_TOKEN
+            {{- $setup := .Values.matrixChat.setup }}
+            {{- $token := dict }}
+            {{- if $setup.enabled }}
+            {{- $token = dict "name" ($setup.existingSecret.name | default $setup.secretName) "key" ($setup.existingSecret.registrationTokenKey | default "registration_token") }}
+            {{- else if or $h.registrationTokenExistingSecret.name $h.registrationToken }}
+            {{- $token = dict "name" ($h.registrationTokenExistingSecret.name | default "matrix-homeserver-secret") "key" ($h.registrationTokenExistingSecret.key | default "registration_token") }}
+            {{- end }}
+            {{- if $token }}
+            # Zero-touch: the token comes from the Secret the matrix-init Job
+            # generated, so the operator never picks it and never copies it into
+            # the backend. This mount is also the ordering constraint that keeps
+            # the homeserver from starting before that Secret exists. With setup
+            # on or off, the same value is the shared secret admins are
+            # registered with, the bootstrap admin included, since no account
+            # becomes an admin by being the first one.
+            {{- range $name := list "TUWUNEL_REGISTRATION_TOKEN" "TUWUNEL_REGISTRATION_SHARED_SECRET" }}
+            - name: {{ $name }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ $h.registrationTokenExistingSecret.name | default "matrix-homeserver-secret" }}
-                  key: {{ $h.registrationTokenExistingSecret.key | default "registration_token" }}
+                  name: {{ $token.name }}
+                  key: {{ $token.key }}
+            {{- end }}
             {{- end }}
           # Tuwunel migrates its database in place before it opens the
           # listener, silently, for as long as the volume size dictates. A

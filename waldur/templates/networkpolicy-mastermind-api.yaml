@@ -13,11 +13,13 @@ spec:
   ingress:
   - from:
     - podSelector: {}
-    ports: 
+    # The pod's port, not the Service's: policy is evaluated after the Service
+    # maps 80 to targetPort 8080, and gunicorn listens on nothing else. A rule
+    # on 80/443 matched no traffic at all, which dropped every in-namespace
+    # caller — the homeserver's appservice transactions among them.
+    ports:
     - protocol: TCP
-      port: 80
-    - protocol: TCP
-      port: 443
+      port: 8080
   egress:
   - to: [] 
 {{ end }}

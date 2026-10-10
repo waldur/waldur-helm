@@ -98,6 +98,10 @@ graph TB
 
   - Exposes metrics on port 8080
 
+  - `waldur.metricsExporter.serviceMonitor.enabled` adds a ServiceMonitor for
+    the Prometheus Operator; the Matrix chat alert rules are under "Monitoring" in
+    [Matrix chat](matrix-chat.md)
+
 ### 6. UVK Everypay Integration
 
 **Deployment:** `waldur-uvk-everypay`

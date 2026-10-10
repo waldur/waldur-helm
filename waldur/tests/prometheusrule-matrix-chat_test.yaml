@@ -1,0 +1,179 @@
+suite: matrix chat alert rules
+templates:
+  - templates/prometheusrule-matrix-chat.yaml
+
+capabilities:
+  apiVersions:
+    - monitoring.coreos.com/v1/PrometheusRule
+
+tests:
+  - it: renders nothing by default
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders nothing while matrix chat is off
+    set:
+      waldur.metricsExporter.enabled: true
+      matrixChat.prometheusRule.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: ships the matrix chat alert rules when enabled
+    set:
+      matrixChat.enabled: true
+      waldur.metricsExporter.enabled: true
+      matrixChat.prometheusRule.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: PrometheusRule
+      - lengthEqual:
+          path: spec.groups
+          count: 1
+      - equal:
+          path: spec.groups[0].name
+          value: waldur-matrix-chat
+      # First in the group: rules in a group are evaluated in order, so the
+      # alerts read the held values from the same evaluation.
+      # Per namespace and job on Kubernetes: a replaced exporter pod must
+      # continue the series, not start a second one. Per target elsewhere:
+      # two Waldurs in one job must not become one.
+      - equal:
+          path: spec.groups[0].rules[0]
+          value:
+            record: waldur_matrix_check_passed:per_waldur
+            expr: >-
+              min by (namespace, job, check) (waldur_matrix_check_passed{namespace!=""})
+              or
+              waldur_matrix_check_passed{namespace=""}
+      - equal:
+          path: spec.groups[0].rules[1]
+          value:
+            record: waldur_matrix_rooms:per_waldur
+            expr: >-
+              max by (namespace, job, state) (waldur_matrix_rooms{namespace!=""})
+              or
+              waldur_matrix_rooms{namespace=""}
+      - equal:
+          path: spec.groups[0].rules[2]
+          value:
+            record: waldur_matrix_check_passed:last20m
+            expr: >-
+              waldur_matrix_check_passed:per_waldur
+              or
+              last_over_time(waldur_matrix_check_passed:per_waldur[20m])
+      - equal:
+          path: spec.groups[0].rules[3]
+          value:
+            record: waldur_matrix_rooms:last20m
+            expr: >-
+              waldur_matrix_rooms:per_waldur
+              or
+              last_over_time(waldur_matrix_rooms:per_waldur[20m])
+      - lengthEqual:
+          path: spec.groups[0].rules
+          count: 11
+      - contains:
+          path: spec.groups[0].rules
+          content:
+            alert: WaldurMatrixMetricsMissing
+            expr: absent(waldur_matrix_diagnostics_up)
+            for: 15m
+            labels:
+              severity: warning
+          any: true
+      - contains:
+          path: spec.groups[0].rules
+          content:
+            alert: WaldurMatrixDiagnosticsDown
+            expr: waldur_matrix_diagnostics_up == 0
+            for: 10m
+            labels:
+              severity: warning
+          any: true
+      - contains:
+          path: spec.groups[0].rules
+          content:
+            alert: WaldurMatrixHomeserverUnreachable
+            expr: >-
+              waldur_matrix_check_passed:last20m{check="homeserver_reachable"} == 0
+              unless ignoring(check)
+              waldur_matrix_check_passed:last20m{check="homeserver_configured"} == 0
+            for: 5m
+            labels:
+              severity: critical
+          any: true
+      - contains:
+          path: spec.groups[0].rules
+          content:
+            alert: WaldurMatrixBotNotRunning
+            expr: >-
+              waldur_matrix_check_passed:last20m{check="bot_running"} == 0
+              unless ignoring(check)
+              waldur_matrix_check_passed:last20m{check="homeserver_configured"} == 0
+            for: 10m
+            labels:
+              severity: warning
+          any: true
+      - contains:
+          path: spec.groups[0].rules
+          content:
+            alert: WaldurMatrixBotSignInFailing
+            expr: >-
+              waldur_matrix_check_passed:last20m{check="bot_whoami"} == 0
+              unless ignoring(check)
+              waldur_matrix_check_passed:last20m{check="homeserver_reachable"} == 0
+            for: 10m
+            labels:
+              severity: warning
+          any: true
+      - contains:
+          path: spec.groups[0].rules
+          content:
+            alert: WaldurMatrixAppservicePingFailing
+            expr: >-
+              waldur_matrix_check_passed:last20m{check="appservice_ping"} == 0
+              unless ignoring(check)
+              waldur_matrix_check_passed:last20m{check="bot_whoami"} == 0
+            for: 10m
+            labels:
+              severity: warning
+          any: true
+      - contains:
+          path: spec.groups[0].rules
+          content:
+            alert: WaldurMatrixRoomsErred
+            expr: waldur_matrix_rooms:last20m{state="error"} > 0
+            for: 30m
+            labels:
+              severity: warning
+          any: true
+
+  # Helm must pass {{ $value }} through untouched: Prometheus expands it when
+  # the alert fires.
+  - it: leaves the Prometheus alert templates to Prometheus
+    set:
+      matrixChat.enabled: true
+      waldur.metricsExporter.enabled: true
+      matrixChat.prometheusRule.enabled: true
+    asserts:
+      - matchRegex:
+          path: spec.groups[0].rules[10].annotations.description
+          pattern: '^\{\{ \$value \}\} Matrix room'
+
+  - it: carries the labels the operator's Prometheus selects rules by
+    set:
+      matrixChat.enabled: true
+      waldur.metricsExporter.enabled: true
+      matrixChat.prometheusRule.enabled: true
+      matrixChat.prometheusRule.labels.release: kube-prometheus-stack
+    asserts:
+      - equal:
+          path: metadata.labels.release
+          value: kube-prometheus-stack
+      - equal:
+          path: metadata.labels["app.kubernetes.io/instance"]
+          value: RELEASE-NAME

@@ -5,6 +5,7 @@ metadata:
   name: waldur-metrics-exporter
   labels:
 {{ include "waldur.labels" . | indent 4 }}
+    app: waldur-metrics-exporter
 {{ if .Values.waldur.metricsExporter.includeAnnotations }}
   annotations:
     prometheus.io/scrape: 'true'

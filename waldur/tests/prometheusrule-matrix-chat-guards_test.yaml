@@ -1,0 +1,26 @@
+# Kept apart from prometheusrule-matrix-chat_test.yaml, which declares the
+# PrometheusRule CRD for the whole suite; the CRD guard needs it absent.
+suite: matrix chat alert rules guards
+templates:
+  - templates/prometheusrule-matrix-chat.yaml
+
+tests:
+  - it: fails when the rules are on but the metrics exporter is off
+    capabilities:
+      apiVersions:
+        - monitoring.coreos.com/v1/PrometheusRule
+    set:
+      matrixChat.enabled: true
+      matrixChat.prometheusRule.enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "matrixChat.prometheusRule.enabled needs waldur.metricsExporter.enabled: the rules read the waldur_matrix_* metrics the exporter publishes, so without it none of them can ever fire. Enable the exporter, with a support or staff user's token in waldur.supportToken."
+
+  - it: fails when the cluster has no PrometheusRule CRD
+    set:
+      matrixChat.enabled: true
+      waldur.metricsExporter.enabled: true
+      matrixChat.prometheusRule.enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "matrixChat.prometheusRule.enabled is true, but the cluster does not serve monitoring.coreos.com/v1 PrometheusRule. It comes with the Prometheus Operator (for example kube-prometheus-stack); install that first, or leave the rules off and load docs/matrix-chat.md's rules into your Prometheus yourself."

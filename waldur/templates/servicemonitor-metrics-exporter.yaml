@@ -1,0 +1,24 @@
+{{- if and .Values.waldur.metricsExporter.enabled .Values.waldur.metricsExporter.serviceMonitor.enabled }}
+{{- if not (.Capabilities.APIVersions.Has "monitoring.coreos.com/v1/ServiceMonitor") }}
+{{- fail "waldur.metricsExporter.serviceMonitor.enabled is true, but the cluster does not serve monitoring.coreos.com/v1 ServiceMonitor. It comes with the Prometheus Operator (for example kube-prometheus-stack); install that first, or scrape the exporter Service through its prometheus.io annotations instead." }}
+{{- end }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: waldur-metrics-exporter
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+{{- with .Values.waldur.metricsExporter.serviceMonitor.labels }}
+{{ toYaml . | indent 4 }}
+{{- end }}
+spec:
+  selector:
+    matchLabels:
+      app: waldur-metrics-exporter
+  endpoints:
+    - port: http
+      path: /metrics
+      {{- with .Values.waldur.metricsExporter.serviceMonitor.interval }}
+      interval: {{ . }}
+      {{- end }}
+{{- end }}

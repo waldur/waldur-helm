@@ -1,0 +1,87 @@
+suite: metrics exporter ServiceMonitor
+templates:
+  - templates/servicemonitor-metrics-exporter.yaml
+  - templates/service-metrics-exporter.yaml
+
+capabilities:
+  apiVersions:
+    - monitoring.coreos.com/v1/ServiceMonitor
+
+tests:
+  - it: renders nothing by default
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: templates/servicemonitor-metrics-exporter.yaml
+
+  - it: renders nothing while the exporter is off
+    set:
+      waldur.metricsExporter.serviceMonitor.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: templates/servicemonitor-metrics-exporter.yaml
+
+  - it: scrapes only the exporter's Service
+    set:
+      waldur.metricsExporter.enabled: true
+      waldur.metricsExporter.serviceMonitor.enabled: true
+    asserts:
+      - isKind:
+          of: ServiceMonitor
+        template: templates/servicemonitor-metrics-exporter.yaml
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app: waldur-metrics-exporter
+        template: templates/servicemonitor-metrics-exporter.yaml
+      # No namespaceSelector: the monitor looks in its own namespace only.
+      - notExists:
+          path: spec.namespaceSelector
+        template: templates/servicemonitor-metrics-exporter.yaml
+      - equal:
+          path: spec.endpoints[0]
+          value:
+            port: http
+            path: /metrics
+            interval: 60s
+        template: templates/servicemonitor-metrics-exporter.yaml
+      # The Service's chart-wide labels are shared by every Service of the
+      # release; this one is what the selector above can tell it apart by.
+      - equal:
+          path: metadata.labels.app
+          value: waldur-metrics-exporter
+        template: templates/service-metrics-exporter.yaml
+
+  - it: scrapes at the interval set
+    set:
+      waldur.metricsExporter.enabled: true
+      waldur.metricsExporter.serviceMonitor.enabled: true
+      waldur.metricsExporter.serviceMonitor.interval: 30s
+    asserts:
+      - equal:
+          path: spec.endpoints[0].interval
+          value: 30s
+        template: templates/servicemonitor-metrics-exporter.yaml
+
+  - it: leaves the interval to Prometheus when none is set
+    set:
+      waldur.metricsExporter.enabled: true
+      waldur.metricsExporter.serviceMonitor.enabled: true
+      waldur.metricsExporter.serviceMonitor.interval: ""
+    asserts:
+      - notExists:
+          path: spec.endpoints[0].interval
+        template: templates/servicemonitor-metrics-exporter.yaml
+
+  - it: carries the labels the operator's Prometheus selects ServiceMonitors by
+    set:
+      waldur.metricsExporter.enabled: true
+      waldur.metricsExporter.serviceMonitor.enabled: true
+      waldur.metricsExporter.serviceMonitor.labels.release: kube-prometheus-stack
+    asserts:
+      - equal:
+          path: metadata.labels.release
+          value: kube-prometheus-stack
+        template: templates/servicemonitor-metrics-exporter.yaml
+

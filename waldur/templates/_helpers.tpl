@@ -649,6 +649,39 @@ false
 {{- end -}}
 
 {{/*
+Exec command for the Celery worker's startup, liveness and readiness probes:
+ping this pod's own worker (celery@<hostname>, the node name Celery derives
+from socket.gethostname()) and exit non-zero, with the reason on stderr, if it
+does not reply within 10s (Celery's default 1s RPC timeout is too low under
+load).
+
+This replaces `celery inspect -d celery@$HOSTNAME ping`, which never closes
+its broker connections: the ping is published through Celery's pooled
+producer, and the CLI exits with that pooled socket -- and its own -- still
+open. RabbitMQ logs each one as "client unexpectedly closed TCP connection",
+several times a minute per worker replica. Detaching the producer pool makes
+the ping publish on the probe's own connection, which the `with` block closes
+with a proper AMQP connection.close. (Closing the pools instead does not help:
+kombu tears pooled sockets down without the AMQP close.) `producer_pool` is a
+cached_property, so it is assigned directly: that holds even if the pool was
+read earlier, whereas setting the private `_producer_pool` would not.
+*/}}
+{{- define "waldur.workerPingProbeCommand" -}}
+- python3
+- -c
+- |
+  import socket, sys
+  from waldur_core.server.celeryconf import app
+  app.control.mailbox.producer_pool = None
+  worker = "celery@" + socket.gethostname()
+  with app.connection() as conn:
+      conn.ensure_connection(max_retries=1)
+      replies = app.control.ping(destination=[worker], timeout=10, connection=conn)
+  if not replies:
+      sys.exit(worker + " did not reply to ping within 10s")
+{{- end -}}
+
+{{/*
 Whether Matrix calls are configured: chat is on and LiveKit has a public
 signaling URL (bundled or external). Gates the homeserver's RTC focus and the
 LiveKit settings seeded into Waldur. Returns "true" or "false".

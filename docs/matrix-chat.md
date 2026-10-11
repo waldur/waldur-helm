@@ -291,6 +291,23 @@ Do not delete the Secret to rotate:
 the Job would also mint a new bootstrap password, which no longer matches the
 bootstrap user on the homeserver, and the registration step would fail.
 
+Treat the `as_token` as a homeserver admin credential. Waldur's registration
+claims every local user ID, so from the moment the appservice is registered the
+token can act as any account on the homeserver, `@waldur-bootstrap` and the
+other admins included. The registration step also makes the bot a homeserver
+admin, so the token can call the admin API as the bot too, for example to set
+any account's password. Waldur staff can read it in clear through the settings
+API. See
+[Making the bot a homeserver admin](https://docs.waldur.com/latest/developer-guide/admin-guide/matrix-appservice-setup/#making-the-bot-a-homeserver-admin).
+
+The tokens also end up outside the Secret. Each registration is posted to
+`#admins:<serverName>` as a plain message, both tokens included, and stays in
+that room's history on the homeserver's PVC; a rotation makes the old ones
+useless. Tuwunel 1.9.3 sends the `hs_token` in the URL of every call to Waldur,
+and when a call cannot reach Waldur's API its warning quotes that URL, so the
+token lands in the homeserver's log. Treat those logs as secret, and rotate both
+tokens if they were shipped anywhere less trusted than the cluster.
+
 **The registration token** rotates separately, and needs a restart:
 
 1. Put a new `registration_token` into the Secret.
@@ -362,9 +379,19 @@ their LiveKit token on the signalling websocket, and both are bearer
 credentials. On a local or kind cluster without TLS, set
 `matrixChat.livekit.allowInsecureTransport: true` to allow `ws://` and `http`.
 
+Chat has no such check, but needs HTTPS just as much: Waldur's session
+response carries the user's Matrix tokens and recovery key. With the defaults,
+`apiScheme: "http"` and `ingress.tls.enabled: false`, the chart's ingresses
+serve it over plain HTTP. Set `apiScheme: "https"`, and terminate TLS at the
+ingresses or in front of them. TLS alone is not enough: homeport's API URL,
+the homeserver's well-known client URL and `MATRIX_HOMESERVER_PUBLIC_URL` are
+all built from `apiScheme`, so with `http` clients are still sent to `http://`
+URLs.
+
 ## Image pinning
 
-Images are pinned to specific versions by default — never `latest`:
+The homeserver and LiveKit images are pinned to specific versions by default,
+by tag — never `latest`:
 
 - **homeserver** — `ghcr.io/matrix-construct/tuwunel`, pinned to the single
   supported version (see below). Set `homeserver.imageDigest` to pin immutably by
@@ -374,6 +401,12 @@ Images are pinned to specific versions by default — never `latest`:
   own key, **not** `global.imageRegistry`, so pointing `global` at a private
   mirror doesn't rewrite LiveKit to a registry that has no such image. Override
   `livekit.imageRegistry` if you mirror it.
+
+A tag can be moved to another image; only a digest cannot. The homeserver pod's
+`render-config` init container and the bot's `check-db-ready` run
+`postgres:17` (`waldur.initdbImageName`), a tag that follows every 17.x
+release; mirror it if every image must stay fixed. The bot itself runs Waldur's
+image, at `waldur.imageDigest` when that is set, else at `waldur.imageTag`.
 
 ## Supported homeserver version
 
@@ -387,7 +420,9 @@ paths:
 | Docker Compose | `WALDUR_TUWUNEL_IMAGE_TAG` |
 
 Both are `v1.9.3`. Do not set a version we do not ship, and do not let the two
-diverge.
+diverge. Waldur's chat drawer is built around details of this version: for
+example, it fetches the dehydrated device's queued events with the `POST`
+Tuwunel serves, not the `GET` matrix-js-sdk sends.
 
 ### Upgrading
 
@@ -424,8 +459,8 @@ From 1.9.2, rooms are created as room version 12 by default. Existing rooms keep
 their version. In a version 12 room the creator, the Waldur bot, has the highest
 power level by definition and can never be listed in the room's power levels.
 
-`serverName` is immutable: it is baked into every user and room ID. From 1.9.0
-the homeserver stamps it into the database and refuses to boot under another
+`serverName` is immutable: it is baked into every user and room ID. The
+homeserver stamps it into the database and refuses to boot under another
 name:
 
 ```text
@@ -437,10 +472,14 @@ corpus.
 
 ### CVE response
 
-Tuwunel publishes advisories on its
-[GitHub repository](https://github.com/matrix-construct/tuwunel/security/advisories).
-Both the client-server and federation surfaces are exposed through the Matrix
-ingress.
+Tuwunel fixes security issues in its next release and does not backport them.
+Its security policy promises a
+[GitHub security advisory](https://github.com/matrix-construct/tuwunel/security/advisories)
+with each fixing release, but it has published none so far, not even for the
+federation disclosure fixed in 1.9.0: the fixes are described only in the
+[release notes](https://github.com/matrix-construct/tuwunel/releases). Watch
+the releases and read each one's notes for security fixes. Both the
+client-server and federation surfaces are exposed through the Matrix ingress.
 
 - Fix in a patch release of the supported minor: bump both packaging paths and
   ship a chart patch release.
@@ -639,8 +678,10 @@ forward, so a drawer in use never expires, and a page left silent for a day
 refresh token never expires; the access token lifetime must be positive, as
 Tuwunel reads `0` as "expire immediately". Waldur also signs out its chat
 devices idle for more than 24 hours, when a user starts a session and in a
-daily job, so a refresh lifetime longer than a day, or `0`, does not keep an
-idle drawer alive much beyond a day.
+daily job at 03:45 UTC, so a refresh lifetime longer than a day, or `0`, keeps
+an idle drawer's device for at most about two days while the daily job runs:
+one that has been idle just under 24 hours at the daily run is left until the
+next. The job skips a run when the homeserver does not answer.
 
 Clients that sign in without a refresh token, such as Element with a password,
 get non-expiring tokens and are unaffected.
@@ -761,17 +802,22 @@ Four steps used to be manual, and all four failed silently when skipped. With
    and setting one while `setup.enabled` is true is a render error rather than a
    value that is quietly ignored.
 2. **Appservice registration** — handled by
-   `matrixChat.setup.registerAppservice` (default on). Tuwunel registers
-   appservices at runtime via the `!admin appservices register` admin-room
-   command rather than from config, so the wiring Job drives that command
+   `matrixChat.setup.registerAppservice` (default on). The chart registers the
+   appservice through Tuwunel's `!admin appservices register` admin-room
+   command; Tuwunel can also read registrations from its config file, which
+   the chart does not use. The wiring Job drives that command
    through the mastermind image's `register_matrix_appservice`, as a bootstrap
    admin it creates itself.
 
    On a new homeserver the command creates `@waldur-bootstrap` through the
    shared-secret registration API, with admin rights and `bootstrap_password`
    as its password. The chart sets the homeserver's
-   `registration_shared_secret` to the registration token, and the API answers
-   only inside the cluster: the chart routes no `/_synapse` path. That first
+   `registration_shared_secret` to the registration token. The ingress routes
+   no `/_synapse` path, but any pod in the cluster can reach the API on the
+   homeserver's Service: `matrixChat.networkPolicy` is off by default, and when
+   on it admits that port from anywhere. Using the API still takes the
+   registration token, an admin's access token, or the `as_token`, which
+   reaches it as the bot once the bot is a homeserver admin. That first
    run uses the token the registration returns, so it works with password
    login off. Later runs sign in as `@waldur-bootstrap` with that password, and
    every run signs the bootstrap session out when it is done. No account becomes an admin by being
@@ -825,27 +871,46 @@ Four steps used to be manual, and all four failed silently when skipped. With
    with the homeserver's in-cluster Service
    (`http://matrix-homeserver.<namespace>.svc:<clientPort>`), where Waldur
    calls it for chat and to verify call tokens, and
-   `MATRIX_HOMESERVER_PUBLIC_URL` with `https://<serverName>`. Calls therefore
-   do not depend on pods reaching the ingress's public address.
+   `MATRIX_HOMESERVER_PUBLIC_URL` with `<apiScheme>://<serverName>`. Calls
+   therefore do not depend on pods reaching the ingress's public address.
+
+   These in-cluster calls are plain HTTP, as are the homeserver's calls to
+   Waldur (`http://waldur-mastermind-api.<namespace>.svc`) and Waldur's to the
+   bundled LiveKit. They carry the appservice tokens, the passwords and tokens
+   Waldur sets or mints for users, and LiveKit room-admin tokens, readable to
+   anything that can see traffic inside the cluster.
 
 ## The Matrix bot
 
 `matrixChat.bot` deploys mastermind's `matrix_bot` command, Waldur's member of
 every Waldur room. It runs on a Matrix device of its own and holds that
-device's keys, so it is the only process that can post into an encrypted room
-or read the commands sent to it there. While it runs, every message Waldur
-sends as the bot (role, order and staff notices, command replies) goes through
-it. Without it, Waldur posts directly, which works only in rooms that are not
-encrypted.
+device's keys. Every Waldur room is encrypted, so it is the only process that
+can post into them: every message Waldur sends as the bot (role, order and
+staff notices, command replies) waits in Waldur's database until the bot posts
+it, and while the bot is not running, they wait. Clients share their room keys
+with its device as with any member's, so it decrypts every message in those
+rooms, not only the commands sent to it.
+
+The bot also makes every history export and writes rooms' earlier keys into
+new members' key backups, so that they can read what was said before they
+joined. While it is down, exports stay `pending` and are made once it starts,
+and disabling a room with `MATRIX_HISTORY_EXPORT_ENABLED` on cannot finish: the
+room is not archived until its history is exported, so it goes to `error` at
+once when the bot is not running, or after 15 minutes when the bot does not
+finish the export in time. Disable it again once the bot runs.
 
 - **Exactly one replica.** The bot holds a lease in Waldur's database, and a
   second one refuses to start while the first holds it, so the Deployment uses
   the `Recreate` strategy: the old pod releases the lease before the new one
   starts.
 - **No volume.** Its keys live in Waldur's database, in a `matrix_bot`
-  schema, pickled under a key stored encrypted with `FIELD_ENCRYPTION_KEY`.
-  Database backups carry them, and losing that key makes the store unreadable:
-  the bot then refuses to start rather than reset its identity.
+  schema, pickled under a key stored encrypted with `FIELD_ENCRYPTION_KEY`, or
+  with a key derived from `SECRET_KEY` while that is unset (the chart's
+  default). Database backups carry them, and losing that key makes the store unreadable:
+  the bot then refuses to start rather than reset its identity. Exports do
+  spool encrypted temporary files to the container's `/tmp`, up to a few
+  hundred MB each with media export on, which counts against the pod's
+  ephemeral storage.
 - It needs the appservice registered (step 2 of
   [Runtime steps](#runtime-steps-and-what-now-handles-them)) and reaches the homeserver
   at `MATRIX_HOMESERVER_URL`, like the API.
@@ -853,7 +918,9 @@ encrypted.
   the bot's identity with it. Disable `matrixChat.bot` there, or drop the copy's
   `matrix_bot` schema and `matrix_chat_matrixbotidentity` rows, before the bot
   starts: otherwise a second bot runs as the same device, can read the
-  original's rooms, and corrupts both bots' sessions.
+  original's rooms, and corrupts both bots' sessions. A copy that keeps the
+  same `FIELD_ENCRYPTION_KEY` also yields every user's escrowed recovery key and
+  every history export, so treat it as you would production.
 
 ## Monitoring
 
@@ -1115,6 +1182,11 @@ exposed — relayed media always rides TLS.
   encryption as WebAssembly, which it refuses to compile without this source. It
   allows compiling WebAssembly only, not `eval()` of JavaScript. Without it the
   chat drawer reports that encryption is unavailable in this browser.
+- **The call-encryption worker.** Calls encrypt their media in a Web Worker
+  that homeport serves from its own origin (`/assets/e2eeWorker-*.js`), so
+  `script-src 'self'` already covers it and the chart sets no `worker-src`. A
+  policy of your own that sets `worker-src` must include `'self'`, or calls in
+  encrypted rooms fail.
 - **NetworkPolicies.** When `matrixChat.networkPolicy.enabled` is `true`, the chart
   adds a policy per pod. This gate is independent of the chart-wide
   `networkPolicy.enabled` (which only covers the homeport/mastermind-api

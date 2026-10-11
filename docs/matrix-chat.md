@@ -398,7 +398,8 @@ minor release so far has done this, so read the
 [upstream release notes](https://github.com/matrix-construct/tuwunel/releases)
 before moving in either direction.
 
-1. Scale the homeserver StatefulSet to zero and snapshot the PVC.
+1. Scale the homeserver StatefulSet to zero and back the PVC up (see
+   [Backup and restore](#backup-and-restore)).
 2. Bump `imageTag` and run `helm upgrade --timeout 20m`, longer than
    `matrixChat.setup.homeserverWaitTimeout` plus a margin. With the default
    five minutes, a long migration marks the release failed while the wiring Job
@@ -450,6 +451,175 @@ ingress.
   until you also switch `MATRIX_ENABLED` off under **Administration →
   Configuration → Matrix chat → Settings** and hide it with
   `waldur.featureFlags: {"project.show_matrix_chat": false}`.
+
+## Backup and restore
+
+Back up these four together, with the bot and the homeserver stopped.
+[Backup and restore](https://docs.waldur.com/latest/developer-guide/admin-guide/matrix-appservice-setup/#backup-and-restore)
+in Waldur's admin guide says what each holds, why they must come from the same
+moment, and why a history export is not a backup.
+
+| What | Holds |
+|---|---|
+| PVC `data-matrix-homeserver-0`, or `homeserver.persistence.existingClaim` | The homeserver's database, media included |
+| Secret `matrix-appservice-secret`, or `setup.existingSecret` | The appservice and registration tokens, and the bootstrap password registration signs in with. It survives `helm uninstall`, but not the namespace |
+| Waldur's database | Rooms and Matrix profiles, the tokens in Constance, users' escrowed recovery keys, the bot's keys (schema `matrix_bot`), and the history exports, files included: Waldur's default `DatabaseStorage` keeps them in the database, encrypted, each export's key in its row. See [PostgreSQL backup configuration](postgres-backup-management.md) |
+| `waldur.secretKey` and `waldur.fieldEncryptionKey`, or their Secrets | `FIELD_ENCRYPTION_KEY`, or a key derived from `SECRET_KEY` while it is unset (the chart's default), unlocks the recovery keys, the bot's keys, every history export and the secret Constance settings, tokens included; without it none of them can be read (see [Components](components.md)). During a key rotation, keep `waldur.fieldEncryptionKeyFallbacks` too, and restore it with the rest |
+
+### Taking a backup
+
+Tuwunel 1.9 can also back its database up while it runs (`database_backup_path`
+and `!admin server backup-database`), but the chart does not configure it, an
+admin has to run the command in the admin room, and it leaves media out. A
+copy of the volume taken while the homeserver is scaled to zero needs none of
+that and includes media. Chat is down while it is taken; Waldur is not. Where
+the storage class supports CSI volume snapshots, a `VolumeSnapshot` of the
+stopped claim does the same job; otherwise copy the files out through a pod
+that mounts the claim:
+
+```bash
+kubectl scale --replicas=0 statefulset/matrix-homeserver deployment/waldur-matrix-bot
+kubectl wait --for=delete pod/matrix-homeserver-0 --timeout=5m
+kubectl apply -f - <<'EOF'
+apiVersion: v1
+kind: Pod
+metadata:
+  name: matrix-homeserver-copy
+spec:
+  restartPolicy: Never
+  containers:
+    - name: copy
+      image: alpine:3
+      command: ["sleep", "3600"]
+      volumeMounts:
+        - name: data
+          mountPath: /var/lib/tuwunel
+  volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: data-matrix-homeserver-0
+EOF
+kubectl wait --for=condition=Ready pod/matrix-homeserver-copy --timeout=5m
+kubectl exec matrix-homeserver-copy -- tar -C /var/lib/tuwunel -czf - . > tuwunel_data.tar.gz
+gzip -t tuwunel_data.tar.gz
+kubectl delete pod matrix-homeserver-copy
+kubectl get secret matrix-appservice-secret -o yaml > matrix-appservice-secret.yaml
+# Waldur's database, while the bot is stopped. With postgresBackup.enabled, run
+# the chart's backup CronJob now and wait for it:
+kubectl create job --from=cronjob/waldur-db-backup-cronjob waldur-db-backup-matrix
+kubectl wait --for=condition=complete job/waldur-db-backup-matrix --timeout=30m
+kubectl delete job waldur-db-backup-matrix
+# Otherwise dump it yourself, e.g. from the bundled PostgreSQL's pod:
+#   kubectl exec <postgres-pod> -- pg_dump -Fc -U waldur waldur > waldur.dump
+kubectl scale --replicas=1 statefulset/matrix-homeserver deployment/waldur-matrix-bot
+```
+
+The bot is stopped with the homeserver so that the keys in the database backup
+match the homeserver's copy. For the same reason the scheduled
+`waldur-db-backup-cronjob` runs are no substitute: they run while the bot is up,
+so their dumps do not pair with a copy of the volume. Under ArgoCD, pause
+automated sync first: self-heal scales both back up.
+
+Keep the files off the cluster, and restrict access to them as to the database:
+together they hold every token and, with the homeserver's volume, the keys to
+every user's key backup, and so to every encrypted message.
+
+History exports are encrypted and do not compress, so the database dumps grow by
+about as much as the exports take up.
+
+LiveKit keeps no state: only its API key and secret matter (the
+`matrixChat.livekit.keys` values or their Secret), and these are part of the
+release's values or Secrets you already keep. If TURN is on, keep the Secret
+named by `matrixChat.livekit.turn.tls.existingSecret` too, or let cert-manager
+issue it again. Nothing of a call needs restoring, but calls in progress drop
+while the homeserver is stopped, and none can start until it is back: Waldur
+checks each caller at the homeserver before it issues a call token.
+
+### Restoring the homeserver
+
+When the claim is lost or damaged, by a failed Tuwunel upgrade for example,
+restore it. The StatefulSet adopts an existing claim named
+`data-matrix-homeserver-0` instead of creating an empty one, so create the claim
+and fill it before the homeserver starts: on an empty volume Tuwunel creates a
+new database, and the archive cannot be unpacked over that.
+
+```bash
+kubectl scale --replicas=0 statefulset/matrix-homeserver deployment/waldur-matrix-bot
+kubectl wait --for=delete pod/matrix-homeserver-0 --timeout=5m
+# Only if the old claim still exists. Copy it out first, as above, in case the
+# backup turns out to be the wrong one.
+kubectl delete pvc data-matrix-homeserver-0
+kubectl apply -f - <<'EOF'
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-matrix-homeserver-0
+spec:
+  accessModes: ["ReadWriteOnce"]
+  # matrixChat.homeserver.persistence.size, and its storageClass if set
+  resources:
+    requests:
+      storage: 10Gi
+EOF
+```
+
+Start the copy pod from the backup step again, then:
+
+```bash
+kubectl wait --for=condition=Ready pod/matrix-homeserver-copy --timeout=5m
+kubectl exec -i matrix-homeserver-copy -- tar -C /var/lib/tuwunel -xzf - < tuwunel_data.tar.gz
+kubectl delete pod matrix-homeserver-copy
+kubectl exec deployment/waldur-mastermind-worker -- waldur shell -c \
+  "from django.db import connection; connection.cursor().execute('DELETE FROM matrix_bot.synctokens')"
+kubectl scale --replicas=1 statefulset/matrix-homeserver deployment/waldur-matrix-bot
+```
+
+The registration comes back with the volume, so the wiring Job changes nothing
+on the next sync, unless the tokens were rotated after the backup: then it
+replaces the registration, as after a [rotation](#rotating-the-tokens).
+
+Waldur's database is now newer than the homeserver.
+[Restoring only the homeserver](https://docs.waldur.com/latest/developer-guide/admin-guide/matrix-appservice-setup/#restoring-only-the-homeserver)
+in Waldur's admin guide says what that breaks: deleting `matrix_bot.synctokens`
+resets the bot's read position, without which it skips events; new chat
+sessions may not reach the bot for a while; users and rooms created after the
+backup are missing, which its repair snippet fixes; and members' key backups
+roll back, which its last command refills. Run its `waldur shell -c "…"`
+commands with `kubectl exec deployment/waldur-mastermind-worker --` in front,
+and the repair snippet with
+`kubectl exec -i deployment/waldur-mastermind-worker -- waldur shell <<'EOF'`.
+Restoring only Waldur's database to an older backup has the reverse effects:
+see [Restoring only Waldur's database](https://docs.waldur.com/latest/developer-guide/admin-guide/matrix-appservice-setup/#restoring-only-waldurs-database).
+
+### Restoring everything
+
+On a new cluster, or after losing the namespace, restore in this order, so that
+nothing starts on an empty volume or mints new tokens:
+
+1. `kubectl apply -f matrix-appservice-secret.yaml`. For a namespace of
+   another name, delete the file's `namespace:` line first. The secrets Job
+   then reuses the tokens instead of generating new ones.
+2. Restore Waldur's database, and set the same `waldur.secretKey` and
+   `waldur.fieldEncryptionKey`, and `waldur.fieldEncryptionKeyFallbacks` if a
+   key rotation was under way. This order needs the database outside the
+   release, as with `externalDB`: the bundled PostgreSQL only exists once the
+   chart is installed, and this guide does not cover restoring into it.
+3. Create and fill `data-matrix-homeserver-0` as above.
+4. `helm install`. The wiring Job finds the appservice already registered and
+   changes nothing.
+
+### Checking a restore
+
+`GET /api/admin/matrix/diagnostics/` (staff) passes the checks it passed before
+the restore, `history_exports` among them with no failures. Then send `!help` in
+a room: the bot answers.
+
+Where history export is on, download the newest completed export
+(`GET /api/matrix/exports/?state=completed`, then
+`GET /api/matrix/exports/<uuid>/download/export/`). A `409` means the export
+cannot be decrypted, most likely because the restored database does not match
+the configured `FIELD_ENCRYPTION_KEY` (or `SECRET_KEY`, while that is unset):
+then the recovery keys and the bot's keys cannot be read either.
 
 ## Token lifetimes
 

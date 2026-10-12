@@ -5,7 +5,12 @@ metadata:
   labels:
 {{ include "waldur.labels" . | indent 4 }}
 spec:
+  {{- /* Cover the migration wait plus image pull and gunicorn startup. */}}
+  {{- if .Values.waldur.initdbEnabled }}
+  progressDeadlineSeconds: {{ add (.Values.waldur.initdbWaitTimeout | default 2700 | int) 600 }}
+  {{- else }}
   progressDeadlineSeconds: 2400
+  {{- end }}
   replicas: {{ default 1 .Values.replicaCount.api }}
   selector:
     matchLabels:
@@ -33,6 +38,14 @@ spec:
       hostAliases:
         {{ toYaml .Values.hostAliases | nindent 8 }}
       {{ end }}
+      {{- if .Values.waldur.initdbEnabled }}
+      initContainers:
+        {{- $migrationWaitResources := .Values.apiResources }}
+        {{- if .Values.hpa.api.enabled }}
+        {{- $migrationWaitResources = .Values.hpa.api.resources }}
+        {{- end }}
+        {{- include "waldur.waitForMigrationsInitContainer" (dict "root" . "resources" $migrationWaitResources) | nindent 8 }}
+      {{- end }}
       containers:
         - name: waldur-mastermind-api
           {{- if .Values.waldur.imageDigest }}
@@ -57,7 +70,7 @@ spec:
               path: /api/configuration/
             initialDelaySeconds: 50 # it takes around a minute to completely start UWSGI server
             periodSeconds: 10
-            failureThreshold: 100 # Mastermind can wait long for DB migrations
+            failureThreshold: 100 # gunicorn can take a while to accept connections after the migration init container exits
           ports:
             - name: http
               containerPort: 8080

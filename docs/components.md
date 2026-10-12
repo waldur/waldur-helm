@@ -74,7 +74,9 @@ graph TB
 | `waldur-homeport` | React-based frontend UI for the cloud marketplace |
 | `waldur-mastermind-api` | Django REST API backend handling all API requests, authentication, and resource orchestration |
 | `waldur-mastermind-worker` | Celery workers processing background tasks, provisioning, and long-running operations |
-| `waldur-mastermind-beat` | Celery scheduler managing periodic tasks, cleanup operations, and recurring jobs |
+| `waldur-mastermind-beat` | Celery scheduler managing periodic tasks, cleanup operations, and recurring jobs. When `waldur.initdbEnabled` is true, its init container runs database migrations (`initdb`) |
+
+When `waldur.initdbEnabled` is true, the API, worker, and web-shell Deployments start a `wait-for-migrations` init container before their main process. It polls `waldur migrate --check` and exits only after the beat pod has applied every migration in the new image. Until then the new pods are not Ready, so the Service keeps sending traffic to the previous API pods and new workers do not consume tasks. The wait is bounded by `waldur.initdbWaitTimeout` (default 45 minutes). After that check passes, the previous API pods still serve until the new ones are Ready, so a migration that drops or renames a column can still fail on those old pods. The cleanup and SAML metadata CronJobs are not gated. Set `waldur.initdbEnabled` to false only when migrations are applied out of band before the new pods start; the chart then does not wait.
 
 ## Optional Components
 

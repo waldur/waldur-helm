@@ -32,6 +32,10 @@ spec:
       hostAliases:
         {{ toYaml .Values.hostAliases | nindent 8 }}
       {{ end }}
+      {{- if .Values.waldur.initdbEnabled }}
+      initContainers:
+        {{- include "waldur.waitForMigrationsInitContainer" (dict "root" . "resources" .Values.waldur.webShell.resources) | nindent 8 }}
+      {{- end }}
       containers:
         - name: waldur-mastermind-web-shell
           {{- if .Values.waldur.imageDigest }}

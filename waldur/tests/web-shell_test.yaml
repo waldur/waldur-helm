@@ -40,6 +40,29 @@ tests:
       - failedTemplate:
           errorPattern: "requires waldur.debug"
 
+  - it: waits for migrations before opening the shell
+    template: templates/deployment-web-shell.yaml
+    set:
+      waldur.webShell.enabled: true
+      waldur.debug: true
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: wait-for-migrations
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].command[2]
+          pattern: "waldur migrate --check"
+
+  - it: skips the migration wait when the chart does not manage the schema
+    template: templates/deployment-web-shell.yaml
+    set:
+      waldur.webShell.enabled: true
+      waldur.debug: true
+      waldur.initdbEnabled: false
+    asserts:
+      - notExists:
+          path: spec.template.spec.initContainers
+
   - it: runs waldur web_shell with DEBUG and the public URL
     template: templates/deployment-web-shell.yaml
     set:

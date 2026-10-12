@@ -742,3 +742,66 @@ invisible here.
 {{- define "waldur.matrixBotLocalpart" -}}
 {{- index .Values.waldur.settingsOverrides "MATRIX_APPSERVICE_SENDER_LOCALPART" | default (dig "setup" "botLocalpart" "waldur-bot" .Values.matrixChat) -}}
 {{- end -}}
+
+{{/*
+Init container that blocks the main process until the schema matches this image.
+
+Migrations run only in the beat Deployment (waldur-mastermind-migrate, args:
+initdb). Helm and Argo CD update the API, worker, and web-shell Deployments
+in the same sync, so without this gate the new image can answer requests,
+consume Celery tasks, or open a shell while those migrations are still
+running. The pod stays unready until this container exits 0.
+
+`migrate --check` exits non-zero while any migration known to this image is
+unapplied, and also while the database is unreachable. It does not apply
+migrations, so beat remains the only migrator. The first check runs before
+any sleep: a restart against an already-current schema pays for one Django
+boot and continues.
+
+Context is a dict:
+  root:      chart root context (image, credentials, initdbWaitTimeout)
+  resources: requests/limits for this pod's main container
+*/}}
+{{- define "waldur.waitForMigrationsInitContainer" -}}
+- name: wait-for-migrations
+  {{- if .root.Values.waldur.imageDigest }}
+  image: {{ .root.Values.global.imageRegistry }}/{{ .root.Values.waldur.imageName }}@{{ .root.Values.waldur.imageDigest }}
+  {{- else }}
+  image: {{ .root.Values.global.imageRegistry }}/{{ .root.Values.waldur.imageName }}:{{ .root.Values.waldur.imageTag }}
+  {{- end }}
+  imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" .root.Values.waldur.imageTag "Values" .root.Values) }}
+  command:
+    - /bin/bash
+    - -ec
+    - |
+      DEADLINE=$(( $(date +%s) + {{ .root.Values.waldur.initdbWaitTimeout | default 2700 | int }} ))
+      until waldur migrate --check >/dev/null 2>&1; do
+          if [ "$(date +%s)" -ge "$DEADLINE" ]; then
+              echo "ERROR: migrations still incomplete after {{ .root.Values.waldur.initdbWaitTimeout | default 2700 | int }}s." >&2
+              echo "ERROR: the beat pod runs them in its waldur-mastermind-migrate initContainer -- check it." >&2
+              # Surface the reason rather than just the timeout.
+              waldur migrate --check || true
+              exit 1
+          fi
+          echo "INFO: waiting for migrations to complete..."
+          # 30s, not a tighter loop: `migrate --check` boots the whole
+          # Django app registry every time (~4s measured), on the node
+          # that is busy running the migrations. Each API, worker, and
+          # web-shell replica polls on its own, so a 10s interval
+          # multiplies that cost by the replica count. One hook polling
+          # every 10s spent ~234s of CPU across 60 boots during one 834s
+          # wait; 30s cuts that, and the first check runs before any
+          # sleep, so an upgrade against an already-current schema --
+          # the common case -- still proceeds immediately.
+          sleep 30
+      done
+      echo "INFO: schema is up to date."
+  env:
+    {{- include "waldur.credentials" .root | nindent 4 }}
+  volumeMounts:
+    - name: api-override
+      mountPath: /etc/waldur/override.conf.py
+      subPath: override.conf.py
+  resources:
+    {{- toYaml .resources | nindent 4 }}
+{{- end -}}

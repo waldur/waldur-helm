@@ -1,0 +1,141 @@
+suite: api and worker wait for migrations before starting
+templates:
+  - templates/deployment-api.yaml
+  - templates/deployment-worker.yaml
+  - templates/deployment-beat.yaml
+  - templates/config-custom-roles.yaml
+
+tests:
+  # New API code must not join the Service while beat is still applying migrations.
+  - it: api stays unready until migrate --check passes
+    template: templates/deployment-api.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: wait-for-migrations
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].command[2]
+          pattern: "waldur migrate --check"
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].command[2]
+          pattern: "exit 1"
+      - contains:
+          path: spec.template.spec.initContainers[0].volumeMounts
+          content:
+            name: api-override
+            mountPath: /etc/waldur/override.conf.py
+            subPath: override.conf.py
+      - equal:
+          path: spec.template.spec.initContainers[0].resources.requests.memory
+          value: 2000Mi
+      # 2700s wait plus 600s for image pull and gunicorn startup.
+      - equal:
+          path: spec.progressDeadlineSeconds
+          value: 3300
+
+  - it: worker stays out of the broker until the same check passes
+    template: templates/deployment-worker.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: wait-for-migrations
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].command[2]
+          pattern: "waldur migrate --check"
+      - equal:
+          path: spec.template.spec.initContainers[0].resources.requests.cpu
+          value: 1000m
+      - equal:
+          path: spec.template.spec.initContainers[0].resources.requests.memory
+          value: 2000Mi
+
+  - it: sizes the api wait like the hpa resource block when that hpa is on
+    template: templates/deployment-api.yaml
+    set:
+      hpa.api.enabled: true
+      hpa.api.resources.requests.cpu: 50m
+      hpa.api.resources.requests.memory: 256Mi
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].resources.requests.cpu
+          value: 50m
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 50m
+
+  - it: sizes the worker wait like the celery hpa resource block when that hpa is on
+    template: templates/deployment-worker.yaml
+    set:
+      hpa.celery.enabled: true
+      hpa.celery.workerResources.requests.cpu: 75m
+      hpa.celery.workerResources.requests.memory: 256Mi
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].resources.requests.cpu
+          value: 75m
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 75m
+
+  - it: runs the same mastermind image as the container it gates
+    template: templates/deployment-api.yaml
+    set:
+      global.imageRegistry: registry.example.com
+      waldur.imageName: acme/mastermind
+      waldur.imageTag: "9.9.9"
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: registry.example.com/acme/mastermind:9.9.9
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: registry.example.com/acme/mastermind:9.9.9
+
+  - it: honors initdbWaitTimeout on the poll and the rollout deadline
+    template: templates/deployment-api.yaml
+    set:
+      waldur.initdbWaitTimeout: 42
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].command[2]
+          pattern: 'DEADLINE=\$\(\( \$\(date \+%s\) \+ 42 \)\)'
+      - equal:
+          path: spec.progressDeadlineSeconds
+          value: 642
+
+  # initdbEnabled: false means migrations are run out of band, before these pods.
+  - it: omits the api wait when the chart does not manage the schema
+    template: templates/deployment-api.yaml
+    set:
+      waldur.initdbEnabled: false
+    asserts:
+      - notExists:
+          path: spec.template.spec.initContainers
+      - equal:
+          path: spec.progressDeadlineSeconds
+          value: 2400
+
+  - it: omits the worker wait when the chart does not manage the schema
+    template: templates/deployment-worker.yaml
+    set:
+      waldur.initdbEnabled: false
+    asserts:
+      - notExists:
+          path: spec.template.spec.initContainers
+      - equal:
+          path: spec.progressDeadlineSeconds
+          value: 2400
+
+  # Beat applies migrations. It must not wait on a check that only it can satisfy.
+  - it: leaves beat as the migrator
+    template: templates/deployment-beat.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: check-db-ready
+      - equal:
+          path: spec.template.spec.initContainers[2].name
+          value: waldur-mastermind-migrate
+      - equal:
+          path: spec.progressDeadlineSeconds
+          value: 3300

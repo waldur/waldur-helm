@@ -5,7 +5,12 @@ metadata:
   labels:
 {{ include "waldur.labels" . | indent 4 }}
 spec:
+  {{- /* The migrate initContainer is the long pole; keep the deadline past initdbWaitTimeout. */}}
+  {{- if .Values.waldur.initdbEnabled }}
+  progressDeadlineSeconds: {{ add (.Values.waldur.initdbWaitTimeout | default 2700 | int) 600 }}
+  {{- else }}
   progressDeadlineSeconds: 2400
+  {{- end }}
   replicas: 1
   selector:
     matchLabels:

@@ -1,0 +1,57 @@
+suite: support configmap
+templates:
+  - templates/config-support.yaml
+
+tests:
+  - it: disables support when the feature is off
+    asserts:
+      - matchRegex:
+          path: data["support.yaml"]
+          pattern: 'WALDUR_SUPPORT_ENABLED: false'
+      - notMatchRegex:
+          path: data["support.yaml"]
+          pattern: WALDUR_SUPPORT_ACTIVE_BACKEND_TYPE
+
+  - it: defaults to the built-in service desk
+    set:
+      waldur.features: [support]
+    asserts:
+      - matchRegex:
+          path: data["support.yaml"]
+          pattern: 'WALDUR_SUPPORT_ENABLED: true'
+      - matchRegex:
+          path: data["support.yaml"]
+          pattern: "WALDUR_SUPPORT_ACTIVE_BACKEND_TYPE: 'basic'"
+      - notMatchRegex:
+          path: data["support.yaml"]
+          pattern: "ATLASSIAN_|ZAMMAD_|SMAX_"
+
+  - it: selects atlassian
+    set:
+      waldur.features: [support]
+      waldur.support.backend: atlassian
+    asserts:
+      - matchRegex:
+          path: data["support.yaml"]
+          pattern: "WALDUR_SUPPORT_ACTIVE_BACKEND_TYPE: 'atlassian'"
+      - matchRegex:
+          path: data["support.yaml"]
+          pattern: "ATLASSIAN_API_URL"
+
+  - it: selects zammad
+    set:
+      waldur.features: [support]
+      waldur.support.backend: zammad
+    asserts:
+      - matchRegex:
+          path: data["support.yaml"]
+          pattern: "WALDUR_SUPPORT_ACTIVE_BACKEND_TYPE: 'zammad'"
+
+  - it: selects smax
+    set:
+      waldur.features: [support]
+      waldur.support.backend: smax
+    asserts:
+      - matchRegex:
+          path: data["support.yaml"]
+          pattern: "WALDUR_SUPPORT_ACTIVE_BACKEND_TYPE: 'smax'"

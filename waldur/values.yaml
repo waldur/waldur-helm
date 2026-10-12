@@ -578,7 +578,10 @@ waldur:
     existingSecret:
       name: ""
   support:
-    backend: "zammad" # Can be "atlassian", "zammad" or "smax"
+    # "basic" is the built-in service desk: tickets stay in Waldur and need no
+    # external system. "atlassian", "zammad" and "smax" sync tickets to that
+    # service desk and need its settings below.
+    backend: "basic"
     existingSecret:
       name: ""
     atlassian:

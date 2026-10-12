@@ -6,6 +6,9 @@ data:
   support.yaml: |
     {{ if has "support" .Values.waldur.features }}
     WALDUR_SUPPORT_ENABLED: true
+    {{ if eq .Values.waldur.support.backend "basic" }}
+    WALDUR_SUPPORT_ACTIVE_BACKEND_TYPE: 'basic'
+    {{ end }}
     {{ if eq .Values.waldur.support.backend "atlassian" }}
     WALDUR_SUPPORT_ACTIVE_BACKEND_TYPE: 'atlassian'
     WALDUR_SUPPORT_DISPLAY_REQUEST_TYPE: true

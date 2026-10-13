@@ -1,0 +1,162 @@
+suite: homeport CSP with an external LiveKit
+templates:
+  - templates/ingress-homeport.yaml
+  - templates/traefik-middleware-homeport.yaml
+  - templates/httproute-homeport.yaml
+
+capabilities:
+  majorVersion: 1
+  minorVersion: 29
+  apiVersions:
+    - gateway.networking.k8s.io/v1/HTTPRoute
+    - gateway.networking.k8s.io/v1/Gateway
+
+# An operator-managed LiveKit (livekit.enabled=false, publicUrl on its own
+# host) is dialled by the browser straight from the SPA, so its origin must be
+# in connect-src or the call websocket is refused client-side with no
+# server-side trace. The bundled LiveKit sits behind the homeserver host's
+# /rtc route, which the existing wss://<serverName> entry already covers.
+#
+# Whole-chart render: every Matrix guard needs valid values here —
+# registrationToken for config-tuwunel, existingSecret for the external
+# LiveKit credentials, https for the call transport check.
+tests:
+  - it: allows the external LiveKit origin in the nginx CSP
+    template: templates/ingress-homeport.yaml
+    set:
+      ingress.enabled: true
+      ingress.className: nginx
+      apiScheme: https
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.livekit.enabled: false
+      matrixChat.livekit.publicUrl: "wss://livekit.operator.example"
+      matrixChat.livekit.keys.existingSecret.name: "operator-livekit-creds"
+    asserts:
+      - matchRegex:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+          pattern: "connect-src[^;]*wss://livekit\\.operator\\.example"
+
+  - it: allows the external LiveKit origin in the haproxy CSP
+    template: templates/ingress-homeport.yaml
+    set:
+      ingress.enabled: true
+      ingress.className: haproxy
+      apiScheme: https
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.livekit.enabled: false
+      matrixChat.livekit.publicUrl: "wss://livekit.operator.example"
+      matrixChat.livekit.keys.existingSecret.name: "operator-livekit-creds"
+    asserts:
+      - matchRegex:
+          path: metadata.annotations["haproxy.org/backend-config-snippet"]
+          pattern: "connect-src[^;]*wss://livekit\\.operator\\.example"
+
+  - it: allows the external LiveKit origin in the traefik CSP
+    template: templates/traefik-middleware-homeport.yaml
+    set:
+      ingress.enabled: true
+      ingress.className: traefik
+      apiScheme: https
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.livekit.enabled: false
+      matrixChat.livekit.publicUrl: "wss://livekit.operator.example"
+      matrixChat.livekit.keys.existingSecret.name: "operator-livekit-creds"
+    documentSelector:
+      path: metadata.name
+      value: homeport-headers
+    asserts:
+      - matchRegex:
+          path: spec.headers.customResponseHeaders["Content-Security-Policy"]
+          pattern: "connect-src[^;]*wss://livekit\\.operator\\.example"
+
+  - it: allows the external LiveKit origin in the HTTPRoute CSP
+    template: templates/httproute-homeport.yaml
+    set:
+      gatewayAPI.enabled: true
+      gatewayAPI.createGateway: true
+      gatewayAPI.gatewayClassName: envoy-gateway
+      apiScheme: https
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.livekit.enabled: false
+      matrixChat.livekit.publicUrl: "wss://livekit.operator.example"
+      matrixChat.livekit.keys.existingSecret.name: "operator-livekit-creds"
+    asserts:
+      - matchRegex:
+          path: spec.rules[0].filters[0].responseHeaderModifier.set[0].value
+          pattern: "connect-src[^;]*wss://livekit\\.operator\\.example"
+
+  # publicUrl may carry a port or a path (wss://lk.op.example:8443/rtc); CSP
+  # sources are origins, so only scheme://host[:port] goes in.
+  - it: reduces a LiveKit publicUrl with port and path to its origin
+    template: templates/ingress-homeport.yaml
+    set:
+      ingress.enabled: true
+      ingress.className: nginx
+      apiScheme: https
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.livekit.enabled: false
+      matrixChat.livekit.publicUrl: "wss://livekit.operator.example:8443/rtc"
+      matrixChat.livekit.keys.existingSecret.name: "operator-livekit-creds"
+    asserts:
+      - matchRegex:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+          pattern: "connect-src[^;]*wss://livekit\\.operator\\.example:8443[ ;]"
+      - notMatchRegex:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+          pattern: "/rtc"
+
+  - it: lists the homeserver origin once when the bundled LiveKit shares it
+    template: templates/ingress-homeport.yaml
+    set:
+      ingress.enabled: true
+      ingress.className: nginx
+      apiScheme: https
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.livekit.enabled: true
+      matrixChat.livekit.keys.apiKey: "devkey"
+      matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+      matrixChat.livekit.publicUrl: "wss://matrix.example.org"
+    asserts:
+      - matchRegex:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+          pattern: "connect-src[^;]*wss://matrix\\.example\\.org"
+      - notMatchRegex:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+          pattern: "connect-src[^;]*wss://matrix\\.example\\.org[^;]*wss://matrix\\.example\\.org"
+
+  - it: adds nothing to the CSP when calls are not configured
+    template: templates/ingress-homeport.yaml
+    set:
+      ingress.enabled: true
+      ingress.className: nginx
+      apiScheme: https
+      matrixChat.enabled: true
+      matrixChat.homeserver.enabled: true
+      matrixChat.homeserver.serverName: "matrix.example.org"
+      matrixChat.homeserver.registrationToken: "s3cret"
+      matrixChat.livekit.publicUrl: ""
+    asserts:
+      - notMatchRegex:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+          pattern: "livekit"
+      - matchRegex:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+          pattern: "connect-src[^;]*https://matrix\\.example\\.org wss://matrix\\.example\\.org"

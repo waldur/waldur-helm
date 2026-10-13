@@ -1365,4 +1365,7 @@ would have no key to sign call tokens with.
 With `livekit.enabled=false` the chart drops the in-cluster LiveKit Service, its
 `config.yaml`, network policy, RTC LoadBalancer, and the `/rtc` ingress
 route. The browser connects straight to `publicUrl`, so reachability, TLS, and the
-media plane are the external operator's responsibility.
+media plane are the external operator's responsibility. The chart adds the
+`publicUrl` origin to the homeport Content-Security-Policy `connect-src` on every
+ingress variant, so the browser is allowed to open the signalling websocket to it;
+nothing needs configuring for that.

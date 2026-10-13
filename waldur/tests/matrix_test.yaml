@@ -810,9 +810,8 @@ tests:
           value: ReadWriteOnce
 
   - it: adopts an existing claim instead of provisioning one when existingClaim is set
-    # The migration path off a prior Deployment-based release: mount its
-    # matrix-homeserver-data PVC directly rather than letting the StatefulSet
-    # provision a fresh (empty) data-matrix-homeserver-0.
+    # Mount the claim directly rather than letting the StatefulSet provision a
+    # fresh (empty) data-matrix-homeserver-0.
     template: templates/statefulset-matrix-homeserver.yaml
     set:
       matrixChat.enabled: true

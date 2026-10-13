@@ -56,16 +56,9 @@ spec:
           {{- end }}
           imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" .Values.waldur.imageTag "Values" .Values) }}
           # matrix-init ships in the mastermind image (/usr/local/bin).
-          # On failure, point at the migration guide: the usual cause on an
-          # upgrade is a deployment whose tokens the Setup wizard configured.
           command:
-            - /bin/sh
-            - -c
-            - |
-              matrix-init wire && exit 0
-              rc=$?
-              echo "matrix-init: the wiring failed. If this release ran Matrix chat before matrixChat.setup was turned on, see docs/matrix-chat.md, \"Migrating an existing deployment\"." >&2
-              exit $rc
+            - matrix-init
+            - wire
           # Names match mastermind's `init_matrix_settings` env contract
           # exactly; the command reads them directly, so renaming one here
           # silently drops a setting. waldur-docker-compose sets the same set.

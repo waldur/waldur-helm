@@ -15,23 +15,24 @@ into render errors this way; these are the Matrix ones.
 {{- end }}
 
 {{- if $m.setup.enabled }}
-{{- $remove := "Remove it, or set matrixChat.setup.enabled=false to manage the tokens by hand. Upgrading a deployment that already runs Matrix chat: see docs/matrix-chat.md, \"Migrating an existing deployment\"." }}
+{{- $remove := "Remove it, or set matrixChat.setup.enabled=false to manage the tokens by hand." }}
 {{- if $m.homeserver.registrationTokenExistingSecret.name }}
 {{- fail (printf "matrixChat.homeserver.registrationTokenExistingSecret.name is set while matrixChat.setup.enabled=true. Under zero-touch setup the registration token lives in the setup Secret next to the appservice tokens, because all three are handed to the homeserver and to Waldur together; a second source is a second value that drifts. %s" $remove) }}
 {{- end }}
 {{- if $m.homeserver.registrationToken }}
 {{- fail (printf "matrixChat.homeserver.registrationToken is set while matrixChat.setup.enabled=true. Zero-touch setup takes the registration token from the setup Secret and seeds the same value into the backend's MATRIX_USER_REGISTRATION_SECRET, so a value here would be ignored — the kind of silent mismatch this setup path exists to remove. %s" $remove) }}
 {{- end }}
-{{- /* An upgrade that turns setup on for a homeserver the chart already runs,
-with no setup Secret yet, would mint new tokens: the homeserver would get a new
-registration token while Waldur keeps the old one, and the wiring Job would
-refuse the hand-configured appservice tokens. The Secret has to be created from
-the current tokens first. lookup answers only against a live cluster (helm
-install/upgrade), and returns nothing under helm template, a dry run or ArgoCD,
-which renders this check a no-op there rather than a false alarm. */ -}}
+{{- /* An upgrade while the homeserver runs and its setup Secret is gone would
+mint new tokens and a new bootstrap password. The wiring Job would seed the new
+tokens into Waldur but could not register them, since the new password does
+not match the bootstrap admin the homeserver already has, and chat would stay
+down. The Secret has to be put back first. lookup answers only against a live
+cluster (helm install/upgrade), and returns nothing under helm template, a dry
+run or ArgoCD, which renders this check a no-op there rather than a false
+alarm. */ -}}
 {{- if and .Release.IsUpgrade (not $m.setup.existingSecret.name) }}
 {{- if and (not (lookup "v1" "Secret" .Release.Namespace $m.setup.secretName)) (lookup "apps/v1" "StatefulSet" .Release.Namespace "matrix-homeserver") }}
-{{- fail (printf "matrixChat.setup.enabled=true on a release whose homeserver already runs, and Secret %s does not exist. The setup Jobs would mint new tokens that neither the homeserver's data nor Waldur's settings match. Create the Secret from the current tokens first, or point setup.existingSecret at one: see %s." $m.setup.secretName "docs/matrix-chat.md, \"Migrating an existing deployment\"") }}
+{{- fail (printf "matrixChat.setup.enabled=true on a release whose homeserver already runs, and Secret %s does not exist. The setup Jobs would mint new tokens that neither the homeserver's data nor Waldur's settings match. Restore the Secret from a backup or rebuild it from Waldur's settings, or point setup.existingSecret at one: see %s." $m.setup.secretName "docs/matrix-chat.md, \"Losing the setup Secret\"") }}
 {{- end }}
 {{- end }}
 {{- /* The wiring Job seeds these on every sync, after the whitelabeling Job

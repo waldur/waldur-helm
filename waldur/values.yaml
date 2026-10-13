@@ -975,10 +975,8 @@ matrixChat:
     # Bot account localpart; becomes @<localpart>:<serverName>.
     botLocalpart: waldur-bot
     # Automate `!admin appservices register` instead of leaving it as a
-    # hand-typed admin-room command. Requires the `register_matrix_appservice`
-    # command in the mastermind image; against an older image the wiring Job
-    # skips registration with a warning in its log, so the chart upgrade itself
-    # still succeeds.
+    # hand-typed admin-room command, with the mastermind image's
+    # `register_matrix_appservice`.
     #
     # On a new homeserver it creates a bootstrap admin, @waldur-bootstrap,
     # through the shared-secret registration API, keyed by the registration
@@ -1025,7 +1023,8 @@ matrixChat:
     # Matrix clients at https://<apiHostname>/api/matrix/livekit, and Waldur
     # gives a token only to joined members of the room. The chart seeds
     # MATRIX_LIVEKIT_PUBLIC_URL, MATRIX_LIVEKIT_URL, MATRIX_LIVEKIT_KEY and
-    # MATRIX_LIVEKIT_SECRET from these values in the init-whitelabeling job.
+    # MATRIX_LIVEKIT_SECRET from these values in the Matrix wiring Job (the
+    # init-whitelabeling job with setup off).
     enabled: false
     imageRegistry: docker.io
     imageName: livekit/livekit-server
@@ -1200,10 +1199,11 @@ matrixChat:
       # admin before you list it). A trusted provider signs a user in to any
       # existing account named like their claim, so list every homeserver admin
       # here. The chart always reserves the appservice bot's localpart
-      # (MATRIX_APPSERVICE_SENDER_LOCALPART from waldur.settingsOverrides, else
-      # waldur-bot) and waldur-bootstrap, the bootstrap admin that automatic
-      # registration creates, ahead of this list. A bot localpart changed in
-      # Waldur's settings rather than here has to be listed too.
+      # (setup.botLocalpart, or with setup off MATRIX_APPSERVICE_SENDER_LOCALPART
+      # from waldur.settingsOverrides where that is set) and waldur-bootstrap,
+      # the bootstrap admin that automatic registration creates, ahead of this
+      # list. A bot localpart changed in Waldur's settings rather than here has
+      # to be listed too.
       forbiddenUsernames: []
     persistence:
       enabled: true
@@ -1211,8 +1211,7 @@ matrixChat:
       storageClass: ""
       # Empty: the StatefulSet provisions its own PVC (data-matrix-homeserver-0)
       # from the volumeClaimTemplate. Set it to mount a pre-existing claim
-      # instead — e.g. to adopt the `matrix-homeserver-data` PVC from a prior
-      # Deployment-based release without losing the embedded database.
+      # instead.
       existingClaim: ""
 
 global:

@@ -8,6 +8,7 @@ call tokens itself, and only to joined members of the room (see
 ## Enabling
 
 ```yaml
+apiScheme: https   # the chart refuses calls over http; see below
 matrixChat:
   enabled: true
   networkPolicy:
@@ -96,113 +97,16 @@ as the bootstrap admin. The chart never generates `admin_token`. Add it for the
 sync that needs it and remove it afterwards: the Job uses it ahead of the
 bootstrap password, so a revoked token left there makes the next change fail.
 
-**Older mastermind images.** The setup Jobs and LiveKit's node-IP discovery run
-`matrix-init`, a script in the mastermind image, together with the
-`init_matrix_settings` command it calls. An image without them cannot run the
-setup: the secrets Job fails with `executable file not found`, and so does the
-upgrade. Point `waldur.imageTag` at an image that has `matrix-init`, or turn
-`setup.enabled` off. With `registerAppservice` on, the wiring Job also needs
-`waldur register_matrix_appservice`. On an image without it, the Job logs a
-warning, seeds Constance, skips the registration and exits 0, and chat stays
-down until the appservice is registered.
-
 While the chart seeds the tokens, the Setup wizard in Waldur refuses to rotate
 them (it answers `409`): the next sync would write the old ones back. It knows
 from the `MATRIX_TOKENS_MANAGED_BY` setting, which the wiring Job sets to
 `deployment` on every run. The other way round, `init_matrix_settings` refuses
 appservice tokens in Constance that the deployment did not seed, for example
-from an earlier run of the Setup wizard: the wiring Job then fails and writes
-nothing. A deployment that ran Matrix chat before `setup` existed hands its
-tokens over as [Migrating an existing deployment](#migrating-an-existing-deployment)
-describes.
-
-### Migrating an existing deployment
-
-Charts before `matrixChat.setup` took the registration token from
-`homeserver.registrationToken` and left the appservice tokens to the Setup
-wizard. `setup.enabled` is on by default now, so upgrading such a release
-without preparation would have the setup Job mint new tokens: the homeserver
-would restart with a registration token Waldur does not have, and the wiring
-Job would refuse the appservice tokens the wizard configured. Hand the current
-tokens to the setup Secret before upgrading instead.
-
-1. Create `matrix-appservice-secret` from Waldur's current settings, with a new
-   bootstrap password. The values go from the API pod straight into the Secret,
-   never through a command line or a file:
-
-   ```bash
-   kubectl -n <namespace> exec deploy/waldur-mastermind-api -- waldur shell -c '
-   import json, secrets
-   from constance import config
-   print("SECRET " + json.dumps({
-       "apiVersion": "v1", "kind": "Secret", "type": "Opaque",
-       "metadata": {"name": "matrix-appservice-secret"},
-       "stringData": {
-           "as_token": config.MATRIX_APPSERVICE_AS_TOKEN,
-           "hs_token": config.MATRIX_APPSERVICE_HS_TOKEN,
-           "registration_token": config.MATRIX_USER_REGISTRATION_SECRET,
-           "bootstrap_password": secrets.token_hex(32),
-       },
-   }))
-   ' | sed -n 's/^SECRET //p' | kubectl -n <namespace> create -f -
-   ```
-
-   The keys are the ones the setup Jobs use: `as_token`, `hs_token`,
-   `registration_token` and `bootstrap_password`, plus an optional
-   `admin_token`. `registration_token` has to be the homeserver's current
-   registration token, the value of `homeserver.registrationToken`. Earlier
-   charts required Waldur's `MATRIX_USER_REGISTRATION_SECRET` to equal it, which
-   is why it is read from there; if yours differ, put the homeserver's value in
-   instead. To keep the tokens in your own secret manager, store the same keys
-   there and set `setup.existingSecret.name`.
-
-2. Remove `homeserver.registrationToken` and
-   `homeserver.registrationTokenExistingSecret` from your values. With setup on,
-   either is a render error. If you pinned `livekit.rtc.nodeIp`, also set
-   `livekit.rtc.autoDiscoverNodeIp: false`, which is on by default now, or
-   remove `nodeIp` to have the address discovered.
-
-3. Upgrade as usual, deleting the init-whitelabeling job first, and with
-   `--wait`, so that the wiring Job runs after the homeserver has restarted
-   with the new configuration:
-
-   ```bash
-   kubectl -n <namespace> delete job waldur-mastermind-init-whitelabeling-job --ignore-not-found
-   helm upgrade waldur waldur/ -n <namespace> -f <your values> --wait --timeout 20m
-   ```
-
-   The secrets Job finds the Secret and reuses it. The wiring Job seeds the same
-   tokens into Waldur, which it accepts because they match what Waldur holds,
-   and marks them as the deployment's from then on. The registration on the
-   homeserver keeps working, and the Job reports it as already registered.
-   It also warns that it could not compare the registration, because no
-   `@waldur-bootstrap` exists yet; see below.
-
-**The bootstrap admin.** The homeserver already has its own admins: the first
-account registered on it, which earlier charts made an admin. The wiring Job
-does not use them. It creates `@waldur-bootstrap` through the shared-secret
-API, which the chart now keys with the registration token, but only when it
-has to change the registration: at the first token rotation, say. While the
-registration works it creates no account, and only warns that it could not
-compare the registration. The shared-secret API works however many users and
-admins the homeserver has, so `bootstrap_password` is all a later rotation
-needs, provided no `@waldur-bootstrap` account exists from an earlier attempt.
-If one does, put a homeserver admin's access token into the Secret under
-`admin_token` for that sync and remove it afterwards. Review the existing
-admins in `#admins:<serverName>`: the first account kept its admin rights, and
-since this chart sets `grant_admin_to_first_user = false`, no account gains
-them that way any more.
-
-**If the upgrade ran without the Secret.** With plain Helm it cannot: an
-upgrade that turns setup on while the `matrix-homeserver` StatefulSet runs and
-the Secret is missing fails at render time and points here. ArgoCD renders
-without access to the cluster, so the check cannot run there. The secrets Job
-then mints new tokens and the wiring Job fails, with a pointer here, and
-leaves Waldur's settings as they were, so the old tokens are still in Waldur.
-To recover, delete the minted `matrix-appservice-secret`, create it as in step
-1, sync again, and restart the homeserver, which read the minted registration
-token at startup:
-`kubectl -n <namespace> rollout restart statefulset/matrix-homeserver`.
+from a run of the Setup wizard while setup was off: the wiring Job then fails
+and writes nothing. To hand the tokens to the deployment, clear
+`MATRIX_APPSERVICE_AS_TOKEN` and `MATRIX_APPSERVICE_HS_TOKEN` under
+**Administration → Configuration → Matrix chat → Settings** and sync again,
+which registers the appservice with the Secret's tokens.
 
 ### Opting out
 
@@ -227,32 +131,17 @@ To manage the tokens by hand again:
    not become an admin (`grant_admin_to_first_user = false`), because Waldur
    registers an account for whoever opens the chat first.
 
-   Register an admin through the shared-secret API instead. The chart sets the
-   homeserver's `registration_shared_secret` to the registration token with
-   setup on or off, and no route reaches that API from outside the cluster.
-   Run this in the API pod once the backend's `MATRIX_HOMESERVER_URL` and
-   `MATRIX_USER_REGISTRATION_SECRET` are set (the latter to the registration
-   token). It prints the account and its password, to sign in to a Matrix
-   client with:
-
-   ```bash
-   kubectl -n <namespace> exec deploy/waldur-mastermind-api -- waldur shell -c '
-   import hashlib, hmac, secrets, httpx
-   from constance import config
-   user, password = "homeserver-admin", secrets.token_hex(32)
-   homeserver = httpx.Client(base_url=config.MATRIX_HOMESERVER_URL)
-   nonce = homeserver.get("/_synapse/admin/v1/register").raise_for_status().json()["nonce"]
-   mac = hmac.new(config.MATRIX_USER_REGISTRATION_SECRET.encode(),
-                  "\0".join([nonce, user, password, "admin"]).encode(), hashlib.sha1)
-   homeserver.post("/_synapse/admin/v1/register", json={
-       "nonce": nonce, "username": user, "password": password, "admin": True,
-       "mac": mac.hexdigest()}).raise_for_status()
-   print(user, password)
-   '
-   ```
-
-   With `homeserver.loginWithPassword: false` the account cannot sign in with
-   that password: keep password login on until the appservice is registered.
+   Register a temporary admin through the shared-secret API instead, as
+   [Rotating with password login off](#rotating-with-password-login-off)
+   describes. The snippets read the secret from Waldur's
+   `MATRIX_USER_REGISTRATION_SECRET`, which has to be the registration token
+   that step 1 gives the homeserver: the chart sets the homeserver's
+   `registration_shared_secret` to that token with setup on or off. The
+   registration answers with the admin's access token, which works with
+   password login off too. Hand it to `register_matrix_appservice` as
+   `MATRIX_ADMIN_TOKEN`, as under
+   [Runtime steps](#runtime-steps-and-what-now-handles-them), then have the
+   admin deactivate itself.
 
 The generated Secret stays where it is: Helm never owned it, so neither turning
 setup off nor `helm uninstall` deletes it.
@@ -342,35 +231,31 @@ registration, either set `loginWithPassword: true` for that sync and back to
 `admin_token` into the Secret, along with the new tokens in step 1 of a
 rotation, and remove it after the sync.
 
-To get a token, register a temporary admin through the shared-secret API, as
+To get a token, register a temporary admin with the two snippets under
 [Token rotation](https://docs.waldur.com/latest/developer-guide/admin-guide/matrix-appservice-setup/#token-rotation)
-in the setup guide describes. On helm, run it in the API pod, which reaches the
-homeserver and holds the registration token in Constance, so the registration
-token never passes through a command line. It prints the account and its
-access token:
+in the setup guide, and after the sync have it deactivate itself. They read the
+homeserver URL and the registration secret from Waldur's settings, so run them
+in the API pod, which reaches the homeserver's admin API inside the cluster;
+nothing outside does. The token goes into the Secret through standard input,
+never on a command line:
 
 ```bash
-kubectl -n <namespace> exec deploy/waldur-mastermind-api -- waldur shell -c '
-import hashlib, hmac, secrets, httpx
-from constance import config
-user, password = "rotation-" + secrets.token_hex(4), secrets.token_hex(32)
-homeserver = httpx.Client(base_url=config.MATRIX_HOMESERVER_URL)
-nonce = homeserver.get("/_synapse/admin/v1/register").raise_for_status().json()["nonce"]
-mac = hmac.new(config.MATRIX_USER_REGISTRATION_SECRET.encode(),
-               "\0".join([nonce, user, password, "admin"]).encode(), hashlib.sha1)
-print(user, homeserver.post("/_synapse/admin/v1/register", json={
-    "nonce": nonce, "username": user, "password": password, "admin": True,
-    "mac": mac.hexdigest()}).raise_for_status().json()["access_token"])
-'
+TOKEN=$(kubectl -n <namespace> exec deploy/waldur-mastermind-api -- \
+  waldur shell -c '<first snippet from the guide>' | sed -n 's/^TOKEN //p')
+printf '{"stringData":{"admin_token":"%s"}}' "$TOKEN" |
+  kubectl -n <namespace> patch secret matrix-appservice-secret --type merge --patch-file /dev/stdin
 ```
 
-After the sync, have the temporary admin deactivate itself in the admin room,
-with the deactivate step under the same
-[Token rotation](https://docs.waldur.com/latest/developer-guide/admin-guide/matrix-appservice-setup/#token-rotation)
-section, run with `HOMESERVER=https://<serverName>` and `TOKEN=<token>`. It uses
-only the public client API. That also signs it out, and nobody can sign in to
-the account again, not even through single sign-on. The step exits non-zero if
-the temporary admin is still active; then deactivate it from `#admins` by hand.
+After the sync, remove `admin_token` from the Secret and have the admin
+deactivate itself:
+
+```bash
+kubectl -n <namespace> patch secret matrix-appservice-secret --type json \
+  -p '[{"op": "remove", "path": "/data/admin_token"}]'
+printf '%s\n' "$TOKEN" | kubectl -n <namespace> exec -i deploy/waldur-mastermind-api -- \
+  waldur shell -c '<second snippet from the guide>'
+unset TOKEN
+```
 
 Calls need encrypted transports. With `livekit.publicUrl` set, the chart
 refuses to render unless `publicUrl` is a `wss://` URL and `apiScheme` is
@@ -489,7 +374,12 @@ client-server and federation surfaces are exposed through the Matrix ingress.
   its ingress; the PVC and its history are kept. Waldur keeps offering chat
   until you also switch `MATRIX_ENABLED` off under **Administration →
   Configuration → Matrix chat → Settings** and hide it with
-  `waldur.featureFlags: {"project.show_matrix_chat": false}`.
+  `waldur.featureFlags: {"project.show_matrix_chat": false}`. To turn chat
+  back on, set `matrixChat.enabled=true`, remove that `featureFlags` entry and
+  switch `MATRIX_ENABLED` on again: the wiring Job switches it on only at the
+  first seeding. To keep the switch in your values instead, set
+  `waldur.settingsOverrides.MATRIX_ENABLED`, which the chart applies on every
+  sync.
 
 ## Backup and restore
 
@@ -542,7 +432,11 @@ kubectl wait --for=condition=Ready pod/matrix-homeserver-copy --timeout=5m
 kubectl exec matrix-homeserver-copy -- tar -C /var/lib/tuwunel -czf - . > tuwunel_data.tar.gz
 gzip -t tuwunel_data.tar.gz
 kubectl delete pod matrix-homeserver-copy
-kubectl get secret matrix-appservice-secret -o yaml > matrix-appservice-secret.yaml
+# Only what a restore needs: the API server refuses to create an object that
+# carries a resourceVersion, and a new cluster may use another namespace.
+kubectl get secret matrix-appservice-secret -o json |
+  jq '{apiVersion, kind, type, data, metadata: {name: .metadata.name, labels: .metadata.labels}}' \
+  > matrix-appservice-secret.json
 # Waldur's database, while the bot is stopped. With postgresBackup.enabled, run
 # the chart's backup CronJob now and wait for it:
 kubectl create job --from=cronjob/waldur-db-backup-cronjob waldur-db-backup-matrix
@@ -635,9 +529,14 @@ see [Restoring only Waldur's database](https://docs.waldur.com/latest/developer-
 On a new cluster, or after losing the namespace, restore in this order, so that
 nothing starts on an empty volume or mints new tokens:
 
-1. `kubectl apply -f matrix-appservice-secret.yaml`. For a namespace of
-   another name, delete the file's `namespace:` line first. The secrets Job
-   then reuses the tokens instead of generating new ones.
+1. Create the namespace and the Secret from the saved copy. The secrets Job
+   then reuses the tokens instead of generating new ones:
+
+   ```bash
+   kubectl create namespace <namespace>
+   kubectl -n <namespace> create -f matrix-appservice-secret.json
+   ```
+
 2. Restore Waldur's database, and set the same `waldur.secretKey` and
    `waldur.fieldEncryptionKey`, and `waldur.fieldEncryptionKeyFallbacks` if a
    key rotation was under way. This order needs the database outside the
@@ -646,6 +545,42 @@ nothing starts on an empty volume or mints new tokens:
 3. Create and fill `data-matrix-homeserver-0` as above.
 4. `helm install`. The wiring Job finds the appservice already registered and
    changes nothing.
+
+### Losing the setup Secret
+
+If `matrix-appservice-secret` is deleted while the homeserver keeps its data,
+put it back before the next sync: the secrets Job would otherwise mint new
+tokens that neither the homeserver nor Waldur holds. `helm upgrade` refuses to
+render while the `matrix-homeserver` StatefulSet runs and the Secret is
+missing. ArgoCD renders without access to the cluster, so the check cannot run
+there: pause automated sync until the Secret is back.
+
+Create it from the backup, as in step 1 above. Without a backup, rebuild it
+from Waldur's settings, which hold the same tokens. The values go from the API
+pod straight into the Secret, never through a command line or a file:
+
+```bash
+kubectl -n <namespace> exec deploy/waldur-mastermind-api -- waldur shell -c '
+import json
+from constance import config
+print("SECRET " + json.dumps({
+    "apiVersion": "v1", "kind": "Secret", "type": "Opaque",
+    "metadata": {"name": "matrix-appservice-secret",
+                 "labels": {"app.kubernetes.io/managed-by": "matrix-init"}},
+    "stringData": {
+        "as_token": config.MATRIX_APPSERVICE_AS_TOKEN,
+        "hs_token": config.MATRIX_APPSERVICE_HS_TOKEN,
+        "registration_token": config.MATRIX_USER_REGISTRATION_SECRET,
+    },
+}))
+' | sed -n 's/^SECRET //p' | kubectl -n <namespace> create -f -
+```
+
+The bootstrap password is lost with the Secret, since Waldur never stores it,
+and a new one would not match `@waldur-bootstrap`. Syncs keep working: the
+wiring Job only warns that it could not compare the registration. The next
+change to the registration, a token rotation say, needs an `admin_token` in the
+Secret, as in [Rotating with password login off](#rotating-with-password-login-off).
 
 ### Checking a restore
 
@@ -893,7 +828,7 @@ The defaults make SSO sign in to the account Waldur provisioned, or refuse:
 | `sso.waldurRegistrationMethod` | `""` | Not a Tuwunel key: Waldur's `MATRIX_SSO_REGISTRATION_METHOD`, the name in Waldur of this identity provider. With `matrixChat.setup` on, the wiring Job seeds it and `MATRIX_EXTERNAL_LOGIN_METHOD: oidc`, and the chart refuses SSO without it. |
 | `sso.trusted` | `true` | `trusted`. Signs in to any existing account named like the claim, so keep `sub` unless the IdP controls usernames. With `false`, Tuwunel refuses every account Waldur provisioned. |
 | `sso.registration` | `false` | `registration`. SSO creates no accounts; it only signs in to existing ones. With `trusted`, the chart refuses `true` unless `sso.allowRegistrationWhenTrusted` is also `true`: SSO would create an account before Waldur provisions it, and a trusted provider then signs anyone whose claim matches into it. |
-| `sso.forbiddenUsernames` | `[]` | `forbidden_usernames`: anchored patterns SSO never signs in to and Tuwunel refuses to register, so create an admin before you list it. The chart always puts the bot's localpart and `waldur-bootstrap`, reserved for the bootstrap admin that automatic registration creates, ahead of the list, so list only the other homeserver admins, such as `admin` above. The bot's localpart is `MATRIX_APPSERVICE_SENDER_LOCALPART` from `waldur.settingsOverrides`, else `waldur-bot`; if you changed it in Waldur's settings instead, list it here too. |
+| `sso.forbiddenUsernames` | `[]` | `forbidden_usernames`: anchored patterns SSO never signs in to and Tuwunel refuses to register, so create an admin before you list it. The chart always puts the bot's localpart and `waldur-bootstrap`, reserved for the bootstrap admin that automatic registration creates, ahead of the list, so list only the other homeserver admins, such as `admin` above. The bot's localpart is `setup.botLocalpart`, or with setup off `MATRIX_APPSERVICE_SENDER_LOCALPART` from `waldur.settingsOverrides` where that is set; if you changed it in Waldur's settings instead, list it here too. |
 | `loginWithPassword` | `true` | `login_with_password`. Set `false` with SSO so clients show no password form. Waldur's drawer is unaffected, but an admin created with a password can then no longer sign in to a client either, so re-registering the appservice after a token rotation needs a homeserver admin's access token, or `true` again for the rotation. |
 
 ## Password mode for Matrix clients
@@ -908,18 +843,12 @@ keep `homeserver.loginWithPassword: true`.
 Waldur sets the passwords through the homeserver's admin API, so the bot has to
 be a homeserver admin; see
 [Making the bot a homeserver admin](https://docs.waldur.com/latest/developer-guide/admin-guide/matrix-appservice-setup/#making-the-bot-a-homeserver-admin)
-for what that costs. On helm, sign in to a Matrix client such as Element, with
-the homeserver `https://<serverName>`, as `@waldur-bootstrap:<serverName>` with
-the bootstrap password:
-
-```bash
-kubectl -n <namespace> get secret matrix-appservice-secret \
-  -o jsonpath='{.data.bootstrap_password}' | base64 -d
-```
-
-In the `#admins:<serverName>` room, send
-`!admin users make-user-admin @<setup.botLocalpart>:<serverName>`, then sign
-out.
+for what that costs. The registration step makes it one, on every sync with
+`registerAppservice` on, and Diagnostics shows the result as **Bot is a
+homeserver admin**. If it could not, the wiring Job's log says why; add an
+`admin_token` to the Secret for one sync, as in
+[Rotating with password login off](#rotating-with-password-login-off), and it
+tries again.
 
 ## Runtime steps, and what now handles them
 
@@ -1065,8 +994,7 @@ and publishes:
 
 The exporter calls the endpoint with `waldur.supportToken`, which must belong
 to a support or staff user. If every call gets `403`, the token belongs to
-neither, or Waldur is too old to let support users read diagnostics and needs
-a staff user's token; `waldur_matrix_diagnostics_up` then stays `0`.
+neither, and `waldur_matrix_diagnostics_up` stays `0`.
 
 ### Scraping the exporter
 
@@ -1120,7 +1048,7 @@ Matrix metrics, so with several it does not notice one of them going away.
 | Alert | Fires when | Severity | First thing to check |
 | --- | --- | --- | --- |
 | `WaldurMatrixMetricsMissing` | No `waldur_matrix_diagnostics_up` series for 15 minutes | warning | The exporter pod runs a version with Matrix metrics, and Prometheus lists it as a target: a ServiceMonitor without the right labels is ignored. |
-| `WaldurMatrixDiagnosticsDown` | The diagnostics call failed for 10 minutes | warning | The exporter's log. `403` means `waldur.supportToken` belongs to neither a support nor a staff user, or Waldur is too old to let support users read diagnostics; anything else, the `waldur-mastermind-api` log. |
+| `WaldurMatrixDiagnosticsDown` | The diagnostics call failed for 10 minutes | warning | The exporter's log. `403` means `waldur.supportToken` belongs to neither a support nor a staff user; anything else, the `waldur-mastermind-api` log. |
 | `WaldurMatrixHomeserverUnreachable` | `homeserver_reachable` failed for 5 minutes while a homeserver URL is set | critical | `kubectl logs matrix-homeserver-0`. A homeserver that is up but not answering after an image change is migrating its database: do not restart it, see [Upgrading](#upgrading). |
 | `WaldurMatrixBotNotRunning` | `bot_running` failed for 10 minutes while a homeserver URL is set | warning | `kubectl logs deployment/waldur-matrix-bot`, and that `matrixChat.bot.enabled` is on. |
 | `WaldurMatrixBotSignInFailing` | `bot_whoami` failed for 10 minutes while the homeserver is reachable | warning | The appservice registration: the `matrix-init-wire` Job's log, and [Rotating the tokens](#rotating-the-tokens) if the tokens changed. |
@@ -1205,24 +1133,6 @@ refused the caller (not joined to the room, or an unknown device). `503` means
 Waldur could not reach the homeserver or LiveKit, or the LiveKit settings above
 are missing.
 
-### Upgrading from lk-jwt-service
-
-Earlier charts deployed `lk-jwt-service` to issue call tokens. Waldur issues
-them now, and the service is removed:
-
-1. Delete `matrixChat.lkJwt` and `matrixChat.homeserver.livekitServiceUrl` from
-   your values. The chart ignores both; the RTC focus now always points at
-   Waldur's API.
-2. Upgrade the chart together with a Waldur image that serves
-   `/api/matrix/livekit` (delete the init-whitelabeling job first, as usual).
-   `helm upgrade` removes the lk-jwt-service Deployment, Service,
-   NetworkPolicy and its `/get_token` and `/sfu` routes.
-3. Restart the homeserver so it reads the new `.well-known`:
-   `kubectl rollout restart statefulset/matrix-homeserver`.
-4. Calls already running keep their LiveKit connection. Clients pick up the new
-   focus the next time they read `.well-known`; reloading Element or the
-   Waldur page is enough.
-
 ## Open-registration guard
 
 With `setup.enabled` (the default) the registration token is always generated, so
@@ -1279,7 +1189,6 @@ matrixChat:
     turn:
       enabled: true
       domain: turn.matrix.example.org   # must resolve to the livekit-rtc LB IP
-      tlsPort: 5349
       tls:
         existingSecret: livekit-turn-tls  # cert/key for `domain`
 ```
@@ -1295,8 +1204,9 @@ Two things the operator must wire (the chart can't):
    `turn.domain` in `turn.tls.existingSecret` (e.g. a cert-manager `Certificate`).
 
 TURNS on `tlsPort` also tunnels through TLS-only firewalls, so it covers both
-symmetric NAT and restrictive networks. Plain TURN/UDP is intentionally not
-exposed — relayed media always rides TLS.
+symmetric NAT and restrictive networks. That holds only on 443, the default:
+those firewalls allow nothing else, so keep it. Plain TURN/UDP is
+intentionally not exposed — relayed media always rides TLS.
 
 ## What the chart wires automatically
 
@@ -1341,6 +1251,7 @@ external instance and the bundled SFU is never needed.
 Configuration:
 
 ```yaml
+apiScheme: https                                # the chart refuses calls over http
 matrixChat:
   enabled: true
   livekit:

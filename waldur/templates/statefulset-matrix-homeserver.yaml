@@ -169,8 +169,7 @@ spec:
           emptyDir: {}
         {{- else if $h.persistence.existingClaim }}
         # BYO claim: mount it directly instead of letting the StatefulSet manage
-        # the volume. Also the migration path off a prior Deployment-based
-        # release — point existingClaim at its `matrix-homeserver-data` PVC.
+        # the volume.
         - name: data
           persistentVolumeClaim:
             claimName: {{ $h.persistence.existingClaim }}

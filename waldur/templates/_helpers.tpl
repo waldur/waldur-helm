@@ -734,6 +734,32 @@ because Waldur's URL settings reject single-label hostnames.
 {{- end -}}
 
 {{/*
+The Matrix origins the homeport CSP allows in connect-src: the homeserver over
+https (chat sync, media) and wss (the bundled LiveKit's /rtc signalling route
+sits behind it), plus the LiveKit publicUrl's origin when it is not the
+homeserver's -- an operator-managed SFU, or a bundled one whose RTC
+LoadBalancer has its own DNS name. The browser dials publicUrl straight from
+the SPA, so an origin missing here refuses the call websocket client-side with
+no server-side trace. Empty when matrix chat is off. Shared by the nginx,
+haproxy, traefik and HTTPRoute policies, which are otherwise copies of each
+other.
+*/}}
+{{- define "waldur.matrixConnectSrc" -}}
+{{- if and .Values.matrixChat.enabled .Values.matrixChat.homeserver.enabled .Values.matrixChat.homeserver.serverName -}}
+{{- $serverName := .Values.matrixChat.homeserver.serverName -}}
+{{- $origins := list (printf "%s://%s" .Values.apiScheme $serverName) (printf "wss://%s" $serverName) -}}
+{{- with .Values.matrixChat.livekit.publicUrl -}}
+{{- $url := urlParse . -}}
+{{- $origin := printf "%s://%s" $url.scheme $url.host -}}
+{{- if not (has $origin $origins) -}}
+{{- $origins = append $origins $origin -}}
+{{- end -}}
+{{- end -}}
+{{- join " " $origins -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 The appservice bot's Matrix localpart: MATRIX_APPSERVICE_SENDER_LOCALPART from
 waldur.settingsOverrides, else matrixChat.setup.botLocalpart where the chart
 has one, else Waldur's default. A value changed only in Waldur's settings is

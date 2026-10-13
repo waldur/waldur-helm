@@ -605,9 +605,9 @@ tests:
       matrixChat.homeserver.enabled: true
       matrixChat.homeserver.serverName: "matrix.example.org"
     asserts:
-      - matchRegex:
-          path: spec.template.spec.containers[0].command[2]
-          pattern: '^matrix-init wire '
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: [matrix-init, wire]
       - notContains:
           path: spec.template.spec.volumes
           content:
@@ -784,7 +784,7 @@ tests:
             namespace: NAMESPACE
     asserts:
       - failedTemplate:
-          errorPattern: "homeserver already runs, and Secret matrix-appservice-secret does not exist.*Migrating an existing deployment"
+          errorPattern: "homeserver already runs, and Secret matrix-appservice-secret does not exist.*Losing the setup Secret"
 
   - it: upgrades a running homeserver once its Secret exists
     template: templates/validate-matrix.yaml
@@ -845,14 +845,3 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
-
-  - it: points a failed wiring at the migration guide
-    template: templates/job-init-matrix-wire.yaml
-    set:
-      matrixChat.enabled: true
-      matrixChat.homeserver.enabled: true
-      matrixChat.homeserver.serverName: "matrix.example.org"
-    asserts:
-      - matchRegex:
-          path: spec.template.spec.containers[0].command[2]
-          pattern: '(?s)^matrix-init wire && exit 0\n.*Migrating an existing deployment'

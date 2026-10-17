@@ -1,8 +1,6 @@
-# Official documentation
+# Installing kubectl
 
 Documentation of installation link: [doc](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/)
-
-## Installing kubectl
 
 1. Download and install latest kubectl
 

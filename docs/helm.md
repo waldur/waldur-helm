@@ -1,8 +1,6 @@
-# Official documentation
+# Installing Helm
 
 Documentation of installation link: [Helm](https://helm.sh/docs/intro/install/#from-script)
-
-## Installing Helm
 
 1. Download and install Helm
 

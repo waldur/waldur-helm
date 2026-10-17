@@ -1,8 +1,6 @@
-# Official documentation
+# Installing minikube
 
 Documentation of installation link: [doc](https://minikube.sigs.k8s.io/docs/start/)
-
-## Installing minikub
 
 1. Download and install minikube
 

@@ -1,4 +1,4 @@
-# Matrix chat (homeserver + LiveKit calls)
+# Matrix chat with Helm
 
 The chart can deploy the Matrix chat infrastructure: a Tuwunel homeserver and
 a LiveKit media SFU for voice and video calls. Waldur's API issues the LiveKit

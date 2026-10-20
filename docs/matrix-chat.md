@@ -562,7 +562,12 @@ pod straight into the Secret, never through a command line or a file:
 ```bash
 kubectl -n <namespace> exec deploy/waldur-mastermind-api -- waldur shell -c '
 import json
-from constance import config
+try:
+    from waldur_core.configuration import config
+except ModuleNotFoundError as e:  # mastermind keeping settings in constance
+    if e.name != "waldur_core.configuration":
+        raise
+    from constance import config
 print("SECRET " + json.dumps({
     "apiVersion": "v1", "kind": "Secret", "type": "Opaque",
     "metadata": {"name": "matrix-appservice-secret",

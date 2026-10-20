@@ -89,9 +89,15 @@ Run linter:
     - |
       PG=$(kubectl get pod -l cluster-name=waldur-testing-postgres,spilo-role=master -o name)
       kubectl exec "$PG" -c postgres -- psql -U postgres -d waldur -v ON_ERROR_STOP=1 -c "
-        DELETE FROM constance_constance WHERE key LIKE 'MATRIX\_%';
         DROP SCHEMA IF EXISTS matrix_bot CASCADE;
         DO \$\$ BEGIN
+          IF to_regclass('configuration_setting') IS NOT NULL THEN
+            DELETE FROM configuration_setting WHERE key LIKE 'MATRIX\_%';
+          END IF;
+          -- Settings of mastermind releases that still keep them in constance.
+          IF to_regclass('constance_constance') IS NOT NULL THEN
+            DELETE FROM constance_constance WHERE key LIKE 'MATRIX\_%';
+          END IF;
           IF to_regclass('matrix_chat_matrixbotidentity') IS NOT NULL THEN
             DELETE FROM matrix_chat_matrixbotidentity;
           END IF;

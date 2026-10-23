@@ -408,23 +408,6 @@ data:
     })
     {{ end }}
 
-    {{ if (has "paypal" .Values.waldur.features) }}
-    #
-    # waldur-paypal
-    #
-
-    # See also http://docs.waldur.com/PayPal+plugin+configuration
-    WALDUR_PAYPAL.update({
-        'ENABLED': True,
-        'BACKEND': {
-            'mode': 'live',
-            'client_id': '{{ .Values.waldur.paypal.clientId }}',
-            'client_secret': os.environ.get("PAYPAL_SECRET", '{{ .Values.waldur.paypal.secret | default "" }})',
-            'currency_name': 'EUR',
-        }
-    })
-    {{ end }}
-
     {{ if .Values.waldur.mail.from }}
     DEFAULT_FROM_EMAIL = '{{ .Values.waldur.mail.from }}'
     {{ end }}

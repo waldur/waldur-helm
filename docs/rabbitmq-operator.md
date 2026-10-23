@@ -456,7 +456,7 @@ For high-throughput scenarios:
 
 ## Support and Documentation
 
-- **Official Documentation:** <https://www.rabbitmq.com/kubernetes/operator/>
+- **Official Documentation:** <https://www.rabbitmq.com/kubernetes/operator/operator-overview>
 
 - **GitHub Repository:** <https://github.com/rabbitmq/cluster-operator>
 

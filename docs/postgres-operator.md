@@ -662,9 +662,9 @@ spec:
 
 - **Community Slack:** #cloudnativepg on Kubernetes Slack
 
-- **Tutorials:** <https://cloudnative-pg.io/documentation/current/tutorial/>
+- **Quickstart:** <https://cloudnative-pg.io/documentation/current/quickstart/>
 
-- **Best Practices:** <https://cloudnative-pg.io/documentation/current/appendices/>
+- **FAQ:** <https://cloudnative-pg.io/documentation/current/faq/>
 
 ---
 

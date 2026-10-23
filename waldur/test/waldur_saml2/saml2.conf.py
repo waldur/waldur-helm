@@ -1,7 +1,7 @@
 import datetime
 import saml2
 
-# wiki: http://docs.waldur.com/Identityproviders
+# docs: https://docs.waldur.com/latest/admin-guide/identities/summary/
 WALDUR_AUTH_SAML2.update({
     # used for assigning the registration method to the user
     'NAME': 'saml2',

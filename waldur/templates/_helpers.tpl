@@ -529,14 +529,6 @@ is the behaviour of an unconfigured relay rather than a crash loop.
       key: DATACITE_PASSWORD
 {{- end -}}
 
-{{- if .Values.waldur.paypal.existingSecret.name -}}
-- name: PAYPAL_SECRET
-  valueFrom:
-    secretKeyRef:
-      name: {{ .Values.waldur.paypal.existingSecret.name }}
-      key: {{ .Values.waldur.paypal.existingSecret.secretKey }}
-{{- end -}}
-
 {{ if .Values.proxy.httpsProxy }}
 - name: https_proxy
   value: {{ .Values.proxy.httpsProxy | quote }}

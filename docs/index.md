@@ -44,4 +44,6 @@ Outline:
 
 - [Proxy setup](proxy-setup.md)
 
+- [Trusting a private CA](trusted-ca-certificates.md)
+
 - [Host aliasing](host-aliasing.md)

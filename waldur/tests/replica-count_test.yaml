@@ -1,0 +1,60 @@
+suite: replica counts
+templates:
+  - templates/deployment-api.yaml
+  - templates/deployment-worker.yaml
+  - templates/deployment-beat.yaml
+  - templates/deployment-homeport.yaml
+  - templates/config-custom-roles.yaml
+
+tests:
+  - it: runs one replica of each component by default
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 1
+        template: templates/deployment-api.yaml
+      - equal:
+          path: spec.replicas
+          value: 1
+        template: templates/deployment-worker.yaml
+      - equal:
+          path: spec.replicas
+          value: 1
+        template: templates/deployment-beat.yaml
+      - equal:
+          path: spec.replicas
+          value: 1
+        template: templates/deployment-homeport.yaml
+
+  - it: keeps an explicit 0 for a passive site
+    set:
+      replicaCount.api: 0
+      replicaCount.worker: 0
+      replicaCount.beat: 0
+      replicaCount.homeport: 0
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 0
+        template: templates/deployment-api.yaml
+      - equal:
+          path: spec.replicas
+          value: 0
+        template: templates/deployment-worker.yaml
+      - equal:
+          path: spec.replicas
+          value: 0
+        template: templates/deployment-beat.yaml
+      - equal:
+          path: spec.replicas
+          value: 0
+        template: templates/deployment-homeport.yaml
+
+  - it: caps beat at one replica
+    set:
+      replicaCount.beat: 3
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 1
+        template: templates/deployment-beat.yaml

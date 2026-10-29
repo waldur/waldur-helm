@@ -11,7 +11,7 @@ spec:
   {{- else }}
   progressDeadlineSeconds: 2400
   {{- end }}
-  replicas: 1
+  replicas: {{ min 1 (.Values.replicaCount.beat | int) }}
   selector:
     matchLabels:
       app: waldur-mastermind-beat

@@ -12,7 +12,7 @@ spec:
   {{- else }}
   progressDeadlineSeconds: 2400
   {{- end }}
-  replicas: {{ default 1 .Values.replicaCount.worker }}
+  replicas: {{ .Values.replicaCount.worker | int }}
   selector:
     matchLabels:
       app: waldur-mastermind-worker

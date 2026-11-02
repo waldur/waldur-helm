@@ -415,6 +415,33 @@ written before the switch keep decrypting with no fallback entry needed.
 - RabbitMQ clustering supported
 - External message broker option
 
+### Passive standby site
+
+On a standby site whose database is a read-only replica (for example a
+CloudNativePG replica cluster), stop the components that write to the database
+and turn them back on at failover:
+
+```yaml
+replicaCount:
+  api: 0
+  worker: 0
+  beat: 0       # beat is a singleton: only 0 or 1
+  homeport: 1   # homeport does not touch the database and can stay up
+waldur:
+  initdbEnabled: false  # skips the whitelabeling PostSync Job; also disables beat's migrations
+```
+
+At failover, set the replica counts and `waldur.initdbEnabled: true` back together.
+
+Caveats:
+
+- `waldur.initdbEnabled: false` fails to render when Matrix chat is enabled with `matrixChat.setup.enabled`.
+- An HPA does not scale a deployment up from 0, so it stays inactive while its deployment is at 0.
+- The CronJobs keep running and have no switch:
+  - The cleanup CronJob's deletes fail against the replica. Its Job still reports Complete, so the errors appear only in the pod log.
+  - With `SAML2` in `waldur.authMethods`, the hourly metadata sync fails whenever the fetched metadata differs from what the replica holds.
+- With Matrix chat enabled, the Matrix bot (always 1 replica) takes a database lease when it starts.
+
 ## Tuning and Extension Hooks
 
 The chart exposes Bitnami-style extension hooks on the `api`, `worker`, `beat`, and `homeport` deployments so operators can inject site-specific configuration without forking. All defaults are empty — the rendered output is unchanged when the values are not set.

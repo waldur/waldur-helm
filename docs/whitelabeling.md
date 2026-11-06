@@ -49,6 +49,43 @@ To setup white-labeling, you can define next variables in `waldur/values.yaml` f
 Alternatively, TOS and PP files content can be provided as multiline values in `tosHtml` and `privacyHtml` options respectfully.
 If defined, they take precedence over the aforementioned ones.
 
+## Settings managed by the chart
+
+A setting the chart renders is reapplied by the `init-whitelabeling` hook on
+every `helm upgrade`. Mastermind locks it: the admin UI shows it as managed by
+the deployment and refuses changes, which the next upgrade would revert.
+Leaving a value empty (or unset, for the booleans) leaves the setting to
+administrators. Locking needs a Mastermind image whose
+`override_constance_settings` has `--lock`; with an older image the rendered
+settings stay editable and the next upgrade reverts changes, as before.
+
+The chart renders only what you set. `site.name`, `currencyName`,
+`whitelabeling.sidebarStyle`, `whitelabeling.disableDarkTheme`,
+`whitelabeling.autoApproveUserTOS`, `enableStrictCheckAcceptingInvitation`,
+`homeport.docsLink` and `support.backend` have no chart default. Two chart defaults differ from
+Waldur's, and the chart makes them Waldur's defaults in `override.conf.py`
+instead of rendering them, so administrators can still change them:
+
+* the documentation link is `https://docs.waldur.com` unless
+  `homeport.docsLink` is set (`""` means no link on a new install; an
+  upgraded one keeps the link the previous chart stored until an
+  administrator clears it);
+* the support desk is off unless `support` is in `waldur.features` or
+  `waldur.support.existingSecret` is set.
+
+### Upgrading
+
+Settings the chart no longer renders keep their current values and are
+handed to administrators. Removing `support` from `waldur.features` no longer
+switches the support desk off: administrators switch it in the admin UI.
+
+A values file that copies the previous chart defaults (`site.name: Waldur`,
+`currencyName: EUR`, `whitelabeling.sidebarStyle: dark`, the three booleans
+set to `false`, `homeport.docsLink`, `support.backend: basic`) still sets them, so they stay rendered
+and become locked. Delete the ones administrators should manage. The same
+applies to `helm upgrade --reuse-values`, which carries the previous chart
+defaults forward: pass your values file instead.
+
 ## Available countries
 
 The countries offered in the organization creation dialog are set with
@@ -64,5 +101,5 @@ waldur:
 By default the value is empty and the chart does not touch the setting, so a list
 configured through *Administration → Branding* is preserved. Once the value is
 set, the chart becomes the source of truth: it is reapplied by the
-`init-whitelabeling` hook on every `helm upgrade`, overwriting changes made
-through the admin UI.
+`init-whitelabeling` hook on every `helm upgrade`, and the admin UI shows it
+as managed by the deployment and does not let administrators change it.

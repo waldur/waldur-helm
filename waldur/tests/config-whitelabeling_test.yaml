@@ -3,6 +3,17 @@ templates:
   - templates/config-whitelabeling.yaml
 
 tests:
+  - it: renders only the homeport URL with the chart defaults
+    # Everything else is left to administrators: a rendered setting is locked
+    # in the admin UI.
+    asserts:
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "homeport_url:"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "(site_name|currency_name|docs_url|sidebar_style|disable_dark_theme|auto_approve_user_tos|enable_strict_check_accepting_invitation):"
+
   - it: should skip all string keys when values are empty
     set:
       waldur.site.name: ""
@@ -285,7 +296,31 @@ tests:
           path: data["whitelabeling.yaml"]
           pattern: "favicon:"
 
-  - it: should preserve boolean false values via hasKey semantics
+  - it: renders nothing for a boolean set to null
+    # The usual way to unset a value in Helm; an empty value would not save.
+    set:
+      waldur.whitelabeling.disableDarkTheme: null
+      waldur.whitelabeling.autoApproveUserTOS: null
+      waldur.enableStrictCheckAcceptingInvitation: null
+    asserts:
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "(disable_dark_theme|auto_approve_user_tos|enable_strict_check_accepting_invitation):"
+
+  - it: renders a boolean given as a string
+    # --set-string, or a values file that quotes it.
+    set:
+      waldur.whitelabeling.disableDarkTheme: "true"
+      waldur.whitelabeling.autoApproveUserTOS: ""
+    asserts:
+      - matchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "disable_dark_theme: true"
+      - notMatchRegex:
+          path: data["whitelabeling.yaml"]
+          pattern: "auto_approve_user_tos:"
+
+  - it: should preserve boolean false values
     set:
       waldur.whitelabeling.disableDarkTheme: false
       waldur.whitelabeling.autoApproveUserTOS: false

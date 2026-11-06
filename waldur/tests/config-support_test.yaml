@@ -3,22 +3,32 @@ templates:
   - templates/config-support.yaml
 
 tests:
-  - it: disables support when the feature is off
+  - it: leaves support to administrators when the feature is off
+    # override.conf.py makes off Waldur's default instead.
     asserts:
-      - matchRegex:
+      - notMatchRegex:
           path: data["support.yaml"]
-          pattern: 'WALDUR_SUPPORT_ENABLED: false'
+          pattern: WALDUR_SUPPORT_ENABLED
       - notMatchRegex:
           path: data["support.yaml"]
           pattern: WALDUR_SUPPORT_ACTIVE_BACKEND_TYPE
 
-  - it: defaults to the built-in service desk
+  - it: leaves the backend to administrators unless one is chosen
     set:
       waldur.features: [support]
     asserts:
       - matchRegex:
           path: data["support.yaml"]
           pattern: 'WALDUR_SUPPORT_ENABLED: true'
+      - notMatchRegex:
+          path: data["support.yaml"]
+          pattern: "WALDUR_SUPPORT_ACTIVE_BACKEND_TYPE|ATLASSIAN_|ZAMMAD_|SMAX_"
+
+  - it: selects the built-in service desk
+    set:
+      waldur.features: [support]
+      waldur.support.backend: basic
+    asserts:
       - matchRegex:
           path: data["support.yaml"]
           pattern: "WALDUR_SUPPORT_ACTIVE_BACKEND_TYPE: 'basic'"

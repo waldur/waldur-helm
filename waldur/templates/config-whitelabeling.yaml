@@ -50,13 +50,13 @@ data:
     {{ if .Values.waldur.whitelabeling.sidebarStyle }}
     sidebar_style: {{ .Values.waldur.whitelabeling.sidebarStyle | quote }}
     {{ end }}
-    {{ if hasKey .Values.waldur.whitelabeling "disableDarkTheme" }}
+    {{ if include "waldur.isSet" .Values.waldur.whitelabeling.disableDarkTheme }}
     disable_dark_theme: {{ .Values.waldur.whitelabeling.disableDarkTheme }}
     {{ end }}
-    {{ if hasKey .Values.waldur.whitelabeling "autoApproveUserTOS" }}
+    {{ if include "waldur.isSet" .Values.waldur.whitelabeling.autoApproveUserTOS }}
     auto_approve_user_tos: {{ .Values.waldur.whitelabeling.autoApproveUserTOS }}
     {{ end }}
-    {{ if hasKey .Values.waldur "enableStrictCheckAcceptingInvitation" }}
+    {{ if include "waldur.isSet" .Values.waldur.enableStrictCheckAcceptingInvitation }}
     enable_strict_check_accepting_invitation: {{ .Values.waldur.enableStrictCheckAcceptingInvitation }}
     {{ end }}
 

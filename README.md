@@ -117,6 +117,13 @@ Upgrade Waldur dependencies and release:
   helm upgrade waldur waldur/
 ```
 
+Settings the chart renders are locked in the admin UI, and settings it no
+longer renders are handed back to administrators with their current values.
+Before upgrading from a chart that rendered its defaults, see "Upgrading"
+under "Settings managed by the chart" in
+[docs/whitelabeling.md](docs/whitelabeling.md): a copied values file or
+`--reuse-values` keeps those defaults set and locked.
+
 Restart deployments to apply configmaps changes:
 
 ```bash

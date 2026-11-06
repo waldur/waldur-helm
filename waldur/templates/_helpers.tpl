@@ -823,3 +823,13 @@ Context is a dict:
   resources:
     {{- toYaml .resources | nindent 4 }}
 {{- end -}}
+
+{{/*
+Whether a value is set: neither missing, null nor an empty string. A false
+boolean is set. Takes the value itself.
+*/}}
+{{- define "waldur.isSet" -}}
+{{- if and (not (kindIs "invalid" .)) (ne (toString .) "") -}}
+true
+{{- end -}}
+{{- end -}}

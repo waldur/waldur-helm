@@ -1,0 +1,45 @@
+suite: chart defaults made Waldur's defaults
+templates:
+  - templates/config-override.yaml
+
+tests:
+  - it: makes the docs link and support off Waldur's defaults
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: "CONSTANCE_CONFIG\\['DOCS_URL'\\] = \\('https://docs.waldur.com',\\)"
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: "CONSTANCE_CONFIG\\['WALDUR_SUPPORT_ENABLED'\\] = \\(False,\\)"
+
+  - it: leaves the docs link to whitelabeling.yaml when it is set
+    set:
+      waldur.homeport.docsLink: "https://docs.example.com"
+    asserts:
+      - notMatchRegex:
+          path: data["override.conf.py"]
+          pattern: "DOCS_URL"
+
+  - it: keeps Waldur's empty default for an empty docs link
+    set:
+      waldur.homeport.docsLink: ""
+    asserts:
+      - notMatchRegex:
+          path: data["override.conf.py"]
+          pattern: "DOCS_URL"
+
+  - it: keeps support on by default when the feature is on
+    set:
+      waldur.features: [support]
+    asserts:
+      - notMatchRegex:
+          path: data["override.conf.py"]
+          pattern: WALDUR_SUPPORT_ENABLED
+
+  - it: keeps support on by default when support comes from a Secret
+    set:
+      waldur.support.existingSecret.name: support-secret
+    asserts:
+      - notMatchRegex:
+          path: data["override.conf.py"]
+          pattern: WALDUR_SUPPORT_ENABLED

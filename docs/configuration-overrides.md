@@ -27,8 +27,11 @@ waldur:
 
 Like `waldur.marketplace.countries`, these values are applied by the
 `init-whitelabeling` post-install/post-upgrade hook: the chart becomes the
-source of truth and reapplies the value on every `helm upgrade`, overwriting
-any change made through the admin UI in between.
+source of truth and reapplies the value on every `helm upgrade`. Mastermind
+locks such settings, so the admin UI shows them as managed by the deployment
+and refuses changes that the next upgrade would revert. Removing a key from
+`settingsOverrides` hands the setting back to administrators with its current
+value.
 
 ## Arbitrary feature flags
 

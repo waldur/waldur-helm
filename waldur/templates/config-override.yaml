@@ -117,6 +117,18 @@ data:
     WALDUR_CORE['NOTIFICATION_SUBJECT'] = '{{ .Values.waldur.notificationSubject }}'
     {{ end }}
 
+    {{- /*
+      Chart defaults that differ from Waldur's own, made Waldur's defaults
+      rather than rendered into a settings file: a rendered setting is locked
+      in the admin UI, while these stay with administrators.
+    */}}
+    {{- if not (kindIs "string" .Values.waldur.homeport.docsLink) }}
+    CONSTANCE_CONFIG['DOCS_URL'] = ('https://docs.waldur.com',) + CONSTANCE_CONFIG['DOCS_URL'][1:]
+    {{- end }}
+    {{- if and (not (has "support" .Values.waldur.features)) (not .Values.waldur.support.existingSecret.name) }}
+    CONSTANCE_CONFIG['WALDUR_SUPPORT_ENABLED'] = (False,) + CONSTANCE_CONFIG['WALDUR_SUPPORT_ENABLED'][1:]
+    {{- end }}
+
     {{ if .Values.waldur.timeZone }}
     # Local time zone to use. See all at https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
     TIME_ZONE = '{{ .Values.waldur.timeZone }}'

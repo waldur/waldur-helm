@@ -419,14 +419,18 @@ waldur:
   #   settingsOverrides:
   #     SCIM_INBOUND_ENABLED: true
   #     MARKETPLACE_LANDING_PAGE: "Catalog"
-  # Applied once via the init-whitelabeling post-install/post-upgrade hook,
-  # like the dedicated settings above — it overwrites any value set through
-  # the admin UI on every `helm upgrade`.
+  # Applied via the init-whitelabeling post-install/post-upgrade hook, like
+  # the dedicated settings above: the chart manages them, so they are locked
+  # in the admin UI and reapplied on every `helm upgrade`. Removing a key
+  # hands it back to administrators with its current value.
   settingsOverrides: {}
-  currencyName: "EUR"
+  # Empty leaves the currency to administrators (Waldur's default is EUR).
+  currencyName: ""
   mastermindUrl: ""
   site:
-    name: "Waldur"
+    # Empty leaves the site name to administrators (Waldur's default is
+    # "Waldur").
+    name: ""
     logo: ""
     address: ""
     email: ""
@@ -579,8 +583,9 @@ waldur:
   support:
     # "basic" is the built-in service desk: tickets stay in Waldur and need no
     # external system. "atlassian", "zammad" and "smax" sync tickets to that
-    # service desk and need its settings below.
-    backend: "basic"
+    # service desk and need its settings below. Empty leaves the choice to
+    # administrators; Waldur's default is "basic".
+    backend: ""
     existingSecret:
       name: ""
     atlassian:
@@ -657,8 +662,10 @@ waldur:
     loginLogoPath: ""
     sidebarLogoPath: ""
     sidebarLogoDarkPath: ""
-    sidebarStyle: "dark"
-    disableDarkTheme: false
+    # Empty leaves the setting to administrators (Waldur's default is "dark").
+    sidebarStyle: ""
+    # Set to manage it from the chart; unset, administrators decide.
+    # disableDarkTheme: false
     poweredByLogoPath: ""
     faviconPath: ""
     tosHtmlPath: ""
@@ -671,7 +678,8 @@ waldur:
     supportPortalLink: ""
     tosHtml: ""
     privacyHtml: ""
-    autoApproveUserTOS: false
+    # Set to manage it from the chart; unset, administrators decide.
+    # autoApproveUserTOS: false
   customInvitations:
     webhookUrl: ""
     tokenUrl: ""
@@ -690,7 +698,8 @@ waldur:
     tokenClientId: ""
     tokenSecret: ""
   projectEndDateRequired: false
-  enableStrictCheckAcceptingInvitation: false
+  # Set to manage it from the chart; unset, administrators decide.
+  # enableStrictCheckAcceptingInvitation: false
   # Measured in weeks number
   invitationDuration:
     individual: 1
@@ -716,7 +725,10 @@ waldur:
     inferencePlaygroundURL: ""
     userMandatoryFields: {}
     userRegistrationHiddenFields: {}
-    docsLink: "https://docs.waldur.com"
+    # Set, the chart manages the documentation link and it is locked in the
+    # admin UI. Unset, Waldur's default becomes https://docs.waldur.com and
+    # administrators manage it; "" makes the default no link.
+    # docsLink: "https://docs.example.com"
     invitationCivilCodeHelpText: ""
   metricsExporter:
     enabled: false

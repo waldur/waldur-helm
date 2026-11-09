@@ -697,6 +697,12 @@ waldur:
     managementUrl: ""
     tokenClientId: ""
     tokenSecret: ""
+  # Seconds allowed for each connect/read/write operation of calls to the
+  # service account API, the course account API, the invitation webhook and
+  # their token endpoints, greater than 0 and at most 30. Unset keeps the image
+  # default (5). Some of these calls run inside API requests, so a higher value
+  # lets a slow backend hold API workers for longer.
+  # userManagementApiTimeout: 15
   projectEndDateRequired: false
   # Set to manage it from the chart; unset, administrators decide.
   # enableStrictCheckAcceptingInvitation: false

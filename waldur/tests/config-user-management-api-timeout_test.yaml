@@ -1,0 +1,84 @@
+suite: user management API timeout
+templates:
+  - templates/config-override.yaml
+
+tests:
+  - it: leaves the image default alone when unset
+    asserts:
+      - notMatchRegex:
+          path: data["override.conf.py"]
+          pattern: USER_MANAGEMENT_API_TIMEOUT
+
+  - it: sets the timeout when given
+    set:
+      waldur.userManagementApiTimeout: 30
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: 'WALDUR_CORE\["USER_MANAGEMENT_API_TIMEOUT"\] = 30\n'
+
+  - it: keeps a fractional timeout
+    set:
+      waldur.userManagementApiTimeout: 2.5
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: 'WALDUR_CORE\["USER_MANAGEMENT_API_TIMEOUT"\] = 2.5\n'
+
+  - it: accepts a quoted number
+    set:
+      waldur.userManagementApiTimeout: "15"
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: 'WALDUR_CORE\["USER_MANAGEMENT_API_TIMEOUT"\] = 15\n'
+
+  - it: accepts the maximum
+    set:
+      waldur.userManagementApiTimeout: 30
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: 'WALDUR_CORE\["USER_MANAGEMENT_API_TIMEOUT"\] = 30\n'
+
+  - it: rejects a negative timeout
+    set:
+      waldur.userManagementApiTimeout: -1
+    asserts:
+      - failedTemplate:
+          errorMessage: waldur.userManagementApiTimeout must be a number of seconds greater than 0 and at most 30
+
+  - it: rejects a timeout above 30
+    set:
+      waldur.userManagementApiTimeout: 31
+    asserts:
+      - failedTemplate:
+          errorMessage: waldur.userManagementApiTimeout must be a number of seconds greater than 0 and at most 30
+
+  - it: rejects NaN
+    set:
+      waldur.userManagementApiTimeout: "NaN"
+    asserts:
+      - failedTemplate:
+          errorMessage: waldur.userManagementApiTimeout must be a number of seconds greater than 0 and at most 30
+
+  - it: rejects Inf
+    set:
+      waldur.userManagementApiTimeout: "Inf"
+    asserts:
+      - failedTemplate:
+          errorMessage: waldur.userManagementApiTimeout must be a number of seconds greater than 0 and at most 30
+
+  - it: rejects a non-number
+    set:
+      waldur.userManagementApiTimeout: "1; import os"
+    asserts:
+      - failedTemplate:
+          errorMessage: waldur.userManagementApiTimeout must be a number of seconds greater than 0 and at most 30
+
+  - it: rejects exponent notation
+    set:
+      waldur.userManagementApiTimeout: "1e1"
+    asserts:
+      - failedTemplate:
+          errorMessage: waldur.userManagementApiTimeout must be a number of seconds greater than 0 and at most 30

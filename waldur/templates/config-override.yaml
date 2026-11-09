@@ -313,6 +313,15 @@ data:
     WALDUR_CORE["COURSE_ACCOUNT_TOKEN_SECRET"] = {{ .Values.waldur.courseAccountApiIntegration.tokenSecret | quote }}
     {{ end }}
 
+    {{- /* Rendered into Python, so only plain decimals: float64 alone also
+    parses NaN and Inf, which render as invalid Python. Capped at 30 because
+    some of these calls run inside API requests, under gunicorn's 30-second
+    worker timeout. */}}
+    {{ with .Values.waldur.userManagementApiTimeout }}
+    {{ if or (not (regexMatch "^[0-9]+(\\.[0-9]+)?$" (toString .))) (le (float64 .) 0.0) (gt (float64 .) 30.0) }}{{ fail "waldur.userManagementApiTimeout must be a number of seconds greater than 0 and at most 30" }}{{ end }}
+    WALDUR_CORE["USER_MANAGEMENT_API_TIMEOUT"] = {{ float64 . }}
+    {{ end }}
+
     {{ if has "protect_freeipa_user_details" .Values.waldur.features }}
     WALDUR_CORE['PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS'] = ['FREEIPA']
     {{ end }}

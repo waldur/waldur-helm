@@ -86,6 +86,15 @@ spec:
             - name: GLOBAL_DEBUG
               value: "true"
             {{ end }}
+            {{- if .Values.waldur.demoPresets.enabled }}
+            - name: WALDUR_DEMO_PRESETS_ENABLED
+              value: "true"
+            - name: WALDUR_DEMO_PRESETS_ALLOWED
+              value: {{ join "," .Values.waldur.demoPresets.allowed | quote }}
+            {{- end }}
+            {{- with (include "waldur.demoPresets.env" . | trim) }}
+            {{- . | nindent 12 }}
+            {{- end }}
             {{ if and (hasKey .Values.waldur "openportal") .Values.waldur.openportal.existingSecret.name }}
             - name: OPENPORTAL_CONFIG
               value: "/etc/waldur/openportal/config.toml"
@@ -155,10 +164,16 @@ spec:
               subPath: {{ with (dig "marketplace" "script" "kubeconfigSecret" (dict) .Values.waldur) }}{{ if and (get . "name") (get . "key") }}{{ get . "key" }}{{ else }}kubeconfig{{ end }}{{ else }}kubeconfig{{ end }}
               readOnly: true
             {{ end }}
+            {{- with (include "waldur.demoPresets.volumeMounts" . | trim) }}
+            {{- . | nindent 12 }}
+            {{- end }}
             {{- with (include "waldur.extraVolumeMounts" .Values.worker) }}
             {{- . | nindent 12 }}
             {{- end }}
       volumes:
+      {{- with (include "waldur.demoPresets.volumes" . | trim) }}
+      {{- . | nindent 6 }}
+      {{- end }}
       - name: api-override
         configMap:
           name: api-override-config

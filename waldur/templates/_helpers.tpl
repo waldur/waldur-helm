@@ -833,3 +833,43 @@ boolean is set. Takes the value itself.
 true
 {{- end -}}
 {{- end -}}
+
+{{/*
+Demo preset settings for the API and the worker, whether or not the portal
+offers presets: the `waldur demo_presets` command in a pod uses them too.
+Takes the root context.
+*/}}
+{{- define "waldur.demoPresets.env" -}}
+{{- $p := .Values.waldur.demoPresets -}}
+{{- if $p.presetsConfigMap }}
+- name: WALDUR_DEMO_PRESETS_EXTRA_DIRS
+  value: /etc/waldur/presets
+{{- end }}
+{{- if $p.overlay }}
+- name: WALDUR_DEMO_PRESETS_OVERLAY
+  value: {{ $p.overlay | quote }}
+{{- end }}
+{{- if $p.staffPassword.existingSecret }}
+- name: WALDUR_DEMO_PRESETS_STAFF_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: {{ $p.staffPassword.existingSecret | quote }}
+      key: {{ $p.staffPassword.key | default "password" | quote }}
+{{- end }}
+{{- end -}}
+
+{{- define "waldur.demoPresets.volumeMounts" -}}
+{{- if .Values.waldur.demoPresets.presetsConfigMap }}
+- name: demo-presets
+  mountPath: /etc/waldur/presets
+  readOnly: true
+{{- end }}
+{{- end -}}
+
+{{- define "waldur.demoPresets.volumes" -}}
+{{- with .Values.waldur.demoPresets.presetsConfigMap }}
+- name: demo-presets
+  configMap:
+    name: {{ . | quote }}
+{{- end }}
+{{- end -}}

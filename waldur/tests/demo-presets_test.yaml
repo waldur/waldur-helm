@@ -1,0 +1,101 @@
+suite: demo presets
+templates:
+  - templates/deployment-api.yaml
+  - templates/deployment-worker.yaml
+
+tests:
+  - it: leaves demo presets off by default
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: WALDUR_DEMO_PRESETS_ENABLED
+            value: "true"
+
+  - it: enables demo presets on the API and the worker
+    set:
+      waldur.demoPresets.enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: WALDUR_DEMO_PRESETS_ENABLED
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: WALDUR_DEMO_PRESETS_ALLOWED
+            value: ""
+
+  - it: passes the allowlist as a comma-separated list
+    set:
+      waldur.demoPresets.enabled: true
+      waldur.demoPresets.allowed:
+        - hpc_ai_platform
+        - call_management
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: WALDUR_DEMO_PRESETS_ALLOWED
+            value: hpc_ai_platform,call_management
+
+  - it: sets no deployment preset settings by default
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: WALDUR_DEMO_PRESETS_EXTRA_DIRS
+            value: /etc/waldur/presets
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: demo-presets
+            configMap:
+              name: site-presets
+
+  - it: mounts the deployment's presets and points mastermind at them
+    set:
+      waldur.demoPresets.presetsConfigMap: site-presets
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: WALDUR_DEMO_PRESETS_EXTRA_DIRS
+            value: /etc/waldur/presets
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: demo-presets
+            mountPath: /etc/waldur/presets
+            readOnly: true
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: demo-presets
+            configMap:
+              name: site-presets
+
+  - it: passes the overlay and the staff password even with the portal gate off
+    set:
+      waldur.demoPresets.overlay: site-infra
+      waldur.demoPresets.staffPassword.existingSecret: demo-staff
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: WALDUR_DEMO_PRESETS_OVERLAY
+            value: site-infra
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: WALDUR_DEMO_PRESETS_STAFF_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: demo-staff
+                key: password
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: WALDUR_DEMO_PRESETS_ENABLED
+            value: "true"

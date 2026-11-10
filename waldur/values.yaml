@@ -319,6 +319,26 @@ waldur:
     # <apiScheme>://<apiHostname>/webshell/, where the chart routes it.
     url: ""
     resources: {}
+  # Demo presets in the portal: staff preview and load ready-made demo data.
+  # Loading a preset DELETES every organization, project, offering, user and
+  # token, so enable this on demo deployments only.
+  demoPresets:
+    enabled: false
+    # Preset names to offer; empty offers every preset.
+    allowed: []
+    # A ConfigMap with the deployment's own presets, one `<name>.json` key per
+    # preset, mounted at /etc/waldur/presets. One named like a built-in preset
+    # replaces it. These and the settings below also apply to the
+    # `waldur demo_presets` command, whether or not `enabled` is set.
+    presetsConfigMap: ""
+    # A preset imported after every load that cleans up first, for what this
+    # deployment needs whatever the demo; it is never offered itself.
+    overlay: ""
+    # A Secret holding the password the presets' staff users get in place of
+    # the published one. Set it wherever the portal is reachable by others.
+    staffPassword:
+      existingSecret: ""
+      key: "password"
   mail:
     existingSecret:
       name: ""

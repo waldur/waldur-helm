@@ -159,16 +159,6 @@ spec:
             - name: api-celery
               mountPath: /etc/waldur/celery.conf
               subPath: celery.conf
-            {{ if .Values.waldur.ssh_public_key_path }}
-            - name: waldur-ssh-pub-key
-              mountPath: /etc/waldur/id_rsa.pub
-              subPath: id_rsa.pub
-            {{ end }}
-            {{ if .Values.waldur.ssh_private_key_path }}
-            - name: waldur-ssh-key
-              mountPath: /etc/waldur/id_rsa
-              subPath: id_rsa
-            {{ end }}
             {{ if or .Values.waldur.mastermindTemplating.mastermindTemplatesPath .Values.waldur.mastermindTemplating.mastermindTemplates }}
             - name: waldur-mastermind-template
               mountPath: /etc/waldur/notifications-templates.yaml
@@ -224,16 +214,6 @@ spec:
       - name: waldur-mastermind-user-agreements
         configMap:
           name: mastermind-user-agreement-config
-      {{ end }}
-      {{ if .Values.waldur.ssh_public_key_path }}
-      - name: waldur-ssh-pub-key
-        configMap:
-          name: waldur-ssh-pub-key-config
-      {{ end }}
-      {{ if .Values.waldur.ssh_private_key_path }}
-      - name: waldur-ssh-key
-        secret:
-          secretName: waldur-ssh-key-config
       {{ end }}
       {{- with (include "waldur.extraVolumes" .Values.beat) }}
       {{- . | nindent 6 }}

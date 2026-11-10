@@ -154,16 +154,6 @@ spec:
             - name: waldur-valimo-certs
               mountPath: /etc/waldur/valimo
             {{ end }}
-            {{ if .Values.waldur.ssh_public_key_path }}
-            - name: waldur-ssh-pub-key
-              mountPath: /etc/waldur/id_rsa.pub
-              subPath: id_rsa.pub
-            {{ end }}
-            {{ if .Values.waldur.ssh_private_key_path }}
-            - name: waldur-ssh-key
-              mountPath: /etc/waldur/id_rsa
-              subPath: id_rsa
-            {{ end }}
             {{ if .Values.waldur.marketplace.script.enabled }}
             - name: waldur-script-kubeconfig
               mountPath: /etc/waldur/kubeconfig
@@ -215,16 +205,6 @@ spec:
       - name: waldur-valimo-certs
         secret:
           secretName: waldur-valimo-secret
-      {{ end }}
-      {{ if .Values.waldur.ssh_public_key_path }}
-      - name: waldur-ssh-pub-key
-        configMap:
-          name: waldur-ssh-pub-key-config
-      {{ end }}
-      {{ if .Values.waldur.ssh_private_key_path }}
-      - name: waldur-ssh-key
-        secret:
-          secretName: waldur-ssh-key-config
       {{ end }}
       {{ if .Values.waldur.marketplace.script.enabled }}
       - name: waldur-script-kubeconfig

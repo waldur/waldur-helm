@@ -3,9 +3,9 @@
 
 # CI fixtures and helm-unittest specs are consumed from the working tree, never
 # from a packaged chart, so they have no business in the published tarball.
-# Without these the release carries ~22 test files, including placeholder
-# credentials (test/ssh/id_rsa, test/waldur_saml2/credentials/sp.pem) that read
-# as secrets to anyone browsing the chart, and test/k8s/rabbitmq-cluster.yaml,
+# Without these the release carries ~20 test files, including a placeholder
+# credential (test/waldur_saml2/credentials/sp.pem) that reads as a secret to
+# anyone browsing the chart, and test/k8s/rabbitmq-cluster.yaml,
 # which looks like a manifest a user is meant to apply.
 #
 # CI still reads these by path: `helm lint waldur/ -f waldur/test/values.yaml`

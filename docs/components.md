@@ -321,8 +321,6 @@ sequenceDiagram
 
 - **waldur-valimo-secret:** Valimo authentication certificates
 
-- **waldur-ssh-key-config:** SSH private keys
-
 - **waldur-script-kubeconfig:** Kubernetes config for script execution
 
 ### Field encryption

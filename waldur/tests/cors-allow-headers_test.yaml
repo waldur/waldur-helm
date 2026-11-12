@@ -1,0 +1,83 @@
+suite: CORS allows the headers the portal sends to the API
+templates:
+  - templates/config-override.yaml
+  - templates/ingress-api.yaml
+  - templates/ingress-api-admin.yaml
+  - templates/ingress-homeport.yaml
+  - templates/traefik-middleware-api.yaml
+  - templates/traefik-middleware-api-admin.yaml
+  - templates/traefik-middleware-homeport.yaml
+
+set:
+  ingress.enabled: true
+
+# The portal sends X-Reauthentication-Grant with a request that needs a recent
+# sign-in, next to X-Impersonated-User-Uuid. A cross-origin API rejects the
+# preflight for a header missing from any of these lists.
+tests:
+  - it: allows the header in mastermind's own CORS settings
+    template: templates/config-override.yaml
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: '"X-Impersonated-User-Uuid",\s+"X-Reauthentication-Grant",'
+
+  - it: allows the header on the nginx ingresses
+    templates:
+      - templates/ingress-api.yaml
+      - templates/ingress-api-admin.yaml
+      - templates/ingress-homeport.yaml
+    set:
+      ingress.className: nginx
+    asserts:
+      - matchRegex:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/cors-allow-headers"]
+          pattern: ",X-Impersonated-User-Uuid,X-Reauthentication-Grant$"
+
+  - it: allows the header on the HAProxy ingresses
+    templates:
+      - templates/ingress-api.yaml
+      - templates/ingress-api-admin.yaml
+      - templates/ingress-homeport.yaml
+    set:
+      ingress.className: haproxy
+    asserts:
+      - matchRegex:
+          path: metadata.annotations["haproxy.org/cors-allow-headers"]
+          pattern: ",X-Impersonated-User-Uuid,X-Reauthentication-Grant$"
+
+  - it: allows the header on the traefik API middleware
+    template: templates/traefik-middleware-api.yaml
+    set:
+      ingress.className: traefik
+    documentSelector:
+      path: metadata.name
+      value: api-cors
+    asserts:
+      - contains:
+          path: spec.headers.accessControlAllowHeaders
+          content: X-Reauthentication-Grant
+
+  - it: allows the header on the traefik API admin middleware
+    template: templates/traefik-middleware-api-admin.yaml
+    set:
+      ingress.className: traefik
+    documentSelector:
+      path: metadata.name
+      value: api-admin-cors
+    asserts:
+      - contains:
+          path: spec.headers.accessControlAllowHeaders
+          content: X-Reauthentication-Grant
+
+  - it: allows the header on the traefik homeport middleware
+    template: templates/traefik-middleware-homeport.yaml
+    set:
+      ingress.className: traefik
+    documentSelector:
+      path: metadata.name
+      value: homeport-headers
+    asserts:
+      - contains:
+          path: spec.headers.accessControlAllowHeaders
+          content: X-Reauthentication-Grant

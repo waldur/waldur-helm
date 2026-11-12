@@ -741,10 +741,52 @@ waldur:
     imageName: "opennode/waldur-homeport"
     imageTag: ""  # Optional: if empty, waldur.imageTag is used
     imageDigest: ""  # Optional: if set, uses unique docker image hash, priority over tag
+    # matomoUrlBase, customSentryURL and inferencePlaygroundURL are also
+    # sources in the portal's Content-Security-Policy (see csp below).
     matomoUrlBase: ""
     matomoSiteId: ""
+    # Origin the portal's Sentry SDK reports to. Unset, the origin of
+    # waldur.sentryDSN is used.
     customSentryURL: ""
     inferencePlaygroundURL: ""
+    # Content-Security-Policy of the portal. The homeport image renders it from
+    # its environment and sends it on every response; the ingress, HTTPRoute
+    # and Traefik templates set none. The chart passes the API origin, Sentry,
+    # Matomo, the inference playground and the Matrix chat hosts on its own;
+    # these add to that. Empty values add nothing. See
+    # docs/content-security-policy.md.
+    csp:
+      # Origins of the SAML identity providers that use the HTTP-POST binding:
+      # the portal submits a form to them (form-action). A string of
+      # space-separated sources or a list; "https:" allows any https target.
+      # No commas: the chart refuses to render a source with , ; " \ or $.
+      formAction: ""
+      # true sends the policy as Content-Security-Policy-Report-Only: browsers
+      # report violations but block nothing, except object-src, base-uri and
+      # frame-ancestors, which the image keeps enforced in a policy of their
+      # own. Roll a new policy out this way.
+      reportOnly: false
+      # Endpoint browsers send violation reports to (report-uri), e.g. a Sentry
+      # project's security endpoint.
+      reportUri: ""
+      # true also sends report-to and a Reporting-Endpoints header for
+      # reportUri. Chromium then reports only through the Reporting API and
+      # ignores report-uri, so turn it on only after seeing such reports
+      # arrive at the endpoint. Needs reportUri.
+      reportTo: false
+      # Sources appended to one directive, keyed by directive name:
+      # default-src, script-src, style-src, img-src, connect-src, font-src,
+      # media-src, worker-src, frame-src or form-action.
+      # Each becomes CSP_<DIRECTIVE>_EXTRA on the homeport container.
+      #   extra:
+      #     connect-src: "https://metrics.example.com"
+      #     img-src: ["https://cdn.example.com", "https://tiles.example.com"]
+      extra: {}
+      # Replaces the whole policy verbatim, for what the values above cannot
+      # express. reportOnly, reportUri and reportTo still apply. It must state
+      # object-src, base-uri and frame-ancestors and end each directive with
+      # ";"; the chart refuses to render one the image would refuse at start.
+      policy: ""
     userMandatoryFields: {}
     userRegistrationHiddenFields: {}
     # Set, the chart manages the documentation link and it is locked in the

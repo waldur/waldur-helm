@@ -1,0 +1,55 @@
+suite: API ingresses mark the controller's own error pages
+templates:
+  - templates/ingress-api.yaml
+  - templates/ingress-api-admin.yaml
+
+set:
+  ingress.enabled: true
+
+# mastermind sets the policy on its own responses. The pages the controller
+# generates itself never reach it: allow-list refusals (403), body and rate
+# limits (413, 429) and an unreachable mastermind (502-504). The ingress sets
+# mastermind's API policy on those.
+tests:
+  - it: sets the policy on the nginx controller's error pages, keeping gzip
+    template: templates/ingress-api.yaml
+    set:
+      ingress.className: nginx
+    asserts:
+      - matchRegex:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+          pattern: "gzip on;"
+      - matchRegex:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+          pattern: "more_set_headers -s \"403 413 429 502 503 504\" \"Content-Security-Policy: default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'\";"
+
+  - it: sets the policy on the nginx controller's error pages for the admin
+    template: templates/ingress-api-admin.yaml
+    set:
+      ingress.className: nginx
+    asserts:
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+          value: |
+            more_set_headers -s "403 413 429 502 503 504" "Content-Security-Policy: default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+
+  - it: sets the policy on HAProxy's own error responses
+    templates:
+      - templates/ingress-api.yaml
+      - templates/ingress-api-admin.yaml
+    set:
+      ingress.className: haproxy
+    asserts:
+      - equal:
+          path: metadata.annotations["haproxy.org/backend-config-snippet"]
+          value: |
+            http-after-response set-header Content-Security-Policy "default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'" if { status 403 413 429 502 503 504 } !{ res.hdr(content-security-policy) -m found }
+
+  - it: keeps the API's HAProxy compression next to the snippet
+    template: templates/ingress-api.yaml
+    set:
+      ingress.className: haproxy
+    asserts:
+      - equal:
+          path: metadata.annotations["haproxy.org/compression-algo"]
+          value: gzip

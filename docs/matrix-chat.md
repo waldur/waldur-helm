@@ -1215,22 +1215,23 @@ intentionally not exposed — relayed media always rides TLS.
 
 ## What the chart wires automatically
 
-- **Homeport CSP.** Enabling matrix injects the homeserver host into the homeport
-  Content-Security-Policy: `connect-src` gets `https://<serverName>` (chat sync)
-  and `wss://<serverName>` (call signaling); `media-src`/`img-src` get
-  `https://<serverName>` (chat media/images). Without this the browser would block
-  the chat client and calls. No action needed — it follows `homeserver.serverName`
-  and is a no-op when matrix is disabled.
-- **WebAssembly in the homeport CSP.** `script-src` always includes
+- **Homeport CSP.** The homeport image builds the portal's
+  Content-Security-Policy, and enabling matrix passes it the homeserver: the
+  container gets `CSP_MATRIX_URL=https://<serverName>` (chat sync, media and
+  images: `connect-src`, `img-src`, `media-src`) and
+  `CSP_MATRIX_CALL_URL=wss://<serverName>` (call signaling: `connect-src`).
+  Without these the browser would block the chat client and calls. No action
+  needed — they follow `homeserver.serverName` and are not set when matrix is
+  disabled. See [Content-Security-Policy](content-security-policy.md).
+- **WebAssembly in the homeport CSP.** The image's `script-src` always includes
   `'wasm-unsafe-eval'`. Chat is end-to-end encrypted, and the browser runs the
   encryption as WebAssembly, which it refuses to compile without this source. It
   allows compiling WebAssembly only, not `eval()` of JavaScript. Without it the
   chat drawer reports that encryption is unavailable in this browser.
 - **The call-encryption worker.** Calls encrypt their media in a Web Worker
-  that homeport serves from its own origin (`/assets/e2eeWorker-*.js`), so
-  `script-src 'self'` already covers it and the chart sets no `worker-src`. A
-  policy of your own that sets `worker-src` must include `'self'`, or calls in
-  encrypted rooms fail.
+  that homeport serves from its own origin (`/assets/e2eeWorker-*.js`), which
+  the image's policy allows. A policy of your own (`waldur.homeport.csp.policy`)
+  that sets `worker-src` must include `'self'`, or calls in encrypted rooms fail.
 - **NetworkPolicies.** When `matrixChat.networkPolicy.enabled` is `true`, the chart
   adds a policy per pod. This gate is independent of the chart-wide
   `networkPolicy.enabled` (which only covers the homeport/mastermind-api
@@ -1282,6 +1283,6 @@ With `livekit.enabled=false` the chart drops the in-cluster LiveKit Service, its
 `config.yaml`, network policy, RTC LoadBalancer, and the `/rtc` ingress
 route. The browser connects straight to `publicUrl`, so reachability, TLS, and the
 media plane are the external operator's responsibility. The chart adds the
-`publicUrl` origin to the homeport Content-Security-Policy `connect-src` on every
-ingress variant, so the browser is allowed to open the signalling websocket to it;
-nothing needs configuring for that.
+`publicUrl` origin to `CSP_MATRIX_CALL_URL` on the homeport container, which puts
+it in the portal's Content-Security-Policy `connect-src`, so the browser is
+allowed to open the signalling websocket to it; nothing needs configuring for that.

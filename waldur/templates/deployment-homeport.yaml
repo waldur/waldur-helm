@@ -70,6 +70,9 @@ spec:
             - name: AUTH_STORAGE
               value: 'sessionStorage'
             {{ end }}
+            {{- with (include "waldur.homeportCspEnv" . | trim) }}
+            {{- . | nindent 12 }}
+            {{- end }}
             {{- with (include "waldur.extraEnvVars" .Values.homeport) }}
             {{- . | nindent 12 }}
             {{- end }}

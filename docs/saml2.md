@@ -17,3 +17,11 @@ To configure SAML2 for Waldur:
     - `sp.pem` -> `./`
 
     - `saml2.conf.py` -> `./`
+
+## Content-Security-Policy
+
+With the HTTP-POST binding the portal submits a form straight to the identity
+provider, which the portal's Content-Security-Policy blocks unless the provider's
+origin is in `form-action`. List those origins in
+`waldur.homeport.csp.formAction`, or set it to `https:` for a federation with
+many identity providers. See [Content-Security-Policy](content-security-policy.md).

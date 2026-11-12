@@ -1,0 +1,164 @@
+suite: homeport CSP values the image would refuse
+templates:
+  - templates/deployment-homeport.yaml
+
+# The homeport image refuses these at start and exits, so the new pod would
+# crash-loop and the rollout hang. The chart fails the render instead, with
+# the same reasons.
+tests:
+  # The realistic slip: a comma-separated list of origins.
+  - it: refuses a comma between sources
+    set:
+      waldur.homeport.csp.formAction: "https://idp1.example.org, https://idp2.example.org"
+    asserts:
+      - failedTemplate:
+          errorMessage: 'waldur.homeport.csp.formAction: "https://idp1.example.org, https://idp2.example.org" may not contain " \ $ , ; or a control character; the homeport image refuses it and does not start. Separate sources with spaces, or give a list.'
+
+  - it: refuses a semicolon in an extra, which would start another directive
+    set:
+      waldur.homeport.csp.extra:
+        connect-src: "https://a.example.com; script-src *"
+    asserts:
+      - failedTemplate:
+          errorMessage: 'waldur.homeport.csp.extra.connect-src: "https://a.example.com; script-src *" may not contain " \ $ , ; or a control character; the homeport image refuses it and does not start. Separate sources with spaces, or give a list.'
+
+  - it: refuses a dollar sign, which nginx would expand
+    set:
+      waldur.homeport.matomoUrlBase: "https://$host/"
+    asserts:
+      - failedTemplate:
+          errorMessage: 'waldur.homeport.matomoUrlBase: "https://$host/" may not contain " \ $ , ; or a control character; the homeport image refuses it and does not start. Separate sources with spaces, or give a list.'
+
+  - it: refuses a double quote, which would end the nginx string
+    set:
+      waldur.homeport.customSentryURL: 'https://sentry.example.com"'
+    asserts:
+      - failedTemplate:
+          errorMessage: 'waldur.homeport.customSentryURL (or waldur.sentryDSN): "https://sentry.example.com\"" may not contain " \ $ , ; or a control character; the homeport image refuses it and does not start. Separate sources with spaces, or give a list.'
+
+  - it: refuses a backslash
+    set:
+      waldur.homeport.csp.extra:
+        img-src: 'https://a.example.com\b'
+    asserts:
+      - failedTemplate:
+          errorMessage: 'waldur.homeport.csp.extra.img-src: "https://a.example.com\\b" may not contain " \ $ , ; or a control character; the homeport image refuses it and does not start. Separate sources with spaces, or give a list.'
+
+  # The image folds whitespace, so a YAML block with one source per line works.
+  - it: accepts sources on separate lines
+    set:
+      waldur.homeport.csp.formAction: |
+        https://idp1.example.org
+        https://idp2.example.org
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_FORM_ACTION
+            value: |
+              https://idp1.example.org
+              https://idp2.example.org
+
+  - it: refuses whitespace in the report URI
+    set:
+      waldur.homeport.csp.reportUri: "https://r.example.com/a b"
+    asserts:
+      - failedTemplate:
+          errorMessage: 'waldur.homeport.csp.reportUri: "https://r.example.com/a b" may not contain whitespace, '' " \ $ , ; or a control character; the homeport image refuses it and does not start. Give one URL.'
+
+  - it: refuses a single quote in the report URI
+    set:
+      waldur.homeport.csp.reportUri: "https://r.example.com/a'b"
+    asserts:
+      - failedTemplate:
+          errorMessage: 'waldur.homeport.csp.reportUri: "https://r.example.com/a''b" may not contain whitespace, '' " \ $ , ; or a control character; the homeport image refuses it and does not start. Give one URL.'
+
+  - it: refuses a policy without object-src, base-uri and frame-ancestors
+    set:
+      waldur.homeport.csp.policy: "default-src 'self'; frame-ancestors 'none'"
+    asserts:
+      - failedTemplate:
+          errorMessage: "waldur.homeport.csp.policy: it lacks object-src base-uri; every policy must state object-src, base-uri and frame-ancestors"
+
+  # A newline does not end a directive: object-src would become a source of
+  # default-src.
+  - it: refuses a policy whose line ended without a semicolon
+    set:
+      waldur.homeport.csp.policy: |
+        default-src 'self'
+        object-src 'none'; base-uri 'none'; frame-ancestors 'none'
+    asserts:
+      - failedTemplate:
+          errorMessage: 'waldur.homeport.csp.policy: object-src sits inside default-src; end every directive with ";", a newline does not'
+
+  - it: refuses a policy with no directive
+    set:
+      waldur.homeport.csp.policy: " ; ;"
+    asserts:
+      - failedTemplate:
+          errorMessage: "waldur.homeport.csp.policy: it holds no directive"
+
+  - it: refuses a comma in the policy
+    set:
+      waldur.homeport.csp.policy: "default-src 'self', object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
+    asserts:
+      - failedTemplate:
+          errorMessage: 'waldur.homeport.csp.policy: "default-src ''self'', object-src ''none''; base-uri ''none''; frame-ancestors ''none''" may not contain " \ $ , or a control character; the homeport image refuses it and does not start. Separate directives with ";".'
+
+  - it: accepts a complete policy in any case, one directive per line
+    set:
+      waldur.homeport.csp.policy: |
+        Default-Src 'self';
+        OBJECT-SRC 'none';
+        base-uri 'none';
+        frame-ancestors 'none'
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_POLICY
+            value: |
+              Default-Src 'self';
+              OBJECT-SRC 'none';
+              base-uri 'none';
+              frame-ancestors 'none'
+
+  # A browser keeps the first of two report-uri directives and ignores the
+  # second.
+  - it: refuses a report-uri in the policy when reportUri is set too
+    set:
+      waldur.homeport.csp.reportUri: "https://r.example.com/"
+      waldur.homeport.csp.policy: "object-src 'none'; base-uri 'none'; frame-ancestors 'none'; report-uri https://x.example.com/"
+    asserts:
+      - failedTemplate:
+          errorMessage: "waldur.homeport.csp.policy: it states report-uri and waldur.homeport.csp.reportUri is set too; give the endpoint in one of them"
+
+  - it: accepts a report-uri in the policy alone
+    set:
+      waldur.homeport.csp.policy: "object-src 'none'; base-uri 'none'; frame-ancestors 'none'; report-uri https://x.example.com/"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_POLICY
+            value: "object-src 'none'; base-uri 'none'; frame-ancestors 'none'; report-uri https://x.example.com/"
+
+  - it: refuses a report-to in the policy when reportTo is set too
+    set:
+      waldur.homeport.csp.reportUri: "https://r.example.com/"
+      waldur.homeport.csp.reportTo: true
+      waldur.homeport.csp.policy: "object-src 'none'; base-uri 'none'; frame-ancestors 'none'; report-to csp"
+    asserts:
+      - failedTemplate:
+          errorMessage: "waldur.homeport.csp.policy: it states report-to and waldur.homeport.csp.reportTo is set too; give it in one of them"
+
+  - it: accepts a report-to in the policy when reportTo is off
+    set:
+      waldur.homeport.csp.reportUri: "https://r.example.com/"
+      waldur.homeport.csp.policy: "object-src 'none'; base-uri 'none'; frame-ancestors 'none'; report-to csp"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_REPORT_URI
+            value: "https://r.example.com/"

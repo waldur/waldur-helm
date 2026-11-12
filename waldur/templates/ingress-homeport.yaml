@@ -4,40 +4,30 @@ kind: Ingress
 metadata:
   name: homeport-ingress
   annotations:
-    {{ $customSentryUrl443 := "" }}
-    {{ $customSentryUrl80 := "" }}
-    {{ if .Values.waldur.homeport.customSentryURL }}
-      {{ $customSentryUrl443 = (print .Values.waldur.homeport.customSentryURL ":443") }}
-      {{ $customSentryUrl80 = (print .Values.waldur.homeport.customSentryURL ":80") }}
-    {{ end }}
-    {{/* Matrix chat: the homeport SPA talks to the homeserver directly — https for
-         the chat sync/media and wss for LiveKit call signaling. Without these the
-         browser CSP blocks the chat client (https) and calls (wss). */}}
-    {{ $matrixConnect := include "waldur.matrixConnectSrc" . }}
-    {{ $matrixMedia := "" }}
-    {{ if and .Values.matrixChat.enabled .Values.matrixChat.homeserver.enabled .Values.matrixChat.homeserver.serverName }}
-      {{ $matrixMedia = printf "%s://%s" .Values.apiScheme .Values.matrixChat.homeserver.serverName }}
-    {{ end }}
+    {{/* The homeport image sends the portal's Content-Security-Policy. The
+         snippets below set one only on the pages the controller generates
+         itself (allow-list refusals, body and rate limits, an unreachable
+         backend), which never reach the image. */}}
     {{ if eq .Values.ingress.className "nginx" }}
     nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,sentry-trace,baggage,X-Impersonated-User-Uuid"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,sentry-trace,baggage,X-Impersonated-User-Uuid,X-Reauthentication-Grant"
     nginx.ingress.kubernetes.io/cors-expose-headers: "Link, X-Result-Count"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "{{ include "waldur.sslRedirect" (dict "scheme" .Values.homeportScheme "Values" .Values) }}"
     nginx.ingress.kubernetes.io/configuration-snippet: |
-      more_set_headers "Content-Security-Policy: base-uri 'self'; object-src 'none'; media-src {{ .Values.homeportScheme }}://{{ .Values.homeportHostname }}/assets/ {{ $matrixMedia }} blob:; script-src 'self' 'wasm-unsafe-eval' sentry.opnd.org {{ .Values.waldur.homeport.customSentryURL }} {{ .Values.waldur.homeport.matomoUrlBase }}; style-src 'self' 'unsafe-inline'; img-src 'self' *.tile.openstreetmap.org {{ .Values.apiHostname }} {{ $matrixMedia }} blob: data: ; connect-src 'self' {{ .Values.apiHostname }} {{ .Values.waldur.homeport.matomoUrlBase }} nominatim.openstreetmap.org:443 sentry.opnd.org:443 sentry.opnd.org:80 {{ $customSentryUrl80 }} {{ $customSentryUrl443 }} {{ $matrixConnect }} {{ .Values.waldur.homeport.inferencePlaygroundURL }}; font-src 'self' data: ; frame-src 'none'; frame-ancestors 'none'";
+      {{ include "waldur.errorPageCspNginx" . }}
     {{ if .Values.ingress.whitelistSourceRange }}
     nginx.ingress.kubernetes.io/whitelist-source-range: "{{ .Values.ingress.whitelistSourceRange }}"
     {{ end }}
     {{ else if or (eq .Values.ingress.className "openshift-default") (eq .Values.ingress.className "haproxy") }}
     haproxy.org/cors-enable: "true"
-    haproxy.org/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,sentry-trace,baggage,X-Impersonated-User-Uuid"
+    haproxy.org/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,sentry-trace,baggage,X-Impersonated-User-Uuid,X-Reauthentication-Grant"
     haproxy.org/cors-expose-headers: "Link, X-Result-Count"
     haproxy.org/ssl-redirect: "{{ include "waldur.sslRedirect" (dict "scheme" .Values.homeportScheme "Values" .Values) }}"
     {{ if and .Values.ingress.tls.enabled (.Values.ingress.tls.source | eq "cluster") }}
     route.openshift.io/termination: "edge"
     {{ end }}
     haproxy.org/backend-config-snippet: |
-      http-response set-header Content-Security-Policy "base-uri 'self'; object-src 'none'; media-src {{ .Values.homeportScheme }}://{{ .Values.homeportHostname }}/assets/ {{ $matrixMedia }} blob:; script-src 'self' 'wasm-unsafe-eval' sentry.opnd.org {{ .Values.waldur.homeport.customSentryURL }} {{ .Values.waldur.homeport.matomoUrlBase }}; style-src 'self' 'unsafe-inline'; img-src 'self' *.tile.openstreetmap.org {{ .Values.apiHostname }} {{ $matrixMedia }} blob: data: ; connect-src 'self' {{ .Values.apiHostname }} {{ .Values.waldur.homeport.matomoUrlBase }} nominatim.openstreetmap.org:443 sentry.opnd.org:443 sentry.opnd.org:80 {{ $customSentryUrl80 }} {{ $customSentryUrl443 }} {{ $matrixConnect }} {{ .Values.waldur.homeport.inferencePlaygroundURL }}; font-src 'self' data: ; frame-src 'none'; frame-ancestors 'none'";
+      {{ include "waldur.errorPageCspHaproxy" . }}
     {{ if .Values.ingress.whitelistSourceRange }}
     haproxy.org/allow-list: "{{ .Values.ingress.whitelistSourceRange }}"
     {{ end }}

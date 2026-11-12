@@ -726,28 +726,239 @@ because Waldur's URL settings reject single-label hostnames.
 {{- end -}}
 
 {{/*
-The Matrix origins the homeport CSP allows in connect-src: the homeserver over
-https (chat sync, media) and wss (the bundled LiveKit's /rtc signalling route
-sits behind it), plus the LiveKit publicUrl's origin when it is not the
-homeserver's -- an operator-managed SFU, or a bundled one whose RTC
-LoadBalancer has its own DNS name. The browser dials publicUrl straight from
-the SPA, so an origin missing here refuses the call websocket client-side with
-no server-side trace. Empty when matrix chat is off. Shared by the nginx,
-haproxy, traefik and HTTPRoute policies, which are otherwise copies of each
-other.
+The homeport image renders the portal's Content-Security-Policy from its
+environment; the proxies in front of it no longer set one. The helpers below
+derive the sources the chart already knows about. An empty variable adds
+nothing to the policy.
 */}}
-{{- define "waldur.matrixConnectSrc" -}}
+
+{{/*
+The policy the ingress controllers send on the pages they generate
+themselves, which never reach homeport or mastermind and would otherwise carry
+no policy at all. It is the policy mastermind sends on its API responses.
+*/}}
+{{- define "waldur.errorPageCsp" -}}
+default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+{{- end -}}
+
+{{/*
+The statuses those pages come with: 403 (the source range allow-list), 413
+(the request body limit), 429 (rate limiting) and 502-504 (the backend is down
+or slow).
+*/}}
+{{- define "waldur.errorPageStatuses" -}}
+403 413 429 502 503 504
+{{- end -}}
+
+{{/*
+The nginx configuration-snippet line that sets the policy on those statuses.
+headers-more cannot test for a header the backend sent, so a backend response
+with one of these statuses gets this policy in place of its own.
+*/}}
+{{- define "waldur.errorPageCspNginx" -}}
+more_set_headers -s "{{ include "waldur.errorPageStatuses" . }}" "Content-Security-Policy: {{ include "waldur.errorPageCsp" . }}";
+{{- end -}}
+
+{{/*
+The HAProxy backend-config-snippet line that sets the policy on those
+statuses. http-after-response also runs on responses HAProxy generates; a
+backend response that carries a policy of its own keeps it.
+*/}}
+{{- define "waldur.errorPageCspHaproxy" -}}
+http-after-response set-header Content-Security-Policy "{{ include "waldur.errorPageCsp" . }}" if { status {{ include "waldur.errorPageStatuses" . }} } !{ res.hdr(content-security-policy) -m found }
+{{- end -}}
+
+{{/*
+The Matrix homeserver origin (CSP_MATRIX_URL): chat sync, media and images.
+Empty when matrix chat is off.
+*/}}
+{{- define "waldur.cspMatrixUrl" -}}
 {{- if and .Values.matrixChat.enabled .Values.matrixChat.homeserver.enabled .Values.matrixChat.homeserver.serverName -}}
-{{- $serverName := .Values.matrixChat.homeserver.serverName -}}
-{{- $origins := list (printf "%s://%s" .Values.apiScheme $serverName) (printf "wss://%s" $serverName) -}}
+{{- printf "%s://%s" .Values.apiScheme .Values.matrixChat.homeserver.serverName -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+The call signalling origins (CSP_MATRIX_CALL_URL): wss to the homeserver host,
+where the bundled LiveKit's /rtc route sits, plus the LiveKit publicUrl's
+origin when it is another one -- an operator-managed SFU, or a bundled one
+whose RTC LoadBalancer has its own DNS name. The browser dials publicUrl
+straight from the SPA, so an origin missing here refuses the call websocket
+client-side with no server-side trace. publicUrl may carry a port or a path;
+CSP sources are origins, so only scheme://host[:port] goes in. Empty when
+matrix chat is off.
+*/}}
+{{- define "waldur.cspMatrixCallUrl" -}}
+{{- $matrixUrl := include "waldur.cspMatrixUrl" . -}}
+{{- if $matrixUrl -}}
+{{- $origins := list (printf "wss://%s" .Values.matrixChat.homeserver.serverName) -}}
 {{- with .Values.matrixChat.livekit.publicUrl -}}
 {{- $url := urlParse . -}}
 {{- $origin := printf "%s://%s" $url.scheme $url.host -}}
-{{- if not (has $origin $origins) -}}
+{{- if not (or (has $origin $origins) (eq $origin $matrixUrl)) -}}
 {{- $origins = append $origins $origin -}}
 {{- end -}}
 {{- end -}}
 {{- join " " $origins -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+The origin the SPA's Sentry SDK posts to (CSP_SENTRY_URL): customSentryURL when
+set, else the origin of waldur.sentryDSN, which mastermind hands the SPA as
+HOMEPORT_SENTRY_DSN.
+*/}}
+{{- define "waldur.cspSentryUrl" -}}
+{{- if .Values.waldur.homeport.customSentryURL -}}
+{{- .Values.waldur.homeport.customSentryURL -}}
+{{- else if .Values.waldur.sentryDSN -}}
+{{- $url := urlParse .Values.waldur.sentryDSN -}}
+{{- printf "%s://%s" $url.scheme $url.host -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+A waldur.homeport.csp switch: "true" when it is true, empty when it is false
+or unset, and a failed render for anything else. Compared as text, because a
+quoted "false" (--set-string, forced strings in a GitOps tool) is a non-empty
+string, which a plain `if` reads as true.
+Usage: {{ include "waldur.cspBool" (dict "name" "reportOnly" "value" $csp.reportOnly) }}
+*/}}
+{{- define "waldur.cspBool" -}}
+{{- $text := .value | toString | lower -}}
+{{- if eq $text "true" -}}
+true
+{{- else if not (has $text (list "false" "" "<nil>")) -}}
+{{- fail (printf "waldur.homeport.csp.%s must be true or false, not %q" .name (toString .value)) -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+CSP sources as one space-separated string: a value may be a string or a list.
+*/}}
+{{- define "waldur.cspSources" -}}
+{{- if kindIs "slice" . -}}
+{{- join " " . -}}
+{{- else if . -}}
+{{- toString . -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Fails the render on a CSP value the homeport image would refuse at start,
+which would leave the new pod crash-looping and the rollout hung. Mirrors the
+image's entrypoint: whitespace (a YAML block's newlines) is folded into
+spaces first; a source list may not hold " \ $ , ; or a control character, a
+whole policy may hold ";" between its directives, and a URI may not hold
+whitespace or ' either.
+Usage: include "waldur.cspCheckValue" (dict "from" "<value path>" "value" $v "kind" "sources|policy|uri")
+*/}}
+{{- define "waldur.cspCheckValue" -}}
+{{- $value := regexReplaceAll `[[:space:]]+` (toString .value) " " | trim -}}
+{{- $refused := dict "sources" `["\\$,;[:cntrl:]]` "policy" `["\\$,[:cntrl:]]` "uri" `["'\\$,; [:cntrl:]]` -}}
+{{- $named := dict "sources" `" \ $ , ;` "policy" `" \ $ ,` "uri" `whitespace, ' " \ $ , ;` -}}
+{{- $hint := dict "sources" "Separate sources with spaces, or give a list." "policy" "Separate directives with \";\"." "uri" "Give one URL." -}}
+{{- if regexMatch (get $refused .kind) $value -}}
+{{- fail (printf "%s: %q may not contain %s or a control character; the homeport image refuses it and does not start. %s" .from $value (get $named .kind) (get $hint .kind)) -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Fails the render on a policy override the homeport image would refuse: one
+with no directive, one where a line ended without ";" so that two directives
+run together (a newline does not end a directive), one that does not state
+object-src, base-uri and frame-ancestors, and one that states report-uri (or
+report-to) while reportUri (or reportTo) adds it as well.
+Usage: include "waldur.cspCheckPolicy" (dict "policy" $policy "reportUri" $uri "reportTo" $bool)
+*/}}
+{{- define "waldur.cspCheckPolicy" -}}
+{{- $from := "waldur.homeport.csp.policy" -}}
+{{- $policy := regexReplaceAll `[[:space:]]+` (toString .policy) " " | trim | lower -}}
+{{- $policy = regexReplaceAll ` *; *` $policy "; " -}}
+{{- $policy = regexReplaceAll `^[; ]+|[; ]+$` $policy "" -}}
+{{- if not $policy -}}
+{{- fail (printf "%s: it holds no directive" $from) -}}
+{{- end -}}
+{{- $names := list -}}
+{{- $alsoDirectives := list "base-uri" "form-action" "frame-ancestors" "report-uri" "report-to" "sandbox" "upgrade-insecure-requests" -}}
+{{- range splitList ";" $policy -}}
+{{- $fields := splitList " " (trim .) | compact -}}
+{{- if $fields -}}
+{{- $directive := first $fields -}}
+{{- $names = append $names $directive -}}
+{{- range rest $fields -}}
+{{- if and (regexMatch `^[a-z]+(-[a-z]+)*$` .) (or (regexMatch `-src(-elem|-attr)?$` .) (has . $alsoDirectives)) -}}
+{{- fail (printf "%s: %s sits inside %s; end every directive with \";\", a newline does not" $from . $directive) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- $missing := list -}}
+{{- range list "object-src" "base-uri" "frame-ancestors" -}}
+{{- if not (has . $names) -}}
+{{- $missing = append $missing . -}}
+{{- end -}}
+{{- end -}}
+{{- if $missing -}}
+{{- fail (printf "%s: it lacks %s; every policy must state object-src, base-uri and frame-ancestors" $from (join " " $missing)) -}}
+{{- end -}}
+{{- if .reportUri -}}
+{{- if has "report-uri" $names -}}
+{{- fail (printf "%s: it states report-uri and waldur.homeport.csp.reportUri is set too; give the endpoint in one of them" $from) -}}
+{{- end -}}
+{{- if and .reportTo (has "report-to" $names) -}}
+{{- fail (printf "%s: it states report-to and waldur.homeport.csp.reportTo is set too; give it in one of them" $from) -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+The homeport container's CSP environment, one entry per non-empty variable.
+waldur.homeport.csp.extra keys are directive names (connect-src, or
+CONNECT_SRC); each becomes CSP_<DIRECTIVE>_EXTRA. A directive the image does
+not know fails the render, because the variable would otherwise be ignored
+without a trace. So does a value the image would refuse at start (see
+waldur.cspCheckValue and waldur.cspCheckPolicy).
+Each entry: variable name, value, kind of value, and the chart value it comes
+from (for error messages).
+*/}}
+{{- define "waldur.homeportCspEnv" -}}
+{{- $csp := .Values.waldur.homeport.csp | default dict -}}
+{{- $hp := .Values.waldur.homeport -}}
+{{- $env := list -}}
+{{- $env = append $env (list "CSP_SENTRY_URL" (include "waldur.cspSentryUrl" .) "sources" "waldur.homeport.customSentryURL (or waldur.sentryDSN)") -}}
+{{- $env = append $env (list "CSP_MATOMO_URL" $hp.matomoUrlBase "sources" "waldur.homeport.matomoUrlBase") -}}
+{{- $env = append $env (list "CSP_MATRIX_URL" (include "waldur.cspMatrixUrl" .) "sources" "matrixChat.homeserver.serverName") -}}
+{{- $env = append $env (list "CSP_MATRIX_CALL_URL" (include "waldur.cspMatrixCallUrl" .) "sources" "matrixChat.livekit.publicUrl") -}}
+{{- $env = append $env (list "CSP_INFERENCE_URL" $hp.inferencePlaygroundURL "sources" "waldur.homeport.inferencePlaygroundURL") -}}
+{{- $env = append $env (list "CSP_FORM_ACTION" (include "waldur.cspSources" $csp.formAction) "sources" "waldur.homeport.csp.formAction") -}}
+{{- $reportOnly := include "waldur.cspBool" (dict "name" "reportOnly" "value" $csp.reportOnly) -}}
+{{- $env = append $env (list "CSP_REPORT_ONLY" $reportOnly "flag" "waldur.homeport.csp.reportOnly") -}}
+{{- $env = append $env (list "CSP_REPORT_URI" $csp.reportUri "uri" "waldur.homeport.csp.reportUri") -}}
+{{- $reportTo := include "waldur.cspBool" (dict "name" "reportTo" "value" $csp.reportTo) -}}
+{{- $env = append $env (list "CSP_REPORT_TO" $reportTo "flag" "waldur.homeport.csp.reportTo") -}}
+{{- $known := list "DEFAULT_SRC" "SCRIPT_SRC" "STYLE_SRC" "IMG_SRC" "CONNECT_SRC" "FONT_SRC" "MEDIA_SRC" "WORKER_SRC" "FRAME_SRC" "FORM_ACTION" -}}
+{{- range $directive, $sources := ($csp.extra | default dict) -}}
+{{- $key := $directive | replace "-" "_" | upper -}}
+{{- if not (has $key $known) -}}
+{{- fail (printf "waldur.homeport.csp.extra: unknown directive %q; use one of %s (lower case with dashes also works)" $directive (join ", " $known)) -}}
+{{- end -}}
+{{- $env = append $env (list (printf "CSP_%s_EXTRA" $key) (include "waldur.cspSources" $sources) "sources" (printf "waldur.homeport.csp.extra.%s" $directive)) -}}
+{{- end -}}
+{{- $env = append $env (list "CSP_POLICY" $csp.policy "policy" "waldur.homeport.csp.policy") -}}
+{{- range $env -}}
+{{- if and (index . 1) (ne (index . 2) "flag") -}}
+{{- $_ := include "waldur.cspCheckValue" (dict "from" (index . 3) "value" (index . 1) "kind" (index . 2)) -}}
+{{- end -}}
+{{- end -}}
+{{- if $csp.policy -}}
+{{- $_ := include "waldur.cspCheckPolicy" (dict "policy" $csp.policy "reportUri" $csp.reportUri "reportTo" $reportTo) -}}
+{{- end -}}
+{{- range $env -}}
+{{- if index . 1 }}
+- name: {{ index . 0 }}
+  value: {{ index . 1 | toString | quote }}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 

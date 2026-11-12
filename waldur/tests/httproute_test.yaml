@@ -251,19 +251,20 @@ tests:
       - hasDocuments:
           count: 0
 
-  - it: sets a CSP response header on the homeport HTTPRoute
+  # The homeport image sends the portal's policy; a second one here could only
+  # tighten it, since browsers enforce every policy a response carries.
+  - it: sets no CSP on the homeport HTTPRoute
     set:
       gatewayAPI.enabled: true
       gatewayAPI.createGateway: true
       gatewayAPI.gatewayClassName: envoy-gateway
     template: templates/httproute-homeport.yaml
     asserts:
+      - notExists:
+          path: spec.rules[0].filters
       - equal:
-          path: spec.rules[0].filters[0].type
-          value: ResponseHeaderModifier
-      - matchRegex:
-          path: spec.rules[0].filters[0].responseHeaderModifier.set[0].value
-          pattern: "Content-Security-Policy|base-uri 'self'"
+          path: spec.rules[0].backendRefs[0].name
+          value: waldur-homeport
 
   - it: renders the redirect HTTPRoute only when createGateway and tls.enabled are both true
     set:

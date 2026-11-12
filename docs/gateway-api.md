@@ -118,7 +118,7 @@ of it -- some features remain implementation-specific, with no standard resource
 | --- | --- | --- | --- |
 | SSL redirect | `force-ssl-redirect` annotation | `RequestRedirect` filter | Yes -- native |
 | Path rewrite | `rewrite-target` annotation | `URLRewrite` filter (`ReplacePrefixMatch`) | Yes -- native |
-| CSP / response headers | `configuration-snippet` | `ResponseHeaderModifier` filter | Yes -- native |
+| Response headers | `configuration-snippet` | `ResponseHeaderModifier` filter | Yes -- native |
 | TLS termination | per-Ingress `tls:` block | Gateway listener `tls.mode: Terminate` | Yes -- native |
 | cert-manager | `cert-manager.io/cluster-issuer` | same annotation, on the Gateway | Yes -- native |
 | CORS | `enable-cors` + `cors-*` annotations | none | No -- `extraPolicies` |
@@ -127,6 +127,9 @@ of it -- some features remain implementation-specific, with no standard resource
 
 The chart renders the portable ones natively (see `templates/httproute-*.yaml`). For the rest, use
 the escape hatch below.
+
+The portal's Content-Security-Policy is not among them on either path: the homeport image sends it,
+so the homeport HTTPRoute sets none (see [Content-Security-Policy](content-security-policy.md)).
 
 ## `extraPolicies`: implementation-specific policies
 
@@ -164,6 +167,7 @@ gatewayAPI:
             - sentry-trace
             - baggage
             - X-Impersonated-User-Uuid
+            - X-Reauthentication-Grant
           exposeHeaders:
             - Link
             - X-Result-Count

@@ -14,6 +14,7 @@ templates:
   - templates/secret-livekit.yaml
   - templates/service-livekit-rtc.yaml
   - templates/ingress-homeport.yaml
+  - templates/deployment-homeport.yaml
   - templates/traefik-middleware-matrix.yaml
   - templates/statefulset-matrix-homeserver.yaml
   - templates/job-init-matrix-wire.yaml
@@ -662,37 +663,42 @@ tests:
       - failedTemplate:
           errorMessage: "matrixChat.livekit is enabled but no API credentials are set. livekit-server would start with no signing key and Waldur could not sign call tokens, so calls fail at runtime with no render-time hint. Set keys.apiKey + keys.apiSecret, or point keys.existingSecret.name at your own Secret."
 
-  - it: injects the matrix homeserver into the homeport CSP when enabled
-    template: templates/ingress-homeport.yaml
+  - it: passes the matrix homeserver to the homeport image's CSP when enabled
+    template: templates/deployment-homeport.yaml
     set:
-      ingress.enabled: true
-      ingress.className: nginx
       apiScheme: https
       matrixChat.enabled: true
       matrixChat.homeserver.enabled: true
       matrixChat.homeserver.serverName: "matrix.example.org"
-      # config-tuwunel also renders here — supply a token so its guard doesn't abort.
-      matrixChat.homeserver.registrationToken: "s3cret"
     asserts:
       # Chat sync/media (https) and LiveKit call signaling (wss) must be allowed
       # in connect-src or the browser silently blocks them — no server-side error.
-      - matchRegex:
-          path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
-          pattern: "connect-src[^;]*https://matrix.example.org"
-      - matchRegex:
-          path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
-          pattern: "connect-src[^;]*wss://matrix.example.org"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_MATRIX_URL
+            value: "https://matrix.example.org"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_MATRIX_CALL_URL
+            value: "wss://matrix.example.org"
 
-  - it: leaves the homeport CSP untouched when matrix chat is disabled
-    template: templates/ingress-homeport.yaml
+  - it: passes no matrix hosts to the homeport image when matrix chat is disabled
+    template: templates/deployment-homeport.yaml
     set:
-      ingress.enabled: true
-      ingress.className: nginx
       matrixChat.enabled: false
     asserts:
-      - notMatchRegex:
-          path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
-          pattern: "matrix"
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_MATRIX_URL
+          any: true
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_MATRIX_CALL_URL
+          any: true
 
   - it: omits the TURN relay from the livekit config by default
     template: templates/config-livekit.yaml

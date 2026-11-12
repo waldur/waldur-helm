@@ -1,8 +1,6 @@
-suite: CORS origins and homeport CSP follow homeportScheme
+suite: CORS origins follow homeportScheme
 templates:
   - templates/config-override.yaml
-  - templates/traefik-middleware-homeport.yaml
-  - templates/ingress-homeport.yaml
 
 set:
   ingress.enabled: true
@@ -53,41 +51,3 @@ tests:
       - matchRegex:
           path: data["override.conf.py"]
           pattern: "'https://legacy\\.example\\.com'"
-
-  # media-src carried the same hardcoded https, so on a plain-http deployment
-  # the browser blocked homeport's own media assets.
-  - it: scopes the traefik CSP media-src to the scheme actually served
-    templates:
-      - templates/traefik-middleware-homeport.yaml
-    set:
-      ingress.className: traefik
-      homeportScheme: http
-    documentSelector:
-      path: metadata.name
-      value: homeport-headers
-    asserts:
-      - matchRegex:
-          path: spec.headers.customResponseHeaders["Content-Security-Policy"]
-          pattern: "media-src http://waldur\\.example\\.com/assets/"
-
-  - it: scopes the nginx CSP media-src to the scheme actually served
-    templates:
-      - templates/ingress-homeport.yaml
-    set:
-      ingress.className: nginx
-      homeportScheme: http
-    asserts:
-      - matchRegex:
-          path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
-          pattern: "media-src http://waldur\\.example\\.com/assets/"
-
-  - it: scopes the haproxy CSP media-src to the scheme actually served
-    templates:
-      - templates/ingress-homeport.yaml
-    set:
-      ingress.className: haproxy
-      homeportScheme: http
-    asserts:
-      - matchRegex:
-          path: metadata.annotations["haproxy.org/backend-config-snippet"]
-          pattern: "media-src http://waldur\\.example\\.com/assets/"

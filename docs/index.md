@@ -26,6 +26,8 @@ Outline:
 
 - [TLS](tls-config.md)
 
+- [Content-Security-Policy](content-security-policy.md)
+
 - [Gateway API](gateway-api.md)
 
 - [Outgoing email](mail.md)

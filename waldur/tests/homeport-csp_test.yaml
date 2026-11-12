@@ -1,0 +1,336 @@
+suite: homeport Content-Security-Policy
+templates:
+  - templates/deployment-homeport.yaml
+  - templates/ingress-homeport.yaml
+  - templates/traefik-middleware-homeport.yaml
+  - templates/httproute-homeport.yaml
+
+capabilities:
+  majorVersion: 1
+  minorVersion: 29
+  apiVersions:
+    - gateway.networking.k8s.io/v1/HTTPRoute
+    - gateway.networking.k8s.io/v1/Gateway
+
+# The homeport image renders the portal's policy from its environment. The
+# chart passes the values to the container and keeps a short policy only on
+# the error pages the proxies generate themselves.
+tests:
+  - it: passes no CSP variables by default
+    template: templates/deployment-homeport.yaml
+    asserts:
+      # TITLE and API_URL only; an empty variable would add nothing anyway.
+      - lengthEqual:
+          path: spec.template.spec.containers[0].env
+          count: 2
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: API_URL
+            value: "http://waldur.local/"
+
+  - it: maps the existing homeport values to the image's variables
+    template: templates/deployment-homeport.yaml
+    set:
+      waldur.homeport.customSentryURL: "https://sentry.example.com"
+      waldur.homeport.matomoUrlBase: "https://matomo.example.com/"
+      waldur.homeport.inferencePlaygroundURL: "https://inference.example.com"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_SENTRY_URL
+            value: "https://sentry.example.com"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_MATOMO_URL
+            value: "https://matomo.example.com/"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_INFERENCE_URL
+            value: "https://inference.example.com"
+
+  # mastermind hands waldur.sentryDSN to the SPA, whose Sentry SDK then posts
+  # to that host.
+  - it: takes the Sentry origin from sentryDSN when customSentryURL is unset
+    template: templates/deployment-homeport.yaml
+    set:
+      waldur.sentryDSN: "https://public@sentry.example.org:8443/7"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_SENTRY_URL
+            value: "https://sentry.example.org:8443"
+
+  - it: prefers customSentryURL over the sentryDSN host
+    template: templates/deployment-homeport.yaml
+    set:
+      waldur.sentryDSN: "https://public@sentry.example.org/7"
+      waldur.homeport.customSentryURL: "https://relay.example.com"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_SENTRY_URL
+            value: "https://relay.example.com"
+
+  - it: passes form-action, reporting and the policy override
+    template: templates/deployment-homeport.yaml
+    set:
+      waldur.homeport.csp.formAction: "https://idp.example.org https://idp2.example.org"
+      waldur.homeport.csp.reportOnly: true
+      waldur.homeport.csp.reportUri: "https://sentry.example.com/api/7/security/?sentry_key=public"
+      waldur.homeport.csp.policy: "default-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_FORM_ACTION
+            value: "https://idp.example.org https://idp2.example.org"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_REPORT_ONLY
+            value: "true"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_REPORT_URI
+            value: "https://sentry.example.com/api/7/security/?sentry_key=public"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_POLICY
+            value: "default-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
+
+  - it: joins a list of form-action sources
+    template: templates/deployment-homeport.yaml
+    set:
+      waldur.homeport.csp.formAction:
+        - "https://idp.example.org"
+        - "https://idp2.example.org"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_FORM_ACTION
+            value: "https://idp.example.org https://idp2.example.org"
+
+  - it: enforces the policy unless reportOnly is true
+    template: templates/deployment-homeport.yaml
+    set:
+      waldur.homeport.csp.reportOnly: false
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_REPORT_ONLY
+          any: true
+
+  # A quoted "false" (--set-string, forced strings in a GitOps tool) is a
+  # non-empty string; read as true it would quietly stop enforcing the policy.
+  - it: enforces the policy when reportOnly is the string "false"
+    template: templates/deployment-homeport.yaml
+    set:
+      waldur.homeport.csp.reportOnly: "false"
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_REPORT_ONLY
+          any: true
+
+  - it: reports only when reportOnly is the string "true"
+    template: templates/deployment-homeport.yaml
+    set:
+      waldur.homeport.csp.reportOnly: "True"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_REPORT_ONLY
+            value: "true"
+
+  - it: refuses a reportOnly that is neither true nor false
+    template: templates/deployment-homeport.yaml
+    set:
+      waldur.homeport.csp.reportOnly: "yes"
+    asserts:
+      - failedTemplate:
+          errorMessage: 'waldur.homeport.csp.reportOnly must be true or false, not "yes"'
+
+  # report-uri is what every browser sends to. With report-to as well,
+  # Chromium reports only through the Reporting API, so it stays opt-in.
+  - it: reports through report-uri only by default
+    template: templates/deployment-homeport.yaml
+    set:
+      waldur.homeport.csp.reportUri: "https://sentry.example.com/api/7/security/"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_REPORT_URI
+            value: "https://sentry.example.com/api/7/security/"
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_REPORT_TO
+          any: true
+
+  - it: adds report-to when reportTo is true
+    template: templates/deployment-homeport.yaml
+    set:
+      waldur.homeport.csp.reportUri: "https://sentry.example.com/api/7/security/"
+      waldur.homeport.csp.reportTo: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_REPORT_TO
+            value: "true"
+
+  - it: leaves report-to off when reportTo is the string "false"
+    template: templates/deployment-homeport.yaml
+    set:
+      waldur.homeport.csp.reportUri: "https://sentry.example.com/api/7/security/"
+      waldur.homeport.csp.reportTo: "false"
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_REPORT_TO
+          any: true
+
+  - it: adds report-to when reportTo is the string "TRUE"
+    template: templates/deployment-homeport.yaml
+    set:
+      waldur.homeport.csp.reportUri: "https://sentry.example.com/api/7/security/"
+      waldur.homeport.csp.reportTo: "TRUE"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_REPORT_TO
+            value: "true"
+
+  - it: refuses a reportTo that is neither true nor false
+    template: templates/deployment-homeport.yaml
+    set:
+      waldur.homeport.csp.reportTo: 1
+    asserts:
+      - failedTemplate:
+          errorMessage: 'waldur.homeport.csp.reportTo must be true or false, not "1"'
+
+  - it: turns each extra directive into CSP_<DIRECTIVE>_EXTRA
+    template: templates/deployment-homeport.yaml
+    set:
+      waldur.homeport.csp.extra:
+        connect-src: "https://metrics.example.com"
+        img-src:
+          - "https://cdn.example.com"
+          - "https://tiles.example.com"
+        FORM_ACTION: "https://idp.example.org"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_CONNECT_SRC_EXTRA
+            value: "https://metrics.example.com"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_IMG_SRC_EXTRA
+            value: "https://cdn.example.com https://tiles.example.com"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_FORM_ACTION_EXTRA
+            value: "https://idp.example.org"
+
+  # The image ignores a variable it does not know, so a typo would pass
+  # silently.
+  - it: refuses an extra directive the image does not know
+    template: templates/deployment-homeport.yaml
+    set:
+      waldur.homeport.csp.extra:
+        conect-src: "https://metrics.example.com"
+    asserts:
+      - failedTemplate:
+          errorMessage: 'waldur.homeport.csp.extra: unknown directive "conect-src"; use one of DEFAULT_SRC, SCRIPT_SRC, STYLE_SRC, IMG_SRC, CONNECT_SRC, FONT_SRC, MEDIA_SRC, WORKER_SRC, FRAME_SRC, FORM_ACTION (lower case with dashes also works)'
+
+  - it: keeps the deployment's own extra env vars next to the CSP ones
+    template: templates/deployment-homeport.yaml
+    set:
+      waldur.homeport.csp.policy: "default-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
+      homeport.extraEnvVars:
+        - name: FOO
+          value: bar
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CSP_POLICY
+            value: "default-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FOO
+            value: bar
+
+  # The SPA policy is no longer set at the proxy. nginx and HAProxy still mark
+  # the pages they generate themselves: allow-list refusals (403), body and
+  # rate limits (413, 429) and an unreachable homeport (502-504).
+  - it: sets the nginx policy only on the controller's own error pages
+    template: templates/ingress-homeport.yaml
+    set:
+      ingress.enabled: true
+      ingress.className: nginx
+      waldur.homeport.customSentryURL: "https://sentry.example.com"
+      waldur.homeport.matomoUrlBase: "https://matomo.example.com/"
+    asserts:
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+          value: |
+            more_set_headers -s "403 413 429 502 503 504" "Content-Security-Policy: default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+
+  - it: sets the HAProxy policy only on its own error responses
+    template: templates/ingress-homeport.yaml
+    set:
+      ingress.enabled: true
+      ingress.className: haproxy
+      waldur.homeport.customSentryURL: "https://sentry.example.com"
+    asserts:
+      - equal:
+          path: metadata.annotations["haproxy.org/backend-config-snippet"]
+          value: |
+            http-after-response set-header Content-Security-Policy "default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'" if { status 403 413 429 502 503 504 } !{ res.hdr(content-security-policy) -m found }
+
+  - it: sets no policy in the traefik headers middleware
+    template: templates/traefik-middleware-homeport.yaml
+    set:
+      ingress.enabled: true
+      ingress.className: traefik
+      waldur.homeport.customSentryURL: "https://sentry.example.com"
+    documentSelector:
+      path: metadata.name
+      value: homeport-headers
+    asserts:
+      - notExists:
+          path: spec.headers.customResponseHeaders
+      - contains:
+          path: spec.headers.accessControlAllowHeaders
+          content: X-Impersonated-User-Uuid
+
+  - it: sets no policy on the homeport HTTPRoute
+    template: templates/httproute-homeport.yaml
+    set:
+      gatewayAPI.enabled: true
+      gatewayAPI.createGateway: true
+      gatewayAPI.gatewayClassName: envoy-gateway
+      waldur.homeport.customSentryURL: "https://sentry.example.com"
+    asserts:
+      - notExists:
+          path: spec.rules[0].filters

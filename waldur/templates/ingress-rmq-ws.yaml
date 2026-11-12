@@ -8,6 +8,10 @@ metadata:
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /ws
     nginx.ingress.kubernetes.io/force-ssl-redirect: "{{ include "waldur.sslRedirect" (dict "scheme" .Values.apiScheme "Values" .Values) }}"
+    # Pages the controller generates itself (allow-list refusals, body and
+    # rate limits, an unreachable backend) never reach RabbitMQ.
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      {{ include "waldur.errorPageCspNginx" . }}
     {{ if .Values.ingress.whitelistSourceRange }}
     nginx.ingress.kubernetes.io/whitelist-source-range: "{{ .Values.ingress.whitelistSourceRange }}"
     {{ end }}
@@ -16,6 +20,11 @@ metadata:
     haproxy.org/path-rewrite: "/ws" # For HAProxy Kubernetes Ingress Controller
     haproxy.router.openshift.io/rewrite-target: "/ws" # For OpenShift's built-in routers
     haproxy.org/ssl-redirect: "{{ include "waldur.sslRedirect" (dict "scheme" .Values.apiScheme "Values" .Values) }}"
+    # HAProxy's own error pages for this backend (none available, a slow one)
+    # never reach RabbitMQ. Its frontend's refusals need the controller's
+    # frontend-config-snippet (docs/content-security-policy.md).
+    haproxy.org/backend-config-snippet: |
+      {{ include "waldur.errorPageCspHaproxy" . }}
     {{ if and .Values.ingress.tls.enabled (.Values.ingress.tls.source | eq "cluster") }}
     route.openshift.io/termination: "edge"
     {{ end }}

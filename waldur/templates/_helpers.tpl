@@ -742,12 +742,13 @@ default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
 {{- end -}}
 
 {{/*
-The statuses those pages come with: 403 (the source range allow-list), 413
-(the request body limit), 429 (rate limiting) and 502-504 (the backend is down
-or slow).
+The statuses those pages come with: 400 and 431 (a request the backend's or
+the controller's server would not parse, such as gunicorn's own error pages),
+403 (the source range allow-list), 413 (the request body limit), 429 (rate
+limiting) and 502-504 (the backend is down or slow).
 */}}
 {{- define "waldur.errorPageStatuses" -}}
-403 413 429 502 503 504
+400 403 413 429 431 502 503 504
 {{- end -}}
 
 {{/*
@@ -756,7 +757,22 @@ headers-more cannot test for a header the backend sent, so a backend response
 with one of these statuses gets this policy in place of its own.
 */}}
 {{- define "waldur.errorPageCspNginx" -}}
-more_set_headers -s "{{ include "waldur.errorPageStatuses" . }}" "Content-Security-Policy: {{ include "waldur.errorPageCsp" . }}";
+{{- include "waldur.errorPageCspNginxLine" (include "waldur.errorPageStatuses" .) -}}
+{{- end -}}
+
+{{/*
+The same line for the ingresses in front of mastermind's API, without 400:
+the browsable API answers a form with invalid input with a 400 page that needs
+mastermind's page policy to load its scripts and styles and post the form
+again. gunicorn's own 400 carries the API policy from the image, and
+mastermind sends one on every response of its own.
+*/}}
+{{- define "waldur.errorPageCspNginxApi" -}}
+{{- include "waldur.errorPageCspNginxLine" (without (splitList " " (include "waldur.errorPageStatuses" .)) "400" | join " ") -}}
+{{- end -}}
+
+{{- define "waldur.errorPageCspNginxLine" -}}
+more_set_headers -s "{{ . }}" "Content-Security-Policy: {{ include "waldur.errorPageCsp" . }}";
 {{- end -}}
 
 {{/*

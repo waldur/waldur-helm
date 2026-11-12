@@ -21,6 +21,11 @@ metadata:
   name: api-matrix-livekit-ingress
   annotations:
     nginx.ingress.kubernetes.io/force-ssl-redirect: "{{ include "waldur.sslRedirect" (dict "scheme" .Values.apiScheme "Values" .Values) }}"
+    # Pages the controller generates itself (allow-list refusals, body and
+    # rate limits, an unreachable backend) never reach mastermind, which sets
+    # the policy on its responses. As on the API ingress, not on a 400.
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      {{ include "waldur.errorPageCspNginxApi" . }}
     {{- if .Values.ingress.whitelistSourceRange }}
     nginx.ingress.kubernetes.io/whitelist-source-range: "{{ .Values.ingress.whitelistSourceRange }}"
     {{- end }}

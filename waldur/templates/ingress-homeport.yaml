@@ -7,7 +7,9 @@ metadata:
     {{/* The homeport image sends the portal's Content-Security-Policy. The
          snippets below set one only on the pages the controller generates
          itself (allow-list refusals, body and rate limits, an unreachable
-         backend), which never reach the image. */}}
+         backend), which never reach the image. HAProxy's backend snippet
+         reaches only the backend's pages; its frontend's refusals need the
+         controller's frontend-config-snippet. */}}
     {{ if eq .Values.ingress.className "nginx" }}
     nginx.ingress.kubernetes.io/enable-cors: "true"
     nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,sentry-trace,baggage,X-Impersonated-User-Uuid,X-Reauthentication-Grant"

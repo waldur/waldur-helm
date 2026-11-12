@@ -281,8 +281,9 @@ tests:
             value: bar
 
   # The SPA policy is no longer set at the proxy. nginx and HAProxy still mark
-  # the pages they generate themselves: allow-list refusals (403), body and
-  # rate limits (413, 429) and an unreachable homeport (502-504).
+  # the pages they generate themselves: a 400 or 431 for a request they would
+  # not parse, allow-list refusals (403), body and rate limits (413, 429) and
+  # an unreachable homeport (502-504).
   - it: sets the nginx policy only on the controller's own error pages
     template: templates/ingress-homeport.yaml
     set:
@@ -294,7 +295,7 @@ tests:
       - equal:
           path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
           value: |
-            more_set_headers -s "403 413 429 502 503 504" "Content-Security-Policy: default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+            more_set_headers -s "400 403 413 429 431 502 503 504" "Content-Security-Policy: default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
 
   - it: sets the HAProxy policy only on its own error responses
     template: templates/ingress-homeport.yaml
@@ -306,7 +307,7 @@ tests:
       - equal:
           path: metadata.annotations["haproxy.org/backend-config-snippet"]
           value: |
-            http-after-response set-header Content-Security-Policy "default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'" if { status 403 413 429 502 503 504 } !{ res.hdr(content-security-policy) -m found }
+            http-after-response set-header Content-Security-Policy "default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'" if { status 400 403 413 429 431 502 503 504 } !{ res.hdr(content-security-policy) -m found }
 
   - it: sets no policy in the traefik headers middleware
     template: templates/traefik-middleware-homeport.yaml

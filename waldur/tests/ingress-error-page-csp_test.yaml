@@ -1,0 +1,127 @@
+suite: the other ingresses mark the controller's own error pages
+templates:
+  - templates/ingress-api-matrix-livekit.yaml
+  - templates/ingress-matrix.yaml
+  - templates/ingress-rmq-ws.yaml
+  - templates/ingress-uvk-everypay.yaml
+  - templates/ingress-web-shell.yaml
+
+set:
+  apiScheme: https
+  ingress.enabled: true
+  matrixChat.enabled: true
+  matrixChat.homeserver.enabled: true
+  matrixChat.homeserver.serverName: "matrix.example.org"
+  # helm-unittest renders the whole chart per test, so the guarded matrix
+  # templates need valid config or their fail-closed guards abort the render.
+  matrixChat.homeserver.registrationToken: "s3cret"
+  matrixChat.livekit.enabled: true
+  matrixChat.livekit.publicUrl: "wss://matrix.example.org"
+  matrixChat.livekit.keys.apiKey: "devkey"
+  matrixChat.livekit.keys.apiSecret: "0123456789abcdef0123456789abcdef"
+  waldur.rabbitmqEvents.stompEnabled: true
+  waldur.uvkEverypay.enabled: true
+  waldur.webShell.enabled: true
+  waldur.debug: true
+
+# Like the API, admin and homeport ingresses, these set mastermind's API policy
+# on the pages the controller generates itself, which never reach the backend:
+# a 400 or 431 for a request it would not parse, allow-list refusals (403),
+# body and rate limits (413, 429) and an unreachable backend (502-504).
+tests:
+  - it: sets the policy on the nginx controller's error pages
+    templates:
+      - templates/ingress-matrix.yaml
+      - templates/ingress-rmq-ws.yaml
+      - templates/ingress-uvk-everypay.yaml
+      - templates/ingress-web-shell.yaml
+    set:
+      ingress.className: nginx
+    asserts:
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+          value: |
+            more_set_headers -s "400 403 413 429 431 502 503 504" "Content-Security-Policy: default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+
+  # mastermind's API: the browsable API answers invalid input with a 400 page
+  # that needs mastermind's page policy, so nginx leaves a 400 alone there.
+  - it: sets the policy on the call token API's error pages, except a 400
+    template: templates/ingress-api-matrix-livekit.yaml
+    set:
+      ingress.className: nginx
+    asserts:
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+          value: |
+            more_set_headers -s "403 413 429 431 502 503 504" "Content-Security-Policy: default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+
+  - it: keeps the other nginx annotations next to the snippet
+    set:
+      ingress.className: nginx
+      ingress.whitelistSourceRange: "192.0.2.0/24"
+    asserts:
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/proxy-read-timeout"]
+          value: "3600"
+        template: templates/ingress-matrix.yaml
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/rewrite-target"]
+          value: /ws
+        template: templates/ingress-rmq-ws.yaml
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/rewrite-target"]
+          value: /$1
+        template: templates/ingress-uvk-everypay.yaml
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/whitelist-source-range"]
+          value: "192.0.2.0/24"
+        template: templates/ingress-web-shell.yaml
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/whitelist-source-range"]
+          value: "192.0.2.0/24"
+        template: templates/ingress-api-matrix-livekit.yaml
+
+  - it: sets the policy on HAProxy's own error responses, keeping a backend's own
+    templates:
+      - templates/ingress-matrix.yaml
+      - templates/ingress-rmq-ws.yaml
+      - templates/ingress-uvk-everypay.yaml
+      - templates/ingress-web-shell.yaml
+    set:
+      ingress.className: haproxy
+    asserts:
+      - equal:
+          path: metadata.annotations["haproxy.org/backend-config-snippet"]
+          value: |
+            http-after-response set-header Content-Security-Policy "default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'" if { status 400 403 413 429 431 502 503 504 } !{ res.hdr(content-security-policy) -m found }
+
+  - it: keeps the other HAProxy annotations next to the snippet
+    set:
+      ingress.className: haproxy
+    asserts:
+      - equal:
+          path: metadata.annotations["haproxy.org/timeout-tunnel"]
+          value: 3600s
+        template: templates/ingress-matrix.yaml
+      - equal:
+          path: metadata.annotations["haproxy.org/path-rewrite"]
+          value: /ws
+        template: templates/ingress-rmq-ws.yaml
+      - equal:
+          path: metadata.annotations["haproxy.org/path-rewrite"]
+          value: /uvk-everypay/(.*) /\1
+        template: templates/ingress-uvk-everypay.yaml
+
+  - it: sets no snippet for traefik
+    templates:
+      - templates/ingress-matrix.yaml
+      - templates/ingress-rmq-ws.yaml
+      - templates/ingress-uvk-everypay.yaml
+      - templates/ingress-web-shell.yaml
+    set:
+      ingress.className: traefik
+    asserts:
+      - notExists:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+      - notExists:
+          path: metadata.annotations["haproxy.org/backend-config-snippet"]

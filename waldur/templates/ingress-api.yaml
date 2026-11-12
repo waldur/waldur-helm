@@ -25,8 +25,9 @@ metadata:
       gzip_comp_level 5;
       # Pages the controller generates itself (allow-list refusals, body and
       # rate limits, an unreachable backend) never reach mastermind, which
-      # sets the policy on its responses.
-      {{ include "waldur.errorPageCspNginx" . }}
+      # sets the policy on its responses. Not on a 400, which the browsable
+      # API answers with a page that needs mastermind's page policy.
+      {{ include "waldur.errorPageCspNginxApi" . }}
     {{ if .Values.ingress.whitelistSourceRange }}
     nginx.ingress.kubernetes.io/whitelist-source-range: "{{ .Values.ingress.whitelistSourceRange }}"
     {{ end }}
@@ -43,9 +44,10 @@ metadata:
     # IngressController via spec.httpCompression.mimeTypes (ROUTER_COMPRESSION_MIME).
     haproxy.org/compression-algo: "gzip"
     haproxy.org/compression-type: "application/json application/javascript text/css text/plain application/xml"
-    # Pages HAProxy generates itself (allow-list refusals, body and rate
-    # limits, an unreachable backend) never reach mastermind, which sets the
-    # policy on its responses.
+    # HAProxy's own error pages for this backend (none available, a slow one)
+    # never reach mastermind, which sets the policy on its responses. Its
+    # frontend's refusals (allow-list, rate limits) need the controller's
+    # frontend-config-snippet (docs/content-security-policy.md).
     haproxy.org/backend-config-snippet: |
       {{ include "waldur.errorPageCspHaproxy" . }}
     {{ if and .Values.ingress.tls.enabled (.Values.ingress.tls.source | eq "cluster") }}

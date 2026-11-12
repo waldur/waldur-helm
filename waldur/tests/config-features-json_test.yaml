@@ -82,3 +82,32 @@ tests:
       - notMatchRegex:
           path: data["features.json"]
           pattern: '"project\.show_matrix_chat": true'
+
+  - it: should show invoices with VAT when the billing feature is listed
+    # Homeport reads the presentation mode from this flag; the old
+    # ACCOUNTING_MODE env var on the homeport pod was never read.
+    set:
+      waldur.features: [billing]
+    asserts:
+      - matchRegex:
+          path: data["features.json"]
+          pattern: '"customer\.show_invoices_with_vat": true'
+
+  - it: should leave the invoice presentation flag alone without the billing feature
+    asserts:
+      - notMatchRegex:
+          path: data["features.json"]
+          pattern: 'customer\.show_invoices_with_vat'
+
+  - it: should let featureFlags keep accounting records with the billing feature listed
+    set:
+      waldur.features: [billing]
+      waldur.featureFlags:
+        customer.show_invoices_with_vat: false
+    asserts:
+      - matchRegex:
+          path: data["features.json"]
+          pattern: '"customer\.show_invoices_with_vat": false'
+      - notMatchRegex:
+          path: data["features.json"]
+          pattern: '"customer\.show_invoices_with_vat": true'

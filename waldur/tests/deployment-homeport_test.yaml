@@ -60,3 +60,13 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].imagePullPolicy
           value: "Always"
+
+  - it: should not set the unused ACCOUNTING_MODE env var with the billing feature
+    set:
+      waldur.features: [billing]
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ACCOUNTING_MODE
+            value: billing

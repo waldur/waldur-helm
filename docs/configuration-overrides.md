@@ -53,6 +53,12 @@ on every pod start, so there is no separate job to run or clean up. This also
 lets you override the handful of flags the chart otherwise hardcodes, such as
 `project.estimated_cost` (defaults to `true`).
 
+Listing `billing` in `waldur.features` sets `customer.show_invoices_with_vat`,
+so the portal shows costs with VAT included and monthly invoices instead of
+accounting records. Set `customer.show_invoices_with_vat: false` in
+`featureFlags` to keep accounting records while still using the invoice issuer
+details that `billing` configures.
+
 ## Custom roles
 
 `waldur.customRoleDescriptions` and `waldur.customRolePermissions` let you

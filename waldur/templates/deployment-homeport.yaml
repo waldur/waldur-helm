@@ -62,10 +62,6 @@ spec:
               value: {{ .Values.waldur.whitelabeling.shortPageTitle }}
             - name: API_URL
               value: {{ printf "%s://%s/" .Values.apiScheme .Values.apiHostname | quote }}
-            {{ if has "billing" .Values.waldur.features }}
-            - name: ACCOUNTING_MODE
-              value: 'billing'
-            {{ end }}
             {{ if has "secure_session" .Values.waldur.features }}
             - name: AUTH_STORAGE
               value: 'sessionStorage'

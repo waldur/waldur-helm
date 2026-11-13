@@ -70,6 +70,10 @@ data:
       {{ if not (hasKey .Values.waldur.featureFlags "project.estimated_cost") }}
         ,"project.estimated_cost": true
       {{ end }}
+      {{- /* "billing" shows VAT-inclusive costs and invoices instead of accounting records */}}
+      {{ if and (has "billing" .Values.waldur.features) (not (hasKey .Values.waldur.featureFlags "customer.show_invoices_with_vat")) }}
+        ,"customer.show_invoices_with_vat": true
+      {{ end }}
       {{ if and .Values.matrixChat.enabled (not (hasKey .Values.waldur.featureFlags "project.show_matrix_chat")) }}
         ,"project.show_matrix_chat": true
       {{ end }}

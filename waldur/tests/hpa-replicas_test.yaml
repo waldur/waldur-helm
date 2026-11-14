@@ -1,0 +1,170 @@
+suite: replica counts under an HPA
+templates:
+  - templates/deployment-api.yaml
+  - templates/deployment-worker.yaml
+release:
+  namespace: waldur
+# Lookups see these Deployments. The scheme is declared once; each test that
+# needs live objects lists them under its own kubernetesProvider. Their
+# replicas are quoted because the fake client cannot deep-copy a YAML int;
+# the template converts what it reads with `int` either way.
+kubernetesProvider:
+  scheme:
+    "apps/v1/Deployment":
+      gvr:
+        group: "apps"
+        version: "v1"
+        resource: "deployments"
+      namespaced: true
+  objects: []
+
+tests:
+  # Without a cluster to look at (helm template, first install) there is no
+  # count to carry over, and replicaCount would reset the HPA's choice.
+  - it: omits the replica count when the HPA is on and no Deployment exists
+    set:
+      hpa.api.enabled: true
+      hpa.celery.enabled: true
+      replicaCount.api: 3
+      replicaCount.worker: 4
+    asserts:
+      - notExists:
+          path: spec.replicas
+        template: templates/deployment-api.yaml
+      - notExists:
+          path: spec.replicas
+        template: templates/deployment-worker.yaml
+
+  # Omitting the field on an upgrade would let Helm delete it and Kubernetes
+  # default it to 1; rendering the live count keeps what the HPA chose.
+  - it: renders the live count of an existing Deployment while the HPA is on
+    set:
+      hpa.api.enabled: true
+      hpa.celery.enabled: true
+      replicaCount.api: 1
+      replicaCount.worker: 1
+    kubernetesProvider:
+      objects:
+        - kind: Deployment
+          apiVersion: apps/v1
+          metadata:
+            name: waldur-mastermind-api
+            namespace: waldur
+          spec:
+            replicas: "5"
+        - kind: Deployment
+          apiVersion: apps/v1
+          metadata:
+            name: waldur-mastermind-worker
+            namespace: waldur
+          spec:
+            replicas: "7"
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 5
+        template: templates/deployment-api.yaml
+      - equal:
+          path: spec.replicas
+          value: 7
+        template: templates/deployment-worker.yaml
+
+  - it: ignores a Deployment of the same name in another namespace
+    set:
+      hpa.api.enabled: true
+    kubernetesProvider:
+      objects:
+        - kind: Deployment
+          apiVersion: apps/v1
+          metadata:
+            name: waldur-mastermind-api
+            namespace: elsewhere
+          spec:
+            replicas: "5"
+    asserts:
+      - notExists:
+          path: spec.replicas
+        template: templates/deployment-api.yaml
+
+  # A Deployment at 0 has an inactive HPA; carrying 0 over would keep a
+  # standby down after replicaCount is raised at failover.
+  - it: does not carry a live 0 over
+    set:
+      hpa.api.enabled: true
+      replicaCount.api: 2
+    kubernetesProvider:
+      objects:
+        - kind: Deployment
+          apiVersion: apps/v1
+          metadata:
+            name: waldur-mastermind-api
+            namespace: waldur
+          spec:
+            replicas: "0"
+    asserts:
+      - notExists:
+          path: spec.replicas
+        template: templates/deployment-api.yaml
+
+  - it: renders the configured count when the HPA is off, whatever is live
+    set:
+      replicaCount.api: 3
+      replicaCount.worker: 4
+    kubernetesProvider:
+      objects:
+        - kind: Deployment
+          apiVersion: apps/v1
+          metadata:
+            name: waldur-mastermind-api
+            namespace: waldur
+          spec:
+            replicas: "5"
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 3
+        template: templates/deployment-api.yaml
+      - equal:
+          path: spec.replicas
+          value: 4
+        template: templates/deployment-worker.yaml
+
+  - it: still renders the count of a component whose HPA is off
+    set:
+      hpa.api.enabled: true
+      replicaCount.api: 3
+      replicaCount.worker: 4
+    asserts:
+      - notExists:
+          path: spec.replicas
+        template: templates/deployment-api.yaml
+      - equal:
+          path: spec.replicas
+          value: 4
+        template: templates/deployment-worker.yaml
+
+  # An HPA never scales up from 0, so a passive standby stays down.
+  - it: keeps an explicit 0 with the HPA enabled
+    set:
+      hpa.api.enabled: true
+      hpa.celery.enabled: true
+      replicaCount.api: 0
+      replicaCount.worker: 0
+    kubernetesProvider:
+      objects:
+        - kind: Deployment
+          apiVersion: apps/v1
+          metadata:
+            name: waldur-mastermind-api
+            namespace: waldur
+          spec:
+            replicas: "5"
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 0
+        template: templates/deployment-api.yaml
+      - equal:
+          path: spec.replicas
+          value: 0
+        template: templates/deployment-worker.yaml

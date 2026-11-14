@@ -54,6 +54,9 @@ data:
         'PORT': os.environ.get('POSTGRESQL_PORT'),
         'USER': os.environ.get('POSTGRESQL_USER'),
         'PASSWORD': os.environ.get('POSTGRESQL_PASSWORD'),
+        'DISABLE_SERVER_SIDE_CURSORS': {{ if eq (.Values.externalDB.disableServerSideCursors | toString) "true" }}True{{ else }}False{{ end }},
+        'OPTIONS': {
+            'prepare_threshold': None,
         },
     }
     DATABASE_ROUTERS = [
@@ -498,6 +501,14 @@ data:
     {{ if .Values.waldur.mastermindUrl }}
     WALDUR_CORE["MASTERMIND_URL"] = {{ .Values.waldur.mastermindUrl | quote }}
     {{ end }}
+    {{- $trustedProxyCount := .Values.waldur.trustedProxyCount }}
+    {{- if include "waldur.isSet" $trustedProxyCount }}
+    {{- if not (regexMatch "^[0-9]+$" (toString $trustedProxyCount)) }}
+    {{- fail (printf "waldur.trustedProxyCount must be a non-negative integer, got %q" (toString $trustedProxyCount)) }}
+    {{- end }}
+
+    WALDUR_CORE["TRUSTED_PROXY_COUNT"] = {{ $trustedProxyCount | int }}
+    {{- end }}
 
     WALDUR_CORE['INVITATION_LIFETIME'] = timedelta(weeks={{ default 1 .Values.waldur.invitationDuration.individual }})
     WALDUR_CORE['GROUP_INVITATION_LIFETIME'] = timedelta(weeks={{ default 1 .Values.waldur.invitationDuration.group }})

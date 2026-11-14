@@ -12,7 +12,9 @@ spec:
   {{- else }}
   progressDeadlineSeconds: 2400
   {{- end }}
-  replicas: {{ .Values.replicaCount.worker | int }}
+  {{- with include "waldur.deploymentReplicas" (dict "root" . "name" "waldur-mastermind-worker" "count" .Values.replicaCount.worker "hpa" .Values.hpa.celery.enabled) }}
+  {{ . }}
+  {{- end }}
   selector:
     matchLabels:
       app: waldur-mastermind-worker

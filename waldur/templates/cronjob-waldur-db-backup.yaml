@@ -1,9 +1,5 @@
 {{ if .Values.postgresBackup.enabled }}
-{{- if or ( gt .Capabilities.KubeVersion.Major "1" ) ( ge .Capabilities.KubeVersion.Minor "21" ) }}
 apiVersion: batch/v1
-{{- else }}
-apiVersion: batch/v1beta1
-{{- end }}
 kind: CronJob
 metadata:
   name: waldur-db-backup-cronjob
@@ -15,6 +11,16 @@ spec:
     spec:
       template:
         spec:
+          {{- if .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- range .Values.imagePullSecrets }}
+            - name: {{ . }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.hostAliases }}
+          hostAliases:
+            {{- toYaml .Values.hostAliases | nindent 12 }}
+          {{- end }}
           containers:
             - name: "postgres-backup-cronjob"
               image: {{ .Values.global.imageRegistry }}/{{ .Values.postgresBackup.image }}
@@ -23,10 +29,7 @@ spec:
                 {{ include "waldur.env.initdb" . | nindent 16 }}
                 - name: MINIO_SERVER
                   value: {{ .Values.backupStorage.endpoint | quote }}
-                - name: MINIO_ACCESS_KEY
-                  value: {{ .Values.backupStorage.accessKey | quote }}
-                - name: MINIO_SECRET_KEY
-                  value: {{ .Values.backupStorage.secretKey | quote }}
+                {{- include "waldur.backupStorage.credentials" . | nindent 16 }}
                 - name: MINIO_BUCKET
                   value: {{ .Values.backupStorage.bucketName | quote }}
                 - name: MINIO_API_VERSION

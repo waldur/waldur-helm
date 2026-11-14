@@ -1,0 +1,101 @@
+suite: horizontal pod autoscalers
+templates:
+  - templates/hpa-api.yaml
+  - templates/hpa-worker.yaml
+
+tests:
+  - it: renders no HPA by default
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: templates/hpa-api.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/hpa-worker.yaml
+
+  # autoscaling/v2beta2 was removed in Kubernetes 1.26.
+  - it: renders autoscaling/v2 with the default replica bounds when enabled
+    set:
+      hpa.api.enabled: true
+      hpa.celery.enabled: true
+    asserts:
+      - isAPIVersion:
+          of: autoscaling/v2
+        template: templates/hpa-api.yaml
+      - isAPIVersion:
+          of: autoscaling/v2
+        template: templates/hpa-worker.yaml
+      - equal:
+          path: spec.minReplicas
+          value: 1
+        template: templates/hpa-api.yaml
+      - equal:
+          path: spec.maxReplicas
+          value: 10
+        template: templates/hpa-api.yaml
+      - equal:
+          path: spec.minReplicas
+          value: 1
+        template: templates/hpa-worker.yaml
+      - equal:
+          path: spec.maxReplicas
+          value: 10
+        template: templates/hpa-worker.yaml
+
+  - it: takes the replica bounds from values
+    set:
+      hpa.api.enabled: true
+      hpa.api.minReplicas: 2
+      hpa.api.maxReplicas: 6
+      hpa.celery.enabled: true
+      hpa.celery.minReplicas: 3
+      hpa.celery.maxReplicas: 12
+    asserts:
+      - equal:
+          path: spec.minReplicas
+          value: 2
+        template: templates/hpa-api.yaml
+      - equal:
+          path: spec.maxReplicas
+          value: 6
+        template: templates/hpa-api.yaml
+      - equal:
+          path: spec.minReplicas
+          value: 3
+        template: templates/hpa-worker.yaml
+      - equal:
+          path: spec.maxReplicas
+          value: 12
+        template: templates/hpa-worker.yaml
+
+  - it: keeps the v2 Utilization target for the CPU threshold
+    set:
+      hpa.api.enabled: true
+      hpa.api.cpuUtilizationBorder: 65
+      hpa.celery.enabled: true
+      hpa.celery.cpuUtilizationBorder: 85
+    asserts:
+      - equal:
+          path: spec.metrics[0].resource
+          value:
+            name: cpu
+            target:
+              type: Utilization
+              averageUtilization: 65
+        template: templates/hpa-api.yaml
+      - equal:
+          path: spec.metrics[0].resource
+          value:
+            name: cpu
+            target:
+              type: Utilization
+              averageUtilization: 85
+        template: templates/hpa-worker.yaml
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: waldur-mastermind-api
+        template: templates/hpa-api.yaml
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: waldur-mastermind-worker
+        template: templates/hpa-worker.yaml

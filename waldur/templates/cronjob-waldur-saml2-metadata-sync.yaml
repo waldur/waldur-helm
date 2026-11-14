@@ -1,9 +1,5 @@
 {{ if has "SAML2" .Values.waldur.authMethods }}
-{{- if or ( gt .Capabilities.KubeVersion.Major "1" ) ( ge .Capabilities.KubeVersion.Minor "21" ) }}
 apiVersion: batch/v1
-{{- else }}
-apiVersion: batch/v1beta1
-{{- end }}
 kind: CronJob
 metadata:
   name: waldur-saml2-metadata-sync-cronjob
@@ -15,6 +11,16 @@ spec:
     spec:
       template:
         spec:
+          {{- if .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- range .Values.imagePullSecrets }}
+            - name: {{ . }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.hostAliases }}
+          hostAliases:
+            {{- toYaml .Values.hostAliases | nindent 12 }}
+          {{- end }}
           containers:
           - name: waldur-saml2-metadata-sync
             {{- if .Values.waldur.imageDigest }}

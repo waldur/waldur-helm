@@ -1,8 +1,4 @@
-{{- if or ( gt .Capabilities.KubeVersion.Major "1" ) ( ge .Capabilities.KubeVersion.Minor "21" ) }}
 apiVersion: batch/v1
-{{- else }}
-apiVersion: batch/v1beta1
-{{- end }}
 kind: CronJob
 metadata:
   name: waldur-cleanup-cronjob
@@ -23,6 +19,10 @@ spec:
             - name: {{ $val }}
             {{ end -}}
           {{ end }}
+          {{- if .Values.hostAliases }}
+          hostAliases:
+            {{- toYaml .Values.hostAliases | nindent 12 }}
+          {{- end }}
           containers:
             - name: waldur-cleanup
               {{- if .Values.waldur.imageDigest }}

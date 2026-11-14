@@ -4,6 +4,12 @@ type: application
 version: 8.1.5-rc.2
 appVersion: "8.1.5-rc.2"
 
+# The floor is Kubernetes 1.23: the HPAs use autoscaling/v2, the cleanup
+# CronJob sets the Job TTL, and Services ask for PreferDualStack, all GA
+# in 1.23. "-0" also admits provider builds such as v1.27.3-eks-xxxx,
+# which semver treats as pre-releases.
+kubeVersion: ">=1.23.0-0"
+
 description: Waldur - Open-Source Cloud Marketplace
 keywords:
   - marketplace

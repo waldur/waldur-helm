@@ -13,4 +13,6 @@ hostAliases:
 
 ```
 
-This will add a record for `my.host.example.com` to the `/etc/hosts` file of all the Waldur containers
+This will add a record for `my.host.example.com` to the `/etc/hosts` file of the
+containers of the Waldur Deployments and CronJobs (cleanup, database backup and
+rotation, SAML2 metadata sync)

@@ -16,19 +16,18 @@ Plan:
 
 1. Scale api, beat, worker -> 0
 
-2. Backup — using backup job
+2. Back up the database — with the backup job or the `pg_dump` below
 
-3. group_vars/puhuri_core_prd - helm_pg_ha_enabled: no ===> CANCEL THE UPDATING PIPELINE!
+3. Provision the destination database (an operator-managed cluster)
 
-4. Run dependency update ==> leads to a working single psql
+4. Restore the dump into the destination
 
-5. Restore DB — using recovery job
+5. Point the release at the destination (`externalDB.*`), drop the
+   `postgresql-ha` values and run `helm upgrade`
 
-6. Run a common update pipeline
+6. Validate that login works
 
-7. Validate that login works
-
-8. Drop old psql ha, drop pvc
+7. Drop the old `postgresql-ha` StatefulSet and its PVCs
 
 ```bash
 
@@ -39,10 +38,10 @@ kubectl exec -it postgresql-ha-waldur-postgresql-0 -- env PGPASSWORD=waldur pg_d
 # Backup restoration
 # Locally
 
-kubectl cp backup.sql.gz postgresql-waldur-0:/tmp/backup.sql.gz
-kubectl exec -it postgresql-waldur-0 -- bash
+kubectl cp backup.sql.gz <destination-primary-pod>:/tmp/backup.sql.gz
+kubectl exec -it <destination-primary-pod> -- bash
 
-# In pgpool pod
+# In the destination pod
 
 gzip -d /tmp/backup.sql.gz
 export PGPASSWORD=waldur

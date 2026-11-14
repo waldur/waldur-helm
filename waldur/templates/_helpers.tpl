@@ -281,6 +281,35 @@ Usage:
 {{- end -}}
 
 {{/*
+S3 credentials for the postgresBackup CronJobs and the restore pod.
+
+With backupStorage.existingSecret.name set, both keys are read from that
+Secret; otherwise they fall back to the plain backupStorage.accessKey and
+backupStorage.secretKey values.
+*/}}
+{{- define "waldur.backupStorage.credentials" -}}
+{{- $existing := .Values.backupStorage.existingSecret | default dict -}}
+- name: MINIO_ACCESS_KEY
+{{- if $existing.name }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ $existing.name | quote }}
+      key: {{ $existing.accessKeyKey | default "AWS_ACCESS_KEY_ID" | quote }}
+{{- else }}
+  value: {{ .Values.backupStorage.accessKey | quote }}
+{{- end }}
+- name: MINIO_SECRET_KEY
+{{- if $existing.name }}
+  valueFrom:
+    secretKeyRef:
+      name: {{ $existing.name | quote }}
+      key: {{ $existing.secretKeyKey | default "AWS_SECRET_ACCESS_KEY" | quote }}
+{{- else }}
+  value: {{ .Values.backupStorage.secretKey | quote }}
+{{- end }}
+{{- end -}}
+
+{{/*
 Add environment variables to configure private database
 */}}
 {{- define "waldur.env.initdb" -}}
@@ -1049,6 +1078,35 @@ Context is a dict:
       subPath: override.conf.py
   resources:
     {{- toYaml .resources | nindent 4 }}
+{{- end -}}
+
+{{/*
+spec.replicas of a Deployment an HPA may scale, as a "replicas: N" line or
+nothing. Context: dict with "root", "name" (the Deployment), "count" (its
+replicaCount) and "hpa" (whether its HPA is enabled).
+
+Without the HPA it is the configured count. With it, the HPA owns the count:
+rendering replicaCount would reset what the HPA scaled to on every upgrade.
+The live count is rendered instead, so the manifest matches the cluster and
+Helm's three-way merge leaves it alone. Omitting the field would not do: once
+a previous manifest set it, Helm deletes it and Kubernetes defaults it to 1.
+Where lookup sees no cluster (helm template, client-side dry runs, Argo CD)
+or the Deployment does not exist yet, the field is omitted. A live 0 is not
+carried over: the HPA is inactive there, and a raised replicaCount must
+bring the Deployment back. replicaCount 0 is always rendered, since an HPA
+never scales up from 0, which keeps a passive standby down.
+*/}}
+{{- define "waldur.deploymentReplicas" -}}
+{{- $count := .count | int -}}
+{{- if or (not .hpa) (eq $count 0) -}}
+replicas: {{ $count }}
+{{- else -}}
+{{- $live := lookup "apps/v1" "Deployment" .root.Release.Namespace .name | default dict -}}
+{{- $liveReplicas := dig "spec" "replicas" 0 $live | int -}}
+{{- if gt $liveReplicas 0 -}}
+replicas: {{ $liveReplicas }}
+{{- end -}}
+{{- end -}}
 {{- end -}}
 
 {{/*

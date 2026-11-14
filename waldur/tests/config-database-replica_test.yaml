@@ -1,0 +1,36 @@
+suite: read replica connection
+templates:
+  - templates/config-override.yaml
+
+tests:
+  - it: adds no replica connection by default
+    asserts:
+      - notMatchRegex:
+          path: data["override.conf.py"]
+          pattern: read_db
+
+  # The block used to end in a stray "},", which made override.conf.py a
+  # SyntaxError and stopped every pod that loads it. CI also py_compiles this
+  # render; this pins the shape of the dict's end (the configmap's block
+  # scalar strips the indentation, so top-level lines start at column 0).
+  - it: closes the replica connection dict and routes reads to it
+    set:
+      readonlyDBReplica.enabled: true
+      readonlyDBReplica.replicaHost: db-replica
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: >-
+            \nDATABASES\['read_db'\] = \{\n(\s+'[A-Z_]+': [^\n]+,\n)+\s+'OPTIONS': \{\n\s+'prepare_threshold': None,\n\s+\},\n\}\nDATABASE_ROUTERS = \[
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: "'HOST': \"db-replica\","
+
+  - it: follows externalDB.disableServerSideCursors like the default connection
+    set:
+      readonlyDBReplica.enabled: true
+      externalDB.disableServerSideCursors: "true"
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: "'HOST': \"waldur-postgres-repl\",\n[^}]+'DISABLE_SERVER_SIDE_CURSORS': True,"

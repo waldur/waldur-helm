@@ -11,7 +11,9 @@ spec:
   {{- else }}
   progressDeadlineSeconds: 2400
   {{- end }}
-  replicas: {{ .Values.replicaCount.api | int }}
+  {{- with include "waldur.deploymentReplicas" (dict "root" . "name" "waldur-mastermind-api" "count" .Values.replicaCount.api "hpa" .Values.hpa.api.enabled) }}
+  {{ . }}
+  {{- end }}
   selector:
     matchLabels:
       app: waldur-mastermind-api

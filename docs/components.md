@@ -435,6 +435,7 @@ Caveats:
 
 - `waldur.initdbEnabled: false` fails to render when Matrix chat is enabled with `matrixChat.setup.enabled`.
 - An HPA does not scale a deployment up from 0, so it stays inactive while its deployment is at 0.
+  The chart still renders `replicas: 0` with the HPA enabled; any other count is left to the HPA (see [HPA](hpa.md)).
 - The CronJobs keep running and have no switch:
   - The cleanup CronJob's deletes fail against the replica. Its Job still reports Complete, so the errors appear only in the pod log.
   - With `SAML2` in `waldur.authMethods`, the hourly metadata sync fails whenever the fetched metadata differs from what the replica holds.

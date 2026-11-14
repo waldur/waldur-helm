@@ -39,10 +39,11 @@ waldur-helm/
 - **Deployments**: `deployment-api.yaml`, `deployment-worker.yaml`, `deployment-beat.yaml`, `deployment-homeport.yaml`, `deployment-metrics-exporter.yaml`, `deployment-uvk-everypay.yaml`, `deployment-waldur-db-restore.yaml`.
 - **Cronjobs**: `cronjob-waldur-cleanup.yaml`, `cronjob-waldur-db-backup.yaml` + `-rotation`, `cronjob-waldur-saml2-metadata-sync.yaml`.
 - **Configmaps** (`config-*.yaml`): every server-side config file is rendered into a configmap and mounted into the pod. Adding a new config file means adding both the configmap template and the volume mount in the relevant deployment.
-- **Init jobs**: `job-init-whitelabeling.yaml` runs once per release; must be deleted before `helm upgrade` (see README "Waldur Helm chart release upgrading"). The same applies to `load-features-job` when present.
+- **Init jobs**: `job-init-whitelabeling.yaml` is a `post-install,post-upgrade` hook with `before-hook-creation` delete policy, so Helm replaces it on every upgrade; nothing has to be deleted by hand first. `helm uninstall` leaves hook Jobs behind, which is why CI's cleanup deletes it explicitly.
 - **Ingresses**: separate ingresses per surface (`ingress-api.yaml`, `ingress-api-admin.yaml`, `ingress-homeport.yaml`, `ingress-rmq-ws.yaml`, `ingress-uvk-everypay.yaml`). Cert-manager `letsencrypt-issuer.yaml` and `certificate-*.yaml` for TLS.
 - **Network policies** are opt-in; gate by values when adding new ones.
-- **HPAs**: `hpa-api.yaml`, `hpa-worker.yaml` — only rendered when corresponding `*Hpa.enabled` is true.
+- **HPAs**: `hpa-api.yaml`, `hpa-worker.yaml` — only rendered when `hpa.api.enabled` / `hpa.celery.enabled` is true.
+- **Kubernetes floor**: `kubeVersion: ">=1.23.0-0"` in `Chart.yaml` (autoscaling/v2, Job TTL, dual-stack Services). Do not add `.Capabilities.KubeVersion` fallbacks for older APIs; raise the floor instead.
 - **Traefik middlewares** (`traefik-middleware-*.yaml`): rendered only when the cluster uses Traefik as its ingress controller.
 
 ## Local development workflow
@@ -103,7 +104,6 @@ CI cluster credentials are in `K8S_CONFIG_WALDUR_HELM_TEST` (GitLab CI variable)
 
 - **Configmap + volume mount**: new server-side config files require (a) `config-*.yaml` template, (b) volume + volumeMount in every relevant deployment, (c) corresponding entry in `values.yaml`.
 - **Subchart upgrades**: bump the version in `Chart.yaml` only after testing locally, then run `helm dep update waldur/` and inspect `Chart.lock`. The CloudPirates charts release very frequently and pin images by digest, so a chart bump is also an image bump.
-- **`init-whitelabeling-job` and `load-features-job`** must be deleted before `helm upgrade` (the README spells this out). Anyone scripting upgrades around this chart should bake this in.
 - **`externalDB` wins**: when `externalDB.enabled` is true the bundled `postgresql` subchart is ignored by the helpers, so do not enable both and expect the subchart to be used.
 - **`docs/` content is synced** into the `waldur-docs` repo via `external-sources.yml` there. Edit here; don't edit the synced copy in waldur-docs.
 - **Test values matter**: `waldur/test/values.yaml` is what CI installs. New required values must land there too or the install job fails.

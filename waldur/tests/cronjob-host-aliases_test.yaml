@@ -1,0 +1,31 @@
+suite: host aliases on CronJobs
+templates:
+  - templates/cronjob-waldur-cleanup.yaml
+  - templates/cronjob-waldur-db-backup.yaml
+  - templates/cronjob-waldur-db-backup-rotation.yaml
+  - templates/cronjob-waldur-saml2-metadata-sync.yaml
+
+tests:
+  - it: sets no host aliases when none are configured
+    set:
+      postgresBackup.enabled: true
+      waldur.authMethods: [LOCAL_SIGNIN, SAML2]
+    asserts:
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.hostAliases
+
+  # The jobs reach the same hosts as the Deployments: the database, the S3
+  # endpoint and the SAML2 federation metadata URLs.
+  - it: gives every CronJob pod the configured host aliases
+    set:
+      postgresBackup.enabled: true
+      waldur.authMethods: [LOCAL_SIGNIN, SAML2]
+      hostAliases:
+        - ip: 10.0.0.5
+          hostnames: [s3.internal.example.com, db.internal.example.com]
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.hostAliases
+          value:
+            - ip: 10.0.0.5
+              hostnames: [s3.internal.example.com, db.internal.example.com]

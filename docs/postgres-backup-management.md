@@ -21,6 +21,50 @@ Backup configuration values (`postgresBackup` prefix):
   ([opennode/postgres-minio](https://hub.docker.com/r/opennode/postgres-minio)
   by default)
 
+## Backup storage
+
+Backups go to an S3-compatible bucket (`backupStorage` prefix). The jobs use the
+`mc` client, so MinIO, AWS S3, Ceph RGW and similar endpoints all work:
+
+- `endpoint` - S3 endpoint URL, e.g. `http://minio.default.svc.cluster.local:9000`
+
+- `bucketName` - bucket the backups are written to (under `backups/postgres/`)
+
+- `existingSecret.name` - name of a Secret in the release namespace holding the
+  S3 credentials. When set, the backup, rotation and restore pods read the
+  credentials from it with `secretKeyRef`, and `accessKey`/`secretKey` are ignored
+
+- `existingSecret.accessKeyKey` - key of the access key in that Secret
+  (default `AWS_ACCESS_KEY_ID`)
+
+- `existingSecret.secretKeyKey` - key of the secret key in that Secret
+  (default `AWS_SECRET_ACCESS_KEY`)
+
+- `accessKey`, `secretKey` - plain credentials, used only when
+  `existingSecret.name` is empty. They end up as plain environment values in
+  the CronJob and Deployment specs, readable by anyone who can read those
+  objects, so prefer `existingSecret` in production
+
+The default key names match the Secret that a Rook or NooBaa ObjectBucketClaim
+generates, so such a Secret can be referenced directly. Otherwise create one:
+
+```bash
+kubectl create secret generic waldur-backup-s3 \
+  --from-literal=AWS_ACCESS_KEY_ID='<access key>' \
+  --from-literal=AWS_SECRET_ACCESS_KEY='<secret key>'
+```
+
+```yaml
+postgresBackup:
+  enabled: true
+
+backupStorage:
+  endpoint: "https://s3.example.com"
+  bucketName: "waldur-backups"
+  existingSecret:
+    name: waldur-backup-s3
+```
+
 ## Backups restoration
 
 To restore backups you need to connect to the restoration pod. The major prerequisite for this is stopping the

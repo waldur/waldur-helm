@@ -2,6 +2,10 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# With hpa.api.enabled / hpa.celery.enabled, the api / worker count is left
+# to the HPA: the chart renders the running Deployment's count (or nothing
+# where it cannot look it up), except 0, which keeps that component down.
+# See docs/hpa.md.
 replicaCount:
   homeport: 1
   api: 1
@@ -88,15 +92,23 @@ waldurCleanupCronjob:
   activeDeadlineSeconds: 1800 # Marked as failed after 30 minutes
   ttlSecondsAfterFinished: 86400 # Deleted after 24 hours
 
+# CPU-based HorizontalPodAutoscalers (autoscaling/v2) for the API and the
+# Celery worker. minReplicas/maxReplicas bound the replica count the HPA may
+# choose; minReplicas must be at least 1 and no greater than maxReplicas.
+# See docs/hpa.md.
 hpa:
   api:
     enabled: false
+    minReplicas: 1
+    maxReplicas: 10
     resources:
       requests:
         cpu: 500m
     cpuUtilizationBorder: 70
   celery:
     enabled: false
+    minReplicas: 1
+    maxReplicas: 10
     workerResources:
       requests:
         cpu: 2000m
@@ -124,6 +136,10 @@ ingress:
   proxyBufferSize: "8k" # Nginx proxy buffer size for upstream response headers. Increase if you get 502 errors due to long pagination Link headers.
   whitelistSourceRange: "" # E.g. '192.168.22.0/24'
   whitelistSourceRangeAdmin: ""
+  # These match the address the ingress controller sees. Behind a load
+  # balancer, see docs/ip-whitelisting.md before making the controller trust
+  # X-Forwarded-For: trusted from any address (ingress-nginx's default
+  # proxy-real-ip-cidr), the header lets any client get past these ranges.
   # Extra annotations merged onto every rendered Ingress object (api, api-admin,
   # homeport, rmq-ws, uvk-everypay). Useful for cross-cutting concerns that the
   # chart does not template natively — for example, controlling DNS TTL via
@@ -243,7 +259,7 @@ proxy:
   httpProxy: ""
   noProxy: ""
 
-# overrides hostAliases in the Waldur deployment's pods
+# overrides hostAliases in the pods of the Waldur Deployments and CronJobs
 hostAliases: []
   # - ip: "1.2.3.4"
   #   hostnames:
@@ -447,6 +463,18 @@ waldur:
   # Empty leaves the currency to administrators (Waldur's default is EUR).
   currencyName: ""
   mastermindUrl: ""
+  # Mastermind's WALDUR_CORE["TRUSTED_PROXY_COUNT"]: the limit on failed
+  # passwords per address counts the X-Forwarded-For entry this many places
+  # from the right. Empty leaves mastermind's default (1), which is right when
+  # the ingress hands on a single address, including behind a load balancer
+  # with the controller resolving the address (docs/ip-whitelisting.md).
+  # 2 only if the ingress keeps the balancer's header and appends to it: then
+  # access subnets, token network restrictions, resource network rules and
+  # the event log, which read the first entry, see whatever the client wrote,
+  # and the ingress must be reachable only through the balancer. 0 ignores
+  # the header. Never set it higher than the number of proxies that add an
+  # entry.
+  trustedProxyCount: ""
   site:
     # Empty leaves the site name to administrators (Waldur's default is
     # "Waldur").
@@ -841,6 +869,10 @@ readonlyDB:
     name: ""
     key: "READONLY_DB_PASSWORD"
 
+# Sends every read Waldur makes to replicaHost, as the main database user.
+# That includes reads inside a transaction that has just written, which do
+# not see its uncommitted rows, and reads that replication lag has not
+# caught up with yet. Test the workload before enabling it.
 readonlyDBReplica:
   enabled: false
   replicaHost: "waldur-postgres-repl"
@@ -906,8 +938,18 @@ postgresBackup:
 # Ceph RGW and friends are all fine. Only consulted when
 # postgresBackup.enabled is true.
 backupStorage:
+  # Plain credentials, rendered into the pod specs as env values. Prefer
+  # existingSecret below in production.
   accessKey: ""
   secretKey: ""
+  # A Secret in the release namespace holding the S3 access key and secret
+  # key. When name is set, the backup, rotation and restore pods read both
+  # credentials from it and accessKey/secretKey above are ignored. The default
+  # key names match the Secrets that Rook/NooBaa ObjectBucketClaims generate.
+  existingSecret:
+    name: ""
+    accessKeyKey: "AWS_ACCESS_KEY_ID"
+    secretKeyKey: "AWS_SECRET_ACCESS_KEY"
   bucketName: data
   ## min.io service endpoint used for communication inside a cluster
   endpoint: "http://minio.default.svc.cluster.local:9000" ## See docs/service-endpoint.md for details.

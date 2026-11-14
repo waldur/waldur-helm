@@ -1,0 +1,49 @@
+suite: trusted proxy count
+templates:
+  - templates/config-override.yaml
+
+tests:
+  - it: leaves mastermind's default alone when unset
+    asserts:
+      - notMatchRegex:
+          path: data["override.conf.py"]
+          pattern: TRUSTED_PROXY_COUNT
+
+  - it: sets the count for a load balancer in front of the ingress
+    set:
+      waldur.trustedProxyCount: 2
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: 'WALDUR_CORE\["TRUSTED_PROXY_COUNT"\] = 2\n'
+
+  # 0 is meaningful (ignore X-Forwarded-For), so it must not read as unset.
+  - it: renders an explicit 0
+    set:
+      waldur.trustedProxyCount: 0
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: 'WALDUR_CORE\["TRUSTED_PROXY_COUNT"\] = 0\n'
+
+  - it: accepts a quoted number
+    set:
+      waldur.trustedProxyCount: "1"
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: 'WALDUR_CORE\["TRUSTED_PROXY_COUNT"\] = 1\n'
+
+  - it: rejects a negative count
+    set:
+      waldur.trustedProxyCount: -1
+    asserts:
+      - failedTemplate:
+          errorPattern: waldur.trustedProxyCount must be a non-negative integer
+
+  - it: rejects a value that is not a number
+    set:
+      waldur.trustedProxyCount: two
+    asserts:
+      - failedTemplate:
+          errorPattern: waldur.trustedProxyCount must be a non-negative integer

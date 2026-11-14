@@ -36,10 +36,7 @@ spec:
             {{- include "waldur.env.initdb" . | nindent 12 }}
             - name: MINIO_SERVER
               value: {{ .Values.backupStorage.endpoint | quote }}
-            - name: MINIO_ACCESS_KEY
-              value: {{ .Values.backupStorage.accessKey | quote }}
-            - name: MINIO_SECRET_KEY
-              value: {{ .Values.backupStorage.secretKey | quote }}
+            {{- include "waldur.backupStorage.credentials" . | nindent 12 }}
             - name: MINIO_BUCKET
               value: {{ .Values.backupStorage.bucketName | quote }}
             - name: MINIO_API_VERSION

@@ -30,6 +30,8 @@ Outline:
 
 - [Gateway API](gateway-api.md)
 
+- [Remote MCP server](mcp.md)
+
 - [Outgoing email](mail.md)
 
 - [White-labeling](whitelabeling.md)

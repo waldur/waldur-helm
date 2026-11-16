@@ -16,6 +16,18 @@ tests:
       - matchRegex:
           path: data["override.conf.py"]
           pattern: 'WALDUR_CORE\["TRUSTED_PROXY_COUNT"\] = 2\n'
+      - notMatchRegex:
+          path: data["override.conf.py"]
+          pattern: MCP_OAUTH_TRUSTED_PROXY_COUNT
+
+  - it: gives the MCP OAuth throttle the same count when MCP is on
+    set:
+      waldur.trustedProxyCount: 2
+      waldur.mcp.enabled: true
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: '\nMCP_OAUTH_TRUSTED_PROXY_COUNT = 2\n'
 
   # 0 is meaningful (ignore X-Forwarded-For), so it must not read as unset.
   - it: renders an explicit 0

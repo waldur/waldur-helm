@@ -1,0 +1,43 @@
+{{- if and .Values.gatewayAPI.enabled .Values.waldur.mcp.enabled }}
+{{- include "waldur.gatewayAPI.assertAvailable" . }}
+{{/*
+  Two routes, like the two MCP Ingresses, so that gatewayAPI.extraPolicies can
+  target them apart: Waldur answers the OAuth endpoints with its own public
+  CORS, which a credentialed CORS policy on mcp-oauth-httproute would replace.
+  The paths are in waldur.mcp.paths.
+*/}}
+{{- $paths := include "waldur.mcp.paths" . | fromJson }}
+{{- $mcp := dict "name" "mcp-httproute" "service" "waldur-mastermind-mcp" "paths" $paths.mcp }}
+{{- $oauth := dict "name" "mcp-oauth-httproute" "service" "waldur-mastermind-api" "paths" $paths.oauth }}
+{{- range $route := list $mcp $oauth }}
+{{- with $ }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ $route.name }}
+  {{- if .Values.gatewayAPI.annotations }}
+  annotations:
+    {{- include "waldur.gatewayAPI.annotations" . | nindent 4 }}
+  {{- end }}
+spec:
+  parentRefs:
+    {{- include "waldur.gatewayAPI.parentRefs" . | nindent 4 }}
+  hostnames:
+    - {{ .Values.localApiHostname | default .Values.apiHostname | quote }}
+    {{- range .Values.apiExtraHosts }}
+    - {{ . | quote }}
+    {{- end }}
+  rules:
+    - matches:
+        {{- range $route.paths }}
+        - path:
+            type: PathPrefix
+            value: {{ . }}
+        {{- end }}
+      backendRefs:
+        - name: {{ $route.service }}
+          port: 80
+{{- end }}
+{{- end }}
+{{- end }}

@@ -335,6 +335,20 @@ waldur:
     # <apiScheme>://<apiHostname>/webshell/, where the chart routes it.
     url: ""
     resources: {}
+  # Remote MCP server: AI agent clients connect to /mcp on the API host and
+  # act as the signed-in user. The chart runs `waldur mcp_server`, routes /mcp
+  # and the OAuth endpoints, and seeds MCP_RESOURCE_URLS (docs/mcp.md).
+  # Administrators still turn on the MCP_ENABLED setting; until then /mcp and
+  # the OAuth endpoints answer 404.
+  mcp:
+    enabled: false
+    # The server is stateless, so replicas need no session affinity.
+    replicas: 1
+    # Threads that run database calls, each holding one Postgres connection.
+    # replicas × dbThreads counts against Postgres max_connections, on top of
+    # the API and Celery pods.
+    dbThreads: 4
+    resources: {}
   # Demo presets in the portal: staff preview and load ready-made demo data.
   # Loading a preset DELETES every organization, project, offering, user and
   # token, so enable this on demo deployments only.
@@ -465,7 +479,9 @@ waldur:
   mastermindUrl: ""
   # Mastermind's WALDUR_CORE["TRUSTED_PROXY_COUNT"]: the limit on failed
   # passwords per address counts the X-Forwarded-For entry this many places
-  # from the right. Empty leaves mastermind's default (1), which is right when
+  # from the right. With waldur.mcp on, it also sets
+  # MCP_OAUTH_TRUSTED_PROXY_COUNT, which the throttle on new OAuth clients of
+  # the MCP server counts the same way. Empty leaves mastermind's default (1), which is right when
   # the ingress hands on a single address, including behind a load balancer
   # with the controller resolving the address (docs/ip-whitelisting.md).
   # 2 only if the ingress keeps the balancer's header and appends to it: then

@@ -36,6 +36,10 @@ spec:
       - baggage
       - X-Impersonated-User-Uuid
       - X-Reauthentication-Grant
+      {{- if .Values.waldur.mcp.enabled }}
+      # Sent by browser-based MCP clients, on /mcp and the OAuth endpoints.
+      - MCP-Protocol-Version
+      {{- end }}
     accessControlExposeHeaders:
       - Link
       - X-Result-Count

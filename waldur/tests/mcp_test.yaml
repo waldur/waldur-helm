@@ -1,0 +1,650 @@
+suite: remote MCP server
+templates:
+  - templates/deployment-mcp.yaml
+  - templates/service-mcp.yaml
+  - templates/ingress-mcp.yaml
+  - templates/httproute-mcp.yaml
+  - templates/networkpolicy-mcp.yaml
+  - templates/config-marketplace.yaml
+  - templates/traefik-middleware-api.yaml
+
+capabilities:
+  apiVersions:
+    - gateway.networking.k8s.io/v1/HTTPRoute
+
+tests:
+  - it: renders nothing by default
+    templates:
+      - templates/deployment-mcp.yaml
+      - templates/service-mcp.yaml
+      - templates/ingress-mcp.yaml
+      - templates/httproute-mcp.yaml
+      - templates/networkpolicy-mcp.yaml
+    set:
+      ingress.enabled: true
+      gatewayAPI.enabled: true
+      gatewayAPI.createGateway: true
+      networkPolicy.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: seeds no resource URL by default
+    template: templates/config-marketplace.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["marketplace.yaml"]
+          pattern: MCP_RESOURCE_URLS
+
+  # An empty host binds IPv4 and IPv6; 0.0.0.0 is IPv4-only and "::" is
+  # IPv6-only under asyncio.
+  - it: runs waldur mcp_server on all interfaces with the database threads
+    template: templates/deployment-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+      waldur.mcp.replicas: 3
+      waldur.mcp.dbThreads: 6
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 3
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value: ["waldur", "mcp_server", "--host", "", "--port", "8091", "--db-threads", "6"]
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet.path
+          value: /health
+
+  - it: mounts only the settings and a scratch /tmp
+    template: templates/deployment-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts
+          value:
+            - name: api-override
+              mountPath: /etc/waldur/override.conf.py
+              subPath: override.conf.py
+            - name: tmp
+              mountPath: /tmp
+
+  # The pod faces the internet: only the credentials the server reads.
+  - it: leaves out the credentials the server does not use
+    template: templates/deployment-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+      waldur.fieldEncryptionKey: "a2V5"
+      waldur.mail.username: mailer
+      waldur.mail.password: mail-secret
+      waldur.ldap.passwordExistingSecret.name: ldap
+      waldur.pid_datacite.password: datacite-secret
+      waldur.sentryDSN: "https://public@sentry.example.com/1"
+      proxy.httpsProxy: "http://proxy.example.org:3128"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: GLOBAL_SECRET_KEY
+          any: true
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FIELD_ENCRYPTION_KEY
+          any: true
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: POSTGRESQL_PASSWORD
+          any: true
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: RABBITMQ_PASSWORD
+          any: true
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SENTRY_DSN
+            value: "https://public@sentry.example.com/1"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: https_proxy
+            value: "http://proxy.example.org:3128"
+      - notMatchRegex:
+          path: spec.template.spec.containers[0].env[*].name
+          pattern: ^(EMAIL_|AUTH_LDAP_|DATACITE_)
+      # The init container runs in the same pod, so it gets the same list.
+      - equal:
+          path: spec.template.spec.initContainers[0].env
+          value:
+            - name: GLOBAL_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: waldur-secret
+                  key: GLOBAL_SECRET_KEY
+            - name: FIELD_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: waldur-secret
+                  key: FIELD_ENCRYPTION_KEY
+            - name: POSTGRESQL_HOST
+              value: postgresql-waldur
+            - name: POSTGRESQL_PORT
+              value: "5432"
+            - name: POSTGRESQL_USER
+              value: waldur
+            - name: POSTGRESQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-waldur
+                  key: password
+            - name: POSTGRESQL_NAME
+              value: waldur
+            - name: RABBITMQ_HOSTNAME
+              value: rmq-rabbitmq
+            - name: RABBITMQ_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: waldur-secret
+                  key: RABBITMQ_USER
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: waldur-secret
+                  key: RABBITMQ_PASSWORD
+            - name: SENTRY_DSN
+              value: "https://public@sentry.example.com/1"
+            - name: SENTRY_ENVIRONMENT
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: https_proxy
+              value: "http://proxy.example.org:3128"
+
+  # Apart from the test above: the chart fails to render with both this and
+  # the LDAP secret set, on master as well.
+  - it: leaves out the eduTEAMS credentials
+    template: templates/deployment-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+      waldur.remoteEduteams.existingSecret.name: eduteams
+    asserts:
+      - notMatchRegex:
+          path: spec.template.spec.containers[0].env[*].name
+          pattern: ^REMOTE_EDUTEAMS_
+      - notMatchRegex:
+          path: spec.template.spec.initContainers[0].env[*].name
+          pattern: ^REMOTE_EDUTEAMS_
+
+  - it: runs without a service account token, privileges or a writable root
+    template: templates/deployment-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.automountServiceAccountToken
+          value: false
+      - equal:
+          path: spec.template.spec.securityContext.seccompProfile.type
+          value: RuntimeDefault
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+      - equal:
+          path: spec.template.spec.initContainers[0].securityContext
+          value:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+
+  - it: waits for migrations before serving
+    template: templates/deployment-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: wait-for-migrations
+
+  # The default 600s would mark a rollout failed while the init container
+  # still waits for a long migration.
+  - it: keeps the progress deadline past the migration wait
+    template: templates/deployment-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+      waldur.initdbWaitTimeout: 3600
+    asserts:
+      - equal:
+          path: spec.progressDeadlineSeconds
+          value: 4200
+
+  - it: rejects a database thread count below 1
+    template: templates/deployment-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+      waldur.mcp.dbThreads: 0
+    asserts:
+      - failedTemplate:
+          errorPattern: waldur.mcp.dbThreads must be a positive integer
+
+  - it: targets the server port from the service
+    template: templates/service-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+    asserts:
+      - equal:
+          path: spec.ports[0].targetPort
+          value: 8091
+      - equal:
+          path: spec.selector.app
+          value: waldur-mastermind-mcp
+
+  - it: admits traffic to the server port
+    template: templates/networkpolicy-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+      networkPolicy.enabled: true
+    asserts:
+      - equal:
+          path: spec.ingress[0].ports[0].port
+          value: 8091
+
+  - it: seeds the public URL of /mcp
+    template: templates/config-marketplace.yaml
+    set:
+      waldur.mcp.enabled: true
+      apiScheme: https
+      apiHostname: api.example.org
+    asserts:
+      - matchRegex:
+          path: data["marketplace.yaml"]
+          pattern: 'MCP_RESOURCE_URLS: "https://api.example.org/mcp"'
+
+  # Clients reject metadata naming another host than the one they used.
+  - it: lists /mcp on every extra API host after the main one
+    template: templates/config-marketplace.yaml
+    set:
+      waldur.mcp.enabled: true
+      apiScheme: https
+      apiHostname: api.example.org
+      apiExtraHosts: ["api.example.net", "api.example.com"]
+      localApiHostname: waldur-api.internal
+    asserts:
+      - matchRegex:
+          path: data["marketplace.yaml"]
+          pattern: 'MCP_RESOURCE_URLS: "https://api.example.org/mcp https://api.example.net/mcp https://api.example.com/mcp"'
+
+  - it: leaves the resource URL to settingsOverrides when set there
+    template: templates/config-marketplace.yaml
+    set:
+      waldur.mcp.enabled: true
+      waldur.settingsOverrides:
+        MCP_RESOURCE_URLS: "https://api.example.org/mcp https://api.example.net/mcp"
+    asserts:
+      - matchRegex:
+          path: data["marketplace.yaml"]
+          pattern: 'MCP_RESOURCE_URLS:\n\s+https://api.example.org/mcp https://api.example.net/mcp'
+      - notMatchRegex:
+          path: data["marketplace.yaml"]
+          pattern: 'MCP_RESOURCE_URLS: "'
+
+  - it: routes /mcp and its metadata to the server, the OAuth endpoints to the API
+    template: templates/ingress-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+      ingress.enabled: true
+      ingress.className: nginx
+      apiHostname: api.example.org
+      apiExtraHosts: ["api.example.net"]
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: spec.rules[0].host
+          value: api.example.org
+      - equal:
+          path: spec.rules[1].host
+          value: api.example.net
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /mcp
+        documentIndex: 0
+      - equal:
+          path: spec.rules[0].http.paths[1].path
+          value: /.well-known/oauth-protected-resource
+        documentIndex: 0
+      - lengthEqual:
+          path: spec.rules[0].http.paths
+          count: 2
+        documentIndex: 0
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: waldur-mastermind-mcp
+        documentIndex: 0
+      - equal:
+          path: spec.rules[0].http.paths[0].path
+          value: /.well-known/oauth-authorization-server
+        documentIndex: 1
+      - equal:
+          path: spec.rules[0].http.paths[1].path
+          value: /oauth/authorize
+        documentIndex: 1
+      - equal:
+          path: spec.rules[0].http.paths[2].path
+          value: /oauth/token
+        documentIndex: 1
+      - equal:
+          path: spec.rules[0].http.paths[3].path
+          value: /oauth/revoke_token
+        documentIndex: 1
+      - equal:
+          path: spec.rules[0].http.paths[4].path
+          value: /oauth/register
+        documentIndex: 1
+      - lengthEqual:
+          path: spec.rules[0].http.paths
+          count: 5
+        documentIndex: 1
+      - equal:
+          path: spec.rules[0].http.paths[0].backend.service.name
+          value: waldur-mastermind-api
+        documentIndex: 1
+
+  # ingress-nginx 1.12+ rejects the whole Ingress when a Prefix path contains
+  # a dot (strict-validate-path-type).
+  - it: uses no Prefix path with a dot in it
+    template: templates/ingress-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+      ingress.enabled: true
+      ingress.className: nginx
+    asserts:
+      - equal:
+          path: spec.rules[0].http.paths[0].pathType
+          value: Prefix
+        documentIndex: 0
+      - equal:
+          path: spec.rules[0].http.paths[1].pathType
+          value: ImplementationSpecific
+        documentIndex: 0
+      - equal:
+          path: spec.rules[0].http.paths[0].pathType
+          value: ImplementationSpecific
+        documentIndex: 1
+      - equal:
+          path: spec.rules[0].http.paths[1].pathType
+          value: Prefix
+        documentIndex: 1
+
+  # ingress-nginx's CORS answers preflights itself with the caller's origin
+  # plus Allow-Credentials; Waldur answers the OAuth endpoints with * and no
+  # credentials, which must reach the browser.
+  - it: leaves CORS on the OAuth endpoints to Waldur on nginx
+    template: templates/ingress-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+      ingress.enabled: true
+      ingress.className: nginx
+    documentSelector:
+      path: metadata.name
+      value: mcp-oauth-ingress
+    asserts:
+      - notExists:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/enable-cors"]
+
+  # Until waldur/waldur-mastermind#1215, the server sends no CORS headers.
+  - it: keeps the API's CORS on /mcp on nginx, with the MCP header
+    template: templates/ingress-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+      ingress.enabled: true
+      ingress.className: nginx
+    documentSelector:
+      path: metadata.name
+      value: mcp-ingress
+    asserts:
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/enable-cors"]
+          value: "true"
+      - matchRegex:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/cors-allow-headers"]
+          pattern: ",Authorization,.*,MCP-Protocol-Version$"
+
+  - it: uses the API's proxy buffer size on nginx
+    template: templates/ingress-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+      ingress.enabled: true
+      ingress.className: nginx
+      ingress.proxyBufferSize: 16k
+    asserts:
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/proxy-buffer-size"]
+          value: 16k
+
+  - it: allows the MCP header on HAProxy
+    template: templates/ingress-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+      ingress.enabled: true
+      ingress.className: haproxy
+    asserts:
+      - equal:
+          path: metadata.annotations["haproxy.org/cors-enable"]
+          value: "true"
+      - matchRegex:
+          path: metadata.annotations["haproxy.org/cors-allow-headers"]
+          pattern: ",MCP-Protocol-Version$"
+
+  # Without these, /mcp and the open client registration would skip the API
+  # ingress's protections. No documentIndex, so both Ingresses are checked.
+  - it: keeps the API's allow-list, HTTPS redirect and error-page policy on nginx
+    template: templates/ingress-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+      ingress.enabled: true
+      ingress.className: nginx
+      ingress.whitelistSourceRange: 10.0.0.0/8
+      ingress.tls.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/whitelist-source-range"]
+          value: 10.0.0.0/8
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/force-ssl-redirect"]
+          value: "true"
+      - equal:
+          path: metadata.annotations["nginx.ingress.kubernetes.io/configuration-snippet"]
+          value: |
+            more_set_headers -s "403 413 429 431 502 503 504" "Content-Security-Policy: default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'";
+
+  - it: keeps the API's allow-list, HTTPS redirect and error-page policy on HAProxy
+    template: templates/ingress-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+      ingress.enabled: true
+      ingress.className: haproxy
+      ingress.whitelistSourceRange: 10.0.0.0/8
+      ingress.tls.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: metadata.annotations["haproxy.org/allow-list"]
+          value: 10.0.0.0/8
+      - equal:
+          path: metadata.annotations["haproxy.org/ssl-redirect"]
+          value: "true"
+      - equal:
+          path: metadata.annotations["haproxy.org/backend-config-snippet"]
+          value: |
+            http-after-response set-header Content-Security-Policy "default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'" if { status 400 403 413 429 431 502 503 504 } !{ res.hdr(content-security-policy) -m found }
+
+  - it: serves both routes with the API certificate on every API host
+    template: templates/ingress-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+      ingress.enabled: true
+      ingress.className: nginx
+      ingress.tls.enabled: true
+      apiHostname: api.example.org
+      apiExtraHosts: ["api.example.net"]
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: spec.tls
+          value:
+            - hosts:
+                - api.example.org
+                - api.example.net
+              secretName: api-certificate
+
+  - it: uses a custom API certificate secret
+    template: templates/ingress-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+      ingress.enabled: true
+      ingress.tls.enabled: true
+      ingress.tls.customMastermindSecretName: api-tls
+    asserts:
+      - equal:
+          path: spec.tls[0].secretName
+          value: api-tls
+
+  - it: leaves TLS to the OpenShift route with cluster certificates
+    template: templates/ingress-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+      ingress.enabled: true
+      ingress.className: openshift-default
+      ingress.tls.enabled: true
+      ingress.tls.source: cluster
+    asserts:
+      - hasDocuments:
+          count: 2
+      - notExists:
+          path: spec.tls
+      - equal:
+          path: metadata.annotations["route.openshift.io/termination"]
+          value: edge
+
+  - it: sends both routes through the API middleware chain on Traefik
+    template: templates/ingress-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+      ingress.enabled: true
+      ingress.className: traefik
+    release:
+      namespace: waldur
+    asserts:
+      - equal:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          value: waldur-api-chain@kubernetescrd
+
+  - it: leaves the Traefik API CORS alone while MCP is off
+    template: templates/traefik-middleware-api.yaml
+    set:
+      ingress.enabled: true
+      ingress.className: traefik
+    documentSelector:
+      path: metadata.name
+      value: api-cors
+    asserts:
+      - notContains:
+          path: spec.headers.accessControlAllowHeaders
+          content: MCP-Protocol-Version
+
+  - it: allows the MCP header in the Traefik API CORS
+    template: templates/traefik-middleware-api.yaml
+    set:
+      waldur.mcp.enabled: true
+      ingress.enabled: true
+      ingress.className: traefik
+    documentSelector:
+      path: metadata.name
+      value: api-cors
+    asserts:
+      - contains:
+          path: spec.headers.accessControlAllowHeaders
+          content: MCP-Protocol-Version
+      - equal:
+          path: spec.headers.accessControlAllowOriginList
+          value: ["*"]
+      - notExists:
+          path: spec.headers.accessControlAllowCredentials
+
+  - it: serves the internal API hostname when localApiHostname is set
+    template: templates/ingress-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+      ingress.enabled: true
+      apiHostname: api.example.org
+      localApiHostname: waldur-api.internal
+    asserts:
+      - equal:
+          path: spec.rules[0].host
+          value: waldur-api.internal
+
+  - it: renders two HTTPRoutes on the API hosts
+    template: templates/httproute-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+      gatewayAPI.enabled: true
+      gatewayAPI.createGateway: true
+      apiHostname: api.example.org
+    asserts:
+      - hasDocuments:
+          count: 2
+      - equal:
+          path: spec.hostnames
+          value: [api.example.org]
+      - equal:
+          path: metadata.name
+          value: mcp-httproute
+        documentIndex: 0
+      - equal:
+          path: spec.rules[0].backendRefs[0].name
+          value: waldur-mastermind-mcp
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: mcp-oauth-httproute
+        documentIndex: 1
+      - equal:
+          path: spec.rules[0].matches[0].path.value
+          value: /.well-known/oauth-authorization-server
+        documentIndex: 1
+      - equal:
+          path: spec.rules[0].matches[1].path.value
+          value: /oauth/authorize
+        documentIndex: 1
+      - equal:
+          path: spec.rules[0].matches[2].path.value
+          value: /oauth/token
+        documentIndex: 1
+      - equal:
+          path: spec.rules[0].matches[3].path.value
+          value: /oauth/revoke_token
+        documentIndex: 1
+      - equal:
+          path: spec.rules[0].matches[4].path.value
+          value: /oauth/register
+        documentIndex: 1
+      - lengthEqual:
+          path: spec.rules[0].matches
+          count: 5
+        documentIndex: 1
+      - equal:
+          path: spec.rules[0].backendRefs[0].name
+          value: waldur-mastermind-api
+        documentIndex: 1

@@ -135,6 +135,14 @@ A secret can be created trough [CLI](https://kubernetes.io/docs/tasks/configure-
 
 Configuration documentation: [index](docs/index.md)
 
+## Remote MCP server
+
+`waldur.mcp.enabled` runs `waldur mcp_server` and routes `/mcp` and the OAuth
+endpoints on the API host; see [docs/mcp.md](docs/mcp.md). Each MCP pod holds
+up to `waldur.mcp.dbThreads` Postgres connections, so
+`waldur.mcp.replicas × waldur.mcp.dbThreads` counts against Postgres
+`max_connections`, on top of the API and Celery pods.
+
 ## Extension hooks
 
 Each application deployment (`api`, `worker`, `beat`, `homeport`) exposes

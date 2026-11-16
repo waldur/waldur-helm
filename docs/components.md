@@ -76,7 +76,7 @@ graph TB
 | `waldur-mastermind-worker` | Celery workers processing background tasks, provisioning, and long-running operations |
 | `waldur-mastermind-beat` | Celery scheduler managing periodic tasks, cleanup operations, and recurring jobs. When `waldur.initdbEnabled` is true, its init container runs database migrations (`initdb`) |
 
-When `waldur.initdbEnabled` is true, the API, worker, and web-shell Deployments start a `wait-for-migrations` init container before their main process. It polls `waldur migrate --check` and exits only after the beat pod has applied every migration in the new image. Until then the new pods are not Ready, so the Service keeps sending traffic to the previous API pods and new workers do not consume tasks. The wait is bounded by `waldur.initdbWaitTimeout` (default 45 minutes). After that check passes, the previous API pods still serve until the new ones are Ready, so a migration that drops or renames a column can still fail on those old pods. The cleanup and SAML metadata CronJobs are not gated. Set `waldur.initdbEnabled` to false only when migrations are applied out of band before the new pods start; the chart then does not wait.
+When `waldur.initdbEnabled` is true, the API, worker, web-shell, and MCP Deployments start a `wait-for-migrations` init container before their main process. It polls `waldur migrate --check` and exits only after the beat pod has applied every migration in the new image. Until then the new pods are not Ready, so the Service keeps sending traffic to the previous API pods and new workers do not consume tasks. The wait is bounded by `waldur.initdbWaitTimeout` (default 45 minutes). After that check passes, the previous API pods still serve until the new ones are Ready, so a migration that drops or renames a column can still fail on those old pods. The cleanup and SAML metadata CronJobs are not gated. Set `waldur.initdbEnabled` to false only when migrations are applied out of band before the new pods start; the chart then does not wait.
 
 ## Optional Components
 
@@ -125,6 +125,28 @@ When `waldur.initdbEnabled` is true, the API, worker, and web-shell Deployments 
   - Handles payment notifications
 
   - Email notifications for transactions
+
+### 7. Remote MCP Server
+
+**Deployment:** `waldur-mastermind-mcp`
+**Container:** `waldur mcp_server` from the mastermind image
+**Enabled by:** `waldur.mcp.enabled`
+
+- **Responsibilities:**
+
+  - Serves `/mcp` and its OAuth resource metadata on the API host, for AI
+    agent clients acting as the signed-in user
+
+- **Configuration:**
+
+  - Each pod holds up to `waldur.mcp.dbThreads` Postgres connections, so
+    `replicas × dbThreads` counts against `max_connections`
+
+  - Runs read-only, without a service account token. Its environment holds
+    only the database, broker, key, Sentry and proxy credentials; the shared
+    settings file can hold more ([Remote MCP server](mcp.md))
+
+  - Routes, CORS and the `MCP_ENABLED` setting: [Remote MCP server](mcp.md)
 
 ## Dependencies
 
@@ -286,6 +308,8 @@ sequenceDiagram
 - **waldur-metrics-exporter:** ClusterIP service on port 8080
 
 - **waldur-uvk-everypay:** ClusterIP service on port 8000
+
+- **waldur-mastermind-mcp:** ClusterIP service on port 80
 
 ### External Access
 

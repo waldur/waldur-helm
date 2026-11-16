@@ -1035,6 +1035,8 @@ boot and continues.
 Context is a dict:
   root:      chart root context (image, credentials, initdbWaitTimeout)
   resources: requests/limits for this pod's main container
+  env:       optional env list as YAML, instead of all of waldur.credentials
+  securityContext: optional container securityContext
 */}}
 {{- define "waldur.waitForMigrationsInitContainer" -}}
 - name: wait-for-migrations
@@ -1044,6 +1046,10 @@ Context is a dict:
   image: {{ .root.Values.global.imageRegistry }}/{{ .root.Values.waldur.imageName }}:{{ .root.Values.waldur.imageTag }}
   {{- end }}
   imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" .root.Values.waldur.imageTag "Values" .root.Values) }}
+  {{- with .securityContext }}
+  securityContext:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   command:
     - /bin/bash
     - -ec
@@ -1071,7 +1077,7 @@ Context is a dict:
       done
       echo "INFO: schema is up to date."
   env:
-    {{- include "waldur.credentials" .root | nindent 4 }}
+    {{- .env | default (include "waldur.credentials" .root) | nindent 4 }}
   volumeMounts:
     - name: api-override
       mountPath: /etc/waldur/override.conf.py
@@ -1157,4 +1163,34 @@ Takes the root context.
   configMap:
     name: {{ . | quote }}
 {{- end }}
+{{- end -}}
+
+{{/*
+The paths routed for the remote MCP server on the API hosts, shared by its
+Ingresses and HTTPRoutes: "mcp" goes to the MCP pods, "oauth" to the API.
+Only these /oauth paths: /oauth/consent is the portal's page, and the portal
+often shares the API's host.
+Usage: {{- $paths := include "waldur.mcp.paths" . | fromJson }}
+*/}}
+{{- define "waldur.mcp.paths" -}}
+{{- $mcp := list "/mcp" "/.well-known/oauth-protected-resource" -}}
+{{- $oauth := list "/.well-known/oauth-authorization-server" "/oauth/authorize" "/oauth/token" "/oauth/revoke_token" "/oauth/register" -}}
+{{- dict "mcp" $mcp "oauth" $oauth | toJson -}}
+{{- end -}}
+
+{{/*
+The part of waldur.credentials the MCP server reads: the database, the broker
+its events go through, the Django and field encryption keys, Sentry and the
+outbound proxy. Not the mail, LDAP, eduTEAMS or DataCite credentials the API
+and workers use. An allowlist, so credentials added to waldur.credentials
+later stay out of the MCP pod until they are added here.
+*/}}
+{{- define "waldur.mcp.credentials" -}}
+{{- $env := list -}}
+{{- range (include "waldur.credentials" . | fromYamlArray) -}}
+{{- if regexMatch "^(GLOBAL_SECRET_KEY|FIELD_ENCRYPTION_KEY(_FALLBACKS)?|POSTGRESQL_[A-Z_]+|RABBITMQ_[A-Z_]+|SENTRY_[A-Z_]+|WALDUR_TELEMETRY_ENABLED|https?_proxy|no_proxy)$" .name -}}
+{{- $env = append $env . -}}
+{{- end -}}
+{{- end -}}
+{{- toYaml $env -}}
 {{- end -}}

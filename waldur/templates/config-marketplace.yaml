@@ -37,6 +37,18 @@ data:
     {{- end }}
     {{ end }}
 
+    {{- if and .Values.waldur.mcp.enabled (not (hasKey .Values.waldur.settingsOverrides "MCP_RESOURCE_URLS")) }}
+    # The public URLs of /mcp, on every API host the chart routes it on:
+    # clients reject resource metadata that names another host than the one
+    # they used (RFC 9728). While this is empty, Waldur issues no OAuth token,
+    # so MCP clients could only use PATs.
+    {{- $mcpUrls := list }}
+    {{- range (prepend .Values.apiExtraHosts .Values.apiHostname) }}
+    {{- $mcpUrls = append $mcpUrls (printf "%s://%s/mcp" $.Values.apiScheme .) }}
+    {{- end }}
+    MCP_RESOURCE_URLS: {{ join " " $mcpUrls | quote }}
+    {{- end }}
+
     {{ if .Values.waldur.settingsOverrides }}
     # Arbitrary runtime setting overrides not covered by a dedicated value
     # above (see waldur.settingsOverrides in values.yaml).

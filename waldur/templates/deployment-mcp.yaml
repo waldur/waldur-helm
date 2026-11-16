@@ -1,0 +1,124 @@
+{{- if .Values.waldur.mcp.enabled }}
+{{- if lt (int .Values.waldur.mcp.dbThreads) 1 }}
+{{- fail (printf "waldur.mcp.dbThreads must be a positive integer, got %q" (toString .Values.waldur.mcp.dbThreads)) }}
+{{- end }}
+{{- $env := include "waldur.mcp.credentials" . }}
+{{- /*
+  For both containers. The image already runs as its waldur user. No
+  runAsNonRoot: the kubelet can't verify a user given by name, and OpenShift
+  assigns its own UID.
+*/}}
+{{- $securityContext := dict "allowPrivilegeEscalation" false "readOnlyRootFilesystem" true "capabilities" (dict "drop" (list "ALL")) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: waldur-mastermind-mcp
+  labels:
+{{ include "waldur.labels" . | indent 4 }}
+spec:
+  {{- /* Cover the migration wait plus image pull and server startup. */}}
+  {{- if .Values.waldur.initdbEnabled }}
+  progressDeadlineSeconds: {{ add (.Values.waldur.initdbWaitTimeout | default 2700 | int) 600 }}
+  {{- else }}
+  progressDeadlineSeconds: 2400
+  {{- end }}
+  replicas: {{ .Values.waldur.mcp.replicas }}
+  selector:
+    matchLabels:
+      app: waldur-mastermind-mcp
+  template:
+    metadata:
+      labels:
+        app: waldur-mastermind-mcp
+        {{ include "waldur.labels" . | nindent 8 }}
+    spec:
+      # The server faces the internet and never calls the Kubernetes API.
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- range .Values.imagePullSecrets }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
+      {{- if .Values.hostAliases }}
+      hostAliases:
+        {{- toYaml .Values.hostAliases | nindent 8 }}
+      {{- end }}
+      {{- if .Values.waldur.initdbEnabled }}
+      initContainers:
+        {{- include "waldur.waitForMigrationsInitContainer" (dict "root" . "resources" .Values.waldur.mcp.resources "env" $env "securityContext" $securityContext) | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: waldur-mastermind-mcp
+          {{- if .Values.waldur.imageDigest }}
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}@{{ .Values.waldur.imageDigest }}
+          {{- else }}
+          image: {{ .Values.global.imageRegistry }}/{{ .Values.waldur.imageName }}:{{ .Values.waldur.imageTag }}
+          {{- end }}
+          imagePullPolicy: {{ include "waldur.imagePullPolicy" (dict "tag" .Values.waldur.imageTag "Values" .Values) }}
+          securityContext:
+            {{- toYaml $securityContext | nindent 12 }}
+          # The server binds to 127.0.0.1 unless told otherwise. An empty host
+          # listens on IPv4 and IPv6 alike; asyncio makes "::" IPv6-only, and
+          # 0.0.0.0 would leave the pod unreachable on IPv6-only clusters.
+          args:
+            - "waldur"
+            - "mcp_server"
+            - "--host"
+            - ""
+            - "--port"
+            - "8091"
+            - "--db-threads"
+            - {{ .Values.waldur.mcp.dbThreads | int | quote }}
+          ports:
+            - name: http
+              containerPort: 8091
+              protocol: TCP
+          # /health answers without the database and while MCP_ENABLED is off.
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          env:
+            {{- $env | nindent 12 }}
+          resources:
+            {{- toYaml .Values.waldur.mcp.resources | nindent 12 }}
+          # Only the settings file: the pod faces the internet, so none of the
+          # SSH keys, kubeconfig or other files the API pods mount.
+          volumeMounts:
+            - name: api-override
+              mountPath: /etc/waldur/override.conf.py
+              subPath: override.conf.py
+            # The only writable path, for libraries that need a temp file.
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: api-override
+          configMap:
+            name: api-override-config
+        - name: tmp
+          emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

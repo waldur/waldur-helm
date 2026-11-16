@@ -151,6 +151,10 @@ waldur:
     key: token
   staffToken: "staff-token"
   debug: true
+  # The install job proves the MCP pod starts and passes /health. MCP_ENABLED
+  # stays off, so /mcp and the OAuth endpoints answer 404.
+  mcp:
+    enabled: true
   mail:
     existingSecret:
       name: ""

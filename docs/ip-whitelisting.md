@@ -10,6 +10,7 @@ ingress:
 ```
 
 Given this value, only IPs from `192.168.22.0/24` subnet are able to access Waldur Mastermind APIs.
+With the [remote MCP server](mcp.md) enabled, it also covers `/mcp` and the OAuth endpoints.
 
 In case you want to limit access to `/api/admin/` endpoint specifically, there is another option called `ingress.whitelistSourceRangeAdmin`:
 
@@ -26,15 +27,18 @@ In case of multiple subnets/IPs, comma separated list can be used as a value. E.
 
 **Note**: this page covers the Ingress path. [Gateway API](gateway-api.md) has no standard
 resource for IP allow-listing -- see the `extraPolicies` section of that doc for the
-implementation-specific equivalent (e.g. Envoy Gateway's `SecurityPolicy`).
+implementation-specific equivalent (e.g. Envoy Gateway's `SecurityPolicy`). A policy covers
+only the routes it targets, so with the remote MCP server it must also target
+`mcp-httproute` and `mcp-oauth-httproute`.
 
 ## Client addresses behind a load balancer
 
 Mastermind reads the client address from `X-Forwarded-For` in two ways:
 
-- The limit on failed passwords per address, and the address the sign-in
-  lockout records, take the entry `waldur.trustedProxyCount` places from the
-  right (mastermind's default is 1).
+- The limit on failed passwords per address, the address the sign-in
+  lockout records, and the throttle on new OAuth clients of the
+  [remote MCP server](mcp.md) take the entry `waldur.trustedProxyCount`
+  places from the right (mastermind's default is 1).
 
 - Personal access token network restrictions (`allowed_networks`), organization
   access subnets, resource network rules and the event log take the **first**

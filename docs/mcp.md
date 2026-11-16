@@ -98,13 +98,16 @@ that call `/mcp` from a server or a desktop app don't need CORS.
   `Allow-Credentials`. Traefik's `api-cors` middleware and HAProxy's
   `cors-enable` answer with `*` and no credentials too, and allow the
   `MCP-Protocol-Version` header.
-- **`/mcp` and its metadata.** The server does not answer CORS itself yet
-  (waldur/waldur-mastermind#1215), so `mcp-ingress` keeps the API's CORS,
-  with `MCP-Protocol-Version` allowed.
-- **Gateway API.** The chart adds no CORS. The routes are split into
-  `mcp-httproute` and `mcp-oauth-httproute`, so a CORS policy in
-  `gatewayAPI.extraPolicies` can target `mcp-httproute` without replacing
-  Waldur's answer on the OAuth endpoints.
+- **`/mcp` and its metadata.** The MCP server answers CORS itself, with
+  `Access-Control-Allow-Origin: *`, no credentials, any request header, and
+  `WWW-Authenticate` exposed so that a browser can read the 401 challenge.
+  `mcp-ingress` adds no CORS of its own on any controller: on Traefik it goes
+  through `mcp-chain`, which is `api-chain` without `api-cors`. Images up to
+  8.1.5-rc.2 send no CORS there, so a client that calls `/mcp` from a web
+  page needs a later mastermind image.
+- **Gateway API.** The chart adds no CORS. Don't add a CORS policy to
+  `mcp-httproute` or `mcp-oauth-httproute` in `gatewayAPI.extraPolicies`: it
+  would replace Waldur's own answer.
 
 ## IP allow-listing
 

@@ -1,17 +1,20 @@
 {{- if and .Values.ingress.enabled .Values.waldur.mcp.enabled }}
 {{/*
   The remote MCP server and the OAuth endpoints its clients sign in through,
-  on the API hosts. Two Ingresses, because on nginx they differ in CORS:
+  on the API hosts. Waldur answers both with Access-Control-Allow-Origin: *
+  and no credentials, and that answer has to reach the browser. Two Ingresses,
+  because they differ in CORS on Traefik and HAProxy:
 
-  - mcp-ingress: /mcp and its resource metadata, served by the MCP pods. They
-    keep the API's CORS until the server answers CORS itself
-    (waldur/waldur-mastermind#1215): browser clients discover the metadata
-    through it.
-  - mcp-oauth-ingress: the OAuth endpoints, served by the API, which answers
-    them with Access-Control-Allow-Origin: * and no credentials. On nginx it
-    has no enable-cors: ingress-nginx would answer preflights itself and swap
-    * for the caller's origin plus Allow-Credentials. Traefik's api-cors and
-    HAProxy's cors-enable answer with * and no credentials, as Waldur does.
+  - mcp-ingress: /mcp and its resource metadata, served by the MCP pods, which
+    answer CORS themselves, preflights included. No controller adds its own:
+    each would answer preflights with a fixed header list, which misses the
+    Mcp-Method, Mcp-Name and Mcp-Param-* headers of newer clients. Traefik's
+    api-cors would also hide WWW-Authenticate, and ingress-nginx would swap *
+    for the caller's origin plus Allow-Credentials. On Traefik it goes through
+    mcp-chain, api-chain without api-cors.
+  - mcp-oauth-ingress: the OAuth endpoints, served by the API. On nginx it has
+    no enable-cors either. Traefik's api-cors and HAProxy's cors-enable answer
+    with * and no credentials, as Waldur does.
 
   The paths, and why only these /oauth ones, are in waldur.mcp.paths.
 
@@ -21,8 +24,8 @@
 {{- $hosts := prepend .Values.apiExtraHosts (.Values.localApiHostname | default .Values.apiHostname) }}
 {{- $corsHeaders := "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,sentry-trace,baggage,X-Impersonated-User-Uuid,X-Reauthentication-Grant,MCP-Protocol-Version" }}
 {{- $paths := include "waldur.mcp.paths" . | fromJson }}
-{{- $mcp := dict "name" "mcp-ingress" "service" "waldur-mastermind-mcp" "nginxCors" true "paths" $paths.mcp }}
-{{- $oauth := dict "name" "mcp-oauth-ingress" "service" "waldur-mastermind-api" "nginxCors" false "paths" $paths.oauth }}
+{{- $mcp := dict "name" "mcp-ingress" "service" "waldur-mastermind-mcp" "proxyCors" false "paths" $paths.mcp }}
+{{- $oauth := dict "name" "mcp-oauth-ingress" "service" "waldur-mastermind-api" "proxyCors" true "paths" $paths.oauth }}
 {{- range $route := list $mcp $oauth }}
 {{- with $ }}
 ---
@@ -32,10 +35,6 @@ metadata:
   name: {{ $route.name }}
   annotations:
     {{- if eq .Values.ingress.className "nginx" }}
-    {{- if $route.nginxCors }}
-    nginx.ingress.kubernetes.io/enable-cors: "true"
-    nginx.ingress.kubernetes.io/cors-allow-headers: {{ $corsHeaders | quote }}
-    {{- end }}
     nginx.ingress.kubernetes.io/force-ssl-redirect: "{{ include "waldur.sslRedirect" (dict "scheme" .Values.apiScheme "Values" .Values) }}"
     # As on the API ingress: /oauth/authorize/ redirects to the consent page
     # with the client's whole query in the Location header.
@@ -49,8 +48,10 @@ metadata:
     nginx.ingress.kubernetes.io/whitelist-source-range: "{{ .Values.ingress.whitelistSourceRange }}"
     {{- end }}
     {{- else if or (eq .Values.ingress.className "openshift-default") (eq .Values.ingress.className "haproxy") }}
+    {{- if $route.proxyCors }}
     haproxy.org/cors-enable: "true"
     haproxy.org/cors-allow-headers: {{ $corsHeaders | quote }}
+    {{- end }}
     haproxy.org/ssl-redirect: "{{ include "waldur.sslRedirect" (dict "scheme" .Values.apiScheme "Values" .Values) }}"
     # HAProxy's own error pages for this backend never reach Waldur. Its
     # frontend's refusals need the controller's frontend-config-snippet
@@ -64,7 +65,7 @@ metadata:
     haproxy.org/allow-list: "{{ .Values.ingress.whitelistSourceRange }}"
     {{- end }}
     {{- else if eq .Values.ingress.className "traefik" }}
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ .Release.Namespace }}-api-chain@kubernetescrd"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ .Release.Namespace }}-{{ $route.proxyCors | ternary "api-chain" "mcp-chain" }}@kubernetescrd"
     {{- end }}
     {{- include "waldur.ingressAnnotations" . }}
 spec:

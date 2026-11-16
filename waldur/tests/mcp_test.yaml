@@ -384,38 +384,22 @@ tests:
         documentIndex: 1
 
   # ingress-nginx's CORS answers preflights itself with the caller's origin
-  # plus Allow-Credentials; Waldur answers the OAuth endpoints with * and no
-  # credentials, which must reach the browser.
-  - it: leaves CORS on the OAuth endpoints to Waldur on nginx
+  # plus Allow-Credentials; Waldur answers both routes with * and no
+  # credentials, which must reach the browser. No documentIndex, so both
+  # Ingresses are checked.
+  - it: leaves CORS to Waldur on nginx
     template: templates/ingress-mcp.yaml
     set:
       waldur.mcp.enabled: true
       ingress.enabled: true
       ingress.className: nginx
-    documentSelector:
-      path: metadata.name
-      value: mcp-oauth-ingress
     asserts:
+      - hasDocuments:
+          count: 2
       - notExists:
           path: metadata.annotations["nginx.ingress.kubernetes.io/enable-cors"]
-
-  # Until waldur/waldur-mastermind#1215, the server sends no CORS headers.
-  - it: keeps the API's CORS on /mcp on nginx, with the MCP header
-    template: templates/ingress-mcp.yaml
-    set:
-      waldur.mcp.enabled: true
-      ingress.enabled: true
-      ingress.className: nginx
-    documentSelector:
-      path: metadata.name
-      value: mcp-ingress
-    asserts:
-      - equal:
-          path: metadata.annotations["nginx.ingress.kubernetes.io/enable-cors"]
-          value: "true"
-      - matchRegex:
+      - notExists:
           path: metadata.annotations["nginx.ingress.kubernetes.io/cors-allow-headers"]
-          pattern: ",Authorization,.*,MCP-Protocol-Version$"
 
   - it: uses the API's proxy buffer size on nginx
     template: templates/ingress-mcp.yaml
@@ -429,12 +413,15 @@ tests:
           path: metadata.annotations["nginx.ingress.kubernetes.io/proxy-buffer-size"]
           value: 16k
 
-  - it: allows the MCP header on HAProxy
+  - it: allows the MCP header on the OAuth endpoints on HAProxy
     template: templates/ingress-mcp.yaml
     set:
       waldur.mcp.enabled: true
       ingress.enabled: true
       ingress.className: haproxy
+    documentSelector:
+      path: metadata.name
+      value: mcp-oauth-ingress
     asserts:
       - equal:
           path: metadata.annotations["haproxy.org/cors-enable"]
@@ -442,6 +429,23 @@ tests:
       - matchRegex:
           path: metadata.annotations["haproxy.org/cors-allow-headers"]
           pattern: ",MCP-Protocol-Version$"
+
+  # The MCP server answers CORS itself; HAProxy would replace its
+  # Access-Control-Allow-Headers with a fixed list.
+  - it: leaves CORS on /mcp to the MCP server on HAProxy
+    template: templates/ingress-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+      ingress.enabled: true
+      ingress.className: haproxy
+    documentSelector:
+      path: metadata.name
+      value: mcp-ingress
+    asserts:
+      - notExists:
+          path: metadata.annotations["haproxy.org/cors-enable"]
+      - notExists:
+          path: metadata.annotations["haproxy.org/cors-allow-headers"]
 
   # Without these, /mcp and the open client registration would skip the API
   # ingress's protections. No documentIndex, so both Ingresses are checked.
@@ -538,7 +542,7 @@ tests:
           path: metadata.annotations["route.openshift.io/termination"]
           value: edge
 
-  - it: sends both routes through the API middleware chain on Traefik
+  - it: sends the OAuth endpoints through the API middleware chain on Traefik
     template: templates/ingress-mcp.yaml
     set:
       waldur.mcp.enabled: true
@@ -546,10 +550,66 @@ tests:
       ingress.className: traefik
     release:
       namespace: waldur
+    documentSelector:
+      path: metadata.name
+      value: mcp-oauth-ingress
     asserts:
       - equal:
           path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
           value: waldur-api-chain@kubernetescrd
+
+  - it: sends /mcp through the API middleware chain without its CORS on Traefik
+    template: templates/ingress-mcp.yaml
+    set:
+      waldur.mcp.enabled: true
+      ingress.enabled: true
+      ingress.className: traefik
+    release:
+      namespace: waldur
+    documentSelector:
+      path: metadata.name
+      value: mcp-ingress
+    asserts:
+      - equal:
+          path: metadata.annotations["traefik.ingress.kubernetes.io/router.middlewares"]
+          value: waldur-mcp-chain@kubernetescrd
+
+  # api-cors would answer preflights with its own header list and replace the
+  # server's Access-Control-Expose-Headers.
+  - it: builds mcp-chain from api-chain without api-cors
+    template: templates/traefik-middleware-api.yaml
+    set:
+      waldur.mcp.enabled: true
+      ingress.enabled: true
+      ingress.className: traefik
+      ingress.whitelistSourceRange: 10.0.0.0/8
+      apiScheme: https
+    documentSelector:
+      path: metadata.name
+      value: mcp-chain
+    asserts:
+      - equal:
+          path: spec.chain.middlewares
+          value:
+            - name: api-redirect-https
+            - name: api-buffering
+            - name: api-compress
+            - name: api-ipallowlist
+
+  # any: true, or containsDocument checks each document on its own and the
+  # negation passes whenever some other Middleware is rendered.
+  - it: renders no mcp-chain while MCP is off
+    template: templates/traefik-middleware-api.yaml
+    set:
+      ingress.enabled: true
+      ingress.className: traefik
+    asserts:
+      - containsDocument:
+          kind: Middleware
+          apiVersion: traefik.io/v1alpha1
+          name: mcp-chain
+          any: true
+        not: true
 
   - it: leaves the Traefik API CORS alone while MCP is off
     template: templates/traefik-middleware-api.yaml

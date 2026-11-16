@@ -2,9 +2,8 @@
 {{- include "waldur.gatewayAPI.assertAvailable" . }}
 {{/*
   Two routes, like the two MCP Ingresses, so that gatewayAPI.extraPolicies can
-  target them apart: Waldur answers the OAuth endpoints with its own public
-  CORS, which a credentialed CORS policy on mcp-oauth-httproute would replace.
-  The paths are in waldur.mcp.paths.
+  target them apart. Waldur answers both with its own public CORS, which a
+  CORS policy on either would replace. The paths are in waldur.mcp.paths.
 */}}
 {{- $paths := include "waldur.mcp.paths" . | fromJson }}
 {{- $mcp := dict "name" "mcp-httproute" "service" "waldur-mastermind-mcp" "paths" $paths.mcp }}

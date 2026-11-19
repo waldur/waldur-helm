@@ -193,7 +193,9 @@ gatewayAPI:
 
 HTTPRoute names to target with `targetRefs` (each is `metadata.name` of the corresponding
 `templates/httproute-*.yaml`): `api-httproute`, `api-admin-httproute`, `homeport-httproute`,
-`rabbitmq-ws-httproute`, `uvk-everypay-httproute`, `matrix-httproute`. The admin-specific IP
+`rabbitmq-ws-httproute`, `uvk-everypay-httproute`, `matrix-httproute`, and with the
+[remote MCP server](mcp.md) `mcp-httproute` and `mcp-oauth-httproute`; an API allow-list must
+target those two as well, or `/mcp` and the OAuth endpoints stay open. The admin-specific IP
 allow-list (the ingress path's separate `whitelistSourceRangeAdmin`) is just another
 `SecurityPolicy` targeting `api-admin-httproute`.
 

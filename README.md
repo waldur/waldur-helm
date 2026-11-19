@@ -11,7 +11,7 @@ on a Kubernetes cluster using the [Helm](https://helm.sh) package manager.
 
 ## Installing prerequisites
 
-1. Install Kubernetes server, for example, using [minikube](docs/minikube.md)
+1. Install Kubernetes server (1.23 or later), for example, using [minikube](docs/minikube.md)
 2. Install Kubernetes client, i.e. [kubectl](docs/kubectl.md)
 3. Install [Helm](docs/helm.md)
 
@@ -98,17 +98,8 @@ Open waldur-mastermind-worker shell and execute the following command:
 
 ## Waldur Helm chart release upgrading
 
-Delete init-whitelabeling job (if exists):
-
-```bash
-  kubectl delete job waldur-mastermind-init-whitelabeling-job || true
-```
-
-Delete load features job (if exists):
-
-```bash
-  kubectl delete job load-features-job || true
-```
+No jobs need to be deleted by hand first: the init-whitelabeling job is a
+Helm hook that Helm replaces on every upgrade.
 
 Upgrade Waldur dependencies and release:
 
@@ -143,6 +134,14 @@ A secret can be created trough [CLI](https://kubernetes.io/docs/tasks/configure-
 ## Configuration docs
 
 Configuration documentation: [index](docs/index.md)
+
+## Remote MCP server
+
+`waldur.mcp.enabled` runs `waldur mcp_server` and routes `/mcp` and the OAuth
+endpoints on the API host; see [docs/mcp.md](docs/mcp.md). Each MCP pod holds
+up to `waldur.mcp.dbThreads` Postgres connections, so
+`waldur.mcp.replicas × waldur.mcp.dbThreads` counts against Postgres
+`max_connections`, on top of the API and Celery pods.
 
 ## Extension hooks
 

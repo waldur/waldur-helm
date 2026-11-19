@@ -1,6 +1,6 @@
 # PostgreSQL Operators (Production)
 
-For **production deployments**, it is strongly recommended to use a PostgreSQL operator instead of the Bitnami Helm charts. This document covers two production-ready options:
+For **production deployments**, it is strongly recommended to use a PostgreSQL operator instead of the bundled single-node PostgreSQL subchart. This document covers two production-ready options:
 
 1. **CloudNativePG** (Recommended for new deployments)
 
@@ -288,7 +288,7 @@ Update your Waldur `values.yaml`:
 
 ```yaml
 
-# Disable bitnami postgresql charts
+# Disable the bundled PostgreSQL
 
 postgresql:
   enabled: false
@@ -910,7 +910,7 @@ Update your Waldur `values.yaml`:
 
 ```yaml
 
-# Disable bitnami postgresql charts
+# Disable the bundled PostgreSQL
 
 postgresql:
   enabled: false
@@ -919,15 +919,72 @@ postgresql:
 
 externalDB:
   enabled: true
-  host: "waldur-postgres-zalando.default.svc.cluster.local"
-  port: 5432
-  database: "waldur"
-  secretName: "waldur.waldur-postgres-zalando.credentials.postgresql.acid.zalan.do"
+  # Host of the primary (read-write) service. Use the short name when Waldur
+  # runs in the cluster's namespace, or "<service>.<namespace>.svc" otherwise.
+  # The chart always connects on port 5432.
   serviceName: "waldur-postgres-zalando"
+  secretName: "waldur.waldur-postgres-zalando.credentials.postgresql.acid.zalan.do"
+  passwordKey: "password"  # default; Zalando secrets store the password here
+  database: "waldur"
+  username: "waldur"
 
-  # Optional: Configure read-only connection
-  readonlyHost: "waldur-postgres-zalando-repl.default.svc.cluster.local"
+# Optional: run /api/query/ requests as the "readonly" role created above.
+# Grant its privileges first, as shown below.
+readonlyDB:
+  enabled: true
+  username: "readonly"
+  passwordExistingSecret:
+    name: "readonly.waldur-postgres-zalando.credentials.postgresql.acid.zalan.do"
+    key: "password"
 ```
+
+`readonlyDB` is a separate, read-only role on the primary. See
+[External DB Integration](external-db-integration.md) for every `externalDB` key.
+
+The chart can also send reads to the replicas (`readonlyDBReplica.enabled`, with
+`replicaHost: "waldur-postgres-zalando-repl"`), but it is left out above: it
+routes every read Waldur makes there, including reads inside a transaction that
+has just written, which do not see its uncommitted rows, and reads that
+replication lag has not caught up with. Test the workload before enabling it.
+
+#### Privileges of the read-only role
+
+`/api/query/` runs the SQL a staff user sends, so the `readonly` role's
+privileges are what keep it read-only. The chart opens the connection with
+`default_transaction_read_only=on`, but that is a session setting the query
+itself can switch off (for example by starting with `SET TRANSACTION READ
+WRITE;`), as can the `ALTER ROLE` default below. For the same reason always set
+`readonlyDB.username`: left empty, the chart connects as the main database user,
+which the manifest above makes a superuser.
+
+Once Waldur has created its schema, run these statements as the `waldur` user,
+the owner of Waldur's tables, so that the default privileges cover the tables
+later migrations create:
+
+```sql
+-- Make its sessions read-only by default
+ALTER ROLE readonly SET default_transaction_read_only = on;
+
+-- Grant read-only access to the database
+GRANT CONNECT ON DATABASE waldur TO readonly;
+
+-- Grant read-only access to the schema
+GRANT USAGE ON SCHEMA public TO readonly;
+
+-- Grant read-only access to existing tables
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly;
+
+-- Grant read-only access to future tables
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO readonly;
+
+-- Revoke access to authtoken_token table
+REVOKE SELECT ON authtoken_token FROM readonly;
+```
+
+The `REVOKE` matters: `authtoken_token` holds every user's API token in
+plain text, so without it any staff user of `/api/query/` could read and use
+them. The other tables still include password hashes and personal data, which
+is why the endpoint is limited to staff.
 
 ## High Availability Features
 

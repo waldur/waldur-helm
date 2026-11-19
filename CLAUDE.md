@@ -97,6 +97,7 @@ CI pulls templates from `waldur/waldur-pipelines`. Jobs:
 | `Test release installation and readiness` | MRs / scheduled / triggered, when `waldur/**` changed | Cleans up the previous test release and its Matrix state (`helm uninstall --wait`, leftover jobs/PVCs, the Matrix setup Secret and settings), then a real `helm install --wait --timeout 20m0s` on the test cluster, then `helm list`; one job, so the `waldur-helm-test` resource group keeps pipelines from interleaving |
 | `Publish new chart version and update docs on github` | on tag | Packages the chart, pushes to the `gh-pages` branch (the `waldur.github.io/waldur-helm/` index) |
 | `Check for deprecated Kubernetes resources` | periodic | Catches drift against current k8s APIs |
+| `Scan images` | master / tags / scheduled; MRs touching chart values, templates or deps | Grype scan of every image in a render with all image-bearing components on (`waldur/test/values-image-scan.yaml`); fixable High+ findings fail it, `allow_failure`. Enable new optional images in that file. Accepted findings go in `.grype.yaml` |
 
 CI cluster credentials are in `K8S_CONFIG_WALDUR_HELM_TEST` (GitLab CI variable).
 

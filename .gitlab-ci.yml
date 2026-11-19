@@ -7,6 +7,8 @@ include:
     file: "/templates/test/check-merge-compatibility.yml"
   - project: "waldur/waldur-pipelines"
     file: "/templates/test/lint-md-files.yml"
+  - project: "waldur/waldur-pipelines"
+    file: "/templates/test/image-vulnerability-scan.yml"
 
 Run linter:
   image:
@@ -315,6 +317,35 @@ Publish new chart version and update docs on github:
     - git status
     - git commit -m "Release $CI_COMMIT_TAG"
     - git push github-origin gh-pages
+
+# Scans every image the chart can deploy, at the tags it ships by default.
+# The list comes from a render with every image-bearing component on (see
+# waldur/test/values-image-scan.yaml), so a tag bump is picked up without
+# editing this job. Accepted findings go in .grype.yaml.
+Scan images:
+  extends: .Image vulnerability scan template
+  before_script:
+    - !reference [.Image vulnerability scan template, before_script]
+    - apk add --no-cache helm yq-go
+    - helm dependency build waldur/
+    - helm template waldur waldur/ -f waldur/test/bundled-values.yaml -f waldur/test/values-image-scan.yaml > rendered-for-scan.yaml
+    - yq -N '.. | select(has("image")) | .image | select(tag == "!!str")' rendered-for-scan.yaml > "$IMAGE_LIST_FILE"
+  rules:
+    # Triggered and release-orchestration runs rescan the same pins.
+    - if: '$CI_PIPELINE_SOURCE == "pipeline"'
+      when: never
+    - !reference [.Image vulnerability scan template, rules]
+    # An MR that changes an image shows whether the bump cleared the findings.
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      changes:
+        - waldur/values.yaml
+        - waldur/test/bundled-values.yaml
+        - waldur/Chart.yaml
+        - waldur/Chart.lock
+        - waldur/templates/**/*
+        - waldur/test/values-image-scan.yaml
+        - .grype.yaml
+        - .gitlab-ci.yml
 
 Check for deprecated Kubernetes resources:
   stage: test

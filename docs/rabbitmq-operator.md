@@ -101,7 +101,7 @@ metadata:
 spec:
   # Pin explicitly -- an unset image field silently takes whatever the
   # operator's default is, rather than a deliberate version.
-  image: rabbitmq:4.3.5
+  image: rabbitmq:4.3.8
 
   # Production recommendation: use odd numbers (3, 5, 7)
   replicas: 3

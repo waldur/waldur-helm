@@ -1777,7 +1777,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.metadata.annotations["checksum/config"]
-          value: "4b3561559c6538e217dbcf75d4561814d7327de49311a3b84f2ba3ec5a420e36"
+          value: "0553f91cda57b425e6bba5cb7161489f4a05801e90d0cb931748de30a4b488c6"
 
   - it: keeps the config checksum when only the secrets change
     template: templates/statefulset-matrix-homeserver.yaml
@@ -1796,7 +1796,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.metadata.annotations["checksum/config"]
-          value: "4b3561559c6538e217dbcf75d4561814d7327de49311a3b84f2ba3ec5a420e36"
+          value: "0553f91cda57b425e6bba5cb7161489f4a05801e90d0cb931748de30a4b488c6"
 
   - it: changes the config checksum when a non-secret single sign-on value changes
     template: templates/statefulset-matrix-homeserver.yaml
@@ -1815,7 +1815,7 @@ tests:
     asserts:
       - notEqual:
           path: spec.template.metadata.annotations["checksum/config"]
-          value: "4b3561559c6538e217dbcf75d4561814d7327de49311a3b84f2ba3ec5a420e36"
+          value: "0553f91cda57b425e6bba5cb7161489f4a05801e90d0cb931748de30a4b488c6"
 
   - it: refuses the email claim when the opt-in is the string "false"
     # --set-string yields "false", a non-empty string that a bare truthiness

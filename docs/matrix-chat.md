@@ -192,10 +192,12 @@ API. See
 The tokens also end up outside the Secret. Each registration is posted to
 `#admins:<serverName>` as a plain message, both tokens included, and stays in
 that room's history on the homeserver's PVC; a rotation makes the old ones
-useless. Tuwunel 1.9.3 sends the `hs_token` in the URL of every call to Waldur,
-and when a call cannot reach Waldur's API its warning quotes that URL, so the
-token lands in the homeserver's log. Treat those logs as secret, and rotate both
-tokens if they were shipped anywhere less trusted than the cluster.
+useless. Tuwunel sends the `hs_token` in the URL of every call to Waldur, and
+before 1.9.4 the warning for a call that could not reach Waldur's API quoted
+that URL, so the token landed in the homeserver's log. 1.9.4 no longer logs
+the URL. Logs from a deployment that ran an older version may still hold the
+token: treat them as secret, and rotate both tokens if they were shipped
+anywhere less trusted than the cluster.
 
 **The registration token** rotates separately, and needs a restart:
 
@@ -304,7 +306,7 @@ paths:
 | Helm | `matrixChat.homeserver.imageTag` |
 | Docker Compose | `WALDUR_TUWUNEL_IMAGE_TAG` |
 
-Both are `v1.9.3`. Do not set a version we do not ship, and do not let the two
+Both are `v1.9.4`. Do not set a version we do not ship, and do not let the two
 diverge. Waldur's chat drawer is built around details of this version: for
 example, it fetches the dehydrated device's queued events with the `POST`
 Tuwunel serves, not the `GET` matrix-js-sdk sends.

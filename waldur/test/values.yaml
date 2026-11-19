@@ -582,7 +582,7 @@ postgresql:
   image:
     # Matches waldur.postgresql.version in _helpers.tpl (client image for the
     # initdb/backup containers) -- move both together.
-    tag: "17.6"
+    tag: "17.12"
   persistence:
     enabled: true
     size: "10Gi"
@@ -625,7 +625,7 @@ rabbitmq:
     password: "waldur"
   # The values below are in use only if rabbitmq.enabled = true
   image:
-    tag: "4.3.5-management"
+    tag: "4.3.8-management"
   replicaCount: 1
   additionalPlugins:
     - rabbitmq_stomp

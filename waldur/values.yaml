@@ -946,7 +946,10 @@ postgresBackup:
   schedule: "0 5 * * *"
   rotationSchedule: "0 6 * * 6"
   maxNumber: 10
-  image: opennode/postgres-minio:0.1.0
+  # pg_dump refuses to dump a server of a newer major version, so this image's
+  # Postgres client must be the same major as the server (17, see
+  # waldur.postgresql.version in _helpers.tpl). 0.1.0 shipped pg_dump 12.
+  image: opennode/postgres-minio:0.1.1
   name: "waldur"
 
 # S3-compatible destination for the optional postgresBackup CronJobs.

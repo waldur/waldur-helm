@@ -1,0 +1,32 @@
+# Layered on top of test/bundled-values.yaml by the "Scan images" CI job.
+#
+# The job renders the chart and scans every image the render references, so
+# this file turns on each optional component that brings its own image. It
+# deliberately does not include test/values.yaml: that file pins the mirror
+# registry and `latest` tags for the test install, and the scan must see the
+# tags the chart ships by default. Nothing here is ever installed; the
+# credentials below exist only so the render's guards pass.
+#
+# When a template gains a new image behind an `enabled` flag, turn it on here,
+# or the scan never sees it.
+postgresBackup:
+  enabled: true
+
+waldur:
+  metricsExporter:
+    enabled: true
+  uvkEverypay:
+    enabled: true
+
+matrixChat:
+  enabled: true
+  homeserver:
+    enabled: true
+    serverName: "image-scan.example.com"
+  livekit:
+    enabled: true
+    publicUrl: "wss://image-scan.example.com"
+    allowInsecureTransport: true
+    keys:
+      apiKey: "image-scan"
+      apiSecret: "image-scan-render-only-not-a-real-secret"

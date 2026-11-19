@@ -16,7 +16,7 @@ Backup configuration values (`postgresBackup` prefix):
 
 - `maxNumber` - maximum number of backups to store
 
-- `image` - Docker image containing `potgres` and `minio` (client) binaries
+- `image` - Docker image containing the `postgres` client tools and the MinIO client (`mc`). Its Postgres major version must match the server's: `pg_dump` refuses to dump a newer server
 
   ([opennode/postgres-minio](https://hub.docker.com/r/opennode/postgres-minio)
   by default)

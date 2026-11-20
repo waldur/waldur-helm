@@ -948,8 +948,11 @@ postgresBackup:
   maxNumber: 10
   # pg_dump refuses to dump a server of a newer major version, so this image's
   # Postgres client must be the same major as the server (17, see
-  # waldur.postgresql.version in _helpers.tpl). 0.1.0 shipped pg_dump 12.
-  image: opennode/postgres-minio:0.1.1
+  # waldur.postgresql.version in _helpers.tpl). The `17` tag is rebuilt weekly
+  # in place (waldur-pipelines, dockerfiles/pg-with-minio) and pulled again on
+  # every run, so the jobs get the latest Postgres 17 and Debian fixes.
+  image: opennode/postgres-minio:17
+  imagePullPolicy: Always
   name: "waldur"
 
 # S3-compatible destination for the optional postgresBackup CronJobs.

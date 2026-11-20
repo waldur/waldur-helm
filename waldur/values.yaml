@@ -861,8 +861,13 @@ waldur:
       azureClientIDKey: ""
       azureClientSecretKey: ""
     enabled: false
-    imageTag: "latest"
-    imageDigest: ""  # Optional: if set, uses digest instead of tag, priority over tag
+    # Release of opennode/waldur-uvk-everypay and its -sidecar image, which are
+    # published together. waldur-uvk-everypay rebuilds its newest release
+    # weekly in place, and imagePullPolicy Always makes every pod start pick
+    # that up; code changes arrive only with a new release.
+    imageTag: "0.2.0"
+    imageDigest: ""  # Optional: if set, uses digest instead of tag, priority over tag (service container only)
+    imagePullPolicy: Always
     uvkServer: "https://uvk-test.ut.ee/client/a74/server.php?format=JSON&action=uvk__"
     everypayGateway: "https://igw-demo.every-pay.com/api/v4"
     everypayUsername: ""

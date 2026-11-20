@@ -116,6 +116,12 @@ When `waldur.initdbEnabled` is true, the API, worker, web-shell, and MCP Deploym
 
   - Sidecar container: HTTP API bridge
 
+- **Images:** `opennode/waldur-uvk-everypay` and
+  `opennode/waldur-uvk-everypay-sidecar`, both at `waldur.uvkEverypay.imageTag`
+  (a release such as `0.2.0`). The newest release is rebuilt weekly in place,
+  and `waldur.uvkEverypay.imagePullPolicy` (default `Always`) makes each pod
+  start pick up the rebuild.
+
 - **Responsibilities:**
 
   - Processes payments through Everypay

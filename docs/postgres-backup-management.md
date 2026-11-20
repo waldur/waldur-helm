@@ -19,7 +19,8 @@ Backup configuration values (`postgresBackup` prefix):
 - `image` - Docker image containing the `postgres` client tools and the MinIO client (`mc`). Its Postgres major version must match the server's: `pg_dump` refuses to dump a newer server
 
   ([opennode/postgres-minio](https://hub.docker.com/r/opennode/postgres-minio)
-  by default)
+  by default; its `17` tag is rebuilt weekly in place, and `imagePullPolicy`
+  (default `Always`) makes every job run pick up the rebuild)
 
 ## Backup storage
 

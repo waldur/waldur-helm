@@ -24,7 +24,7 @@ spec:
           containers:
             - name: "postgres-backup-cronjob"
               image: {{ .Values.global.imageRegistry }}/{{ .Values.postgresBackup.image }}
-              imagePullPolicy: {{ include "waldur.imagePullPolicyFromImage" (dict "image" .Values.postgresBackup.image "Values" .Values) }}
+              imagePullPolicy: {{ .Values.postgresBackup.imagePullPolicy | default (include "waldur.imagePullPolicyFromImage" (dict "image" .Values.postgresBackup.image "Values" .Values)) }}
               command: ["/bin/sh"]
               args: ["-c", "backup-rotation"]
               env:

@@ -373,9 +373,14 @@ data:
     WALDUR_INVOICES['PAYMENT_INTERVAL'] = {{ .Values.waldur.invoice.paymentInterval }}
     {{ end }}
 
-    {{ if gt (int .Values.waldur.invoice.finalizationGracePeriodHours) 0 }}
-    WALDUR_INVOICES['INVOICE_FINALIZATION_GRACE_PERIOD_HOURS'] = {{ .Values.waldur.invoice.finalizationGracePeriodHours }}
-    {{ end }}
+    {{- $gracePeriodHours := .Values.waldur.invoice.finalizationGracePeriodHours }}
+    {{- if include "waldur.isSet" $gracePeriodHours }}
+    {{- if not (regexMatch "^[0-9]+$" (toString $gracePeriodHours)) }}
+    {{- fail (printf "waldur.invoice.finalizationGracePeriodHours must be a non-negative integer, got %q" (toString $gracePeriodHours)) }}
+    {{- end }}
+
+    WALDUR_INVOICES['INVOICE_FINALIZATION_GRACE_PERIOD_HOURS'] = {{ $gracePeriodHours | int }}
+    {{- end }}
 
     # Enable reporting of accounting data
     {{ if .Values.waldur.invoice_reporting.enabled }}

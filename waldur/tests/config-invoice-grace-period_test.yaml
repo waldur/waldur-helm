@@ -1,0 +1,34 @@
+suite: invoice finalization grace period
+templates:
+  - templates/config-override.yaml
+
+tests:
+  - it: leaves mastermind's default alone when unset
+    asserts:
+      - notMatchRegex:
+          path: data["override.conf.py"]
+          pattern: INVOICE_FINALIZATION_GRACE_PERIOD_HOURS
+
+  - it: sets the grace period
+    set:
+      waldur.invoice.finalizationGracePeriodHours: 24
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: "WALDUR_INVOICES\\['INVOICE_FINALIZATION_GRACE_PERIOD_HOURS'\\] = 24\\n"
+
+  # 0 finalizes at midnight, which is not mastermind's default, so it must not read as unset.
+  - it: renders an explicit 0
+    set:
+      waldur.invoice.finalizationGracePeriodHours: 0
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: "WALDUR_INVOICES\\['INVOICE_FINALIZATION_GRACE_PERIOD_HOURS'\\] = 0\\n"
+
+  - it: rejects a negative value
+    set:
+      waldur.invoice.finalizationGracePeriodHours: -1
+    asserts:
+      - failedTemplate:
+          errorPattern: waldur.invoice.finalizationGracePeriodHours must be a non-negative integer

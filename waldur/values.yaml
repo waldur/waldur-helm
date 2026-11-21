@@ -629,7 +629,10 @@ waldur:
     bankAccount: ""
     vatCode: ""
     paymentInterval: ""
-    finalizationGracePeriodHours: 0
+    # Hours after midnight on the 1st during which the previous month's
+    # invoices stay open, so service providers can report the month's last
+    # usage. Empty keeps mastermind's default (2); 0 finalizes them at midnight.
+    finalizationGracePeriodHours: ""
   invoice_reporting:
     enabled: false
     email: ""

@@ -770,6 +770,12 @@ waldur:
   # default (5). Some of these calls run inside API requests, so a higher value
   # lets a slow backend hold API workers for longer.
   # userManagementApiTimeout: 15
+  # Delete events (the audit trail users and auditors read) older than this
+  # many days, together with their feed entries, in a daily background job.
+  # Whole days; unset or 0 keeps events forever, the image default. Deletion is
+  # permanent, so choose the period by your audit-retention policy. Staff
+  # cannot change it from the UI.
+  # eventRetentionDays: 365
   projectEndDateRequired: false
   # Set to manage it from the chart; unset, administrators decide.
   # enableStrictCheckAcceptingInvitation: false

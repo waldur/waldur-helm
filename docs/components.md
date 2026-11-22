@@ -413,6 +413,37 @@ A deployment that started without a dedicated key can adopt one at any time —
 the `secretKey`-derived key stays an implicit last-resort fallback, so rows
 written before the switch keep decrypting with no fallback entry needed.
 
+### Event retention
+
+Every event in the event log (a resource created, a role granted, a sign-in)
+stays in the database for the life of the deployment unless
+`waldur.eventRetentionDays` is set. With a period set, a daily Celery beat task
+(`delete-expired-events`, 04:30) deletes events older than that many days,
+together with their feed entries:
+
+```yaml
+waldur:
+  eventRetentionDays: 365
+```
+
+- Whole days. Unset or `0` keeps events forever, which is the default; the
+  chart refuses to render anything but a whole number.
+- It is rendered into `override.conf.py` as
+  `WALDUR_CORE["EVENT_RETENTION_DAYS"]`. It is a deployment setting: it does
+  not appear in the administration settings, and staff cannot change it from
+  the UI or through `waldur.settingsOverrides`.
+- **Deletion is permanent.** The event log is the audit trail users,
+  organization owners and auditors read, so choose the period by your
+  audit-retention policy, and back up or export the events first if they must
+  be kept elsewhere.
+- Pods do not restart when only this value changes. After the `helm upgrade`,
+  run `kubectl rollout restart deploy/waldur-mastermind-worker
+  deploy/waldur-mastermind-beat deploy/waldur-mastermind-api` so the worker
+  picks up the new period.
+
+See the event retention page of the Waldur admin guide for how the cleanup
+runs on a large table and how to choose a period.
+
 ## High Availability Considerations
 
 1. **API Layer:**

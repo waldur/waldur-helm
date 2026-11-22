@@ -325,6 +325,18 @@ data:
     WALDUR_CORE["USER_MANAGEMENT_API_TIMEOUT"] = {{ float64 . }}
     {{ end }}
 
+    {{- /* Rendered into Python, so only whole non-negative numbers. 0 keeps
+    events forever, as an unset value does. */}}
+    {{ with .Values.waldur.eventRetentionDays }}
+    {{- /* values.yaml numbers arrive as float64, which toString prints as
+    1e+06 from a million up; print whole floats as plain digits instead.
+    A leading zero is refused rather than read as octal. */}}
+    {{ $days := toString . }}
+    {{ if kindIs "float64" . }}{{ if ne (floor .) . }}{{ fail "waldur.eventRetentionDays must be a whole number of days, 0 to keep events forever" }}{{ end }}{{ $days = printf "%.0f" . }}{{ end }}
+    {{ if not (regexMatch "^(0|[1-9][0-9]*)$" $days) }}{{ fail "waldur.eventRetentionDays must be a whole number of days, 0 to keep events forever" }}{{ end }}
+    WALDUR_CORE["EVENT_RETENTION_DAYS"] = {{ $days }}
+    {{ end }}
+
     {{ if has "protect_freeipa_user_details" .Values.waldur.features }}
     WALDUR_CORE['PROTECT_USER_DETAILS_FOR_REGISTRATION_METHODS'] = ['FREEIPA']
     {{ end }}

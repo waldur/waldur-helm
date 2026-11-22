@@ -1,0 +1,70 @@
+suite: event retention days
+templates:
+  - templates/config-override.yaml
+
+tests:
+  - it: leaves the image default (keep forever) alone when unset
+    asserts:
+      - notMatchRegex:
+          path: data["override.conf.py"]
+          pattern: EVENT_RETENTION_DAYS
+
+  - it: leaves the image default alone when 0
+    set:
+      waldur.eventRetentionDays: 0
+    asserts:
+      - notMatchRegex:
+          path: data["override.conf.py"]
+          pattern: EVENT_RETENTION_DAYS
+
+  - it: sets the retention period when given
+    set:
+      waldur.eventRetentionDays: 365
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: 'WALDUR_CORE\["EVENT_RETENTION_DAYS"\] = 365\n'
+
+  - it: accepts a quoted number
+    set:
+      waldur.eventRetentionDays: "90"
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: 'WALDUR_CORE\["EVENT_RETENTION_DAYS"\] = 90\n'
+
+  - it: rejects a negative period
+    set:
+      waldur.eventRetentionDays: -1
+    asserts:
+      - failedTemplate:
+          errorMessage: waldur.eventRetentionDays must be a whole number of days, 0 to keep events forever
+
+  - it: rejects a fractional period
+    set:
+      waldur.eventRetentionDays: 1.5
+    asserts:
+      - failedTemplate:
+          errorMessage: waldur.eventRetentionDays must be a whole number of days, 0 to keep events forever
+
+  - it: rejects a non-number
+    set:
+      waldur.eventRetentionDays: "1; import os"
+    asserts:
+      - failedTemplate:
+          errorMessage: waldur.eventRetentionDays must be a whole number of days, 0 to keep events forever
+
+  - it: rejects a leading zero instead of reading it as octal
+    set:
+      waldur.eventRetentionDays: "030"
+    asserts:
+      - failedTemplate:
+          errorMessage: waldur.eventRetentionDays must be a whole number of days, 0 to keep events forever
+
+  - it: renders a large period as plain digits
+    set:
+      waldur.eventRetentionDays: 1000000
+    asserts:
+      - matchRegex:
+          path: data["override.conf.py"]
+          pattern: 'WALDUR_CORE\["EVENT_RETENTION_DAYS"\] = 1000000\n'

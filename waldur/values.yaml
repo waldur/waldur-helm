@@ -477,19 +477,20 @@ waldur:
   # Empty leaves the currency to administrators (Waldur's default is EUR).
   currencyName: ""
   mastermindUrl: ""
-  # Mastermind's WALDUR_CORE["TRUSTED_PROXY_COUNT"]: the limit on failed
-  # passwords per address counts the X-Forwarded-For entry this many places
-  # from the right. With waldur.mcp on, it also sets
-  # MCP_OAUTH_TRUSTED_PROXY_COUNT, which the throttle on new OAuth clients of
-  # the MCP server counts the same way. Empty leaves mastermind's default (1), which is right when
+  # Mastermind's WALDUR_CORE["TRUSTED_PROXY_COUNT"]: how many proxies in
+  # front of Waldur add an X-Forwarded-For entry. Waldur takes the client
+  # address from the entry this many places from the right, for everything
+  # that uses it: access subnets, token network restrictions, resource network
+  # rules, the event log, the sign-in lockout and the per-address throttles,
+  # MCP included. Empty leaves mastermind's default (1), which is right when
   # the ingress hands on a single address, including behind a load balancer
   # with the controller resolving the address (docs/ip-whitelisting.md).
-  # 2 only if the ingress keeps the balancer's header and appends to it: then
-  # access subnets, token network restrictions, resource network rules and
-  # the event log, which read the first entry, see whatever the client wrote,
-  # and the ingress must be reachable only through the balancer. 0 ignores
-  # the header. Never set it higher than the number of proxies that add an
-  # entry.
+  # 2 if the ingress keeps a load balancer's header and appends to it; the
+  # ingress must then be reachable only through the balancer. 0 ignores the
+  # header. Too high a count reaches the entries a client wrote itself, so the
+  # client chooses its address and gets past access subnets and token network
+  # restrictions. Too low a count gives every user a proxy's address, so they
+  # all share one limit and access subnets admit or refuse everybody alike.
   trustedProxyCount: ""
   site:
     # Empty leaves the site name to administrators (Waldur's default is

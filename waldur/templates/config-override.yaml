@@ -525,10 +525,6 @@ data:
     {{- end }}
 
     WALDUR_CORE["TRUSTED_PROXY_COUNT"] = {{ $trustedProxyCount | int }}
-    {{- if .Values.waldur.mcp.enabled }}
-    # Same count for the throttle on new OAuth clients of the MCP server.
-    MCP_OAUTH_TRUSTED_PROXY_COUNT = {{ $trustedProxyCount | int }}
-    {{- end }}
     {{- end }}
 
     WALDUR_CORE['INVITATION_LIFETIME'] = timedelta(weeks={{ default 1 .Values.waldur.invitationDuration.individual }})
